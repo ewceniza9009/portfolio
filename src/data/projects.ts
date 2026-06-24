@@ -11,7 +11,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/litestaff",
     demo: "https://demo-hr.liteclerk.com/LandingPage",
     video: "https://ewceniza23.bsite.net/videos/HRISVideo.mp4",
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/HRIS.png"
+    image: "/img/HRIS.png",
+    fallback: "/img/1-thumbnail.jpg"
   },
   {
     id: 2,
@@ -25,7 +26,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/NexPoint",
     demo: "https://nex-point.vercel.app/",
     video: null,
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/HRIS.png"
+    image: "/img/nexpoint.png",
+    fallback: "/img/2-thumbnail.jpg"
   },
   {
     id: 3,
@@ -39,7 +41,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/cloudpallet",
     demo: null,
     video: null,
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/FMIS.png"
+    image: "/img/cloudpallet.png",
+    fallback: "/img/3-thumbnail.jpg"
   },
   {
     id: 4,
@@ -53,7 +56,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/drobble",
     demo: null,
     video: null,
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/LMIS.png"
+    image: "/img/drobble.png",
+    fallback: "/img/4-thumbnail.jpg"
   },
   {
     id: 5,
@@ -67,7 +71,8 @@ const projects = [
     repo: null,
     demo: "http://streetsmart-001-site2.gtempurl.com/",
     video: "https://ewceniza23.bsite.net/videos/FMISVideo.mp4",
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/FMIS.png"
+    image: "/img/FMIS.png",
+    fallback: "/img/5-thumbnail.jpg"
   },
   {
     id: 6,
@@ -81,7 +86,8 @@ const projects = [
     repo: null,
     demo: "http://streetsmart-001-site5.gtempurl.com/",
     video: "https://ewceniza23.bsite.net/videos/LMISVideo.mp4",
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/LMIS.png"
+    image: "/img/LMIS.png",
+    fallback: "/img/6-thumbnail.jpg"
   },
   {
     id: 7,
@@ -95,7 +101,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/pos24",
     demo: null,
     video: "https://ewceniza23.bsite.net/videos/POSMVideo.mp4",
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/POSM.png"
+    image: "/img/POSM.png",
+    fallback: "/img/1-thumbnail.jpg"
   },
   {
     id: 8,
@@ -109,7 +116,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/emr",
     demo: "https://emr-three-hazel.vercel.app",
     video: null,
-    image: "https://raw.githubusercontent.com/ewceniza9009/ewceniza9009/refs/heads/main/assets/img/portfolio/Custom.png"
+    image: "/img/halkyone.png",
+    fallback: "/img/2-thumbnail.jpg"
   }
 ]
 
