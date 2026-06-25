@@ -45,7 +45,7 @@ export default function Footer({ onScrollTo }: FooterProps) {
             </p>
             <span className="hidden md:inline text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Currently at AccountMate Software Corporation
+              Full-stack developer • Building commercial applications • Available for consulting
             </p>
           </div>
 
