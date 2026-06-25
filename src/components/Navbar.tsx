@@ -31,8 +31,8 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
       />
 
       <nav
-        className="fixed top-0 left-0 right-0 z-50 border-b"
-        style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', borderColor: 'var(--border)' }}
+        className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm transition-all duration-300"
+        style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderColor: 'var(--border)' }}
       >
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <motion.a

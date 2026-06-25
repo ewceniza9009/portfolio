@@ -70,6 +70,17 @@ function SkillTag({ skill, category }: { skill: SkillItem; category: string }) {
   )
 }
 
+const getBentoClasses = (index: number) => {
+  switch (index) {
+    case 0: return 'md:col-span-2 md:row-span-1' // Frontend
+    case 1: return 'md:col-span-1 md:row-span-1' // Backend
+    case 2: return 'md:col-span-1 md:row-span-1' // Database
+    case 3: return 'md:col-span-1 md:row-span-1' // Tools
+    case 4: return 'md:col-span-1 md:row-span-1' // Practices
+    default: return 'md:col-span-1 md:row-span-1'
+  }
+}
+
 export default function SkillsSection({ skills }: SkillsSectionProps) {
   return (
     <section id="skills" className="py-32 px-6" style={{ background: 'var(--bg-section-alt)' }}>
@@ -86,34 +97,38 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
         </motion.h2>
         <p className="mb-16" style={{ color: 'var(--text-secondary)' }}>Technologies I work with</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.entries(skills).map(([category, data], index) => (
             <motion.div
               key={category}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="rounded-2xl border overflow-hidden group"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+              className={`rounded-2xl border overflow-hidden group flex flex-col ${getBentoClasses(index)}`}
               style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-              whileHover={{ y: -4 }}
+              whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
             >
               {/* Animated gradient banner */}
-              <div className={`relative h-24 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent opacity-40" />
-                <div className="relative z-10 w-full px-6 pb-3 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white drop-shadow-lg flex items-center gap-2">
-                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20, className: 'text-white' })}
+              <div className={`relative h-24 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end shrink-0`}>
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-[var(--bg-card)]/50 to-transparent opacity-80" />
+                
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--text-primary)_1px,_transparent_1px)] [background-size:20px_20px]" />
+                
+                <div className="relative z-10 w-full px-6 pb-4 flex items-center justify-between">
+                  <h3 className="font-bold text-white drop-shadow-lg flex items-center gap-3 text-xl">
+                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 22, className: 'text-white' })}
                     {CATEGORY_LABELS[category] || category}
                   </h3>
                   {/* Skill count badge */}
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur-md shadow-inner border border-white/10">
                     {data.items.length} skills
                   </span>
                 </div>
               </div>
 
-              <div className="p-6 pt-4">
-                <div className="flex flex-wrap gap-2">
+              <div className="p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30">
+                <div className="flex flex-wrap gap-2.5">
                   {data.items.map((skill) => (
                     <SkillTag key={skill.name} skill={skill} category={category} />
                   ))}
