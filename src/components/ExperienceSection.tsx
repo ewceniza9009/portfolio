@@ -7,7 +7,8 @@ interface Experience {
   company: string
   location: string
   position: string
-  description: string
+  descriptions: string[]
+  technologies?: string[]
 }
 
 interface ExperienceSectionProps {
@@ -109,9 +110,28 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
                     <p className="text-xs flex items-center gap-1 mt-1 mb-2" style={{ color: 'var(--text-muted)' }}>
                       <MapPin size={11} /> {exp.location}
                     </p>
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                      {exp.description}
-                    </p>
+                    <ul className="text-sm leading-relaxed mb-4 space-y-2.5" style={{ color: 'var(--text-secondary)' }}>
+                      {exp.descriptions.map((desc, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />
+                          <span className="flex-1">{desc}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    {exp.technologies && exp.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                        {exp.technologies.map((tech, i) => (
+                          <span
+                            key={i}
+                            className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-white/5 backdrop-blur-sm border transition-colors hover:bg-white/10"
+                            style={{ color: 'var(--text-primary)', borderColor: 'var(--glass-border)' }}
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </motion.div>
                 </div>
               </motion.div>

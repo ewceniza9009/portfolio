@@ -139,7 +139,7 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
 
           {/* Value proposition */}
           <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed text-text-secondary">
-            Architecting secure, scalable enterprise systems — from financial
+            Architecting secure, scalable enterprise systems, from financial
             platforms and warehouse management to AI-powered HR solutions.
           </p>
 
