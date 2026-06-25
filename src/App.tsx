@@ -13,7 +13,6 @@ import Footer from './components/Footer'
 import AwardsSection from './components/AwardsSection'
 import BackToTop from './components/BackToTop'
 import awards from './data/awards'
-import VantaBackground from './components/VantaBackground'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('hero')
