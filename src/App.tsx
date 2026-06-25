@@ -36,22 +36,30 @@ export default function App() {
 
   // Active section tracking
   useEffect(() => {
+    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'skills', 'contact']
+    const elements = sectionIds.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[]
+    
+    let ticking = false;
+
     const handleScroll = () => {
-      const sections = ['hero', 'experience', 'awards', 'projects', 'skills', 'contact']
-      const scrollY = window.scrollY + window.innerHeight / 3
-      for (const section of sections) {
-        const element = document.getElementById(section)
-        if (element) {
-          const offsetTop = element.offsetTop
-          const offsetHeight = element.offsetHeight
-          if (scrollY >= offsetTop && scrollY < offsetTop + offsetHeight) {
-            setActiveSection(section)
-            break
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY + window.innerHeight / 3
+          for (const element of elements) {
+            const offsetTop = element.offsetTop
+            const offsetHeight = element.offsetHeight
+            if (scrollY >= offsetTop && scrollY < offsetTop + offsetHeight) {
+              setActiveSection(element.id)
+              break
+            }
           }
-        }
+          ticking = false;
+        })
+        ticking = true;
       }
     }
-    window.addEventListener('scroll', handleScroll)
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 

@@ -17,8 +17,11 @@ export default function VantaBackground() {
   }, [])
 
   useEffect(() => {
-    // Check for reduced motion preference
+    // Check for reduced motion preference or mobile device to prevent scroll stutter
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    if (window.innerWidth < 768) {
       return;
     }
 
