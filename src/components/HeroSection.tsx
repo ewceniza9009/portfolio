@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Github, Linkedin, ChevronDown, ArrowRight } from "lucide-react";
 import VantaBackground from "./VantaBackground";
 
