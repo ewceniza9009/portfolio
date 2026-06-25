@@ -44,7 +44,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: index * 0.15, duration: 0.5, ease: 'easeOut' }}
-              className="group relative rounded-3xl overflow-hidden border flex flex-col md:flex-row w-full transition-shadow hover:shadow-2xl"
+              className="group relative rounded-3xl overflow-hidden border flex flex-col md:flex-row w-full transition-shadow hover:shadow-lg"
               style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
             >
               {/* Image Section on the Left */}
@@ -60,7 +60,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   src={award.image}
                   alt={award.title}
-                  className="w-auto h-56 md:h-64 object-contain relative z-10 rounded-2xl drop-shadow-2xl saturate-[1.15] contrast-[1.1] brightness-[1.05]"
+                  className="w-auto h-56 md:h-64 object-contain relative z-10 rounded-2xl drop-shadow-md saturate-[1.15] contrast-[1.1] brightness-[1.05]"
                 />
               </div>
 

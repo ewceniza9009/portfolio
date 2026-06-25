@@ -20,7 +20,16 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
 
   return (
-    <section id="experience" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section-alt)' }}>
+    <section id="experience" className="py-32 px-6 relative overflow-hidden">
+      {/* Soft centered fade for text readability without card edges */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none bg-[var(--bg-primary)]"
+        style={{
+          opacity: 0.85,
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 15%, transparent 75%)",
+          maskImage: "radial-gradient(ellipse at center, black 15%, transparent 75%)",
+        }}
+      />
       {/* Minimal Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_var(--text-primary)_1.5px,_transparent_1.5px)] [background-size:32px_32px] pointer-events-none" />
       
@@ -29,27 +38,81 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
       <div className="absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[120px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
 
       {/* Tech Doodles / Floating Accents */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ opacity: 0.15, color: 'var(--text-secondary)' }}>
-        {/* Floating Bracket */}
-        <div className="absolute top-[15%] right-[10%] text-9xl font-mono font-black rotate-12 blur-[1px]">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ opacity: 0.12, color: 'var(--text-secondary)' }}>
+        {/* Left side curly at top */}
+        <div className="absolute top-[5%] left-[2%] text-5xl font-mono font-black rotate-12 blur-[0.5px] opacity-50">
           {'{'}
         </div>
-        {/* Floating Tag */}
-        <div className="absolute bottom-[20%] left-[5%] text-7xl font-mono font-bold -rotate-12 blur-[1px]">
+
+        {/* Left side code snippet */}
+        <div className="absolute top-[18%] left-[3%] font-mono text-sm leading-none tracking-tight">
+          <div className="blur-[0.5px]"></div>
+          <div className="mt-3 ml-4 text-xs opacity-60 blur-[0.5px]">const</div>
+          <div className="ml-2 text-xs opacity-40 blur-[0.5px]">build</div>
+          <div className="ml-4 text-xs opacity-60 blur-[0.5px]">= ()</div>
+        </div>
+
+        {/* Left side SQL keywords */}
+        <div className="absolute top-[35%] left-[8%] font-mono text-xs tracking-widest opacity-50 blur-[0.5px]">
+          SELECT
+        </div>
+        <div className="absolute top-[38%] left-[12%] font-mono text-[10px] tracking-widest opacity-30 blur-[0.5px]">
+          FROM
+        </div>
+
+        {/* Left side closing tag */}
+        <div className="absolute bottom-[18%] left-[4%] text-5xl font-mono font-bold -rotate-12 blur-[0.5px]">
           {'/>'}
         </div>
-        {/* Zigzag squiggle */}
-        <svg className="absolute top-[40%] right-[8%] w-32 h-32 -rotate-12 blur-[1px]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+
+        {/* Left side dots pattern */}
+        <div className="absolute bottom-[8%] left-[15%] font-mono text-[10px] tracking-widest opacity-20">
+          <span>.</span><span>.</span><span>.</span>
+        </div>
+
+        {/* Left side small grid */}
+        <div className="absolute bottom-[12%] left-[22%] opacity-15">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="0.5">
+            <line x1="0" y1="20" x2="40" y2="20" />
+            <line x1="20" y1="0" x2="20" y2="40" />
+          </svg>
+        </div>
+
+        {/* Right side curly at top */}
+        <div className="absolute top-[15%] right-[6%] text-7xl font-mono font-black rotate-12 blur-[1px] opacity-60">
+          {'{'}
+        </div>
+
+        {/* Right side zigzag */}
+        <svg className="absolute top-[35%] right-[8%] w-24 h-24 -rotate-12 blur-[0.5px] opacity-40" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <path d="M10 50 L 30 20 L 50 80 L 70 20 L 90 50" />
         </svg>
-        {/* Crosshairs */}
-        <div className="absolute top-[60%] left-[10%] text-4xl font-mono tracking-widest">
+
+        {/* Right side crosshairs */}
+        <div className="absolute top-[50%] right-[5%] text-3xl font-mono tracking-[0.2em] opacity-35">
           + + +
         </div>
-        {/* Abstract Circle */}
-        <svg className="absolute top-[80%] right-[15%] w-24 h-24 rotate-45 blur-[1px]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="10 10">
-          <circle cx="50" cy="50" r="40" />
+
+        {/* Right side binary */}
+        <div className="absolute top-[60%] right-[10%] font-mono text-[9px] tracking-tighter opacity-20 leading-none blur-[0.5px]">
+          <div>01101001</div>
+          <div className="ml-2">00110111</div>
+        </div>
+
+        {/* Right side dashed circle */}
+        <svg className="absolute bottom-[25%] right-[12%] w-24 h-24 rotate-12 blur-[0.5px] opacity-35" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="8 8">
+          <circle cx="50" cy="50" r="38" />
         </svg>
+
+        {/* Right side curly at bottom */}
+        <div className="absolute bottom-[12%] right-[8%] text-6xl font-mono font-black rotate-45 blur-[1px] opacity-60">
+          {'}'}
+        </div>
+
+        {/* Right side brackets cluster */}
+        <div className="absolute bottom-[35%] right-[5%] text-4xl font-mono opacity-25 blur-[0.5px]">
+          []
+        </div>
       </div>
 
       {/* Section divider */}

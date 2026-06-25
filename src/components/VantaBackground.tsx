@@ -43,6 +43,7 @@ export default function VantaBackground() {
           scaleMobile: 1.00,
           color: theme === 'dark' ? 0x22c55e : 0x16a34a,
           backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xf8fafc,
+          backgroundAlpha: 0,
         })
       }
     }
@@ -59,6 +60,10 @@ export default function VantaBackground() {
     <div
       ref={vantaRef}
       className="absolute top-[10vh] left-[15vw] w-[120vw] h-[120vh] z-0 pointer-events-none vanta-fallback"
+      style={{
+        WebkitMaskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",
+        maskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",
+      }}
     />
   )
 }

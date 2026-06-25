@@ -306,38 +306,6 @@ a {
   transform: translateY(-1px);
 }
 
-/* ── Floating Orbs ── */
-@keyframes float-slow {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -20px) scale(1.05); }
-  66% { transform: translate(-20px, 15px) scale(0.95); }
-}
-
-@keyframes float-medium {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-25px, -30px) scale(1.1); }
-}
-
-.floating-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-.floating-orb-1 {
-  animation: float-slow 8s ease-in-out infinite;
-}
-
-.floating-orb-2 {
-  animation: float-medium 10s ease-in-out infinite;
-}
-
-.floating-orb-3 {
-  animation: float-slow 12s ease-in-out infinite reverse;
-}
-
 /* ── Section Divider ── */
 .section-divider {
   height: 1px;

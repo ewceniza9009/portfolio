@@ -13,6 +13,7 @@ import Footer from './components/Footer'
 import AwardsSection from './components/AwardsSection'
 import BackToTop from './components/BackToTop'
 import awards from './data/awards'
+import VantaBackground from './components/VantaBackground'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('hero')
@@ -65,7 +66,7 @@ export default function App() {
 
   return (
     <>
-      <div className="min-h-screen transition-colors duration-300 relative z-10" style={{ color: 'var(--text-primary)' }}>
+      <div className="min-h-screen transition-colors duration-300 relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
           theme={theme}

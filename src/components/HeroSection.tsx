@@ -52,29 +52,25 @@ function useTypewriter(
 }
 
 export default function HeroSection({ onScrollTo }: HeroSectionProps) {
-  
   const typedRole = useTypewriter(ROLES);
 
   return (
     <section
       id="hero"
-      className="min-h-screen flex items-center justify-center px-6 pt-20 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center px-6 pt-20 relative"
     >
       <VantaBackground />
-      {/* Overlay to dim VantaBackground for text contrast, but revealing the vortex at bottom right */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none bg-[var(--bg-section)]" 
+      {/* Soft centered fade for text readability without card edges */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none bg-[var(--bg-primary)]"
         style={{
-          WebkitMaskImage: 'radial-gradient(circle at 75% 75%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 50%)',
-          maskImage: 'radial-gradient(circle at 75% 75%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 50%)'
+          opacity: 0.85,
+          WebkitMaskImage: "radial-gradient(circle at center, black 15%, transparent 65%)",
+          maskImage: "radial-gradient(circle at center, black 15%, transparent 65%)",
         }}
       />
-      
-      
 
-      <motion.div
-        className="text-center max-w-4xl relative z-10"
-      >
+      <motion.div className="text-center max-w-4xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -90,7 +86,7 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
               src="/img/profile-pic.png"
               alt="Erwin Wilson Ceniza"
               className="w-40 h-40 mx-auto rounded-full object-cover border-2"
-            style={{ borderColor: 'var(--accent)' }}
+              style={{ borderColor: "var(--accent)" }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -110,20 +106,23 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
             {typedRole}
             <span className="typewriter-cursor" />
           </p>
-          
 
           {/* Value proposition */}
-          <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed text-text-secondary">
-            Architecting secure, scalable enterprise systems, from financial
-            platforms and warehouse management to AI-powered HR solutions.
-          </p>
+          <div className="text-lg max-w-2xl mx-auto mb-10 text-center text-text-secondary space-y-2">
+            <p>Building enterprise software for over a decade.</p>
+            <p>I work across the full stack, mostly in .NET, sometimes in Node or React, and I actually enjoy getting into complex database queries.</p>
+            <p>HR systems, accounting platforms, warehouse logistics.</p>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             <button
               onClick={() => onScrollTo("projects")}
               className="px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2 hover:scale-105 shadow-[0_0_20px_var(--accent-dim)] hover:shadow-[0_0_30px_var(--accent-dim)]"
-              style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
+              style={{
+                background: "var(--accent)",
+                color: "var(--bg-primary)",
+              }}
             >
               View Projects <ArrowRight size={18} />
             </button>
