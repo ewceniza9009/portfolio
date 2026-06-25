@@ -22,73 +22,6 @@ const projects = [
     fallback: "/img/1-thumbnail.jpg"
   },
   {
-    id: 2,
-    title: "NexPoint CRM",
-    subtitle: "Customer Relationship Management",
-    description: "An enterprise-caliber CRM platform engineered for high-growth teams that need full visibility over their customer lifecycle — from initial lead capture through deal closure, campaign execution, and post-sale support.",
-    details: [
-      "**Unified Customer Profiles** — Aggregates every interaction, transaction, and communication into a single 360-degree customer view accessible across departments.",
-      "**Visual Sales Pipeline** — Offers intuitive drag-and-drop deal management with built-in lead scoring and revenue forecasting to help sales teams prioritize effectively.",
-      "**Campaign & Ticketing Center** — Combines marketing automation with a priority-driven support ticket system, bridging the gap between outreach and customer retention.",
-      "**Live Business Intelligence** — Real-time dashboards powered by SignalR deliver instant visibility into KPIs, pipeline health, and team performance without page refreshes."
-    ],
-    tech: ["ASP.NET Core 10", "EF Core", "PostgreSQL", "Angular 20", "SignalR"],
-    year: "2026",
-    type: "Commercialized",
-    color: "#00ffcc",
-    repo: "https://github.com/ewceniza9009/NexPoint",
-    demo: "https://nex-point.vercel.app/",
-    video: null,
-    image: "/img/nexpoint.png",
-    fallback: "/img/2-thumbnail.jpg"
-  },
-  {
-    id: 3,
-    title: "CloudPallet",
-    subtitle: "3PL Cold Storage WMS (SaaS)",
-    description: "Purpose-built for third-party logistics operators managing cold storage facilities. Addresses temperature-sensitive inventory challenges with FEFO-based lot tracking, granular location hierarchies (down to individual shelf levels), and integrated environmental monitoring.",
-    details: [
-      "**Usage-Based 3PL Billing** — An event-driven billing engine that programmatically calculates client charges based on storage duration, temperature tier, handling events, and value-added services such as blast freezing, kitting, and fumigation.",
-      "**Barcode-Enforced Operations** — Automates receiving workflows with integrated scale capture, generates SSCC pallet barcodes on the fly, and enforces barcode verification during picking and shipping to eliminate human error.",
-      "**Scalable Domain Architecture** — Employs Domain-Driven Design, CQRS, and Clean Architecture with MediatR, enabling independent service evolution and horizontal scaling.",
-      "**Granular Access Management** — Multi-tier role-based access (Admin, Operator, Finance) ensures operational separation and data security across warehouse tenants.",
-      "**Real-Time Operational Dashboards** — SignalR-driven live views of dock scheduling, cold room temperatures, and inventory movement for immediate situational awareness.",
-      "**Automated Document Generation** — QuestPDF integration produces professional invoices, warehouse receipts, and compliance reports on demand."
-    ],
-    tech: ["ASP.NET Core 9", "EF Core 9", "Angular 20", "SignalR", "Docker"],
-    year: "2024",
-    type: "Commercialized",
-    color: "#00ff88",
-    repo: "https://github.com/ewceniza9009/cloudpallet",
-    demo: null,
-    video: null,
-    image: "/img/cloudpallet.png",
-    fallback: "/img/3-thumbnail.jpg"
-  },
-  {
-    id: 4,
-    title: "drobble",
-    subtitle: "Ecommerce (SaaS)",
-    description: "A cloud-native e-commerce engine decomposed into independent microservices — each owning its own data store and business logic. Designed as a production-ready blueprint for high-throughput online retail, with containerized deployment and full observability baked in.",
-    details: [
-      "**Service-Oriented Backend** — Independently deployable services for catalog, users, orders, payments, search, and reviews, coordinated through an Ocelot API gateway and RabbitMQ message bus.",
-      "**Modern Storefront SPA** — A React 19+ progressive web app built with Vite and TypeScript, using Redux Toolkit and RTK Query for efficient state and cache management.",
-      "**Principled Architecture** — Every service adheres to Clean Architecture and CQRS conventions with MediatR, ensuring testable, maintainable codebases that scale independently.",
-      "**Enterprise-Grade Observability** — OpenTelemetry tracing plus Serilog structured logging provide deep visibility, while Polly handles transient fault tolerance with retries and circuit breakers.",
-      "**Defense-in-Depth Security** — JWT-based authentication, request rate limiting, input validation via FluentValidation, and OWASP-aligned security practices protect every endpoint.",
-      "**Polyglot Persistence** — PostgreSQL for transactional workloads, MongoDB for flexible document storage, Elasticsearch for full-text search, and Redis for high-speed caching and rate limiting."
-    ],
-    tech: ["ASP.NET Core", "React", "MongoDB", "PostgreSQL", "Docker"],
-    year: "2024",
-    type: "Commercialized",
-    color: "#00ffcc",
-    repo: "https://github.com/ewceniza9009/drobble",
-    demo: null,
-    video: null,
-    image: "/img/drobble.png",
-    fallback: "/img/4-thumbnail.jpg"
-  },
-  {
     id: 5,
     title: "Cloud FMIS",
     subtitle: "Financial Management Information System",
@@ -131,27 +64,6 @@ const projects = [
     fallback: "/img/6-thumbnail.jpg"
   },
   {
-    id: 7,
-    title: "POS System",
-    subtitle: "Point of Sale (Desktop & Mobile)",
-    description: "A resilient, multi-platform point-of-sale solution built for retail and food-service environments where connectivity can't always be guaranteed. Its hybrid online/offline architecture keeps transactions flowing regardless of network conditions.",
-    details: [
-      "**Instant Multi-Terminal Sync** — SignalR pushes sales, inventory updates, and customer data changes to every connected terminal and the central server in real time.",
-      "**Built-In Stock Management** — Tracks inventory levels live, triggers low-stock notifications, and supports purchase order creation directly from the register interface.",
-      "**Single-Codebase Multi-Platform** — Flutter enables native execution on iOS, Android, Windows, and web browsers from one unified codebase, minimizing maintenance overhead.",
-      "**Offline-First Resilience** — Local SQLite storage ensures sales continue uninterrupted during network outages, with automatic synchronization once connectivity is restored."
-    ],
-    tech: ["Flutter", "ASP.NET Core", "SQLite", "SignalR"],
-    year: "2023",
-    type: "Commercialized",
-    color: "#00ff88",
-    repo: "https://github.com/ewceniza9009/pos24",
-    demo: null,
-    video: "https://ewceniza23.bsite.net/videos/POSMVideo.mp4",
-    image: "/img/POSM.png",
-    fallback: "/img/1-thumbnail.jpg"
-  },
-  {
     id: 8,
     title: "Halkyone Clinical OS",
     subtitle: "Electronic Medical Record (EMR)",
@@ -172,6 +84,94 @@ const projects = [
     video: null,
     image: "/img/halkyone.png",
     fallback: "/img/2-thumbnail.jpg"
+  },
+  {
+    id: 3,
+    title: "CloudPallet",
+    subtitle: "3PL Cold Storage WMS (SaaS)",
+    description: "Purpose-built for third-party logistics operators managing cold storage facilities. Addresses temperature-sensitive inventory challenges with FEFO-based lot tracking, granular location hierarchies (down to individual shelf levels), and integrated environmental monitoring.",
+    details: [
+      "**Usage-Based 3PL Billing** — An event-driven billing engine that programmatically calculates client charges based on storage duration, temperature tier, handling events, and value-added services such as blast freezing, kitting, and fumigation.",
+      "**Barcode-Enforced Operations** — Automates receiving workflows with integrated scale capture, generates SSCC pallet barcodes on the fly, and enforces barcode verification during picking and shipping to eliminate human error.",
+      "**Scalable Domain Architecture** — Employs Domain-Driven Design, CQRS, and Clean Architecture with MediatR, enabling independent service evolution and horizontal scaling.",
+      "**Granular Access Management** — Multi-tier role-based access (Admin, Operator, Finance) ensures operational separation and data security across warehouse tenants.",
+      "**Real-Time Operational Dashboards** — SignalR-driven live views of dock scheduling, cold room temperatures, and inventory movement for immediate situational awareness.",
+      "**Automated Document Generation** — QuestPDF integration produces professional invoices, warehouse receipts, and compliance reports on demand."
+    ],
+    tech: ["ASP.NET Core 9", "EF Core 9", "Angular 20", "SignalR", "Docker"],
+    year: "2024",
+    type: "Deployed",
+    color: "#00ff88",
+    repo: "https://github.com/ewceniza9009/cloudpallet",
+    demo: null,
+    video: null,
+    image: "/img/cloudpallet.png",
+    fallback: "/img/3-thumbnail.jpg"
+  },
+  {
+    id: 2,
+    title: "NexPoint CRM",
+    subtitle: "Customer Relationship Management",
+    description: "An enterprise-caliber CRM platform engineered for high-growth teams that need full visibility over their customer lifecycle — from initial lead capture through deal closure, campaign execution, and post-sale support.",
+    details: [
+      "**Unified Customer Profiles** — Aggregates every interaction, transaction, and communication into a single 360-degree customer view accessible across departments.",
+      "**Visual Sales Pipeline** — Offers intuitive drag-and-drop deal management with built-in lead scoring and revenue forecasting to help sales teams prioritize effectively.",
+      "**Campaign & Ticketing Center** — Combines marketing automation with a priority-driven support ticket system, bridging the gap between outreach and customer retention.",
+      "**Live Business Intelligence** — Real-time dashboards powered by SignalR deliver instant visibility into KPIs, pipeline health, and team performance without page refreshes."
+    ],
+    tech: ["ASP.NET Core 10", "EF Core", "PostgreSQL", "Angular 20", "SignalR"],
+    year: "2026",
+    type: "Deployed",
+    color: "#00ffcc",
+    repo: "https://github.com/ewceniza9009/NexPoint",
+    demo: "https://nex-point.vercel.app/",
+    video: null,
+    image: "/img/nexpoint.png",
+    fallback: "/img/2-thumbnail.jpg"
+  },
+  {
+    id: 4,
+    title: "drobble",
+    subtitle: "Ecommerce (SaaS)",
+    description: "A cloud-native e-commerce engine decomposed into independent microservices — each owning its own data store and business logic. Designed as a production-ready blueprint for high-throughput online retail, with containerized deployment and full observability baked in.",
+    details: [
+      "**Service-Oriented Backend** — Independently deployable services for catalog, users, orders, payments, search, and reviews, coordinated through an Ocelot API gateway and RabbitMQ message bus.",
+      "**Modern Storefront SPA** — A React 19+ progressive web app built with Vite and TypeScript, using Redux Toolkit and RTK Query for efficient state and cache management.",
+      "**Principled Architecture** — Every service adheres to Clean Architecture and CQRS conventions with MediatR, ensuring testable, maintainable codebases that scale independently.",
+      "**Enterprise-Grade Observability** — OpenTelemetry tracing plus Serilog structured logging provide deep visibility, while Polly handles transient fault tolerance with retries and circuit breakers.",
+      "**Defense-in-Depth Security** — JWT-based authentication, request rate limiting, input validation via FluentValidation, and OWASP-aligned security practices protect every endpoint.",
+      "**Polyglot Persistence** — PostgreSQL for transactional workloads, MongoDB for flexible document storage, Elasticsearch for full-text search, and Redis for high-speed caching and rate limiting."
+    ],
+    tech: ["ASP.NET Core", "React", "MongoDB", "PostgreSQL", "Docker"],
+    year: "2024",
+    type: "Microservices",
+    color: "#00ffcc",
+    repo: "https://github.com/ewceniza9009/drobble",
+    demo: null,
+    video: null,
+    image: "/img/drobble.png",
+    fallback: "/img/4-thumbnail.jpg"
+  },
+  {
+    id: 7,
+    title: "POS System",
+    subtitle: "Point of Sale (Desktop & Mobile)",
+    description: "A resilient, multi-platform point-of-sale solution built for retail and food-service environments where connectivity can't always be guaranteed. Its hybrid online/offline architecture keeps transactions flowing regardless of network conditions.",
+    details: [
+      "**Instant Multi-Terminal Sync** — SignalR pushes sales, inventory updates, and customer data changes to every connected terminal and the central server in real time.",
+      "**Built-In Stock Management** — Tracks inventory levels live, triggers low-stock notifications, and supports purchase order creation directly from the register interface.",
+      "**Single-Codebase Multi-Platform** — Flutter enables native execution on iOS, Android, Windows, and web browsers from one unified codebase, minimizing maintenance overhead.",
+      "**Offline-First Resilience** — Local SQLite storage ensures sales continue uninterrupted during network outages, with automatic synchronization once connectivity is restored."
+    ],
+    tech: ["Flutter", "ASP.NET Core", "SQLite", "SignalR"],
+    year: "2023",
+    type: "Commercialized",
+    color: "#00ff88",
+    repo: "https://github.com/ewceniza9009/pos24",
+    demo: null,
+    video: "https://ewceniza23.bsite.net/videos/POSMVideo.mp4",
+    image: "/img/POSM.png",
+    fallback: "/img/1-thumbnail.jpg"
   }
 ]
 
