@@ -16,8 +16,7 @@ api.upload_folder(
     folder_path="dist",
     repo_id=space_id,
     repo_type="space",
-    commit_message="Update portfolio",
-    add_exist_ok=True
+    commit_message="Update portfolio"
 )
 
 print(f"Done! https://huggingface.co/spaces/{space_id}")
