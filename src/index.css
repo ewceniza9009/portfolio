@@ -110,11 +110,47 @@ a {
 .bg-card { background-color: var(--bg-card); }
 .border-custom { border-color: var(--border); }
 
+/* ── Animated Gradient Text ── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent) 0%, #4ade80 100%);
+  background: linear-gradient(
+    270deg,
+    var(--accent) 0%,
+    #4ade80 25%,
+    var(--accent-secondary) 50%,
+    #4ade80 75%,
+    var(--accent) 100%
+  );
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Shimmer Text (for hero subtitle) ── */
+.shimmer-text {
+  background: linear-gradient(
+    110deg,
+    var(--text-secondary) 35%,
+    var(--text-primary) 50%,
+    var(--text-secondary) 65%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: -100% 50%; }
 }
 
 /* ── Profile Ring Animation ── */
@@ -190,7 +226,23 @@ a {
   background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
 }
 
-/* ── Project Card Hover ── */
+/* ── Animated gradient banners ── */
+.skill-gradient-frontend,
+.skill-gradient-backend,
+.skill-gradient-database,
+.skill-gradient-tools,
+.skill-gradient-practices {
+  background-size: 200% 200%;
+  animation: gradient-pan 4s ease-in-out infinite;
+}
+
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Project Card Hover with Glow ── */
 .project-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -198,7 +250,9 @@ a {
 .project-card:hover {
   transform: translateY(-4px);
   border-color: var(--accent) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px var(--accent-dim);
 }
 
 /* ── Experience Timeline ── */
@@ -250,4 +304,183 @@ a {
 .tag-neutral {
   background: var(--bg-secondary);
   color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.tag-neutral:hover {
+  background: var(--accent-dim);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* ── Floating Orbs ── */
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-25px, -30px) scale(1.1); }
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.floating-orb-1 {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.floating-orb-2 {
+  animation: float-medium 10s ease-in-out infinite;
+}
+
+.floating-orb-3 {
+  animation: float-slow 12s ease-in-out infinite reverse;
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-dim) 20%,
+    var(--accent) 50%,
+    var(--accent-dim) 80%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+
+/* ── Typewriter Cursor ── */
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--accent);
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Stat Counter ── */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-dim) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Availability Pulse ── */
+@keyframes availability-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+}
+
+.availability-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: availability-pulse 2s ease-in-out infinite;
+}
+
+/* ── Contact Card Hover ── */
+.contact-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.contact-card-green::after {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+}
+
+.contact-card-blue::after {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+}
+
+.contact-card:hover::after {
+  opacity: 1;
+}
+
+/* ── Copy Toast ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+.copy-toast {
+  animation: toast-in 0.2s ease-out, toast-out 0.2s ease-in 1.5s forwards;
+}
+
+/* ── Video Badge ── */
+.video-badge {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Nav Pill ── */
+.nav-pill {
+  background: var(--accent-dim);
+  border-radius: 9999px;
+}
+
+/* ── Theme Toggle ── */
+.theme-toggle-btn {
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95) rotate(15deg);
 }

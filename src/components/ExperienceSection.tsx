@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { MapPin } from 'lucide-react'
+import { useRef } from 'react'
 
 interface Experience {
   year: string
@@ -14,9 +15,15 @@ interface ExperienceSectionProps {
 }
 
 export default function ExperienceSection({ experience }: ExperienceSectionProps) {
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
+
   return (
     <section id="experience" className="py-32 px-6" style={{ background: 'var(--bg-section-alt)' }}>
-      <div className="max-w-4xl mx-auto">
+      {/* Section divider */}
+      <div className="section-divider max-w-4xl mx-auto mb-32" />
+
+      <div className="max-w-4xl mx-auto" ref={sectionRef}>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -27,10 +34,13 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
         <p className="mb-16" style={{ color: 'var(--text-secondary)' }}>Professional journey</p>
 
         <div className="relative max-w-3xl mx-auto">
-          {/* Timeline line */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-0.5"
+          {/* Animated timeline line */}
+          <motion.div
+            className="absolute left-0 top-0 w-0.5"
             style={{ background: 'linear-gradient(to bottom, var(--accent), var(--accent-secondary), transparent)' }}
+            initial={{ height: 0 }}
+            animate={isInView ? { height: '100%' } : { height: 0 }}
+            transition={{ duration: 1.5, ease: 'easeOut' }}
           />
 
           {experience.map((exp, index) => {
@@ -44,17 +54,18 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
                 transition={{ delay: index * 0.12 }}
                 className="relative pl-12 pb-8 md:pb-12 last:pb-0"
               >
-                {/* Year label instead of number */}
+                {/* Timeline dot */}
                 <div
                   className="absolute left-0 top-1 flex items-center justify-center -translate-x-1/2 z-10"
                 >
-                  <div
+                  <motion.div
                     className="w-3 h-3 rounded-full"
                     style={{
                       background: isCurrent ? 'var(--accent)' : 'var(--bg-card)',
                       border: `2px solid ${isCurrent ? 'var(--accent)' : 'var(--accent-secondary)'}`,
                       boxShadow: isCurrent ? '0 0 12px var(--accent-dim)' : 'none'
                     }}
+                    whileHover={{ scale: 1.5 }}
                   />
                 </div>
 
@@ -69,21 +80,29 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
                     </span>
                     {isCurrent && (
                       <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
                         style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
                       >
+                        <span className="availability-dot" style={{ width: 6, height: 6 }} />
                         Current
                       </span>
                     )}
                   </div>
 
-                  {/* Card */}
-                  <div
-                    className={`p-5 rounded-xl border transition-all ${isCurrent ? 'timeline-current' : ''}`}
+                  {/* Card with hover expansion */}
+                  <motion.div
+                    className={`p-5 rounded-xl border transition-colors ${isCurrent ? 'timeline-current' : ''}`}
                     style={{
                       background: 'var(--bg-card)',
                       borderColor: isCurrent ? 'var(--accent)' : 'var(--border)',
                     }}
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: isCurrent
+                        ? '0 8px 30px rgba(34, 197, 94, 0.15)'
+                        : '0 8px 30px rgba(0, 0, 0, 0.2)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
                     <h3 className="font-bold text-base">{exp.company}</h3>
                     <p className="text-sm mt-0.5" style={{ color: 'var(--accent)' }}>{exp.position}</p>
@@ -93,7 +112,7 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                       {exp.description}
                     </p>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )
