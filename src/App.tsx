@@ -11,6 +11,8 @@ import ProjectModal from './components/ProjectModal'
 import SkillsSection from './components/SkillsSection'
 import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
+import AwardsSection from './components/AwardsSection'
+import awards from './data/awards'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('hero')
@@ -35,7 +37,7 @@ export default function App() {
   // Active section tracking
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['hero', 'experience', 'projects', 'skills', 'contact']
+      const sections = ['hero', 'experience', 'awards', 'projects', 'skills', 'contact']
       const scrollY = window.scrollY + window.innerHeight / 3
       for (const section of sections) {
         const element = document.getElementById(section)
@@ -73,6 +75,7 @@ export default function App() {
         />
         <HeroSection onScrollTo={scrollTo} />
         <ExperienceSection experience={experience} />
+        <AwardsSection awards={awards} />
         <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
         <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
         <SkillsSection skills={skills} />
