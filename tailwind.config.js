@@ -9,7 +9,7 @@ export default {
       fontFamily: {
         'display': ['Space Grotesk', 'sans-serif'],
         'mono': ['JetBrains Mono', 'monospace'],
-        'signature': ['"Great Vibes"', 'cursive'],
+        'signature': ['"Satisfy"', 'cursive'],
       },
       colors: {
         'bg-primary': 'var(--bg-primary)',
