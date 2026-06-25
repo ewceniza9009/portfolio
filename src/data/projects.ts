@@ -43,27 +43,6 @@ const projects = [
     fallback: "/img/5-thumbnail.jpg"
   },
   {
-    id: 6,
-    title: "Cloud Loan",
-    subtitle: "Loan Management System",
-    description: "A complete loan lifecycle platform that digitizes everything from application intake and credit evaluation through disbursement, servicing, and final settlement, giving lending teams the tools to manage portfolios with precision and full transparency.",
-    details: [
-      "**Digital Loan Origination** : Streamlines applications with electronic forms, automated credit scoring workflows, and configurable approval chains that accelerate underwriting decisions.",
-      "**Centralized Portfolio Oversight** : A command-center dashboard for monitoring active loans, upcoming maturities, payment schedules, and delinquency trends across the entire book.",
-      "**Automated Loan Servicing** : Handles recurring billing cycles, payment allocation, penalty computation, and amortization schedule generation without manual intervention.",
-      "**Risk & Performance Analytics** : Produces actionable reports on portfolio composition, exposure concentration, collection effectiveness, and aging analysis."
-    ],
-    tech: ["Blazor.NET", "SQL Server", "Syncfusion", "DevExpress"],
-    year: "2022",
-    type: "Commercialized",
-    color: "#00ffcc",
-    repo: null,
-    demo: "http://streetsmart-001-site5.gtempurl.com/",
-    video: "https://ewceniza23.bsite.net/videos/LMISVideo.mp4",
-    image: "/img/LMIS.png",
-    fallback: "/img/6-thumbnail.jpg"
-  },
-  {
     id: 8,
     title: "Halkyone Clinical OS",
     subtitle: "Electronic Medical Record (EMR)",
@@ -81,9 +60,32 @@ const projects = [
     color: "#00ffcc",
     repo: "https://github.com/ewceniza9009/emr",
     demo: "https://emr-three-hazel.vercel.app",
-    video: null,
+    video: "https://www.youtube.com/watch?v=bzJQIrhxXFo&start=934",
     image: "/img/halkyone.png",
     fallback: "/img/2-thumbnail.jpg"
+  },
+  {
+    id: 9,
+    title: "Smash Elite",
+    subtitle: "Badminton Facility & Community Platform",
+    description: "A full-stack facility management and community platform connecting administrators, coaches, customers, and delivery staff. It features a robust system for court bookings, tournament brackets with live scoring, a custom jersey catalog, and an integrated online shop with real-time delivery tracking.",
+    details: [
+      "**Comprehensive Court Management** : Handles bookings across various modalities (coaching, rental, sparring, tournament) with dynamic peak-time pricing and coach assignments.",
+      "**Live Tournament Engine** : Automates single-elimination brackets with BYE resolution, tracks live match scoring via Socket.IO, and maintains a tiered leaderboard.",
+      "**Custom Jersey CMS & E-Commerce** : A complete pipeline for custom jersey inquiries alongside an online shop supporting GCash/COD, stock tracking, and multi-item cart checkout.",
+      "**Delivery & Operations** : A mobile-responsive dashboard for delivery staff with order assignments, a complete status pipeline, and a security PIN verification system.",
+      "**Coaching & Meetups** : Streamlines training sessions and open play meetups with capacity limits, registration workflows, and admin approval systems.",
+      "**Real-Time Architecture** : Employs Socket.IO namespaced connections for live updates across tournament scores, order tracking, and cross-platform notifications."
+    ],
+    tech: ["React 19", "Node.js", "Express", "SQLite/Turso", "Socket.IO"],
+    year: "2026",
+    type: "Full-Stack SaaS",
+    color: "#00ffcc",
+    repo: "https://huggingface.co/spaces/ewceniza/smashelite/tree/main",
+    demo: "https://ewceniza-smashelite.hf.space/",
+    video: "https://www.youtube.com/watch?v=BGYXhj808-A",
+    image: "/img/smashelite.png",
+    fallback: "/img/1-thumbnail.jpg"
   },
   {
     id: 3,
@@ -151,6 +153,27 @@ const projects = [
     video: null,
     image: "/img/drobble.png",
     fallback: "/img/4-thumbnail.jpg"
+  },
+  {
+    id: 6,
+    title: "Cloud Loan",
+    subtitle: "Loan Management System",
+    description: "A complete loan lifecycle platform that digitizes everything from application intake and credit evaluation through disbursement, servicing, and final settlement, giving lending teams the tools to manage portfolios with precision and full transparency.",
+    details: [
+      "**Digital Loan Origination** : Streamlines applications with electronic forms, automated credit scoring workflows, and configurable approval chains that accelerate underwriting decisions.",
+      "**Centralized Portfolio Oversight** : A command-center dashboard for monitoring active loans, upcoming maturities, payment schedules, and delinquency trends across the entire book.",
+      "**Automated Loan Servicing** : Handles recurring billing cycles, payment allocation, penalty computation, and amortization schedule generation without manual intervention.",
+      "**Risk & Performance Analytics** : Produces actionable reports on portfolio composition, exposure concentration, collection effectiveness, and aging analysis."
+    ],
+    tech: ["Blazor.NET", "SQL Server", "Syncfusion", "DevExpress"],
+    year: "2022",
+    type: "Commercialized",
+    color: "#00ffcc",
+    repo: null,
+    demo: "http://streetsmart-001-site5.gtempurl.com/",
+    video: "https://ewceniza23.bsite.net/videos/LMISVideo.mp4",
+    image: "/img/LMIS.png",
+    fallback: "/img/6-thumbnail.jpg"
   },
   {
     id: 7,

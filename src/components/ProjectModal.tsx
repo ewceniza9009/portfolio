@@ -69,12 +69,22 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               {/* Media */}
               <div className="relative h-64 md:h-80" style={{ background: 'var(--bg-card)' }}>
                 {project.video ? (
-                  <video
-                    src={project.video}
-                    controls
-                    className="w-full h-full object-cover"
-                    aria-label={`Demo video for ${project.title}`}
-                  />
+                  project.video.includes('youtube.com') || project.video.includes('youtu.be') ? (
+                    <iframe
+                      src={project.video.replace('watch?v=', 'embed/').replace('&start=', '?start=').replace('&t=', '?start=')}
+                      title={`Demo video for ${project.title}`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <video
+                      src={project.video}
+                      controls
+                      className="w-full h-full object-cover"
+                      aria-label={`Demo video for ${project.title}`}
+                    />
+                  )
                 ) : (
                   <ImageWithFallback
                     src={project.image}
@@ -208,7 +218,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     className="px-5 py-2.5 rounded-lg font-semibold border flex items-center gap-2 transition-all hover:scale-105"
                     style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
                   >
-                    <ExternalLink size={16} /> Demo
+                    <ExternalLink size={16} /> Live App
                   </a>
                 )}
               </div>

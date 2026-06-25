@@ -214,7 +214,7 @@ function ProjectCard({ project, index, onSelectProject }: { project: Project; in
               style={{ background: 'var(--accent-secondary-dim)', color: 'var(--accent-secondary)' }}
             >
               <ExternalLink size={13} />
-              Demo
+              Live App
             </a>
           )}
         </div>
