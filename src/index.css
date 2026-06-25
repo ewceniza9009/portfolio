@@ -242,16 +242,58 @@ a {
 
 .project-card:hover {
   transform: translateY(-4px);
-  border-color: var(--accent) !important;
+  border-color: transparent !important;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 30px var(--accent-dim);
+    0 0 30px var(--accent-dim) !important;
 }
+
+/* ── Smooth Transform Fix for Cards ── */
+/* Physical 1px borders look like jagged swords during 3D transforms. 
+   We hide the physical border and use an absolutely positioned ::after 
+   pseudo-element to draw a smooth, anti-aliased border ON TOP of all children. */
+.project-card,
+#experience .rounded-xl.border,
+#awards .rounded-3xl.border,
+#skills .rounded-2xl.border {
+  position: relative;
+  border-color: transparent !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  -webkit-font-smoothing: subpixel-antialiased;
+  will-change: transform;
+}
+
+.project-card::after,
+#experience .rounded-xl.border::after,
+#awards .rounded-3xl.border::after,
+#skills .rounded-2xl.border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--border);
+  pointer-events: none;
+  z-index: 50;
+  transition: box-shadow 0.3s ease;
+}
+
+.project-card:hover::after {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
 
 /* ── Experience Timeline ── */
 .timeline-current {
-  border-left: 2px solid var(--accent);
   background: var(--accent-dim);
+}
+
+.timeline-current::after {
+  box-shadow: 
+    inset 2px 0 0 0 var(--accent), 
+    inset 0 0 0 1px var(--accent) !important;
 }
 
 /* ── Bounce Animation ── */

@@ -105,7 +105,7 @@ const projects = [
     type: "Deployed",
     color: "#00ff88",
     repo: "https://github.com/ewceniza9009/cloudpallet",
-    demo: null,
+    demo: "https://ewceniza9009.github.io/cloudpallet",
     video: null,
     image: "/img/cloudpallet.png",
     fallback: "/img/3-thumbnail.jpg"
