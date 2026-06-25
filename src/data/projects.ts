@@ -76,7 +76,7 @@ const projects = [
       "**Dynamic Clinical Assessments** : Runtime-generated forms for standardized instruments (ESAS-R, PHQ-9, PPS) with documentation accelerators and automated report generation via QuestPDF."
     ],
     tech: [".NET 9", "HotChocolate GraphQL", "Next.js 14", "PostgreSQL"],
-    year: "2024",
+    year: "2026",
     type: "Emerging",
     color: "#00ffcc",
     repo: "https://github.com/ewceniza9009/emr",
@@ -99,7 +99,7 @@ const projects = [
       "**Automated Document Generation** : QuestPDF integration produces professional invoices, warehouse receipts, and compliance reports on demand."
     ],
     tech: ["ASP.NET Core 9", "EF Core 9", "Angular 20", "SignalR", "Docker"],
-    year: "2024",
+    year: "2025",
     type: "Deployed",
     color: "#00ff88",
     repo: "https://github.com/ewceniza9009/cloudpallet",
@@ -120,7 +120,7 @@ const projects = [
       "**Live Business Intelligence** : Real-time dashboards powered by SignalR deliver instant visibility into KPIs, pipeline health, and team performance without page refreshes."
     ],
     tech: ["ASP.NET Core 10", "EF Core", "PostgreSQL", "Angular 20", "SignalR"],
-    year: "2026",
+    year: "2025",
     type: "Deployed",
     color: "#00ffcc",
     repo: "https://github.com/ewceniza9009/NexPoint",
