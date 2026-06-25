@@ -95,37 +95,44 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
 
 export default function ContactSection() {
   return (
-    <section id="contact" className="py-32 px-6" style={{ background: 'var(--bg-section)' }}>
+    <section id="contact" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section)' }}>
+      {/* Ambient glowing orbs */}
+      <div className="absolute top-1/2 left-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent)' }} />
+      <div className="absolute top-1/2 right-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
+      
       {/* Section divider */}
-      <div className="section-divider max-w-3xl mx-auto mb-32" />
+      <div className="section-divider max-w-3xl mx-auto mb-32 relative z-10" />
 
-      <div className="max-w-3xl mx-auto text-center">
+      <div className="max-w-4xl mx-auto text-center relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-4xl font-bold mb-4 font-display"
+          className="text-4xl md:text-5xl font-bold mb-6 font-display"
         >
-          Let's Build Something Together
+          Let's Build Something <span className="gradient-text">Together</span>
         </motion.h2>
 
         {/* Availability indicator */}
-        <div className="flex items-center justify-center gap-2 mb-12">
+        <div className="flex items-center justify-center gap-2 mb-16">
           <span className="availability-dot" />
-          <p className="text-sm font-medium" style={{ color: 'var(--accent)' }}>
-            Available for new projects and opportunities
+          <p className="text-sm font-medium tracking-wide uppercase" style={{ color: 'var(--text-secondary)' }}>
+            Available for new opportunities
           </p>
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="rounded-2xl p-8 md:p-12 border"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-3xl p-8 md:p-12 glass shadow-2xl relative overflow-hidden"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Subtle inner gradient for the glass card */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)' }} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
             <CopyableContact
               href="mailto:erwinwilsonceniza@gmail.com"
-              icon={<Mail size={20} />}
+              icon={<Mail size={22} />}
               label="Email"
               value="erwinwilsonceniza@gmail.com"
               copyValue="erwinwilsonceniza@gmail.com"
@@ -134,7 +141,7 @@ export default function ContactSection() {
 
             <CopyableContact
               href="tel:+639351228470"
-              icon={<Phone size={20} />}
+              icon={<Phone size={22} />}
               label="Phone"
               value="+63 935-122-8470"
               copyValue="+639351228470"
@@ -143,14 +150,14 @@ export default function ContactSection() {
 
             <SocialLink
               href="https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32"
-              icon={<Linkedin size={20} />}
+              icon={<Linkedin size={22} />}
               label="LinkedIn"
               value="erwin-wilson-ceniza"
             />
 
             <SocialLink
               href="https://github.com/ewceniza9009"
-              icon={<Github size={20} />}
+              icon={<Github size={22} />}
               label="GitHub"
               value="ewceniza9009"
             />
