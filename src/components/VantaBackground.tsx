@@ -17,11 +17,8 @@ export default function VantaBackground() {
   }, [])
 
   useEffect(() => {
-    // Check for reduced motion preference or mobile device to prevent scroll stutter
+    // Check for reduced motion preference
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    if (window.innerWidth < 768) {
       return;
     }
 
@@ -43,7 +40,7 @@ export default function VantaBackground() {
           minHeight: 200.00,
           minWidth: 200.00,
           scale: 1.00,
-          scaleMobile: 1.00,
+          scaleMobile: 2.00,
           color: theme === 'dark' ? 0x22c55e : 0x16a34a,
           backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xf8fafc,
           backgroundAlpha: 0,
