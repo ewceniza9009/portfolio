@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Menu, X, Sun, Moon } from 'lucide-react'
+import Logo from './Logo'
 
 const NAV_ITEMS = ['Experience', 'Projects', 'Skills', 'Contact']
 
@@ -37,9 +38,11 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
           <motion.a
             href="#hero"
             onClick={(e) => { e.preventDefault(); onScrollTo('hero') }}
-            className="text-2xl md:text-3xl font-signature text-accent"
+            className="flex items-center gap-3 text-2xl md:text-3xl font-signature text-accent"
+            style={{ lineHeight: 1 }}
           >
-            Erwin Wilson Ceniza
+            <Logo size={36} className="flex-shrink-0" style={{ display: 'block' }} />
+            <span style={{ transform: 'translateY(2px)' }}>Erwin Wilson Ceniza</span>
           </motion.a>
 
           {/* Desktop Nav */}
