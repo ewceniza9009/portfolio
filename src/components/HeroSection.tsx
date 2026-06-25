@@ -52,9 +52,7 @@ function useTypewriter(
 }
 
 export default function HeroSection({ onScrollTo }: HeroSectionProps) {
-  const { scrollYProgress } = useScroll();
-  const opacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+  
   const typedRole = useTypewriter(ROLES);
 
   return (
@@ -72,42 +70,9 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
         }}
       />
       
-      {/* Floating decorative orbs */}
-      <div
-        className="floating-orb floating-orb-1"
-        style={{
-          width: 300,
-          height: 300,
-          top: "10%",
-          left: "5%",
-          background:
-            "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
-        }}
-      />
-      <div
-        className="floating-orb floating-orb-2"
-        style={{
-          width: 250,
-          height: 250,
-          top: "60%",
-          right: "8%",
-          background:
-            "radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%)",
-        }}
-      />
-      <div
-        className="floating-orb floating-orb-3"
-        style={{
-          width: 200,
-          height: 200,
-          bottom: "15%",
-          left: "30%",
-          background: "radial-gradient(circle, #4ade80 0%, transparent 70%)",
-        }}
-      />
+      
 
       <motion.div
-        style={{ opacity, scale }}
         className="text-center max-w-4xl relative z-10"
       >
         <motion.div
@@ -124,7 +89,8 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
             <img
               src="/img/profile-pic.png"
               alt="Erwin Wilson Ceniza"
-              className="w-40 h-40 mx-auto rounded-full object-cover profile-ring"
+              className="w-40 h-40 mx-auto rounded-full object-cover border-2"
+            style={{ borderColor: 'var(--accent)' }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -132,7 +98,7 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
           </motion.div>
 
           {/* Name */}
-          <h1 className="text-7xl md:text-8xl font-normal mb-4 font-signature">
+          <h1 className="text-5xl md:text-6xl font-normal mb-4 font-signature">
             Erwin Wilson <span className="gradient-text">Ceniza</span>
           </h1>
 
@@ -144,9 +110,7 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
             {typedRole}
             <span className="typewriter-cursor" />
           </p>
-          <p className="text-sm font-mono tracking-wider uppercase mb-8 shimmer-text">
-            10+ Years · ERP · AI · SaaS
-          </p>
+          
 
           {/* Value proposition */}
           <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed text-text-secondary">
