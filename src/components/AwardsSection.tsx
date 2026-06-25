@@ -29,10 +29,10 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
           <div className="inline-flex items-center justify-center p-3 mb-4 rounded-2xl" style={{ background: 'var(--accent-dim)' }}>
             <AwardIcon size={28} style={{ color: 'var(--accent)' }} />
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold mb-4 font-display">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 font-display">
             Awards & Recognition
           </h2>
-          <p className="max-w-2xl text-lg" style={{ color: 'var(--text-secondary)' }}>
+          <p className="max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
             Milestones and achievements recognized throughout my career journey.
           </p>
         </motion.div>
@@ -77,11 +77,11 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   </span>
                 </div>
 
-                <h3 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-[var(--accent)] transition-colors duration-300">
+                <h3 className="text-xl md:text-2xl font-bold mb-3 group-hover:text-[var(--accent)] transition-colors duration-300">
                   {award.title}
                 </h3>
                 
-                <p className="text-base md:text-lg leading-relaxed max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm md:text-base leading-relaxed max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
                   {award.description}
                 </p>
 
