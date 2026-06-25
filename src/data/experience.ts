@@ -1,5 +1,12 @@
 const experience = [
   {
+    year: "NOV 2025 — APRIL 30, 2026",
+    company: "Eclaro Business Solution",
+    location: "Manila, Philippines",
+    position: "Software Developer",
+    description: "Contributed to a company-wide EMR system, developing responsive Blazor scheduling modules and integrating Azure Graph API for Microsoft 365 synchronization via PostgreSQL."
+  },
+  {
     year: "2018 - May 20, 2025",
     company: "AccountMate Software Corporation",
     location: "Mandaue City, Cebu (PH) | Petaluma, CA (US)",
