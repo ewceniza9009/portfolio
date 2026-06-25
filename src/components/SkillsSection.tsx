@@ -109,15 +109,15 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
               whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
             >
               {/* Animated gradient banner */}
-              <div className={`relative h-24 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end shrink-0`}>
-                <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[var(--bg-card)] to-transparent" />
+              <div className={`relative h-16 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end shrink-0`}>
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-card)] to-transparent" />
                 
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--text-primary)_1px,_transparent_1px)] [background-size:20px_20px]" />
                 
-                <div className="relative z-10 w-full px-6 pb-4 flex items-center justify-between">
-                  <h3 className="font-bold text-white drop-shadow-lg flex items-center gap-3 text-xl">
-                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 22, className: 'text-white' })}
+                <div className="relative z-10 w-full px-6 pb-3 flex items-center justify-between">
+                  <h3 className="font-bold text-white drop-shadow-lg flex items-center gap-3 text-lg">
+                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20, className: 'text-white' })}
                     {CATEGORY_LABELS[category] || category}
                   </h3>
                   {/* Skill count badge */}
