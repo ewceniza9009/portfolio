@@ -77,7 +77,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   </span>
                 </div>
 
-                <h3 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[var(--accent)] group-hover:to-[var(--accent-secondary)] transition-all duration-300">
+                <h3 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-[var(--accent)] transition-colors duration-300">
                   {award.title}
                 </h3>
                 
@@ -85,8 +85,8 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   {award.description}
                 </p>
 
-                {/* Decorative arrow/line that expands on hover */}
-                <div className="mt-8 flex items-center gap-4 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                {/* Decorative arrow/line that expands on hover/focus */}
+                <div className="mt-8 flex items-center gap-4 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:translate-x-0 transition-all duration-300">
                   <div className="h-px w-12" style={{ background: 'var(--accent)' }} />
                   <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>Recognized</span>
                 </div>

@@ -20,9 +20,40 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
 
   return (
-    <section id="experience" className="py-32 px-6" style={{ background: 'var(--bg-section-alt)' }}>
+    <section id="experience" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section-alt)' }}>
+      {/* Minimal Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_var(--text-primary)_1.5px,_transparent_1.5px)] [background-size:32px_32px] pointer-events-none" />
+      
+      {/* Subtle glowing accents */}
+      <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full opacity-[0.07] blur-[120px] pointer-events-none" style={{ background: 'var(--accent)' }} />
+      <div className="absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[120px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
+
+      {/* Tech Doodles / Floating Accents */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ opacity: 0.15, color: 'var(--text-secondary)' }}>
+        {/* Floating Bracket */}
+        <div className="absolute top-[15%] right-[10%] text-9xl font-mono font-black rotate-12 blur-[1px]">
+          {'{'}
+        </div>
+        {/* Floating Tag */}
+        <div className="absolute bottom-[20%] left-[5%] text-7xl font-mono font-bold -rotate-12 blur-[1px]">
+          {'/>'}
+        </div>
+        {/* Zigzag squiggle */}
+        <svg className="absolute top-[40%] right-[8%] w-32 h-32 -rotate-12 blur-[1px]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 50 L 30 20 L 50 80 L 70 20 L 90 50" />
+        </svg>
+        {/* Crosshairs */}
+        <div className="absolute top-[60%] left-[10%] text-4xl font-mono tracking-widest">
+          + + +
+        </div>
+        {/* Abstract Circle */}
+        <svg className="absolute top-[80%] right-[15%] w-24 h-24 rotate-45 blur-[1px]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="10 10">
+          <circle cx="50" cy="50" r="40" />
+        </svg>
+      </div>
+
       {/* Section divider */}
-      <div className="section-divider max-w-4xl mx-auto mb-32" />
+      <div className="section-divider max-w-4xl mx-auto mb-32 relative z-10" />
 
       <div className="max-w-4xl mx-auto" ref={sectionRef}>
         <motion.h2

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Github, Linkedin, ChevronDown, ArrowRight } from "lucide-react";
+import VantaBackground from "./VantaBackground";
 
 interface HeroSectionProps {
   onScrollTo: (id: string) => void;
@@ -59,8 +60,18 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
   return (
     <section
       id="hero"
-      className="min-h-screen flex items-center justify-center px-6 pt-20 bg-[var(--bg-section)] relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center px-6 pt-20 relative overflow-hidden"
     >
+      <VantaBackground />
+      {/* Overlay to dim VantaBackground for text contrast, but revealing the vortex at bottom right */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none bg-[var(--bg-section)]" 
+        style={{
+          WebkitMaskImage: 'radial-gradient(circle at 75% 75%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 50%)',
+          maskImage: 'radial-gradient(circle at 75% 75%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 50%)'
+        }}
+      />
+      
       {/* Floating decorative orbs */}
       <div
         className="floating-orb floating-orb-1"
@@ -145,11 +156,19 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <button
+              onClick={() => onScrollTo("projects")}
+              className="px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2 hover:scale-105 shadow-[0_0_20px_var(--accent-dim)] hover:shadow-[0_0_30px_var(--accent-dim)]"
+              style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
+            >
+              View Projects <ArrowRight size={18} />
+            </button>
             <a
               href="https://github.com/ewceniza9009"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 bg-accent text-bg-primary"
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
+              style={{ color: "var(--text-primary)" }}
             >
               <Github size={18} /> GitHub
             </a>
@@ -157,17 +176,11 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
               href="https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 rounded-lg font-semibold border transition-all flex items-center gap-2 hover:scale-105 border-accent text-accent"
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
+              style={{ color: "var(--text-primary)" }}
             >
               <Linkedin size={18} /> LinkedIn
             </a>
-            <button
-              onClick={() => onScrollTo("projects")}
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105"
-              style={{ background: "var(--accent-secondary)", color: "#fff" }}
-            >
-              View Projects <ArrowRight size={18} />
-            </button>
           </div>
         </motion.div>
 

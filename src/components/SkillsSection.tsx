@@ -110,7 +110,7 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
             >
               {/* Animated gradient banner */}
               <div className={`relative h-24 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end shrink-0`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-[var(--bg-card)]/50 to-transparent opacity-80" />
+                <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[var(--bg-card)] to-transparent" />
                 
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--text-primary)_1px,_transparent_1px)] [background-size:20px_20px]" />
@@ -127,8 +127,13 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
                 </div>
               </div>
 
-              <div className="p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30">
-                <div className="flex flex-wrap gap-2.5">
+              <div className="relative p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30 overflow-hidden">
+                {/* Subtle Background Icon */}
+                <div className="absolute -bottom-8 -right-8 opacity-[0.03] pointer-events-none transform group-hover:scale-110 group-hover:opacity-[0.05] group-hover:-rotate-6 transition-all duration-700" style={{ color: 'var(--text-primary)' }}>
+                  {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 180 })}
+                </div>
+
+                <div className="relative z-10 flex flex-wrap gap-2.5">
                   {data.items.map((skill) => (
                     <SkillTag key={skill.name} skill={skill} category={category} />
                   ))}

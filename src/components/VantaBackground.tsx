@@ -17,6 +17,11 @@ export default function VantaBackground() {
   }, [])
 
   useEffect(() => {
+    // Check for reduced motion preference
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
     async function init() {
       const three = await import('three')
       window.THREE = three
@@ -53,7 +58,7 @@ export default function VantaBackground() {
   return (
     <div
       ref={vantaRef}
-      className="fixed inset-0 z-0 pointer-events-none vanta-fallback"
+      className="absolute top-[10vh] left-[15vw] w-[120vw] h-[120vh] z-0 pointer-events-none vanta-fallback"
     />
   )
 }

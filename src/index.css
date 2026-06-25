@@ -15,9 +15,9 @@
   --accent: #22c55e;
   --accent-hover: #16a34a;
   --accent-dim: rgba(34, 197, 94, 0.15);
-  --accent-secondary: #3b82f6;
-  --accent-secondary-hover: #2563eb;
-  --accent-secondary-dim: rgba(59, 130, 246, 0.12);
+  --accent-secondary: #14b8a6;
+  --accent-secondary-hover: #0d9488;
+  --accent-secondary-dim: rgba(20, 184, 166, 0.12);
   --border: rgba(255, 255, 255, 0.08);
   --glass-bg: rgba(17, 17, 17, 0.85);
   --glass-border: rgba(255, 255, 255, 0.06);
@@ -36,9 +36,9 @@
   --accent: #16a34a;
   --accent-hover: #15803d;
   --accent-dim: rgba(22, 163, 74, 0.1);
-  --accent-secondary: #2563eb;
-  --accent-secondary-hover: #1d4ed8;
-  --accent-secondary-dim: rgba(37, 99, 235, 0.08);
+  --accent-secondary: #0d9488;
+  --accent-secondary-hover: #0f766e;
+  --accent-secondary-dim: rgba(13, 148, 136, 0.08);
   --border: rgba(0, 0, 0, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-border: rgba(0, 0, 0, 0.05);
@@ -94,9 +94,15 @@ a {
 /* ── Glass Effect ── */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+}
+@media (min-width: 768px) {
+  .glass {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 /* ── Utility Classes ── */
@@ -483,4 +489,14 @@ a {
 
 .theme-toggle-btn:active {
   transform: scale(0.95) rotate(15deg);
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

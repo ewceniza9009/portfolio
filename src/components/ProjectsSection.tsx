@@ -102,9 +102,10 @@ function ProjectCard({ project, index, onSelectProject }: { project: Project; in
   useEffect(() => {
     const el = cardRef.current
     if (!el) return
-    // Only tilt on desktop
-    const mq = window.matchMedia('(pointer: fine)')
-    if (!mq.matches) return
+    // Only tilt on desktop with fine pointer, and respect reduced-motion
+    const mqPointer = window.matchMedia('(pointer: fine)')
+    const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (!mqPointer.matches || mqMotion.matches) return
 
     el.addEventListener('mousemove', handleMouseMove)
     el.addEventListener('mouseleave', handleMouseLeave)

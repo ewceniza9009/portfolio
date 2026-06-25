@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import projects from './data/projects'
 import experience from './data/experience'
 import skills from './data/skills'
-import VantaBackground from './components/VantaBackground'
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
 import ExperienceSection from './components/ExperienceSection'
@@ -12,6 +11,7 @@ import SkillsSection from './components/SkillsSection'
 import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
 import AwardsSection from './components/AwardsSection'
+import BackToTop from './components/BackToTop'
 import awards from './data/awards'
 
 export default function App() {
@@ -65,7 +65,6 @@ export default function App() {
 
   return (
     <>
-      <VantaBackground />
       <div className="min-h-screen transition-colors duration-300 relative z-10" style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
@@ -73,6 +72,7 @@ export default function App() {
           onToggleTheme={toggleTheme}
           onScrollTo={scrollTo}
         />
+        <main>
         <HeroSection onScrollTo={scrollTo} />
         <ExperienceSection experience={experience} />
         <AwardsSection awards={awards} />
@@ -80,7 +80,9 @@ export default function App() {
         <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
         <SkillsSection skills={skills} />
         <ContactSection />
+        </main>
         <Footer onScrollTo={scrollTo} />
+        <BackToTop />
       </div>
     </>
   )
