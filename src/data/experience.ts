@@ -1,6 +1,6 @@
 const experience = [
   {
-    year: "2018 - Present",
+    year: "2018 - May 20, 2025",
     company: "AccountMate Software Corporation",
     location: "Mandaue City, Cebu (PH) | Petaluma, CA (US)",
     position: "Software Developer",
