@@ -21,6 +21,9 @@ app.post('/api/contact', async (req, res) => {
     if (!name || !email || !message) {
       return res.status(400).json({ error: 'Name, email, and message are required' })
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' })
+    }
 
     const id = uuidv4()
     await turso.execute({
@@ -77,6 +80,9 @@ app.post('/api/reply', authMiddleware, async (req, res) => {
     if (!msgResult.rows.length) return res.status(404).json({ error: 'Message not found' })
 
     const msg = msgResult.rows[0] as any
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(msg.email)) {
+      return res.status(400).json({ error: 'Invalid recipient email address' })
+    }
 
     // Send email via Gmail
     const transporter = nodemailer.createTransport({

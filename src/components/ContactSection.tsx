@@ -97,6 +97,12 @@ export default function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [savedEmails, setSavedEmails] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('contact_emails') || '[]') }
+    catch { return [] }
+  })
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -105,6 +111,11 @@ export default function ContactSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
+    if (!emailRegex.test(form.email)) {
+      setToast({ type: 'error', text: 'Please enter a valid email address.' })
+      setTimeout(() => setToast(null), 4000)
+      return
+    }
 
     setSending(true)
     try {
@@ -113,8 +124,12 @@ export default function ContactSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error('Failed to send')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send')
       setToast({ type: 'success', text: 'Message sent! I\'ll get back to you soon.' })
+      const updated = savedEmails.includes(form.email) ? savedEmails : [form.email, ...savedEmails].slice(0, 10)
+      setSavedEmails(updated)
+      localStorage.setItem('contact_emails', JSON.stringify(updated))
       setForm({ name: '', email: '', subject: '', message: '' })
     } catch {
       setToast({ type: 'error', text: 'Failed to send. Please email me directly.' })
@@ -180,9 +195,13 @@ export default function ContactSection() {
                 value={form.email}
                 onChange={handleChange}
                 required
+                list="saved-emails"
                 className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
                 style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
               />
+              <datalist id="saved-emails">
+                {savedEmails.map(e => <option key={e} value={e} />)}
+              </datalist>
             </div>
           </div>
 
