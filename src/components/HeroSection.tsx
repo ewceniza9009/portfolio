@@ -10,7 +10,7 @@ interface HeroSectionProps {
 const ROLES = [
   "Full Stack Developer",
   "Enterprise Solutions Engineer",
-  "AI Integration",
+  "AI Solutions Researcher",
   "SaaS Builder",
 ];
 
