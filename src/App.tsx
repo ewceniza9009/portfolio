@@ -85,10 +85,12 @@ function Portfolio() {
           <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
         )}
       </AnimatePresence>
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--accent)] origin-left z-[100]"
-        style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
-      />
+      {!selectedProject && (
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--accent)] origin-left z-[100]"
+          style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
+        />
+      )}
       <div className="min-h-screen transition-colors duration-300 relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}

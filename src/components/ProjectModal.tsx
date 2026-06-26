@@ -194,18 +194,20 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   />
                   {/* Gradient overlay to ensure mobile close button is visible */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent lg:hidden pointer-events-none" />
-                  {/* Fullscreen button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowFullscreen(true) }}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 z-20 backdrop-blur-md bg-white/20 text-white shadow-lg hover:bg-white/40"
-                    aria-label="View fullscreen"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" />
-                    </svg>
-                  </button>
                 </div>
               )}
+
+              {/* Fullscreen button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowFullscreen(true) }}
+                className="absolute top-3 right-14 lg:right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 z-20 backdrop-blur-md shadow-lg"
+                style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
+                aria-label="View fullscreen"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+              </button>
 
               {/* Mobile Close Button (Frosted Glass) */}
               <button
