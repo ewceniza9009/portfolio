@@ -30,7 +30,7 @@ function AdminPanel() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiModels, setAiModels] = useState<string[]>([])
-  const [aiModel, setAiModel] = useState('gemini-1.5-flash')
+  const [aiModel, setAiModel] = useState('gemini-2.5-flash')
 
   const api = async (path: string, options?: RequestInit) => {
     return fetch(path, {

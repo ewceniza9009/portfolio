@@ -115,11 +115,12 @@ app.post('/api/reply', authMiddleware, async (req, res) => {
 })
 
 const FREE_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
   'gemini-1.5-flash',
   'gemini-1.5-flash-8b',
   'gemini-1.5-pro',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
 ]
 
 // ── Admin: List available AI models ──
