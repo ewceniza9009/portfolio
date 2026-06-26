@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import projects from './data/projects'
 import experience from './data/experience'
@@ -17,8 +18,9 @@ import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
 import awards from './data/awards'
 import TerminalFooter from './components/TerminalFooter'
+import AdminPanel from './components/AdminPanel'
 
-export default function App() {
+function Portfolio() {
   const [activeSection, setActiveSection] = useState('hero')
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -29,7 +31,6 @@ export default function App() {
     return 'dark'
   })
 
-  // Theme persistence
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
@@ -39,9 +40,6 @@ export default function App() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
   }
 
-
-
-  // Scroll Progress
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -49,10 +47,9 @@ export default function App() {
     restDelta: 0.001
   })
 
-  // Active section tracking via IntersectionObserver
   useEffect(() => {
     const sectionIds = ['hero', 'experience', 'awards', 'projects', 'github', 'skills', 'contact']
-    
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -61,7 +58,7 @@ export default function App() {
       })
     }, {
       root: null,
-      rootMargin: '-50% 0px -50% 0px', // Trigger when section crosses the middle of the screen
+      rootMargin: '-50% 0px -50% 0px',
       threshold: 0
     })
 
@@ -69,7 +66,7 @@ export default function App() {
       const element = document.getElementById(id)
       if (element) observer.observe(element)
     })
-    
+
     return () => observer.disconnect()
   }, [])
 
@@ -100,19 +97,28 @@ export default function App() {
           onScrollTo={scrollTo}
         />
         <main>
-        <HeroSection onScrollTo={scrollTo} />
-        <ExperienceSection experience={experience} />
-        <AwardsSection awards={awards} />
-        <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
-        <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
-        <GitHubSection theme={theme} />
-        <SkillsSection skills={skills} />
-        <ContactSection />
+          <HeroSection onScrollTo={scrollTo} />
+          <ExperienceSection experience={experience} />
+          <AwardsSection awards={awards} />
+          <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
+          <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
+          <GitHubSection theme={theme} />
+          <SkillsSection skills={skills} />
+          <ContactSection />
         </main>
         <TerminalFooter />
         <Footer onScrollTo={scrollTo} />
         <BackToTop />
       </div>
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="*" element={<Portfolio />} />
+    </Routes>
   )
 }

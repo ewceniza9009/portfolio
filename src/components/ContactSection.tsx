@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Phone, Linkedin, Github, Copy, Check } from 'lucide-react'
+import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide-react'
 
 function CopyToast({ message }: { message: string }) {
   return (
@@ -94,13 +94,41 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
 }
 
 export default function ContactSection() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [sending, setSending] = useState(false)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name || !form.email || !form.message) return
+
+    setSending(true)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error('Failed to send')
+      setToast({ type: 'success', text: 'Message sent! I\'ll get back to you soon.' })
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch {
+      setToast({ type: 'error', text: 'Failed to send. Please email me directly.' })
+    } finally {
+      setSending(false)
+      setTimeout(() => setToast(null), 4000)
+    }
+  }
+
   return (
     <section id="contact" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section)' }}>
-      {/* Ambient glowing orbs */}
       <div className="absolute top-1/2 left-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent)' }} />
       <div className="absolute top-1/2 right-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
-      
-      {/* Section divider */}
+
       <div className="section-divider max-w-3xl mx-auto mb-32 relative z-10" />
 
       <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -112,7 +140,6 @@ export default function ContactSection() {
           Let's Build Something <span className="gradient-text">Together</span>
         </motion.h2>
 
-        {/* Availability indicator */}
         <div className="flex items-center justify-center gap-2 mb-16">
           <span className="availability-dot" />
           <p className="text-sm font-medium tracking-wide uppercase" style={{ color: 'var(--text-secondary)' }}>
@@ -120,14 +147,110 @@ export default function ContactSection() {
           </p>
         </div>
 
+        {/* Contact Form */}
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-3xl p-8 md:p-12 glass shadow-2xl relative overflow-hidden mb-8 text-left"
+        >
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)' }} />
+
+          <h3 className="text-xl font-semibold mb-6 text-center relative z-10">Send Me a Message</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Name *</label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Email *</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              />
+            </div>
+          </div>
+
+          <div className="mb-4 relative z-10">
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Subject</label>
+            <input
+              type="text"
+              name="subject"
+              value={form.subject}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+            />
+          </div>
+
+          <div className="mb-6 relative z-10">
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Message *</label>
+            <textarea
+              name="message"
+              value={form.message}
+              onChange={handleChange}
+              required
+              rows={5}
+              className="w-full px-4 py-3 rounded-xl text-sm transition-colors resize-none"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={sending}
+            className="relative z-10 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              background: 'var(--accent)',
+              color: 'var(--bg-primary)',
+              opacity: sending ? 0.7 : 1,
+            }}
+          >
+            {sending ? <Loader size={16} className="animate-spin" /> : <Send size={16} />}
+            {sending ? 'Sending...' : 'Send Message'}
+          </button>
+
+          <AnimatePresence>
+            {toast && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="relative z-10 mt-4 px-4 py-2 rounded-xl text-sm"
+                style={{
+                  background: toast.type === 'success' ? 'var(--accent-dim)' : 'rgba(239,68,68,0.15)',
+                  color: toast.type === 'success' ? 'var(--accent)' : '#ef4444',
+                }}
+              >
+                {toast.text}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.form>
+
+        {/* Contact Cards */}
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5 }}
           className="rounded-3xl p-8 md:p-12 glass shadow-2xl relative overflow-hidden"
         >
-          {/* Subtle inner gradient for the glass card */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)' }} />
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)' }} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
             <CopyableContact
