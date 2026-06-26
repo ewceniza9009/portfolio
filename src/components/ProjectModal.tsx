@@ -1,7 +1,7 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, ExternalLink } from "lucide-react";
-import { TechIcon, ImageWithFallback } from "./ProjectsSection";
+import { TechIcon } from "./ProjectsSection";
 
 interface Project {
   id: number;
@@ -31,7 +31,8 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
-  // Escape key handler
+  const [isZoomed, setIsZoomed] = useState(false);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -43,6 +44,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     if (project) {
       document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
+      setIsZoomed(false);
       return () => {
         document.removeEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "";
@@ -57,7 +59,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex flex-col justify-end lg:justify-center lg:items-center"
           style={{ background: "rgba(0,0,0,0.8)" }}
           onClick={onClose}
           role="dialog"
@@ -65,76 +67,140 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           aria-label={`Project details: ${project.title}`}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
-            style={{ background: "var(--bg-secondary)" }}
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="w-full h-full lg:h-[90vh] lg:w-[95vw] lg:max-w-7xl lg:rounded-2xl flex flex-col lg:flex-row overflow-hidden shadow-2xl"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Scrollable content area */}
-            <div className="overflow-y-auto flex-1">
-              {/* Media */}
-              <div
-                className="relative h-64 md:h-80"
-                style={{ background: "var(--bg-card)" }}
-              >
-                {project.video ? (
-                  project.video.includes("youtube.com") ||
-                  project.video.includes("youtu.be") ? (
-                    <iframe
-                      src={project.video
-                        .replace("watch?v=", "embed/")
-                        .replace("&start=", "?start=")
-                        .replace("&t=", "?start=")}
-                      title={`Demo video for ${project.title}`}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  ) : (
-                    <video
-                      src={project.video}
-                      controls
-                      className="w-full h-full object-cover"
-                      aria-label={`Demo video for ${project.title}`}
-                    />
-                  )
-                ) : (
-                  <ImageWithFallback
+            {/* Media Panel (Left on Desktop, Top on Mobile) */}
+            <div 
+              className={`relative w-full lg:w-1/2 h-[40vh] lg:h-full flex-shrink-0 flex flex-col items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r ${
+                project.video ? "p-0 lg:p-12" : "p-0"
+              }`}
+              style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
+            >
+              {project.video ? (
+                <>
+                  {/* Ambient blurred background using the project image to fill the void */}
+                  <div 
+                    className="absolute inset-0 opacity-30 blur-3xl scale-110 transition-opacity duration-1000"
+                    style={{
+                      backgroundImage: `url(${project.image})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
+                  {/* Subtle overlay to ensure the video pops */}
+                  <div className="absolute inset-0 bg-[var(--bg-card)]/50" />
+
+                  {/* Constrained 16:9 wrapper with subtle hover float */}
+                  <motion.div 
+                    whileHover={{ scale: 1.02, y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full lg:h-auto lg:aspect-video lg:rounded-2xl overflow-hidden shadow-2xl relative bg-black flex items-center justify-center z-10 border border-white/5"
+                  >
+                    {project.video.includes("youtube.com") || project.video.includes("youtu.be") ? (
+                      <iframe
+                        src={project.video
+                          .replace("watch?v=", "embed/")
+                          .replace("&start=", "?start=")
+                          .replace("&t=", "?start=")}
+                        title={`Demo video for ${project.title}`}
+                        className="absolute inset-0 w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    ) : (
+                      <video
+                        src={project.video}
+                        controls
+                        className="w-full h-full object-contain"
+                        aria-label={`Demo video for ${project.title}`}
+                      />
+                    )}
+                  </motion.div>
+                </>
+              ) : (
+                /* Image only - with interactive zoom and hover scale */
+                <div 
+                  className="absolute inset-0 w-full h-full overflow-hidden cursor-pointer"
+                  onClick={() => setIsZoomed(!isZoomed)}
+                  title="Click to zoom in/out"
+                >
+                  {/* Ambient blurred background using the project image to fill the void */}
+                  <div 
+                    className="absolute inset-0 opacity-30 blur-3xl scale-110 transition-opacity duration-1000"
+                    style={{
+                      backgroundImage: `url(${project.image})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-[var(--bg-card)]/50" />
+                  
+                  <motion.img
                     src={project.image}
                     alt={project.title}
-                    fallback={project.fallback}
-                    className="w-full h-full object-cover"
+                    animate={{ 
+                      scale: isZoomed ? 1.05 : 1, 
+                      objectFit: isZoomed ? "contain" : "cover" 
+                    }}
+                    whileHover={!isZoomed ? { scale: 1.05 } : {}}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="w-full h-full relative z-10"
                   />
-                )}
+                  {/* Gradient overlay to ensure mobile close button is visible */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent lg:hidden pointer-events-none" />
+                </div>
+              )}
 
-                {/* Close button */}
-                <button
-                  onClick={onClose}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-110"
-                  style={{
-                    background: "var(--bg-primary)",
-                    borderColor: "var(--border)",
-                  }}
-                  aria-label="Close project details"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+              {/* Mobile Close Button (Frosted Glass) */}
+              <button
+                onClick={onClose}
+                className="lg:hidden absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 z-10 backdrop-blur-md bg-white/20 text-white shadow-lg"
+                aria-label="Close project details"
+              >
+                <X size={20} />
+              </button>
 
-              {/* Content */}
-              <div className="p-8">
-                <div className="flex items-start justify-between mb-4 gap-4">
-                  <div>
-                    <h3 className="text-2xl font-bold font-display">
-                      {project.title}
-                    </h3>
-                    <p style={{ color: "var(--accent-secondary)" }}>
-                      {project.subtitle}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Mobile Seamless Gradient Transition */}
+              <div 
+                className="lg:hidden absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+                style={{ background: 'linear-gradient(to top, var(--bg-secondary), transparent)' }}
+              />
+            </div>
+
+            {/* Content Panel (Right on Desktop, Bottom on Mobile) */}
+            <div className="w-full lg:w-1/2 h-full flex flex-col relative" style={{ background: "var(--bg-secondary)" }}>
+              {/* Desktop Close Button */}
+              <button
+                onClick={onClose}
+                className="hidden lg:flex absolute top-6 right-6 w-10 h-10 rounded-full items-center justify-center border transition-all hover:scale-110 z-10"
+                style={{
+                  background: "var(--bg-card)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-primary)"
+                }}
+                aria-label="Close project details"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto p-6 lg:p-12 lg:pr-24">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold font-display mb-2">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: "var(--accent-secondary)" }}>
+                    {project.subtitle}
+                  </p>
+                  
+                  {/* Tags aligned properly below subtitle */}
+                  <div className="flex items-center gap-2 flex-wrap mb-6">
                     <span
                       className="font-mono text-sm px-3 py-1 rounded-full"
                       style={{
@@ -163,7 +229,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 </div>
 
                 <p
-                  className="mb-4 leading-relaxed"
+                  className="mb-8 leading-relaxed text-sm"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   {project.description}
@@ -172,14 +238,14 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 {/* Testimonial */}
                 {project.testimonial && (
                   <div
-                    className="mb-6 p-4 rounded-xl border-l-4"
+                    className="mb-8 p-5 rounded-xl border-l-4"
                     style={{
                       background: "var(--bg-card)",
                       borderColor: "var(--accent)",
                     }}
                   >
                     <p
-                      className="text-sm italic mb-2"
+                      className="text-sm italic mb-3"
                       style={{ color: "var(--text-secondary)" }}
                     >
                       "{project.testimonial.quote}"
@@ -195,25 +261,24 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
                 {/* Detailed features */}
                 {project.details && project.details.length > 0 && (
-                  <div className="mb-6">
+                  <div className="mb-8">
                     <h4
-                      className="text-sm font-semibold mb-3 uppercase tracking-wider"
+                      className="text-sm font-semibold mb-4 uppercase tracking-wider"
                       style={{ color: "var(--accent)" }}
                     >
                       Key Features
                     </h4>
-                    <ul className="space-y-3">
+                    <ul className="space-y-4">
                       {project.details.map((detail, i) => {
-                        // Parse **bold** markers into styled spans
                         const parts = detail.split(/\*\*(.*?)\*\*/g);
                         return (
                           <li
                             key={i}
-                            className="flex gap-3 text-sm leading-relaxed"
+                            className="flex gap-4 text-sm leading-relaxed"
                             style={{ color: "var(--text-secondary)" }}
                           >
                             <span
-                              className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"
                               style={{ background: "var(--accent)" }}
                             />
                             <span>
@@ -237,9 +302,9 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 )}
 
-                <div className="mb-0">
+                <div>
                   <h4
-                    className="text-sm font-semibold mb-3 uppercase tracking-wider"
+                    className="text-sm font-semibold mb-4 uppercase tracking-wider"
                     style={{ color: "var(--accent)" }}
                   >
                     Tech Stack
@@ -248,7 +313,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     {project.tech.map((tech) => (
                       <span
                         key={tech}
-                        className="tag-neutral inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
+                        className="tag-neutral inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors hover:bg-[var(--accent-dim)]"
+                        style={{ border: "1px solid var(--border)" }}
                       >
                         <TechIcon name={tech} />
                         {tech}
@@ -257,47 +323,48 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Sticky bottom bar */}
-            {(project.repo || project.demo) && (
-              <div
-                className="flex gap-4 px-8 py-4 border-t flex-shrink-0"
-                style={{
-                  borderColor: "var(--border)",
-                  background: "var(--bg-secondary)",
-                }}
-              >
-                {project.repo && (
-                  <a
-                    href={project.repo}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105"
-                    style={{
-                      background: "var(--accent)",
-                      color: "var(--bg-primary)",
-                    }}
-                  >
-                    <Github size={16} /> Repository
-                  </a>
-                )}
-                {project.demo && (
-                  <a
-                    href={project.demo}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-lg font-semibold border flex items-center gap-2 transition-all hover:scale-105"
-                    style={{
-                      borderColor: "var(--accent)",
-                      color: "var(--accent)",
-                    }}
-                  >
-                    <ExternalLink size={16} /> Live App
-                  </a>
-                )}
-              </div>
-            )}
+              {/* Compact Sticky bottom bar */}
+              {(project.repo || project.demo) && (
+                <div
+                  className="flex flex-col sm:flex-row justify-end gap-3 p-6 border-t flex-shrink-0"
+                  style={{
+                    borderColor: "var(--border)",
+                    background: "var(--bg-secondary)",
+                  }}
+                >
+                  {project.repo && (
+                    <a
+                      href={project.repo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105"
+                      style={{
+                        background: "var(--bg-card)",
+                        color: "var(--text-primary)",
+                        border: "1px solid var(--border)"
+                      }}
+                    >
+                      <Github size={18} /> Repository
+                    </a>
+                  )}
+                  {project.demo && (
+                    <a
+                      href={project.demo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105"
+                      style={{
+                        background: "var(--accent)",
+                        color: "#ffffff",
+                      }}
+                    >
+                      <ExternalLink size={18} /> Live App
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           </motion.div>
         </motion.div>
       )}

@@ -42,7 +42,7 @@ export default function VantaBackground() {
           scale: 1.00,
           scaleMobile: 2.00,
           color: theme === 'dark' ? 0x22c55e : 0x16a34a,
-          backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xf8fafc,
+          backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xffffff,
           backgroundAlpha: 0,
         })
       }

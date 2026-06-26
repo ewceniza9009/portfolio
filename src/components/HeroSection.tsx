@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Github, Linkedin, ChevronDown, ArrowRight } from "lucide-react";
+import { Github, Linkedin, ChevronDown, ArrowRight, Download } from "lucide-react";
 import VantaBackground from "./VantaBackground";
 
 interface HeroSectionProps {
@@ -53,6 +53,7 @@ function useTypewriter(
 
 export default function HeroSection({ onScrollTo }: HeroSectionProps) {
   const typedRole = useTypewriter(ROLES);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <section
@@ -80,15 +81,19 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
         >
           {/* Profile Photo */}
           <motion.div
-            className="mb-10"
+            className="mb-10 relative w-40 h-40 mx-auto rounded-full overflow-hidden border-2"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
+            style={{ borderColor: "var(--accent)" }}
           >
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-[var(--bg-secondary)] animate-pulse" />
+            )}
             <img
               src="/img/profile-pic.png"
               alt="Erwin Wilson Ceniza"
-              className="w-40 h-40 mx-auto rounded-full object-cover border-2"
-              style={{ borderColor: "var(--accent)" }}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImgLoaded(true)}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -97,8 +102,8 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
 
           {/* Name */}
           <h1
-            className="text-5xl md:text-6xl font-normal font-signature"
-            style={{ lineHeight: 1.1 }}
+            className="text-5xl md:text-6xl font-normal font-signature tracking-tight"
+            style={{ lineHeight: 1.3 }}
           >
             Erwin Wilson <span className="gradient-text">Ceniza</span>
           </h1>
@@ -184,6 +189,14 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
             >
               View Projects <ArrowRight size={18} />
             </button>
+            <a
+              href="/Resume2026.4.pdf"
+              download="Erwin_Wilson_Ceniza_Resume.pdf"
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
+              style={{ color: "var(--text-primary)" }}
+            >
+              <Download size={18} /> Resume
+            </a>
             <a
               href="https://github.com/ewceniza9009"
               target="_blank"

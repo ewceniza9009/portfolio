@@ -1,15 +1,18 @@
 const experience = [
   {
-    year: "May 2025 - Present",
+    year: "Nov 2025 - Present",
     company: "Eclaro Business Solution",
-    location: "Manila, Philippines",
+    location: "Remote (Manila HQ / New York, US Client)",
     position: "Software Developer",
     descriptions: [
-      "Built scheduling modules for an EMR system serving 500+ daily active clinicians across hospital networks.",
-      "Integrated Azure Graph API for Microsoft 365 synchronization across a platform with 1,000+ user accounts.",
-      "Optimized PostgreSQL queries reducing report generation time from 45 seconds to under 5 seconds."
+      "Developed provider reassignment scheduling features, integrating Microsoft Graph API for Azure scheduling and Outlook email synchronization.",
+      "Implemented a document vault utilizing Azure Cloud Storage Blobs, utilizing Azurite for local development.",
+      "Created a dynamic scripting algorithm to generate patient outreach scripts based on state, zip code, and street address.",
+      "Built modules for patient visit assessments and vital signs, including data visualization graphs.",
+      "Incorporated OData to support efficient search functionality across large datasets.",
+      "Ensured code quality through unit testing with xUnit and bUnit, API testing with Postman, and managed database state via EF Core migrations and seeding."
     ],
-    technologies: ["Blazor", "Azure Graph API", "PostgreSQL", "C#", ".NET"]
+    technologies: ["Blazor", "Azure Graph API", "Azure Blob Storage", "OData", "EF Core", "xUnit", "bUnit", "PostgreSQL", "C#", ".NET"]
   },
   {
     year: "Sep 2018 - May 2025",
@@ -17,43 +20,35 @@ const experience = [
     location: "Petaluma, San Francisco CA (Remote)",
     position: "Software Developer",
     descriptions: [
-      "Developed features for a flagship ERP platform used by 200+ businesses across the US.",
-      "Built a WIP manufacturing module handling $50M+ in monthly inventory valuations.",
-      "Created SSRS reporting systems processing 10,000+ transactions daily with automated distribution to 50+ stakeholders."
+      "Contributed to the development of a flagship ERP platform using WPF, XAML, and the MVVM architectural pattern.",
+      "Built a Work-in-Progress (WIP) manufacturing module with Telerik UI, optimizing data retrieval via LINQ to Entities.",
+      "Designed and deployed an automated backend distribution service for SSRS-based reports.",
+      "Developed financial tools including an Advance Billing module, Aatrix integration for tax compliance, and a real-time Zip Code API.",
+      "Standardized Azure DevOps CI/CD pipelines and Git version control workflows for reliable deployments."
     ],
-    technologies: ["WPF", "XAML", "MVVM", "C#", ".NET", "SQL Server", "SSRS", "Azure DevOps", "LINQ to Entities"]
+    technologies: ["WPF", "XAML", "MVVM", "C#", ".NET", "SQL Server", "SSRS", "Azure DevOps", "Telerik UI"]
   },
   {
     year: "Nov 2016 - Sep 2018",
-    company: "Technologic/StreetSmart (Startup)",
+    company: "TechnoLogic Solutions",
     location: "Cebu City, Cebu",
-    position: "Product/Software Developer",
+    position: "Lead System Developer",
     descriptions: [
-      "Built and launched 3 commercial software products generating $200K+ in annual recurring revenue for the startup.",
-      "Developed a Cloud FMIS handling $5M+ in monthly financial transactions for client companies.",
-      "Led a small team of 3 developers, managing GitHub repos and conducting code reviews."
+      "Guided the technical direction and development of commercial software suites, including Cloud FMIS, Cloud HRIS, and Loan Management systems.",
+      "Led hands-on development efforts and established modern development practices.",
+      "Managed product roadmaps, evaluated feature implementations, and maintained source code utilizing GitHub."
     ],
-    technologies: ["ASP.NET MVC", "C#", "SQL Server", "GitHub", "Cloud Solutions", "Web API"]
+    technologies: ["ASP.NET MVC", "C#", "SQL Server", "GitHub", "Cloud Architecture", "Web API"]
   },
   {
-    year: "Mar 2015 - Nov 2016",
-    company: "Dan Enrico Group",
-    location: "Lapu-Lapu City, Cebu",
-    position: "Consultant/Software Developer",
-    descriptions: [
-      "Deployed POS solutions across 15+ retail locations including grocery, café, and hardware stores.",
-      "Integrated POS systems with accounting back-office software processing $2M+ in monthly sales."
-    ],
-    technologies: ["C#", "SQL Server", "POS Systems", ".NET"]
-  },
-  {
-    year: "Apr 2011 - Mar 2015",
-    company: "Innosoft Solutions",
+    year: "April 2011 - March 2015",
+    company: "Innosoft Solutions Inc.",
     location: "Cebu City, Cebu",
-    position: "Programmer/RND",
+    position: "Software Developer / RND",
     descriptions: [
-      "Built custom cloud and mobile solutions for 20+ small business clients.",
-      "Developed a mobile inventory app used by 500+ daily active users in distribution warehouses."
+      "Transitioned from client support to a Research & Development role focused on mobile and cloud innovation.",
+      "Participated in R&D projects utilizing emerging mobile and cloud technologies.",
+      "Supported product development initiatives by applying mobile and cloud technologies."
     ],
     technologies: ["C#", ".NET", "Mobile Development", "Cloud Solutions", "SQL Server"]
   }

@@ -101,11 +101,18 @@ interface ProjectsSectionProps {
 // 3D tilt hook
 function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const rectRef = useRef<DOMRect | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (ref.current) {
+      rectRef.current = ref.current.getBoundingClientRect();
+    }
+  }, [ref]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
+      if (!rectRef.current) return;
+      const rect = rectRef.current;
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const centerX = rect.width / 2;
@@ -114,14 +121,14 @@ function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
       const rotateY = ((x - centerX) / centerX) * 6;
       setTilt({ rotateX, rotateY });
     },
-    [ref],
+    [],
   );
 
   const handleMouseLeave = useCallback(() => {
     setTilt({ rotateX: 0, rotateY: 0 });
   }, []);
 
-  return { tilt, handleMouseMove, handleMouseLeave };
+  return { tilt, handleMouseEnter, handleMouseMove, handleMouseLeave };
 }
 
 function ProjectCard({
@@ -134,7 +141,7 @@ function ProjectCard({
   onSelectProject: (id: number) => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const { tilt, handleMouseMove, handleMouseLeave } = useTilt(cardRef);
+  const { tilt, handleMouseEnter, handleMouseMove, handleMouseLeave } = useTilt(cardRef);
   const hiddenTechCount = project.tech.length - 3;
 
   useEffect(() => {
@@ -145,19 +152,22 @@ function ProjectCard({
     const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (!mqPointer.matches || mqMotion.matches) return;
 
+    el.addEventListener("mouseenter", handleMouseEnter);
     el.addEventListener("mousemove", handleMouseMove);
     el.addEventListener("mouseleave", handleMouseLeave);
     return () => {
+      el.removeEventListener("mouseenter", handleMouseEnter);
       el.removeEventListener("mousemove", handleMouseMove);
       el.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [handleMouseMove, handleMouseLeave]);
+  }, [handleMouseEnter, handleMouseMove, handleMouseLeave]);
 
   return (
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
       transition={{ delay: index * 0.08 }}
       className="project-card group rounded-2xl border overflow-hidden cursor-pointer"
       style={{
@@ -335,16 +345,23 @@ export default function ProjectsSection({
           Featured work
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((project, index) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              index={index}
-              onSelectProject={onSelectProject}
-            />
-          ))}
-        </div>
+        {projects.length === 0 ? (
+          <div className="text-center py-20 border rounded-2xl border-dashed" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
+            <p className="text-xl font-medium" style={{ color: 'var(--text-secondary)' }}>Projects are brewing...</p>
+            <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Check back later for updates.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {projects.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                index={index}
+                onSelectProject={onSelectProject}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

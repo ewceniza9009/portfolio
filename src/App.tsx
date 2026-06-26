@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import projects from './data/projects'
 import experience from './data/experience'
 import skills from './data/skills'
@@ -12,12 +13,15 @@ import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
 import AwardsSection from './components/AwardsSection'
 import BackToTop from './components/BackToTop'
+import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
 import awards from './data/awards'
+import TerminalFooter from './components/TerminalFooter'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('hero')
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark'
@@ -35,33 +39,38 @@ export default function App() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
   }
 
-  // Active section tracking
+
+
+  // Scroll Progress
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  })
+
+  // Active section tracking via IntersectionObserver
   useEffect(() => {
     const sectionIds = ['hero', 'experience', 'awards', 'projects', 'github', 'skills', 'contact']
-    const elements = sectionIds.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[]
     
-    let ticking = false;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id)
+        }
+      })
+    }, {
+      root: null,
+      rootMargin: '-50% 0px -50% 0px', // Trigger when section crosses the middle of the screen
+      threshold: 0
+    })
 
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollY = window.scrollY + window.innerHeight / 3
-          for (const element of elements) {
-            const offsetTop = element.offsetTop
-            const offsetHeight = element.offsetHeight
-            if (scrollY >= offsetTop && scrollY < offsetTop + offsetHeight) {
-              setActiveSection(element.id)
-              break
-            }
-          }
-          ticking = false;
-        })
-        ticking = true;
-      }
-    }
+    sectionIds.forEach(id => {
+      const element = document.getElementById(id)
+      if (element) observer.observe(element)
+    })
     
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => observer.disconnect()
   }, [])
 
   const scrollTo = (id: string) => {
@@ -74,6 +83,15 @@ export default function App() {
 
   return (
     <>
+      <AnimatePresence>
+        {isLoading && (
+          <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
+        )}
+      </AnimatePresence>
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--accent)] origin-left z-[100]"
+        style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
+      />
       <div className="min-h-screen transition-colors duration-300 relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
@@ -87,10 +105,11 @@ export default function App() {
         <AwardsSection awards={awards} />
         <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
         <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
-        <GitHubSection />
+        <GitHubSection theme={theme} />
         <SkillsSection skills={skills} />
         <ContactSection />
         </main>
+        <TerminalFooter />
         <Footer onScrollTo={scrollTo} />
         <BackToTop />
       </div>

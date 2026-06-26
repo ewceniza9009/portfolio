@@ -11,13 +11,6 @@ interface SkillsData {
   }
 }
 
-const CATEGORY_GRADIENTS: Record<string, string> = {
-  frontend: 'skill-gradient-frontend',
-  backend: 'skill-gradient-backend',
-  database: 'skill-gradient-database',
-  tools: 'skill-gradient-tools',
-  practices: 'skill-gradient-practices',
-}
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ size?: number | string; className?: string }>> = {
   frontend: Monitor,
@@ -47,12 +40,16 @@ interface SkillsSectionProps {
   skills: SkillsData
 }
 
-function SkillTag({ skill, category }: { skill: SkillItem; category: string }) {
+function SkillTag({ skill, category, index }: { skill: SkillItem; category: string; index: number }) {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
   const [isHovered, setIsHovered] = React.useState(false)
 
   return (
     <motion.span
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10px" }}
+      transition={{ delay: index * 0.1, type: 'spring', stiffness: 300, damping: 20 }}
       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-default"
       style={{
         background: isHovered && hoverColors ? hoverColors.bg : 'var(--bg-secondary)',
@@ -62,7 +59,6 @@ function SkillTag({ skill, category }: { skill: SkillItem; category: string }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ y: -2, scale: 1.05 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
     >
       {skill.icon && React.createElement(skill.icon, { size: 14 })}
       {skill.name}
@@ -108,23 +104,36 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
               style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
               whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
             >
-              {/* Animated gradient banner */}
-              <div className={`relative h-16 ${CATEGORY_GRADIENTS[category] || 'skill-gradient-frontend'} flex items-end shrink-0`}>
-                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-card)] to-transparent" />
+              {/* Subtle tinted header */}
+              <div 
+                className="relative h-16 flex items-center justify-between px-6 shrink-0 border-b"
+                style={{ 
+                  background: CATEGORY_HOVER_COLORS[category]?.bg || 'var(--bg-secondary)',
+                  borderColor: 'var(--border)'
+                }}
+              >
+                {/* Subtle Background Pattern */}
+                <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_currentColor_1px,_transparent_1px)] [background-size:20px_20px]" style={{ color: CATEGORY_HOVER_COLORS[category]?.color }} />
                 
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--text-primary)_1px,_transparent_1px)] [background-size:20px_20px]" />
+                <h3 
+                  className="font-bold flex items-center gap-3 text-lg relative z-10"
+                  style={{ color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-primary)' }}
+                >
+                  {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20 })}
+                  {CATEGORY_LABELS[category] || category}
+                </h3>
                 
-                <div className="relative z-10 w-full px-6 pb-3 flex items-center justify-between">
-                  <h3 className="font-bold text-white drop-shadow-lg flex items-center gap-3 text-lg">
-                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20, className: 'text-white' })}
-                    {CATEGORY_LABELS[category] || category}
-                  </h3>
-                  {/* Skill count badge */}
-                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur-md shadow-inner border border-white/10">
-                    {data.items.length} skills
-                  </span>
-                </div>
+                {/* Skill count badge */}
+                <span 
+                  className="text-xs font-semibold px-3 py-1 rounded-full relative z-10"
+                  style={{ 
+                    background: 'var(--bg-card)', 
+                    color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-secondary)',
+                    border: '1px solid var(--border)'
+                  }}
+                >
+                  {data.items.length} skills
+                </span>
               </div>
 
               <div className="relative p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30 overflow-hidden">
@@ -134,8 +143,8 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
                 </div>
 
                 <div className="relative z-10 flex flex-wrap gap-2.5">
-                  {data.items.map((skill) => (
-                    <SkillTag key={skill.name} skill={skill} category={category} />
+                  {data.items.map((skill, skillIndex) => (
+                    <SkillTag key={skill.name} skill={skill} category={category} index={skillIndex} />
                   ))}
                 </div>
               </div>
