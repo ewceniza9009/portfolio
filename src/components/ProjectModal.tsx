@@ -174,7 +174,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
 
             {/* Content Panel (Right on Desktop, Bottom on Mobile) */}
-            <div className="w-full lg:w-1/2 h-full flex flex-col relative" style={{ background: "var(--bg-secondary)" }}>
+            <div className="w-full lg:w-1/2 flex-1 lg:h-full flex flex-col relative min-h-0" style={{ background: "var(--bg-secondary)" }}>
               {/* Desktop Close Button */}
               <button
                 onClick={onClose}
@@ -327,7 +327,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               {/* Compact Sticky bottom bar */}
               {(project.repo || project.demo) && (
                 <div
-                  className="flex flex-col sm:flex-row justify-end gap-3 p-6 border-t flex-shrink-0"
+                  className="flex flex-row justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t flex-shrink-0"
                   style={{
                     borderColor: "var(--border)",
                     background: "var(--bg-secondary)",
@@ -338,14 +338,14 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       href={project.repo}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105"
+                      className="flex-1 sm:flex-none px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:scale-105"
                       style={{
                         background: "var(--bg-card)",
                         color: "var(--text-primary)",
                         border: "1px solid var(--border)"
                       }}
                     >
-                      <Github size={18} /> Repository
+                      <Github size={16} className="sm:w-[18px] sm:h-[18px]" /> Repository
                     </a>
                   )}
                   {project.demo && (
@@ -353,13 +353,13 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       href={project.demo}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105"
+                      className="flex-1 sm:flex-none px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:scale-105"
                       style={{
                         background: "var(--accent)",
                         color: "#ffffff",
                       }}
                     >
-                      <ExternalLink size={18} /> Live App
+                      <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" /> Live App
                     </a>
                   )}
                 </div>

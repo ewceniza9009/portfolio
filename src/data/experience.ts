@@ -10,7 +10,8 @@ const experience = [
       "Created a dynamic scripting algorithm to generate patient outreach scripts based on state, zip code, and street address.",
       "Built modules for patient visit assessments and vital signs, including data visualization graphs.",
       "Incorporated OData to support efficient search functionality across large datasets.",
-      "Ensured code quality through unit testing with xUnit and bUnit, API testing with Postman, and managed database state via EF Core migrations and seeding."
+      "Ensured code quality through unit testing with xUnit and bUnit, API testing with Postman, and managed database state via EF Core migrations and seeding.",
+      "Participated in creating pull requests and agile scrum meetings to solidify the feature function and development I am involved with."
     ],
     technologies: ["Blazor", "Azure Graph API", "Azure Blob Storage", "OData", "EF Core", "xUnit", "bUnit", "PostgreSQL", "C#", ".NET"]
   },
