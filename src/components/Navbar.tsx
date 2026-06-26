@@ -117,34 +117,30 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
           </div>
         </div>
 
-        <AnimatePresence>
-          {mobileMenuOpen && (
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="px-6 py-4 flex flex-col gap-1"
             >
-              <div className="px-6 py-4 flex flex-col gap-1">
-                {['hero', ...NAV_ITEMS.map(i => i.toLowerCase())].map((item) => (
-                  <a
-                    key={item}
-                    href={`#${item}`}
-                    onClick={(e) => { e.preventDefault(); handleNavClick(item) }}
-                    className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
-                    style={{
-                      color: activeSection === item ? 'var(--accent)' : 'var(--text-secondary)',
-                      background: activeSection === item ? 'var(--accent-dim)' : 'transparent',
-                    }}
-                  >
-                    {item}
-                  </a>
-                ))}
-              </div>
+              {['hero', ...NAV_ITEMS.map(i => i.toLowerCase())].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item}`}
+                  onClick={(e) => { e.preventDefault(); handleNavClick(item) }}
+                  className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
+                  style={{
+                    color: activeSection === item ? 'var(--accent)' : 'var(--text-secondary)',
+                    background: activeSection === item ? 'var(--accent-dim)' : 'transparent',
+                  }}
+                >
+                  {item}
+                </a>
+              ))}
             </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
       </nav>
     </>
   )
