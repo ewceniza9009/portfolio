@@ -65,8 +65,10 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
         className="absolute inset-0 z-0 pointer-events-none bg-[var(--bg-primary)]"
         style={{
           opacity: 0.85,
-          WebkitMaskImage: "radial-gradient(circle at center, black 15%, transparent 65%)",
-          maskImage: "radial-gradient(circle at center, black 15%, transparent 65%)",
+          WebkitMaskImage:
+            "radial-gradient(circle at center, black 15%, transparent 65%)",
+          maskImage:
+            "radial-gradient(circle at center, black 15%, transparent 65%)",
         }}
       />
 
@@ -94,24 +96,80 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
           </motion.div>
 
           {/* Name */}
-          <h1 className="text-5xl md:text-6xl font-normal mb-4 font-signature">
+          <h1
+            className="text-5xl md:text-6xl font-normal font-signature"
+            style={{ lineHeight: 1.1 }}
+          >
             Erwin Wilson <span className="gradient-text">Ceniza</span>
           </h1>
 
           {/* Typewriter role */}
           <p
-            className="text-xl md:text-2xl font-medium mb-2 font-display"
-            style={{ color: "var(--text-secondary)", minHeight: "2em" }}
+            className="text-lg md:text-xl font-display mt-4"
+            style={{ color: "var(--text-secondary)", minHeight: "1.75em" }}
           >
             {typedRole}
             <span className="typewriter-cursor" />
           </p>
 
           {/* Value proposition */}
-          <div className="text-lg max-w-2xl mx-auto mb-10 text-center text-text-secondary space-y-2">
-            <p>Building enterprise software for over a decade.</p>
-            <p>I work across the full stack, mostly in .NET, sometimes in Node or React, and I actually enjoy getting into complex database queries.</p>
-            <p>HR systems, accounting platforms, warehouse logistics.</p>
+          <div className="max-w-2xl mx-auto mt-6 mb-6 text-center space-y-2">
+            <p className="text-base" style={{ color: "var(--text-secondary)" }}>
+              Ten years building enterprise software.
+            </p>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Full stack - .NET, React, Angular, Node, Express. Whatever the
+              project calls for.
+            </p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              HR systems. Finance. Logistics. Healthcare.
+            </p>
+          </div>
+
+          {/* Quick stats */}
+          <div className="flex items-center justify-center gap-6 mb-6">
+            <div className="text-center">
+              <p
+                className="text-xl font-bold"
+                style={{ color: "var(--accent)" }}
+              >
+                10+
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Years
+              </p>
+            </div>
+            <div className="w-px h-8" style={{ background: "var(--border)" }} />
+            <div className="text-center">
+              <p
+                className="text-xl font-bold"
+                style={{ color: "var(--accent)" }}
+              >
+                20+
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Projects
+              </p>
+            </div>
+            <div className="w-px h-8" style={{ background: "var(--border)" }} />
+            <div className="text-center">
+              <p
+                className="text-xl font-bold"
+                style={{ color: "var(--accent)" }}
+              >
+                .NET
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                + More
+              </p>
+            </div>
+          </div>
+
+          {/* About quick intro */}
+          <div className="max-w-xl mx-auto mb-8 text-center">
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Based in Cebu. Developer by day, musician by night.
+            </p>
           </div>
 
           {/* CTA Buttons */}

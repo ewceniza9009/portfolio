@@ -12,6 +12,7 @@ import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
 import AwardsSection from './components/AwardsSection'
 import BackToTop from './components/BackToTop'
+import GitHubSection from './components/GitHubSection'
 import awards from './data/awards'
 
 export default function App() {
@@ -36,7 +37,7 @@ export default function App() {
 
   // Active section tracking
   useEffect(() => {
-    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'skills', 'contact']
+    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'github', 'skills', 'contact']
     const elements = sectionIds.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[]
     
     let ticking = false;
@@ -86,6 +87,7 @@ export default function App() {
         <AwardsSection awards={awards} />
         <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
         <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
+        <GitHubSection />
         <SkillsSection skills={skills} />
         <ContactSection />
         </main>

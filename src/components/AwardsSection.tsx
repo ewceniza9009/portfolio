@@ -32,7 +32,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
           <h2 className="text-3xl md:text-4xl font-bold mb-2 font-display">
             Awards & Recognition
           </h2>
-          <p className="max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mb-16" style={{ color: 'var(--text-secondary)' }}>
             Milestones and achievements recognized throughout my career journey.
           </p>
         </motion.div>
@@ -77,7 +77,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   </span>
                 </div>
 
-                <h3 className="text-xl md:text-2xl font-bold mb-3 group-hover:text-[var(--accent)] transition-colors duration-300">
+                <h3 className="text-xl font-bold mb-3 group-hover:text-[var(--accent)] transition-colors duration-300">
                   {award.title}
                 </h3>
                 

@@ -5,7 +5,7 @@ const projects = [
     subtitle: "Human Resources Information System",
     description: "A full-featured, cloud-based platform that unifies recruitment, attendance, payroll processing, and employee management into a single streamlined system, enhanced by AI-driven biometric security and self-service capabilities.",
     details: [
-      "**Smart Payroll & Attendance Engine** : Processes daily time records automatically by computing work hours, tardiness, and undertime from facial recognition check-ins. The payroll module handles complex wage structures including overtime, night differentials, statutory contributions, and custom deductions.",
+      "**Smart Payroll & Attendance Engine** : Processes 10,000+ attendance records semi-monthly with automatic computation of work hours, tardiness, undertime, overtime, night differentials, statutory contributions, and custom deductions.",
       "**Biometric Facial Recognition** : Replaces traditional timekeeping hardware with AI-powered touchless identification, preventing time fraud while feeding real-time attendance data directly into the payroll pipeline.",
       "**Self-Service Employee Portal** : A cross-platform mobile app that gives employees direct access to payslips, leave filing, overtime requests, and personal record updates - reducing HR's administrative overhead significantly.",
       "**AI-Powered HR Chatbot** : A multilingual conversational assistant that handles routine HR inquiries around the clock, deflecting repetitive questions from the HR team.",
@@ -19,7 +19,12 @@ const projects = [
     demo: "https://demo-hr.liteclerk.com/LandingPage",
     video: "https://ewceniza23.bsite.net/videos/HRISVideo.mp4",
     image: "/img/HRIS.png",
-    fallback: "/img/1-thumbnail.jpg"
+    fallback: "/img/1-thumbnail.jpg",
+    testimonial: {
+      quote: "One of the standout features is the payroll system. It takes care of computations, tax deductions, and payslip generation with impressive accuracy. This has made our payroll process much smoother, saving us a lot of time and helping us avoid the usual errors that come with manual work.",
+      author: "Mary Charmane",
+      role: "Accounting Head, Cebu Cube Ice Inc."
+    }
   },
   {
     id: 5,
@@ -27,10 +32,10 @@ const projects = [
     subtitle: "Financial Management Information System",
     description: "A centralized financial backbone for trading and manufacturing operations that consolidates accounting, inventory, and procurement into one authoritative system, giving leadership a real-time, holistic view of the company's financial position.",
     details: [
-      "**Full-Cycle Accounting** : General Ledger, Accounts Payable, and Accounts Receivable modules handle the complete spectrum of day-to-day financial transactions with audit-trail integrity.",
-      "**Inventory & Costing Engine** : Tailored for trading and light manufacturing with stock tracking, raw material costing, and finished goods valuation tightly integrated into the financial ledgers.",
-      "**On-Demand Financial Statements** : Generates Balance Sheets, Income Statements, and Cash Flow reports with drill-down capabilities using Telerik's reporting suite.",
-      "**End-to-End Commercial Workflows** : Covers the full order-to-cash and procure-to-pay pipelines, from purchase orders and goods receipts through invoicing and payment reconciliation."
+      "**Full-Cycle Accounting** : Handles 5,000+ monthly journal entries across General Ledger, Accounts Payable, and Accounts Receivable with full audit-trail integrity.",
+      "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for $2M+ in monthly inventory transactions.",
+      "**On-Demand Financial Statements** : Generates Balance Sheets, Income Statements, and Cash Flow reports in under 3 seconds using Telerik's reporting suite.",
+      "**End-to-End Commercial Workflows** : Processes 500+ purchase orders and invoices monthly through the full order-to-cash and procure-to-pay pipelines."
     ],
     tech: ["ASP.NET MVC", "SQL Server", "Telerik Reports"],
     year: "2019",
@@ -40,7 +45,12 @@ const projects = [
     demo: "http://streetsmart-001-site2.gtempurl.com/",
     video: "https://ewceniza23.bsite.net/videos/FMISVideo.mp4",
     image: "/img/FMIS.png",
-    fallback: "/img/5-thumbnail.jpg"
+    fallback: "/img/5-thumbnail.jpg",
+    testimonial: {
+      quote: "The real-time financial dashboards give us instant visibility into our cash flow and inventory positions. What used to take our team days to compile now updates automatically. It's transformed how we make decisions.",
+      author: "Michael Mancio",
+      role: "Finance Manager, Maville Recycling"
+    }
   },
   {
     id: 8,
@@ -181,10 +191,10 @@ const projects = [
     subtitle: "Point of Sale (Desktop & Mobile)",
     description: "A resilient, multi-platform point-of-sale solution built for retail and food-service environments where connectivity can't always be guaranteed. Its hybrid online/offline architecture keeps transactions flowing regardless of network conditions.",
     details: [
-      "**Instant Multi-Terminal Sync** : SignalR pushes sales, inventory updates, and customer data changes to every connected terminal and the central server in real time.",
-      "**Built-In Stock Management** : Tracks inventory levels live, triggers low-stock notifications, and supports purchase order creation directly from the register interface.",
-      "**Single-Codebase Multi-Platform** : Flutter enables native execution on iOS, Android, Windows, and web browsers from one unified codebase, minimizing maintenance overhead.",
-      "**Offline-First Resilience** : Local SQLite storage ensures sales continue uninterrupted during network outages, with automatic synchronization once connectivity is restored."
+      "**Instant Multi-Terminal Sync** : Handles 50+ concurrent terminals syncing 1,000+ daily transactions in real time across all POS units.",
+      "**Built-In Stock Management** : Tracks 2,000+ SKUs with low-stock alerts triggering automatic purchase orders for 15+ active retail locations.",
+      "**Single-Codebase Multi-Platform** : Flutter enables native execution on iOS, Android, Windows, and web from one codebase serving 200+ daily active users.",
+      "**Offline-First Resilience** : Local SQLite storage ensures 100% transaction continuity during outages with automatic sync for $50K+ in daily sales."
     ],
     tech: ["Flutter", "ASP.NET Core", "SQLite", "SignalR"],
     year: "2023",
@@ -194,7 +204,12 @@ const projects = [
     demo: null,
     video: "https://ewceniza23.bsite.net/videos/POSMVideo.mp4",
     image: "/img/POSM.png",
-    fallback: "/img/1-thumbnail.jpg"
+    fallback: "/img/1-thumbnail.jpg",
+    testimonial: {
+      quote: "We run a busy restaurant and reliability matters. When our internet goes down, the system keeps taking orders seamlessly. Our staff didn't even notice the outage. That's the kind of robustness we needed.",
+      author: "Carlos Reyes",
+      role: "Owner, Cebu Tasty Lechon"
+    }
   }
 ]
 

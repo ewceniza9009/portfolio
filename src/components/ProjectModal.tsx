@@ -1,46 +1,54 @@
-import { useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Github, ExternalLink } from 'lucide-react'
-import { TechIcon, ImageWithFallback } from './ProjectsSection'
+import { useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Github, ExternalLink } from "lucide-react";
+import { TechIcon, ImageWithFallback } from "./ProjectsSection";
 
 interface Project {
-  id: number
-  title: string
-  subtitle: string
-  description: string
-  details: string[]
-  tech: string[]
-  year: string
-  type: string
-  color: string
-  repo: string | null
-  demo: string | null
-  video: string | null
-  image: string
-  fallback: string
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  details: string[];
+  tech: string[];
+  year: string;
+  type: string;
+  color: string;
+  repo: string | null;
+  demo: string | null;
+  video: string | null;
+  image: string;
+  fallback: string;
+  testimonial?: {
+    quote: string;
+    author: string;
+    role: string;
+  };
 }
 
 interface ProjectModalProps {
-  project: Project | null
-  onClose: () => void
+  project: Project | null;
+  onClose: () => void;
 }
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   // Escape key handler
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
     if (project) {
-      document.addEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'hidden'
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
       return () => {
-        document.removeEventListener('keydown', handleKeyDown)
-        document.body.style.overflow = ''
-      }
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+      };
     }
-  }, [project, handleKeyDown])
+  }, [project, handleKeyDown]);
 
   return (
     <AnimatePresence>
@@ -50,7 +58,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.8)' }}
+          style={{ background: "rgba(0,0,0,0.8)" }}
           onClick={onClose}
           role="dialog"
           aria-modal="true"
@@ -61,17 +69,24 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
-            style={{ background: 'var(--bg-secondary)' }}
+            style={{ background: "var(--bg-secondary)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Scrollable content area */}
             <div className="overflow-y-auto flex-1">
               {/* Media */}
-              <div className="relative h-64 md:h-80" style={{ background: 'var(--bg-card)' }}>
+              <div
+                className="relative h-64 md:h-80"
+                style={{ background: "var(--bg-card)" }}
+              >
                 {project.video ? (
-                  project.video.includes('youtube.com') || project.video.includes('youtu.be') ? (
+                  project.video.includes("youtube.com") ||
+                  project.video.includes("youtu.be") ? (
                     <iframe
-                      src={project.video.replace('watch?v=', 'embed/').replace('&start=', '?start=').replace('&t=', '?start=')}
+                      src={project.video
+                        .replace("watch?v=", "embed/")
+                        .replace("&start=", "?start=")
+                        .replace("&t=", "?start=")}
                       title={`Demo video for ${project.title}`}
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -98,7 +113,10 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-110"
-                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)' }}
+                  style={{
+                    background: "var(--bg-primary)",
+                    borderColor: "var(--border)",
+                  }}
                   aria-label="Close project details"
                 >
                   <X size={20} />
@@ -109,21 +127,34 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               <div className="p-8">
                 <div className="flex items-start justify-between mb-4 gap-4">
                   <div>
-                    <h3 className="text-2xl font-bold font-display">{project.title}</h3>
-                    <p style={{ color: 'var(--accent-secondary)' }}>{project.subtitle}</p>
+                    <h3 className="text-2xl font-bold font-display">
+                      {project.title}
+                    </h3>
+                    <p style={{ color: "var(--accent-secondary)" }}>
+                      {project.subtitle}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span
                       className="font-mono text-sm px-3 py-1 rounded-full"
-                      style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+                      style={{
+                        background: "var(--accent)",
+                        color: "var(--bg-primary)",
+                      }}
                     >
                       {project.year}
                     </span>
                     <span
                       className="text-xs px-3 py-1 rounded-full font-medium"
                       style={{
-                        background: project.type === 'Emerging' ? 'var(--accent-secondary-dim)' : 'var(--accent-dim)',
-                        color: project.type === 'Emerging' ? 'var(--accent-secondary)' : 'var(--accent)'
+                        background:
+                          project.type === "Emerging"
+                            ? "var(--accent-secondary-dim)"
+                            : "var(--accent-dim)",
+                        color:
+                          project.type === "Emerging"
+                            ? "var(--accent-secondary)"
+                            : "var(--accent)",
                       }}
                     >
                       {project.type}
@@ -131,48 +162,86 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 </div>
 
-                <p className="mb-6 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <p
+                  className="mb-4 leading-relaxed"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   {project.description}
                 </p>
+
+                {/* Testimonial */}
+                {project.testimonial && (
+                  <div
+                    className="mb-6 p-4 rounded-xl border-l-4"
+                    style={{
+                      background: "var(--bg-card)",
+                      borderColor: "var(--accent)",
+                    }}
+                  >
+                    <p
+                      className="text-sm italic mb-2"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      "{project.testimonial.quote}"
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      - {project.testimonial.author}, {project.testimonial.role}
+                    </p>
+                  </div>
+                )}
 
                 {/* Detailed features */}
                 {project.details && project.details.length > 0 && (
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+                    <h4
+                      className="text-sm font-semibold mb-3 uppercase tracking-wider"
+                      style={{ color: "var(--accent)" }}
+                    >
                       Key Features
                     </h4>
                     <ul className="space-y-3">
                       {project.details.map((detail, i) => {
                         // Parse **bold** markers into styled spans
-                        const parts = detail.split(/\*\*(.*?)\*\*/g)
+                        const parts = detail.split(/\*\*(.*?)\*\*/g);
                         return (
                           <li
                             key={i}
                             className="flex gap-3 text-sm leading-relaxed"
-                            style={{ color: 'var(--text-secondary)' }}
+                            style={{ color: "var(--text-secondary)" }}
                           >
                             <span
                               className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: 'var(--accent)' }}
+                              style={{ background: "var(--accent)" }}
                             />
                             <span>
                               {parts.map((part, j) =>
                                 j % 2 === 1 ? (
-                                  <strong key={j} style={{ color: 'var(--text-primary)' }}>{part}</strong>
+                                  <strong
+                                    key={j}
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {part}
+                                  </strong>
                                 ) : (
                                   <span key={j}>{part}</span>
-                                )
+                                ),
                               )}
                             </span>
                           </li>
-                        )
+                        );
                       })}
                     </ul>
                   </div>
                 )}
 
                 <div className="mb-0">
-                  <h4 className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+                  <h4
+                    className="text-sm font-semibold mb-3 uppercase tracking-wider"
+                    style={{ color: "var(--accent)" }}
+                  >
                     Tech Stack
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -195,8 +264,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               <div
                 className="flex gap-4 px-8 py-4 border-t flex-shrink-0"
                 style={{
-                  borderColor: 'var(--border)',
-                  background: 'var(--bg-secondary)',
+                  borderColor: "var(--border)",
+                  background: "var(--bg-secondary)",
                 }}
               >
                 {project.repo && (
@@ -205,7 +274,10 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105"
-                    style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+                    style={{
+                      background: "var(--accent)",
+                      color: "var(--bg-primary)",
+                    }}
                   >
                     <Github size={16} /> Repository
                   </a>
@@ -216,7 +288,10 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-5 py-2.5 rounded-lg font-semibold border flex items-center gap-2 transition-all hover:scale-105"
-                    style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                    style={{
+                      borderColor: "var(--accent)",
+                      color: "var(--accent)",
+                    }}
                   >
                     <ExternalLink size={16} /> Live App
                   </a>
@@ -227,5 +302,5 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }

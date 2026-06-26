@@ -107,7 +107,7 @@ export default function ContactSection() {
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-bold mb-6 font-display"
+          className="text-3xl md:text-4xl font-bold mb-6 font-display"
         >
           Let's Build Something <span className="gradient-text">Together</span>
         </motion.h2>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Menu, X, Sun, Moon } from 'lucide-react'
 import Logo from './Logo'
 
-const NAV_ITEMS = ['Experience', 'Awards', 'Projects', 'Skills', 'Contact']
+const NAV_ITEMS = ['Experience', 'Awards', 'Projects', 'GitHub', 'Skills', 'Contact']
 
 interface NavbarProps {
   activeSection: string
