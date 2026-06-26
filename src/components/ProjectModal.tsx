@@ -174,7 +174,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
 
             {/* Content Panel (Right on Desktop, Bottom on Mobile) */}
-            <div className="w-full lg:w-1/2 flex-1 lg:h-full flex flex-col relative min-h-0" style={{ background: "var(--bg-secondary)" }}>
+            <div className="w-full lg:w-1/2 flex-1 lg:flex-none lg:h-full flex flex-col relative min-h-0" style={{ background: "var(--bg-secondary)" }}>
               {/* Desktop Close Button */}
               <button
                 onClick={onClose}
