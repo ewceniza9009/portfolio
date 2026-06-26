@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, ExternalLink } from "lucide-react";
 import { TechIcon } from "./ProjectsSection";
@@ -33,15 +33,17 @@ interface ProjectModalProps {
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const showFullscreenRef = useRef(showFullscreen);
+  showFullscreenRef.current = showFullscreen;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (showFullscreen) setShowFullscreen(false);
+        if (showFullscreenRef.current) setShowFullscreen(false);
         else onClose();
       }
     },
-    [onClose, showFullscreen],
+    [onClose],
   );
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     <AnimatePresence>
       {project && (
         <motion.div
+          key="modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -424,6 +427,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
       {/* Fullscreen image viewer */}
       {showFullscreen && project && (
         <motion.div
+          key="fullscreen"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
