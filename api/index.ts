@@ -3,8 +3,8 @@ import cors from 'cors'
 import { v4 as uuidv4 } from 'uuid'
 import nodemailer from 'nodemailer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import turso, { initDb } from './db'
-import { loginHandler, authMiddleware } from './auth'
+import turso, { initDb } from './db.js'
+import { loginHandler, authMiddleware } from './auth.js'
 
 const app = express()
 
