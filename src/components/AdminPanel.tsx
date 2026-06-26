@@ -29,6 +29,8 @@ function AdminPanel() {
   const [sending, setSending] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
+  const [aiModels, setAiModels] = useState<string[]>([])
+  const [aiModel, setAiModel] = useState('gemini-1.5-flash')
 
   const api = async (path: string, options?: RequestInit) => {
     return fetch(path, {
@@ -80,8 +82,19 @@ function AdminPanel() {
     }
   }
 
+  const fetchModels = async () => {
+    try {
+      const res = await api('/api/ai/models')
+      if (res.ok) {
+        const data = await res.json()
+        setAiModels(data.models)
+        setAiModel(data.models[0])
+      }
+    } catch {}
+  }
+
   useEffect(() => {
-    if (token) fetchMessages()
+    if (token) { fetchMessages(); fetchModels() }
   }, [token])
 
   const handleSendReply = async () => {
@@ -111,6 +124,7 @@ function AdminPanel() {
         method: 'POST',
         body: JSON.stringify({
           prompt: aiPrompt,
+          model: aiModel,
           context: `Original message from ${selected.name} (${selected.email}):\n${selected.message}`,
         }),
       })
@@ -239,7 +253,7 @@ function AdminPanel() {
                 <Bot size={16} style={{ color: 'var(--accent-secondary)' }} />
                 <span className="text-xs font-semibold" style={{ color: 'var(--accent-secondary)' }}>AI Compose</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={aiPrompt}
@@ -261,6 +275,14 @@ function AdminPanel() {
                   {aiLoading ? <Loader size={16} className="animate-spin" /> : 'Generate'}
                 </button>
               </div>
+              <select
+                value={aiModel}
+                onChange={e => setAiModel(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl text-xs"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              >
+                {aiModels.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
             </div>
 
             <div className="flex items-center gap-3">

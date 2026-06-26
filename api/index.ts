@@ -114,17 +114,32 @@ app.post('/api/reply', authMiddleware, async (req, res) => {
   }
 })
 
+const FREE_MODELS = [
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+]
+
+// ── Admin: List available AI models ──
+app.get('/api/ai/models', authMiddleware, (_req, res) => {
+  res.json({ models: FREE_MODELS })
+})
+
 // ── Admin: AI compose message ──
 app.post('/api/ai/compose', authMiddleware, async (req, res) => {
   try {
-    const { prompt, context } = req.body
+    const { prompt, context, model: modelName } = req.body
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
 
+    const selected = modelName && FREE_MODELS.includes(modelName) ? modelName : 'gemini-1.5-flash'
+
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = genAI.getGenerativeModel({ model: selected })
 
     const fullPrompt = context
       ? `You are helping compose a professional email reply. Context:\n${context}\n\nInstructions: ${prompt}\n\nWrite the email reply body only (no subject line).`
