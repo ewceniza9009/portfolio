@@ -32,12 +32,16 @@ interface ProjectModalProps {
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (showFullscreen) setShowFullscreen(false);
+        else onClose();
+      }
     },
-    [onClose],
+    [onClose, showFullscreen],
   );
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
       document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
       setIsZoomed(false);
+      setShowFullscreen(false);
       return () => {
         document.removeEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "";
@@ -162,8 +167,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 /* Image only - with interactive zoom and hover scale */
                 <div 
                   className="absolute inset-0 w-full h-full overflow-hidden cursor-pointer"
-                  onClick={() => setIsZoomed(!isZoomed)}
-                  title="Click to zoom in/out"
+                  onClick={() => setShowFullscreen(true)}
+                  title="Click to view fullscreen"
                 >
                   {/* Ambient blurred background using the project image to fill the void */}
                   <div 
@@ -401,6 +406,36 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               )}
             </div>
           </motion.div>
+        </motion.div>
+      )}
+
+      {/* Fullscreen image viewer */}
+      {showFullscreen && project && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.95)" }}
+          onClick={() => setShowFullscreen(false)}
+        >
+          <button
+            onClick={() => setShowFullscreen(false)}
+            className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 z-10"
+            style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
+            aria-label="Close fullscreen view"
+          >
+            <X size={24} />
+          </button>
+          <motion.img
+            src={project.image}
+            alt={project.title}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="max-w-[95vw] max-h-[95vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </motion.div>
       )}
     </AnimatePresence>
