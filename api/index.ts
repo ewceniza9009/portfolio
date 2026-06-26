@@ -54,7 +54,7 @@ app.get('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
     const result = await turso.execute({
       sql: 'SELECT * FROM messages WHERE id = ?',
-      args: [req.params.id],
+      args: [req.params.id as string],
     })
     if (!result.rows.length) return res.status(404).json({ error: 'Message not found' })
     res.json(result.rows[0])
