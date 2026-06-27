@@ -35,10 +35,10 @@ const experience = [
     location: "Cebu City, Cebu",
     position: "Lead System Developer",
     descriptions: [
-      "Guided the technical direction and development of commercial software suites, including Cloud FMIS, Cloud HRIS, Loan Management, Point of Sale (POS), and Warehouse Management.",
-      "Led hands-on development efforts and established modern development practices.",
-      "Managed product roadmaps, evaluated feature implementations, and maintained source code utilizing GitHub.",
-      "Detailed portfolio showcasing these developed products, including video demonstrations and technical descriptions, is available at: https://ewceniza-portfolio.vercel.app"
+      "Led the technical direction and full-lifecycle development of commercial software products.",
+      "Managed development of Cloud FMIS (Financial), Cloud HRIS (Payroll), Loan Management, POS, and Warehouse Management suites.",
+      "Defined product roadmaps, evaluated feature designs, and made core architecture decisions.",
+      "Wrote clean code alongside the team, managed version control, and maintained code repositories using GitHub."
     ],
     technologies: ["ASP.NET MVC", "C#", "SQL Server", "GitHub", "Cloud Architecture", "Web API"]
   },
@@ -48,9 +48,10 @@ const experience = [
     location: "Cebu City, Cebu",
     position: "Software Developer / RND",
     descriptions: [
-      "Rapidly promoted from client support to R&D, specializing in mobile and cloud innovation.",
-      "Led complex R&D projects utilizing emerging mobile and cloud technologies.",
-      "Accelerated product development initiatives through advanced mobile and cloud expertise."
+      "Transitioned from support to the R&D team to specialize in new mobile and cloud projects.",
+      "Helped transition legacy desktop applications to multi-layered cloud services, including POS, financial, and HR systems.",
+      "Built and deployed R&D projects from initial concepts through to production release using mobile and cloud frameworks.",
+      "Shortened product delivery times by designing and introducing faster development and release pipelines."
     ],
     technologies: ["C#", ".NET", "Mobile Development", "Cloud Solutions", "SQL Server"]
   }
