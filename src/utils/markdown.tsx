@@ -72,13 +72,18 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setHasError(false)
 
     try {
-      const base64 = window.btoa(unescape(encodeURIComponent(formattedCode)))
-      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+      const encoder = new TextEncoder()
+      const bytes = encoder.encode(formattedCode)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      const base64url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
       const url = `https://mermaid.ink/svg/${base64url}`
       
       fetch(url)
         .then(res => {
-          if (!res.ok) throw new Error('Failed to load svg')
+          if (!res.ok) throw new Error('mermaid.ink returned ' + res.status)
           return res.text()
         })
         .then(svgText => {
@@ -87,13 +92,15 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
             setIsLoading(false)
           }
         })
-        .catch(() => {
+        .catch(err => {
+          console.warn('[Mermaid] fetch failed:', err)
           if (active) {
             setHasError(true)
             setIsLoading(false)
           }
         })
     } catch (e) {
+      console.warn('[Mermaid] encoding error:', e)
       setHasError(true)
       setIsLoading(false)
     }
