@@ -190,6 +190,27 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           max-width: 900px !important;
           height: auto !important;
         }
+        /* Ensure node background shapes adapt to the active theme with perfect contrast */
+        .mermaid-svg-container svg .node rect,
+        .mermaid-svg-container svg .node circle,
+        .mermaid-svg-container svg .node path,
+        .mermaid-svg-container svg .node polygon,
+        .mermaid-svg-container svg .mindmap-node rect,
+        .mermaid-svg-container svg .mindmap-node circle,
+        .mermaid-svg-container svg .mindmap-node path,
+        .mermaid-svg-container svg .mindmap-node polygon {
+          fill: var(--bg-card) !important;
+          stroke: var(--accent) !important;
+          stroke-width: 1.5px !important;
+        }
+        /* Ensure node text labels are high contrast in both themes */
+        .mermaid-svg-container svg .node text,
+        .mermaid-svg-container svg .node tspan,
+        .mermaid-svg-container svg .mindmap-node text,
+        .mermaid-svg-container svg .mindmap-node tspan {
+          fill: var(--text-primary) !important;
+          color: var(--text-primary) !important;
+        }
       `}</style>
       
       {/* Interactive Sandbox Container */}
