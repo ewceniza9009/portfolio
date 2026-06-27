@@ -102,14 +102,24 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
         style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderColor: 'var(--border)' }}
       >
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <motion.a
-            href="#hero"
-            onClick={(e) => { e.preventDefault(); onScrollTo('hero') }}
-            className="flex items-center gap-3 font-signature text-accent"
-            style={{ lineHeight: 1 }}
-          >
-            <Logo size={36} className="flex-shrink-0" style={{ display: 'block' }} />
-          </motion.a>
+          {isHomePage ? (
+            <motion.a
+              href="#hero"
+              onClick={(e) => { e.preventDefault(); onScrollTo('hero') }}
+              className="flex items-center gap-3 font-signature text-accent"
+              style={{ lineHeight: 1 }}
+            >
+              <Logo size={36} className="flex-shrink-0" style={{ display: 'block' }} />
+            </motion.a>
+          ) : (
+            <Link
+              to="/"
+              className="flex items-center gap-3 font-signature text-accent transition-transform hover:scale-105"
+              style={{ lineHeight: 1 }}
+            >
+              <Logo size={36} className="flex-shrink-0" style={{ display: 'block' }} />
+            </Link>
+          )}
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">

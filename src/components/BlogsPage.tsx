@@ -410,7 +410,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               )}
 
               {/* RECENT POSTS GRID */}
-              {gridBlogs.length > 0 && (
+              {(gridBlogs.length > 0 || featuredBlog) && (
                 <div className="space-y-6">
                   {featuredBlog && (
                     <h2 className="text-xs uppercase font-mono tracking-widest border-b pb-3 mb-6" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
@@ -513,6 +513,39 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                           </motion.article>
                         )
                       })}
+
+                      {/* Render Coming Soon Placeholders to fill the 3-column grid */}
+                      {Array.from({ length: Math.max(0, 3 - gridBlogs.length) }).map((_, placeholderIdx) => (
+                        <motion.div
+                          key={`placeholder-${placeholderIdx}`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 0.85, scale: 1 }}
+                          transition={{ duration: 0.5, delay: (gridBlogs.length + placeholderIdx) * 0.05 }}
+                          className="flex flex-col justify-between rounded-3xl border-2 border-dashed p-6 min-h-[360px] bg-white/[0.01] backdrop-blur-sm select-none relative group overflow-hidden"
+                          style={{ borderColor: 'var(--border)' }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/[0.01]" />
+                          <div className="space-y-4 relative z-10">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-40" style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', color: 'var(--accent)' }}>
+                              <Sparkles size={16} className="animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                              <h3 className="text-sm font-semibold tracking-tight text-[var(--text-muted)] opacity-60">
+                                {placeholderIdx === 0 ? 'Writing in Progress...' : 'Next Case Study Drafting...'}
+                              </h3>
+                              <p className="text-xs leading-relaxed text-[var(--text-muted)] opacity-40">
+                                {placeholderIdx === 0 
+                                  ? 'Drafting the next deep-dive on telemetry loops, scalable architectures, and advanced full-stack systems.' 
+                                  : 'Fleshing out database schema autopsies, microservices migration reports, and cloud platform integrations.'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="pt-6 border-t relative z-10 flex items-center justify-between text-[10px] font-mono tracking-widest text-[var(--text-muted)] opacity-35 uppercase" style={{ borderColor: 'var(--border)' }}>
+                            <span>Article</span>
+                            <span>Coming Soon</span>
+                          </div>
+                        </motion.div>
+                      ))}
                     </AnimatePresence>
                   </motion.div>
                 </div>
