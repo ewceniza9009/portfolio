@@ -5,6 +5,7 @@ import VantaBackground from "./VantaBackground";
 
 interface HeroSectionProps {
   onScrollTo: (id: string) => void;
+  onViewResume?: () => void;
 }
 
 const ROLES = [
@@ -51,7 +52,7 @@ function useTypewriter(
   return text;
 }
 
-export default function HeroSection({ onScrollTo }: HeroSectionProps) {
+export default function HeroSection({ onScrollTo, onViewResume }: HeroSectionProps) {
   const typedRole = useTypewriter(ROLES);
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -189,14 +190,13 @@ export default function HeroSection({ onScrollTo }: HeroSectionProps) {
             >
               View Projects <ArrowRight size={18} />
             </button>
-            <a
-              href="/Resume2026.4.pdf"
-              download="Erwin_Wilson_Ceniza_Resume.pdf"
+            <button
+              onClick={onViewResume}
               className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
               style={{ color: "var(--text-primary)" }}
             >
               <Download size={18} /> Resume
-            </a>
+            </button>
             <a
               href="https://github.com/ewceniza9009"
               target="_blank"

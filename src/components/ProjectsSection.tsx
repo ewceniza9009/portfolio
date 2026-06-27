@@ -143,6 +143,18 @@ function ProjectCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const { tilt, handleMouseEnter, handleMouseMove, handleMouseLeave } = useTilt(cardRef);
   const hiddenTechCount = project.tech.length - 3;
+  const [isHovered, setIsHovered] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isHovered) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [isHovered]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -178,6 +190,8 @@ function ProjectCard({
           "transform 0.15s ease-out, box-shadow 0.3s ease, border-color 0.3s ease",
       }}
       onClick={() => onSelectProject(project.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image */}
       <div
@@ -190,11 +204,24 @@ function ProjectCard({
           fallback={project.fallback}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent z-10" />
+
+        {project.video && (
+          <video
+            ref={videoRef}
+            src={project.video}
+            muted
+            loop
+            playsInline
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-10 ${
+              isHovered ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        )}
 
         {/* Year badge */}
         <span
-          className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium font-mono"
+          className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium font-mono z-20"
           style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
         >
           {project.year}
@@ -202,7 +229,7 @@ function ProjectCard({
 
         {/* Type badge */}
         <span
-          className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium"
+          className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium z-20"
           style={{
             background:
               project.type === "Emerging"
@@ -219,7 +246,7 @@ function ProjectCard({
 
         {/* Video badge */}
         {project.video && (
-          <span className="absolute bottom-3 right-3 video-badge flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-white">
+          <span className="absolute bottom-3 right-3 video-badge flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-white z-20">
             <Play size={10} fill="currentColor" /> Video
           </span>
         )}

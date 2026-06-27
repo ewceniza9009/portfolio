@@ -1,8 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Server, Database, Wrench, Lightbulb } from 'lucide-react'
 
-type SkillItem = { name: string; icon?: React.ComponentType<{ size?: number }> }
+export type SkillItem = { 
+  name: string; 
+  icon?: React.ComponentType<{ size?: number }>;
+  level?: 'core' | 'familiar';
+}
 
 interface SkillsData {
   [category: string]: {
@@ -10,7 +14,6 @@ interface SkillsData {
     items: SkillItem[]
   }
 }
-
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ size?: number | string; className?: string }>> = {
   frontend: Monitor,
@@ -106,9 +109,19 @@ interface SkillsSectionProps {
   skills: SkillsData
 }
 
-function SkillTag({ skill, category, index }: { skill: SkillItem; category: string; index: number }) {
+function SkillTag({ 
+  skill, 
+  category, 
+  index, 
+  isDimmed 
+}: { 
+  skill: SkillItem; 
+  category: string; 
+  index: number;
+  isDimmed: boolean;
+}) {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
-  const [isHovered, setIsHovered] = React.useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const defaultBg = hoverColors ? hoverColors.bg.replace('0.12', '0.04') : 'var(--bg-secondary)'
 
   return (
@@ -116,17 +129,19 @@ function SkillTag({ skill, category, index }: { skill: SkillItem; category: stri
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: "-10px" }}
-      transition={{ delay: index * 0.1, type: 'spring', stiffness: 300, damping: 20 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-default border transition-all duration-300"
+      transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+      className="skill-tag inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all duration-300"
       style={{
         background: isHovered && hoverColors ? hoverColors.bg : defaultBg,
         color: isHovered && hoverColors ? hoverColors.color : 'var(--text-secondary)',
         borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
         boxShadow: isHovered ? '0 2px 8px var(--accent-dim)' : 'none',
+        opacity: isDimmed ? 0.25 : 1,
+        pointerEvents: isDimmed ? 'none' : 'auto',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -2, scale: 1.05 }}
+      whileHover={isDimmed ? {} : { y: -2, scale: 1.05 }}
     >
       {skill.icon && React.createElement(skill.icon, { size: 14 })}
       {skill.name}
@@ -146,6 +161,8 @@ const getBentoClasses = (index: number) => {
 }
 
 export default function SkillsSection({ skills }: SkillsSectionProps) {
+  const [filterMode, setFilterMode] = useState<'all' | 'core'>('all')
+
   return (
     <section id="skills" className="py-32 px-6" style={{ background: 'var(--bg-section-alt)' }}>
       {/* Section divider */}
@@ -159,63 +176,102 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
         >
           Skills
         </motion.h2>
-        <p className="mb-16" style={{ color: 'var(--text-secondary)' }}>Technologies I work with</p>
+        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>Technologies I work with</p>
+
+        {/* Filter Controls */}
+        <div className="flex gap-2 mb-10 bg-black/10 dark:bg-white/5 p-1 rounded-xl w-fit border border-neutral-200 dark:border-neutral-800">
+          <button
+            onClick={() => setFilterMode('all')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono transition-all ${
+              filterMode === 'all'
+                ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            All Skills
+          </button>
+          <button
+            onClick={() => setFilterMode('core')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono transition-all ${
+              filterMode === 'core'
+                ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Core Stack
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(skills).map(([category, data], index) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
-              className={`rounded-2xl border overflow-hidden group flex flex-col ${getBentoClasses(index)}`}
-              style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-              whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
-            >
-              {/* Subtle tinted header */}
-              <div 
-                className="relative h-16 flex items-center justify-between px-6 shrink-0 border-b"
-                style={{ 
-                  background: CATEGORY_HOVER_COLORS[category]?.bg || 'var(--bg-secondary)',
-                  borderColor: 'var(--border)'
-                }}
+          {Object.entries(skills).map(([category, data], index) => {
+            const visibleItemsCount = data.items.filter(
+              item => filterMode === 'all' || item.level !== 'familiar'
+            ).length
+
+            return (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+                className={`rounded-2xl border overflow-hidden group flex flex-col ${getBentoClasses(index)}`}
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+                whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
               >
-                {/* Subtle Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_currentColor_1px,_transparent_1px)] [background-size:20px_20px]" style={{ color: CATEGORY_HOVER_COLORS[category]?.color }} />
-                
-                <h3 
-                  className="font-bold flex items-center gap-3 text-lg relative z-10"
-                  style={{ color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-primary)' }}
-                >
-                  {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20 })}
-                  {CATEGORY_LABELS[category] || category}
-                </h3>
-                
-                {/* Skill count badge */}
-                <span 
-                  className="text-xs font-semibold px-3 py-1 rounded-full relative z-10"
+                {/* Subtle tinted header */}
+                <div 
+                  className="relative h-16 flex items-center justify-between px-6 shrink-0 border-b"
                   style={{ 
-                    background: 'var(--bg-card)', 
-                    color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-secondary)',
-                    border: '1px solid var(--border)'
+                    background: CATEGORY_HOVER_COLORS[category]?.bg || 'var(--bg-secondary)',
+                    borderColor: 'var(--border)'
                   }}
                 >
-                  {data.items.length} skills
-                </span>
-              </div>
-
-              <div className="relative p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30 overflow-hidden">
-                {/* Subtle Background blueprint decoration */}
-                {BACKGROUND_DECORATIONS[category] || null}
-
-                <div className="relative z-10 flex flex-wrap gap-2.5">
-                  {data.items.map((skill, skillIndex) => (
-                    <SkillTag key={skill.name} skill={skill} category={category} index={skillIndex} />
-                  ))}
+                  {/* Subtle Background Pattern */}
+                  <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_currentColor_1px,_transparent_1px)] [background-size:20px_20px]" style={{ color: CATEGORY_HOVER_COLORS[category]?.color }} />
+                  
+                  <h3 
+                    className="font-bold flex items-center gap-3 text-lg relative z-10"
+                    style={{ color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-primary)' }}
+                  >
+                    {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 20 })}
+                    {CATEGORY_LABELS[category] || category}
+                  </h3>
+                  
+                  {/* Skill count badge */}
+                  <span 
+                    className="text-xs font-semibold px-3 py-1 rounded-full relative z-10 transition-all duration-300"
+                    style={{ 
+                      background: 'var(--bg-card)', 
+                      color: CATEGORY_HOVER_COLORS[category]?.color || 'var(--text-secondary)',
+                      border: '1px solid var(--border)'
+                    }}
+                  >
+                    {visibleItemsCount} skills
+                  </span>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+
+                <div className="relative p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30 overflow-hidden">
+                  {/* Subtle Background blueprint decoration */}
+                  {BACKGROUND_DECORATIONS[category] || null}
+
+                  <div className="relative z-10 flex flex-wrap gap-2.5">
+                    {data.items.map((skill, skillIndex) => {
+                      const isDimmed = filterMode === 'core' && skill.level === 'familiar'
+                      return (
+                        <SkillTag 
+                          key={skill.name} 
+                          skill={skill} 
+                          category={category} 
+                          index={skillIndex} 
+                          isDimmed={isDimmed} 
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>
