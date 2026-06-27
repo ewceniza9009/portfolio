@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, User, Sparkles, Tag } from 'lucide-react'
+import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
