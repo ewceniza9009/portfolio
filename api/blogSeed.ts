@@ -5,8 +5,17 @@ export async function seedFirstBlog(turso: any) {
   const slug = 'engineering-realtime-telemetry-signalr'
   
   try {
+    // Ensure updated_at column exists on the blogs table (self-healing migration fallback)
+    try {
+      await turso.execute({
+        sql: "ALTER TABLE blogs ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))"
+      })
+    } catch (_) {
+      // Column already exists, ignore error
+    }
+
     const check = await turso.execute({
-      sql: 'SELECT id, likes FROM blogs WHERE slug = ?',
+      sql: 'SELECT id, likes, updated_at FROM blogs WHERE slug = ?',
       args: [slug]
     })
     
@@ -17,27 +26,38 @@ export async function seedFirstBlog(turso: any) {
     const readTime = '8 min read'
     
     // Read the markdown content dynamically from the static file on disk.
-    // This bypasses Node's ES module compilation cache so changes are read instantly.
     const markdownPath = path.join(process.cwd(), 'api', 'engineering-realtime-telemetry-signalr.md')
     const content = fs.readFileSync(markdownPath, 'utf8')
 
-    // If the post already exists, update its content, title, tags, and summary.
-    // We implement self-healing likes: if likes is the old seed value (12), reset it to 0.
-    // Otherwise, preserve the current organic likes count across restarts.
+    // Get the file's last modified timestamp on disk
+    const fileStats = fs.statSync(markdownPath)
+    const fileMtime = fileStats.mtime.getTime()
+
     if (check.rows.length > 0) {
-      const dbLikes = Number(check.rows[0].likes || 0)
+      const row = check.rows[0]
+      const dbLikes = Number(row.likes || 0)
       const targetLikes = dbLikes === 12 ? 0 : dbLikes
 
-      await turso.execute({
-        sql: 'UPDATE blogs SET title = ?, content = ?, summary = ?, tags = ?, read_time = ?, likes = ? WHERE slug = ?',
-        args: [title, content, summary, tags, readTime, targetLikes, slug]
-      })
-      console.log(`Successfully synced EMR blog post content (Likes: ${targetLikes}).`)
+      // Parse the DB updated_at timestamp. SQLite returns a UTC string like 'YYYY-MM-DD HH:MM:SS'.
+      // We convert it to ISO format by replacing the space with 'T' and appending 'Z'.
+      const dbUpdatedStr = row.updated_at || '1970-01-01 00:00:00'
+      const dbMtime = new Date(dbUpdatedStr.replace(' ', 'T') + 'Z').getTime()
+
+      // Sync from disk ONLY if the markdown file on disk has been edited more recently than the database row
+      if (fileMtime > dbMtime + 2000) {
+        await turso.execute({
+          sql: 'UPDATE blogs SET title = ?, content = ?, summary = ?, tags = ?, read_time = ?, likes = ?, updated_at = datetime(\'now\') WHERE slug = ?',
+          args: [title, content, summary, tags, readTime, targetLikes, slug]
+        })
+        console.log(`Successfully synced EMR blog post content from disk (File was updated).`)
+      } else {
+        console.log(`Skipped syncing EMR blog post: DB is up to date (or newer than disk file).`)
+      }
       return
     }
 
     await turso.execute({
-      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, published, likes, read_time) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?)',
+      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, published, likes, read_time, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, datetime(\'now\'))',
       args: [blogId, slug, title, content, summary, tags, readTime]
     })
     
