@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
+import { Copy, Check } from 'lucide-react'
 
 interface MermaidRendererProps {
   code: string
@@ -327,6 +328,63 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   )
 }
 
+interface CodeBlockProps {
+  code: string
+  lang: string
+  highlightedHtml: string
+}
+
+function CodeBlock({ code, lang, highlightedHtml }: CodeBlockProps) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.warn('Failed to copy code: ', err)
+    }
+  }
+
+  return (
+    <div className="relative group my-6 rounded-2xl overflow-hidden border select-text" style={{ borderColor: 'rgba(255, 255, 255, 0.15)' }}>
+      {/* Header bar / Lang badge */}
+      <div className="flex items-center justify-between px-5 py-2.5 bg-[#161b22] text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none border-b border-white/5">
+        <span>{lang || 'code'}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors hover:bg-white/10 hover:text-white"
+          style={{ color: copied ? 'var(--accent)' : 'inherit' }}
+        >
+          {copied ? (
+            <>
+              <Check size={11} />
+              <span>Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy size={11} />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      <pre 
+        className="p-5 overflow-x-auto text-xs font-mono select-text" 
+        style={{ 
+          background: '#0d1117', 
+          color: '#c9d1d9', 
+          margin: 0
+        }}
+      >
+        <code dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      </pre>
+    </div>
+  )
+}
+
 function highlightCode(code: string, lang: string): string {
   const l = lang ? lang.toLowerCase() : ''
   
@@ -448,17 +506,12 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(
-            <pre 
+            <CodeBlock 
               key={keyIndex++} 
-              className="border rounded-xl p-4 overflow-x-auto my-4 text-xs font-mono select-text" 
-              style={{ 
-                background: '#0d1117', 
-                color: '#c9d1d9', 
-                borderColor: 'rgba(255, 255, 255, 0.15)' 
-              }}
-            >
-              <code dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
-            </pre>
+              code={codeText} 
+              lang={codeLang} 
+              highlightedHtml={highlightedHtml} 
+            />
           )
         }
         inCodeBlock = false
