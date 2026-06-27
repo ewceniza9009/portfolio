@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
-import mermaid from 'mermaid'
+import React, { useState, useEffect } from 'react'
 import { AccentKey } from '../data/accents'
+import mermaid from 'mermaid'
 
 interface MermaidRendererProps {
   code: string
@@ -12,7 +12,6 @@ function MermaidRenderer({ code, theme = 'dark' }: MermaidRendererProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [showCode, setShowCode] = useState(false)
-  const renderKey = useRef(0)
   
   // Interactive zoom & pan states
   const [scale, setScale] = useState(1)
@@ -25,53 +24,61 @@ function MermaidRenderer({ code, theme = 'dark' }: MermaidRendererProps) {
 
   useEffect(() => {
     let active = true
-    renderKey.current++
-    const key = renderKey.current
     setIsLoading(true)
     setHasError(false)
 
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: isDark ? 'dark' : 'default',
-      fontFamily: 'Outfit, Inter, system-ui, sans-serif',
-      themeVariables: {
-        fontFamily: 'Outfit, Inter, system-ui, sans-serif',
-        lineColor: isDark ? '#475569' : '#94a3b8',
-        mainBkg: isDark ? '#0d1117' : '#ffffff',
-        primaryColor: isDark ? '#1e293b' : '#f1f5f9',
-        primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
-        actorBkg: isDark ? '#1e293b' : '#f8fafc',
-        actorTextColor: isDark ? '#f8fafc' : '#0f172a',
-        signalTextColor: isDark ? '#cbd5e1' : '#475569',
-        labelBoxBkgColor: isDark ? '#1e293b' : '#f1f5f9',
-        labelTextColor: isDark ? '#f8fafc' : '#0f172a',
-        noteBkgColor: isDark ? '#1e293b' : '#fef08a',
-        noteTextColor: isDark ? '#f8fafc' : '#0f172a',
-      },
-      sequence: {
-        actorMargin: 85,
-        messageMargin: 45,
-        boxMargin: 15,
-        noteMargin: 15,
-      },
-    })
+    ;(async () => {
+      try {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDark ? 'dark' : 'default',
+          fontFamily: 'Outfit, Inter, system-ui, sans-serif',
+          themeVariables: {
+            fontFamily: 'Outfit, Inter, system-ui, sans-serif',
+            lineColor: isDark ? '#475569' : '#94a3b8',
+            mainBkg: isDark ? '#0d1117' : '#ffffff',
+            primaryColor: isDark ? '#1e293b' : '#f1f5f9',
+            primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
+            actorBkg: isDark ? '#1e293b' : '#f8fafc',
+            actorTextColor: isDark ? '#f8fafc' : '#0f172a',
+            signalTextColor: isDark ? '#cbd5e1' : '#475569',
+            labelBoxBkgColor: isDark ? '#1e293b' : '#f1f5f9',
+            labelTextColor: isDark ? '#f8fafc' : '#0f172a',
+            noteBkgColor: isDark ? '#1e293b' : '#fef08a',
+            noteTextColor: isDark ? '#f8fafc' : '#0f172a',
+          },
+          sequence: {
+            actorMargin: 85,
+            messageMargin: 45,
+            boxMargin: 15,
+            noteMargin: 15,
+          },
+        })
 
-    mermaid.render(`mermaid-${key}`, cleanCode)
-      .then(({ svg }) => {
+        // Render into a temporary hidden element, then extract SVG
+        const el = document.createElement('div')
+        el.className = 'mermaid'
+        el.textContent = cleanCode
+        el.style.display = 'none'
+        document.body.appendChild(el)
+
+        await mermaid.run({ nodes: [el] })
+        const svg = el.innerHTML
+        el.remove()
+
         if (active) {
-          // Ensure SVG has 100% width
           const styled = svg.replace('<svg ', '<svg style="max-width:100%;height:auto" ')
           setSvgHtml(styled)
           setIsLoading(false)
         }
-      })
-      .catch(err => {
-        console.error('[Mermaid] render error:', err)
+      } catch (err) {
+        console.error('[Mermaid] error:', err instanceof Error ? err.message : err)
         if (active) {
           setHasError(true)
           setIsLoading(false)
         }
-      })
+      }
+    })()
 
     return () => { active = false }
   }, [cleanCode, isDark])
