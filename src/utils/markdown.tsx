@@ -215,6 +215,11 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           fill: var(--text-primary) !important;
           color: var(--text-primary) !important;
         }
+        /* Ensure HTML labels inside foreignObject nodes are readable */
+        .mermaid-svg-container svg .node foreignObject *,
+        .mermaid-svg-container svg .mindmap-node foreignObject * {
+          color: var(--text-primary) !important;
+        }
       `}</style>
       
       {/* Interactive Sandbox Container */}
