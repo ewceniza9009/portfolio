@@ -462,6 +462,51 @@ function parseBlock(block: string, i: number): React.ReactNode {
     return <hr key={i} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />
   }
 
+  // Table Parsing
+  const lines = block.split('\n')
+  if (lines.length >= 2) {
+    const secondLine = lines[1].trim()
+    const isTableSeparator = secondLine.startsWith('|') && /^[|:\s-]+$/.test(secondLine)
+    
+    if (isTableSeparator) {
+      const headers = lines[0].split('|').map(s => s.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+      const rows = lines.slice(2).map(line => {
+        return line.split('|').map(s => s.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+      }).filter(row => row.length > 0)
+
+      return (
+        <div key={i} className="my-6 w-full overflow-x-auto rounded-2xl border bg-white/5" style={{ borderColor: 'var(--border)' }}>
+          <table className="w-full text-sm border-collapse text-left select-text">
+            <thead>
+              <tr className="border-b" style={{ borderColor: 'var(--border)', background: 'rgba(255, 255, 255, 0.02)' }}>
+                {headers.map((header, hIdx) => (
+                  <th key={hIdx} className="px-4 py-3 font-semibold text-[var(--accent)] tracking-tight">
+                    {parseInline(header)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rIdx) => (
+                <tr 
+                  key={rIdx} 
+                  className="border-b last:border-b-0 hover:bg-white/5 transition-colors" 
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="px-4 py-3 text-[var(--text-secondary)]">
+                      {parseInline(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  }
+
   // Headers (h1 to h6)
   const headerMatch = block.match(/^(#{1,6})\s+([\s\S]*)$/)
   if (headerMatch) {
