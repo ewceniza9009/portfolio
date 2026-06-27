@@ -73,7 +73,8 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
     try {
       const base64 = window.btoa(unescape(encodeURIComponent(formattedCode)))
-      const url = `https://mermaid.ink/svg/${base64}`
+      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+      const url = `https://mermaid.ink/svg/${base64url}`
       
       fetch(url)
         .then(res => {
