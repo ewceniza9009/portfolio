@@ -93,12 +93,19 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
   )
 }
 
+const getSafeItem = (key: string): string | null => {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+const setSafeItem = (key: string, value: string): void => {
+  try { localStorage.setItem(key, value) } catch {}
+}
+
 export default function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [savedEmails, setSavedEmails] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('contact_emails') || '[]') }
+    try { return JSON.parse(getSafeItem('contact_emails') || '[]') }
     catch { return [] }
   })
 
@@ -119,7 +126,10 @@ export default function ContactSection() {
 
     setSending(true)
     try {
-      const res = await fetch('/api/contact', {
+      const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
+        ? 'http://localhost:3000'
+        : ''
+      const res = await fetch(`${baseUrl}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -129,7 +139,7 @@ export default function ContactSection() {
       setToast({ type: 'success', text: 'Message sent! I\'ll get back to you soon.' })
       const updated = savedEmails.includes(form.email) ? savedEmails : [form.email, ...savedEmails].slice(0, 10)
       setSavedEmails(updated)
-      localStorage.setItem('contact_emails', JSON.stringify(updated))
+      setSafeItem('contact_emails', JSON.stringify(updated))
       setForm({ name: '', email: '', subject: '', message: '' })
     } catch {
       setToast({ type: 'error', text: 'Failed to send. Please email me directly.' })

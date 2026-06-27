@@ -19,6 +19,15 @@ import GitHubSection from './components/GitHubSection'
 import awards from './data/awards'
 import TerminalFooter from './components/TerminalFooter'
 import AdminPanel from './components/AdminPanel'
+import { ACCENT_THEMES } from './data/accents'
+import type { AccentKey } from './data/accents'
+
+const getSafeItem = (key: string): string | null => {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+const setSafeItem = (key: string, value: string): void => {
+  try { localStorage.setItem(key, value) } catch {}
+}
 
 function Portfolio() {
   const [activeSection, setActiveSection] = useState('hero')
@@ -26,15 +35,36 @@ function Portfolio() {
   const [isLoading, setIsLoading] = useState(true)
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark'
+      return (getSafeItem('theme') as 'dark' | 'light') || 'dark'
     }
     return 'dark'
   })
 
+  const [accent, setAccent] = useState<AccentKey>(() => {
+    if (typeof window !== 'undefined') {
+      return (getSafeItem('accent') as AccentKey) || 'gold'
+    }
+    return 'gold'
+  })
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
+    setSafeItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const themeSet = ACCENT_THEMES[accent][theme]
+    
+    root.style.setProperty('--accent', themeSet.accent)
+    root.style.setProperty('--accent-hover', themeSet.accentHover)
+    root.style.setProperty('--accent-dim', themeSet.accentDim)
+    root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
+    root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
+    root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
+    
+    setSafeItem('accent', accent)
+  }, [accent, theme])
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
@@ -97,6 +127,8 @@ function Portfolio() {
           theme={theme}
           onToggleTheme={toggleTheme}
           onScrollTo={scrollTo}
+          accent={accent}
+          onChangeAccent={setAccent}
         />
         <main>
           <HeroSection onScrollTo={scrollTo} />
