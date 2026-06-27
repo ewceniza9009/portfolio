@@ -190,6 +190,10 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           max-width: 900px !important;
           height: auto !important;
         }
+        /* Ensure connector lines (and all other paths by default) are visible in both dark and light modes */
+        .mermaid-svg-container svg path {
+          stroke: var(--text-muted) !important;
+        }
         /* Ensure node background shapes adapt to the active theme with perfect contrast */
         .mermaid-svg-container svg .node rect,
         .mermaid-svg-container svg .node circle,
