@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import nodemailer from 'nodemailer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import turso, { initDb } from './db.js'
-import { loginHandler, authMiddleware } from './auth.js'
+import { loginHandler, authMiddleware, rateLimitMiddleware } from './auth.js'
 
 const app = express()
 
@@ -101,10 +101,15 @@ app.post('/api/reply', authMiddleware, async (req, res) => {
       replyTo: process.env.GMAIL_USER,
     })
 
+    // Accumulate the reply body in history if it exists
+    const updatedBody = msg.reply_body
+      ? `${body}\n\n========================================\n[Previous Reply Sent on ${new Date(msg.replied_at).toLocaleString('en-US')}]:\n${msg.reply_body}`
+      : body
+
     // Mark as replied in DB
     await turso.execute({
       sql: 'UPDATE messages SET replied = 1, reply_subject = ?, reply_body = ?, replied_at = datetime(?) WHERE id = ?',
-      args: [subject, body, new Date().toISOString(), messageId],
+      args: [subject, updatedBody, new Date().toISOString(), messageId],
     })
 
     res.json({ success: true })
@@ -157,6 +162,6 @@ app.post('/api/ai/compose', authMiddleware, async (req, res) => {
 })
 
 // ── Admin: Login ──
-app.post('/api/auth/login', loginHandler)
+app.post('/api/auth/login', rateLimitMiddleware, loginHandler)
 
 export default app
