@@ -22,10 +22,9 @@ interface CopyableContactProps {
   label: string
   value: string
   copyValue: string
-  variant: 'green' | 'blue'
 }
 
-function CopyableContact({ href, icon, label, value, copyValue, variant }: CopyableContactProps) {
+function CopyableContact({ href, icon, label, value, copyValue }: CopyableContactProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback((e: React.MouseEvent) => {
@@ -40,17 +39,21 @@ function CopyableContact({ href, icon, label, value, copyValue, variant }: Copya
     <a
       href={href}
       onClick={handleCopy}
-      className={`contact-card ${variant === 'green' ? 'contact-card-green' : 'contact-card-blue'} flex items-center gap-4 p-4 rounded-xl relative group`}
-      style={{ background: 'var(--bg-secondary)' }}
+      className="flex items-center gap-4 p-4 rounded-xl relative group border transition-all duration-300 hover:scale-[1.02]"
+      style={{ 
+        background: 'var(--bg-secondary)', 
+        borderColor: 'var(--border)',
+        boxShadow: 'var(--card-shadow)'
+      }}
     >
       <AnimatePresence>
         {copied && <CopyToast message="Copied to clipboard!" />}
       </AnimatePresence>
 
-      <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+      <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
         style={{
-          background: variant === 'green' ? 'var(--accent)' : 'var(--accent-secondary)',
-          color: variant === 'green' ? 'var(--bg-primary)' : '#fff'
+          background: 'var(--accent-dim)',
+          color: 'var(--accent)'
         }}>
         {icon}
       </div>
@@ -78,11 +81,18 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="contact-card contact-card-blue flex items-center gap-4 p-4 rounded-xl"
-      style={{ background: 'var(--bg-secondary)' }}
+      className="flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 hover:scale-[1.02] group"
+      style={{ 
+        background: 'var(--bg-secondary)', 
+        borderColor: 'var(--border)',
+        boxShadow: 'var(--card-shadow)'
+      }}
     >
-      <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: 'var(--accent-secondary)', color: '#fff' }}>
+      <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+        style={{ 
+          background: 'var(--accent-dim)', 
+          color: 'var(--accent)' 
+        }}>
         {icon}
       </div>
       <div className="text-left">
@@ -100,7 +110,11 @@ const setSafeItem = (key: string, value: string): void => {
   try { localStorage.setItem(key, value) } catch {}
 }
 
-export default function ContactSection() {
+interface ContactSectionProps {
+  theme?: 'dark' | 'light'
+}
+
+export default function ContactSection({ theme = 'dark' }: ContactSectionProps) {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -180,7 +194,10 @@ export default function ContactSection() {
           transition={{ duration: 0.5 }}
           className="rounded-3xl p-8 md:p-12 glass shadow-2xl relative overflow-hidden mb-8 text-left"
         >
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)' }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ 
+            background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)',
+            opacity: theme === 'dark' ? 0.12 : 0.015
+          }} />
 
           <h3 className="text-xl font-semibold mb-6 text-center relative z-10">Send Me a Message</h3>
 
@@ -193,8 +210,8 @@ export default function ContactSection() {
                 value={form.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
-                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-300 contact-input"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div>
@@ -206,8 +223,8 @@ export default function ContactSection() {
                 onChange={handleChange}
                 required
                 list="saved-emails"
-                className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
-                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-300 contact-input"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
               <datalist id="saved-emails">
                 {savedEmails.map(e => <option key={e} value={e} />)}
@@ -222,8 +239,8 @@ export default function ContactSection() {
               name="subject"
               value={form.subject}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl text-sm transition-colors"
-              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-300 contact-input"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
 
@@ -235,17 +252,17 @@ export default function ContactSection() {
               onChange={handleChange}
               required
               rows={5}
-              className="w-full px-4 py-3 rounded-xl text-sm transition-colors resize-none"
-              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-300 contact-input resize-none"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
 
           <button
             type="submit"
             disabled={sending}
-            className="relative z-10 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+            className="relative z-10 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.98] shadow-md hover:shadow-lg"
             style={{
-              background: 'var(--accent)',
+              background: 'linear-gradient(to right, var(--accent), var(--accent-secondary))',
               color: 'var(--bg-primary)',
               opacity: sending ? 0.7 : 1,
             }}
@@ -279,7 +296,10 @@ export default function ContactSection() {
           transition={{ duration: 0.5 }}
           className="rounded-3xl p-8 md:p-12 glass shadow-2xl relative overflow-hidden"
         >
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)' }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ 
+            background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)',
+            opacity: theme === 'dark' ? 0.12 : 0.015
+          }} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
             <CopyableContact
@@ -288,7 +308,6 @@ export default function ContactSection() {
               label="Email"
               value="erwinwilsonceniza@gmail.com"
               copyValue="erwinwilsonceniza@gmail.com"
-              variant="green"
             />
 
             <CopyableContact
@@ -297,7 +316,6 @@ export default function ContactSection() {
               label="Phone"
               value="+63 935-122-8470"
               copyValue="+639351228470"
-              variant="green"
             />
 
             <SocialLink

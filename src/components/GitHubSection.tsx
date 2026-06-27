@@ -1,24 +1,32 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { Github, ExternalLink, Activity, Star } from 'lucide-react'
+import { ACCENT_THEMES } from '../data/accents'
+import type { AccentKey } from '../data/accents'
 
 const GITHUB_USERNAME = 'ewceniza9009'
 
 interface GitHubSectionProps {
   theme?: 'dark' | 'light'
+  accent?: AccentKey
 }
 
-export default function GitHubSection({ theme = 'dark' }: GitHubSectionProps) {
+export default function GitHubSection({ theme = 'dark', accent = 'gold' }: GitHubSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
 
   const isLight = theme === 'light'
   
+  // Extract the color hex without '#' for the contribution chart and stats widgets
+  const themeSet = ACCENT_THEMES[accent]?.[theme]
+  const accentColorHex = themeSet?.accent.replace('#', '') || 'f3ca65'
+  const accentSecondaryColorHex = themeSet?.accentSecondary.replace('#', '') || 'cca03d'
+
   // Theme-aware GitHub stats parameters
   const bgColor = isLight ? 'ffffff' : '181818'
   const textColor = isLight ? '475569' : 'a3a3a3'
-  const titleColor = isLight ? '10b981' : '22c55e'
-  const iconColor = isLight ? '0ea5e9' : '14b8a6'
+  const titleColor = accentColorHex
+  const iconColor = accentSecondaryColorHex
   const borderHidden = 'true'
 
   return (
@@ -57,6 +65,32 @@ export default function GitHubSection({ theme = 'dark' }: GitHubSectionProps) {
 
         {/* Bento Box Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Contribution Heatmap (Spans all 3 columns) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            whileHover={{ y: -5, boxShadow: '0 8px 30px rgba(0,0,0,0.15)' }}
+            className="rounded-2xl border overflow-hidden col-span-1 md:col-span-3 flex flex-col transition-shadow"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
+          >
+            <div className="p-6 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+              <Activity size={18} style={{ color: 'var(--accent)' }} />
+              <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Contribution Heatmap</h3>
+            </div>
+            <div className="p-8 overflow-x-auto flex justify-center items-center">
+              <div className="min-w-[800px] w-full flex justify-center">
+                <img
+                  src={`https://ghchart.rshah.org/${accentColorHex}/${GITHUB_USERNAME}`}
+                  alt={`${GITHUB_USERNAME}'s GitHub Contributions Heatmap`}
+                  className="w-full h-auto max-h-32 object-contain"
+                  style={{
+                    filter: theme === 'dark' ? 'invert(0.9) hue-rotate(180deg)' : 'none'
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
           {/* Top Languages (Spans 2 columns on desktop) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

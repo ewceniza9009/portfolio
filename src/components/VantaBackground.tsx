@@ -1,18 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
+import { ACCENT_THEMES } from '../data/accents'
+import type { AccentKey } from '../data/accents'
 
 export default function VantaBackground() {
   const vantaRef = useRef<HTMLDivElement>(null)
   const effectRef = useRef<any>(null)
-  const [theme, setTheme] = useState(() =>
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
+  )
+  const [accent, setAccent] = useState<AccentKey>(() =>
+    (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
   )
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      const current = document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
-      setTheme(current)
+      const currentTheme = document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
+      const currentAccent = (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
+      setTheme(currentTheme)
+      setAccent(currentAccent)
     })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] })
     return () => observer.disconnect()
   }, [])
 
@@ -32,6 +39,10 @@ export default function VantaBackground() {
           effectRef.current.destroy()
           effectRef.current = null
         }
+        
+        const colorHex = ACCENT_THEMES[accent]?.[theme]?.accent || '#f3ca65'
+        const colorNum = parseInt(colorHex.replace('#', '0x'), 16)
+
         effectRef.current = RINGS({
           el: vantaRef.current,
           mouseControls: false,
@@ -41,7 +52,7 @@ export default function VantaBackground() {
           minWidth: 200.00,
           scale: 1.00,
           scaleMobile: 2.00,
-          color: theme === 'dark' ? 0x22c55e : 0x16a34a,
+          color: colorNum,
           backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xffffff,
           backgroundAlpha: 0,
         })
@@ -54,7 +65,7 @@ export default function VantaBackground() {
         effectRef.current = null
       }
     }
-  }, [theme])
+  }, [theme, accent])
 
   return (
     <div

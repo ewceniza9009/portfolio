@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Github, ExternalLink, Play } from "lucide-react";
+import { Github, ExternalLink, Play, Search, X } from "lucide-react";
 import {
   SiDotnet,
   SiReact,
@@ -324,6 +324,35 @@ export default function ProjectsSection({
   projects,
   onSelectProject,
 }: ProjectsSectionProps) {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch =
+      project.title.toLowerCase().includes(search.toLowerCase()) ||
+      project.subtitle.toLowerCase().includes(search.toLowerCase()) ||
+      project.description.toLowerCase().includes(search.toLowerCase()) ||
+      project.tech.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (filter === "all") return true;
+    if (filter === "commercial") return project.type === "Commercialized";
+    if (filter === "saas")
+      return ["Full-Stack SaaS", "Deployed", "Microservices"].includes(
+        project.type
+      );
+    if (filter === "emerging") return project.type === "Emerging";
+    return true;
+  });
+
+  const filterTabs = [
+    { id: "all", label: "All Projects" },
+    { id: "commercial", label: "Commercial ERP" },
+    { id: "saas", label: "SaaS & Cloud" },
+    { id: "emerging", label: "Emerging Tech" },
+  ];
+
   return (
     <section
       id="projects"
@@ -334,25 +363,86 @@ export default function ProjectsSection({
       <div className="section-divider max-w-6xl mx-auto mb-32" />
 
       <div className="max-w-6xl mx-auto">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-4xl font-bold mb-2 font-display"
-        >
-          Projects
-        </motion.h2>
-        <p className="mb-16" style={{ color: "var(--text-secondary)" }}>
-          Featured work
-        </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+          <div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="text-3xl md:text-4xl font-bold mb-2 font-display"
+            >
+              Projects
+            </motion.h2>
+            <p style={{ color: "var(--text-secondary)" }}>Featured work</p>
+          </div>
 
-        {projects.length === 0 ? (
-          <div className="text-center py-20 border rounded-2xl border-dashed" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
-            <p className="text-xl font-medium" style={{ color: 'var(--text-secondary)' }}>Projects are brewing...</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Check back later for updates.</p>
+          {/* Search bar & filter wrapper */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-stretch sm:items-center">
+            {/* Search Input */}
+            <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl text-sm transition-all duration-300 contact-input"
+                style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm p-0.5 rounded-full hover:bg-[var(--accent-dim)]"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap gap-2">
+              {filterTabs.map((tab) => {
+                const isActive = filter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilter(tab.id)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border"
+                    style={{
+                      background: isActive
+                        ? "var(--accent)"
+                        : "var(--bg-card)",
+                      color: isActive ? "var(--bg-primary)" : "var(--text-secondary)",
+                      borderColor: isActive ? "var(--accent)" : "var(--border)",
+                      boxShadow: isActive ? "0 2px 8px var(--accent-dim)" : "none",
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {filteredProjects.length === 0 ? (
+          <div
+            className="text-center py-20 border rounded-2xl border-dashed"
+            style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
+          >
+            <p
+              className="text-xl font-medium"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              No matching projects found
+            </p>
+            <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
+              Try adjusting your search keywords or active filter.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {projects.map((project, index) => (
+            {filteredProjects.map((project, index) => (
               <ProjectCard
                 key={project.id}
                 project={project}

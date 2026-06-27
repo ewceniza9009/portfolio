@@ -21,13 +21,13 @@ const experience = [
     location: "Petaluma, San Francisco CA (Remote)",
     position: "Software Developer",
     descriptions: [
-      "Contributed to the development of a flagship ERP platform using WPF, XAML, and the MVVM architectural pattern.",
-      "Built a Work-in-Progress (WIP) manufacturing module with Telerik UI, optimizing data retrieval via LINQ to Entities.",
-      "Designed and deployed an automated backend distribution service for SSRS-based reports.",
-      "Developed financial tools including an Advance Billing module, Aatrix integration for tax compliance, and a real-time Zip Code API.",
-      "Standardized Azure DevOps CI/CD pipelines and Git version control workflows for reliable deployments."
+      "Contributed to the Development of their flagship ERP platform using WPF, XAML, and MVVM. Developed modular systems via Mediator/MEF and run through all development life cycles using Azure DevOps CI/CD pipelines.",
+      "**WIP Module Optimization:** Engineered a high-performance manufacturing module using Telerik UI; optimized data operations with LINQ to Entities to accelerate reporting and tracking accuracy.",
+      "**Reporting & BI:** Designed SSRS-based reports and deployed an automated back-end distribution service, streamlining operational insights for stakeholders.",
+      "**Advanced Feature Engineering:** Developed an Advance Billing module for revenue optimization, integrated Aatrix for 1099 tax compliance, and built a real-time Zip Code API for address validation.",
+      "**DevOps:** Standardized Azure DevOps workflows, utilizing Git and automated CI/CD pipelines to ensure frequent, reliable, and high-quality deployments."
     ],
-    technologies: ["WPF", "XAML", "MVVM", "C#", ".NET", "SQL Server", "SSRS", "Azure DevOps", "Telerik UI"]
+    technologies: ["WPF", "XAML", "MVVM", "Mediator", "MEF", "C#", ".NET", "SQL Server", "SSRS", "Azure DevOps", "Telerik UI"]
   },
   {
     year: "Nov 2016 - Sep 2018",
@@ -35,9 +35,10 @@ const experience = [
     location: "Cebu City, Cebu",
     position: "Lead System Developer",
     descriptions: [
-      "Guided the technical direction and development of commercial software suites, including Cloud FMIS, Cloud HRIS, and Loan Management systems.",
+      "Guided the technical direction and development of commercial software suites, including Cloud FMIS, Cloud HRIS, Loan Management, Point of Sale (POS), and Warehouse Management.",
       "Led hands-on development efforts and established modern development practices.",
-      "Managed product roadmaps, evaluated feature implementations, and maintained source code utilizing GitHub."
+      "Managed product roadmaps, evaluated feature implementations, and maintained source code utilizing GitHub.",
+      "Detailed portfolio showcasing these developed products, including video demonstrations and technical descriptions, is available at: https://ewceniza-portfolio.vercel.app"
     ],
     technologies: ["ASP.NET MVC", "C#", "SQL Server", "GitHub", "Cloud Architecture", "Web API"]
   },
@@ -47,9 +48,9 @@ const experience = [
     location: "Cebu City, Cebu",
     position: "Software Developer / RND",
     descriptions: [
-      "Transitioned from client support to a Research & Development role focused on mobile and cloud innovation.",
-      "Participated in R&D projects utilizing emerging mobile and cloud technologies.",
-      "Supported product development initiatives by applying mobile and cloud technologies."
+      "Rapidly promoted from client support to R&D, specializing in mobile and cloud innovation.",
+      "Led complex R&D projects utilizing emerging mobile and cloud technologies.",
+      "Accelerated product development initiatives through advanced mobile and cloud expertise."
     ],
     technologies: ["C#", ".NET", "Mobile Development", "Cloud Solutions", "SQL Server"]
   }

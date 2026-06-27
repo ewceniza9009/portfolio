@@ -107,9 +107,9 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           <AwardsSection awards={awards} />
           <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
           <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
-          <GitHubSection theme={theme} />
+          <GitHubSection theme={theme} accent={accent} />
           <SkillsSection skills={skills} />
-          <ContactSection />
+          <ContactSection theme={theme} />
         </main>
         <TerminalFooter />
         <Footer onScrollTo={scrollTo} />
@@ -149,6 +149,8 @@ export default function App() {
     root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
     root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
     root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
+    
+    root.setAttribute('data-accent', accent)
     
     setSafeItem('accent', accent)
   }, [accent, theme])

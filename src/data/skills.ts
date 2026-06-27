@@ -28,6 +28,7 @@ const skills: Record<string, { image: string; items: SkillItem[] }> = {
       { name: "Hot Chocolate" },
       { name: "SignalR" },
       { name: "Microsoft Graph API" },
+      { name: "VBA" },
       { name: "Python", icon: SiPython },
       { name: "TensorFlow", icon: SiTensorflow },
       { name: "OpenCV", icon: SiOpencv },
@@ -58,6 +59,7 @@ const skills: Record<string, { image: string; items: SkillItem[] }> = {
     image: "/img/3-thumbnail.jpg",
     items: [
       { name: "MS SQL Server" },
+      { name: "MS Access" },
       { name: "PostgreSQL", icon: SiPostgresql },
       { name: "MongoDB", icon: SiMongodb },
       { name: "MySQL", icon: SiMysql },

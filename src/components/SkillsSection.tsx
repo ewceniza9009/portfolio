@@ -36,6 +36,72 @@ const CATEGORY_HOVER_COLORS: Record<string, { bg: string; color: string }> = {
   practices: { bg: 'rgba(236, 72, 153, 0.12)', color: '#ec4899' },
 }
 
+const BACKGROUND_DECORATIONS: Record<string, React.ReactNode> = {
+  frontend: (
+    <svg className="absolute -bottom-6 -right-6 w-48 h-48 opacity-[0.05] pointer-events-none transform group-hover:scale-105 group-hover:opacity-[0.08] transition-all duration-700" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <rect x="20" y="20" width="160" height="130" rx="8" />
+      <line x1="20" y1="50" x2="180" y2="50" />
+      <rect x="35" y="65" width="40" height="70" rx="4" />
+      <rect x="85" y="65" width="80" height="30" rx="4" />
+      <rect x="85" y="105" width="80" height="30" rx="4" />
+      <circle cx="35" cy="35" r="3" fill="currentColor" />
+      <circle cx="47" cy="35" r="3" fill="currentColor" />
+      <circle cx="59" cy="35" r="3" fill="currentColor" />
+    </svg>
+  ),
+  backend: (
+    <svg className="absolute -bottom-6 -right-6 w-48 h-48 opacity-[0.05] pointer-events-none transform group-hover:scale-105 group-hover:opacity-[0.08] transition-all duration-700" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <rect x="20" y="25" width="160" height="32" rx="4" />
+      <rect x="20" y="72" width="160" height="32" rx="4" />
+      <rect x="20" y="119" width="160" height="32" rx="4" />
+      <circle cx="40" cy="41" r="3" fill="currentColor" />
+      <circle cx="40" cy="88" r="3" fill="currentColor" />
+      <circle cx="40" cy="135" r="3" fill="currentColor" />
+      <path d="M120 41 V 135" strokeDasharray="4 4" />
+      <circle cx="120" cy="41" r="4" fill="currentColor" />
+      <circle cx="120" cy="88" r="4" fill="currentColor" />
+      <circle cx="120" cy="135" r="4" fill="currentColor" />
+    </svg>
+  ),
+  database: (
+    <svg className="absolute -bottom-6 -right-6 w-48 h-48 opacity-[0.05] pointer-events-none transform group-hover:scale-105 group-hover:opacity-[0.08] transition-all duration-700" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M 40 40 C 40 30, 100 30, 100 40 C 100 50, 40 50, 40 40 Z" />
+      <path d="M 40 40 V 80 C 40 90, 100 90, 100 80 V 40" />
+      <path d="M 40 60 C 40 70, 100 70, 100 60" />
+      <path d="M 100 110 C 100 100, 160 100, 160 110 C 160 120, 100 120, 100 110 Z" />
+      <path d="M 100 110 V 150 C 100 160, 160 160, 160 150 V 110" />
+      <path d="M 100 130 C 100 140, 160 140, 160 130" />
+      <path d="M 70 85 C 70 120, 130 90, 130 105" strokeDasharray="4 4" />
+      <circle cx="70" cy="85" r="4" fill="currentColor" />
+      <circle cx="130" cy="105" r="4" fill="currentColor" />
+    </svg>
+  ),
+  tools: (
+    <svg className="absolute -bottom-6 -right-6 w-48 h-48 opacity-[0.05] pointer-events-none transform group-hover:scale-105 group-hover:opacity-[0.08] transition-all duration-700" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M 30 150 H 170" />
+      <circle cx="50" cy="150" r="5" fill="currentColor" />
+      <circle cx="100" cy="150" r="5" fill="currentColor" />
+      <circle cx="150" cy="150" r="5" fill="currentColor" />
+      <path d="M 50 150 Q 75 90, 110 90 H 160" />
+      <circle cx="110" cy="90" r="5" fill="currentColor" />
+      <circle cx="150" cy="90" r="5" fill="currentColor" />
+      <path d="M 100 150 Q 120 40, 140 40 H 160" />
+      <circle cx="145" cy="40" r="5" fill="currentColor" />
+    </svg>
+  ),
+  practices: (
+    <svg className="absolute -bottom-6 -right-6 w-48 h-48 opacity-[0.05] pointer-events-none transform group-hover:scale-105 group-hover:opacity-[0.08] transition-all duration-700" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <polygon points="100,30 160,65 160,135 100,170 40,135 40,65" strokeDasharray="4 4" />
+      <circle cx="100" cy="100" r="35" />
+      <rect x="85" y="85" width="30" height="30" rx="3" />
+      <circle cx="100" cy="100" r="5" fill="currentColor" />
+      <line x1="100" y1="30" x2="100" y2="65" />
+      <line x1="40" y1="100" x2="65" y2="100" />
+      <line x1="160" y1="100" x2="135" y2="100" />
+    </svg>
+  )
+}
+
 interface SkillsSectionProps {
   skills: SkillsData
 }
@@ -43,6 +109,7 @@ interface SkillsSectionProps {
 function SkillTag({ skill, category, index }: { skill: SkillItem; category: string; index: number }) {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
   const [isHovered, setIsHovered] = React.useState(false)
+  const defaultBg = hoverColors ? hoverColors.bg.replace('0.12', '0.04') : 'var(--bg-secondary)'
 
   return (
     <motion.span
@@ -50,11 +117,12 @@ function SkillTag({ skill, category, index }: { skill: SkillItem; category: stri
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: "-10px" }}
       transition={{ delay: index * 0.1, type: 'spring', stiffness: 300, damping: 20 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-default"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-default border transition-all duration-300"
       style={{
-        background: isHovered && hoverColors ? hoverColors.bg : 'var(--bg-secondary)',
+        background: isHovered && hoverColors ? hoverColors.bg : defaultBg,
         color: isHovered && hoverColors ? hoverColors.color : 'var(--text-secondary)',
-        transition: 'all 0.2s ease',
+        borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
+        boxShadow: isHovered ? '0 2px 8px var(--accent-dim)' : 'none',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -137,10 +205,8 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
               </div>
 
               <div className="relative p-6 flex-grow flex flex-col justify-start bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-hover)]/30 overflow-hidden">
-                {/* Subtle Background Icon */}
-                <div className="absolute -bottom-8 -right-8 opacity-[0.03] pointer-events-none transform group-hover:scale-110 group-hover:opacity-[0.05] group-hover:-rotate-6 transition-all duration-700" style={{ color: 'var(--text-primary)' }}>
-                  {CATEGORY_ICONS[category] && React.createElement(CATEGORY_ICONS[category], { size: 180 })}
-                </div>
+                {/* Subtle Background blueprint decoration */}
+                {BACKGROUND_DECORATIONS[category] || null}
 
                 <div className="relative z-10 flex flex-wrap gap-2.5">
                   {data.items.map((skill, skillIndex) => (

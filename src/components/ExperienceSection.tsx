@@ -45,11 +45,10 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
         </div>
 
         {/* Left side code snippet */}
-        <div className="absolute top-[18%] left-[3%] font-mono text-sm leading-none tracking-tight">
-          <div className="blur-[0.5px]"></div>
-          <div className="mt-3 ml-4 text-xs opacity-60 blur-[0.5px]">const</div>
-          <div className="ml-2 text-xs opacity-40 blur-[0.5px]">build</div>
-          <div className="ml-4 text-xs opacity-60 blur-[0.5px]">= ()</div>
+        <div className="absolute top-[18%] left-[3%] font-mono text-xs leading-normal tracking-tight opacity-45 blur-[0.5px]">
+          <div><span className="opacity-70">const</span> build = () =&gt; {'{'}</div>
+          <div className="pl-3 opacity-50">deploy();</div>
+          <div>{'}'}</div>
         </div>
 
         {/* Left side SQL keywords */}
@@ -205,12 +204,25 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
                       <MapPin size={11} /> {exp.location}
                     </p>
                     <ul className="text-sm leading-relaxed mb-4 space-y-2.5" style={{ color: 'var(--text-secondary)' }}>
-                      {exp.descriptions.map((desc, i) => (
-                        <li key={i} className="flex items-start gap-2.5">
-                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />
-                          <span className="flex-1">{desc}</span>
-                        </li>
-                      ))}
+                      {exp.descriptions.map((desc, i) => {
+                        const parts = desc.split(/\*\*(.*?)\*\*/g);
+                        return (
+                          <li key={i} className="flex items-start gap-2.5">
+                            <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />
+                            <span className="flex-1">
+                              {parts.map((part, j) =>
+                                j % 2 === 1 ? (
+                                  <strong key={j} style={{ color: 'var(--text-primary)' }}>
+                                    {part}
+                                  </strong>
+                                ) : (
+                                  <span key={j}>{part}</span>
+                                )
+                              )}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                     
                     {exp.technologies && exp.technologies.length > 0 && (
