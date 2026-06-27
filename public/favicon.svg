@@ -1,23 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" shape-rendering="geometricPrecision">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22c55e"/>
-      <stop offset="100%" stop-color="#16a34a"/>
+    <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f3ca65" />
+      <stop offset="100%" stop-color="#cca03d" />
     </linearGradient>
+    <filter id="badgeShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="0.7" />
+    </filter>
   </defs>
-  <!-- Background -->
-  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#g)"/>
-  <!-- < bracket -->
-  <polyline points="104,192 49,256 104,320" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- E -->
-  <path d="M178,192 L134,192 L134,320 L178,320" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="134" y1="256" x2="172" y2="256" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
-  <!-- W -->
-  <polyline points="208,192 224,320 241,228 258,320 274,192" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- C -->
-  <path d="M344,192 L304,192 L304,320 L344,320" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- / slash -->
-  <line x1="384" y1="192" x2="370" y2="320" stroke="rgba(255,255,255,0.4)" stroke-width="14" stroke-linecap="round"/>
-  <!-- > bracket -->
-  <polyline points="408,192 463,256 408,320" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+
+  {/* Large Outer Hexagon filling 98% of width and 88% of height */}
+  <polygon 
+    points="25,6 75,6 99,50 75,94 25,94 1,50" 
+    stroke="url(#logoGrad1)" 
+    stroke-width="5" 
+    stroke-linejoin="round" 
+    fill="rgba(15, 23, 42, 0.55)"
+    filter="url(#badgeShadow)"
+  />
+
+  {/* Large Inner Hexagon */}
+  <polygon 
+    points="29,13 71,13 92,50 71,87 29,87 8,50" 
+    stroke="url(#logoGrad1)" 
+    stroke-width="1.8" 
+    stroke-linejoin="round" 
+    fill="none"
+    opacity="0.8"
+  />
+
+  {/* Giant Geometric Gold Letter E (Thickness increased to 8px for maximum contrast) */}
+  <path 
+    fill="url(#logoGrad1)" 
+    stroke="url(#logoGrad1)"
+    stroke-width="1.8"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+    d="M32 24 H68 V32 H40 V46 H62 V54 H40 V68 H68 V76 H32 Z"
+  />
 </svg>
