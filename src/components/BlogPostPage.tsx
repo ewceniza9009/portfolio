@@ -401,8 +401,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
           {/* Written By Author Card */}
           <section className="p-6 rounded-3xl border glass mb-16 flex flex-col sm:flex-row items-center gap-5 select-none" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center border bg-shimmer flex-shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-              <User size={32} style={{ color: 'var(--accent)' }} />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+              <img src="/img/profile-pic.png" alt="Erwin Wilson Ceniza" className="w-full h-full object-cover rounded-2xl" />
             </div>
             <div className="text-center sm:text-left space-y-1">
               <h4 className="text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5">
