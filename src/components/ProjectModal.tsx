@@ -411,7 +411,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       className="flex-1 sm:flex-none px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-all hover:scale-105"
                       style={{
                         background: "var(--accent)",
-                        color: "#ffffff",
+                        color: "var(--bg-primary)",
                       }}
                     >
                       <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" /> Live App

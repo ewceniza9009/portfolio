@@ -477,7 +477,7 @@ function AdminPanel() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="p-5 rounded-2xl border flex flex-col" 
-                      style={{ background: 'rgba(243, 202, 101, 0.05)', borderColor: 'var(--accent)' }}
+                      style={{ background: 'var(--accent-dim)', borderColor: 'var(--accent)' }}
                     >
                       <div className="flex items-center justify-between border-b pb-3 mb-3" style={{ borderColor: 'var(--accent)' }}>
                         <div className="flex items-center gap-2">

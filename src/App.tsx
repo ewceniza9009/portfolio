@@ -29,46 +29,17 @@ const setSafeItem = (key: string, value: string): void => {
   try { localStorage.setItem(key, value) } catch {}
 }
 
-function Portfolio() {
+interface PortfolioProps {
+  theme: 'dark' | 'light'
+  toggleTheme: () => void
+  accent: AccentKey
+  setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
+}
+
+function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [activeSection, setActiveSection] = useState('hero')
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window !== 'undefined') {
-      return (getSafeItem('theme') as 'dark' | 'light') || 'dark'
-    }
-    return 'dark'
-  })
-
-  const [accent, setAccent] = useState<AccentKey>(() => {
-    if (typeof window !== 'undefined') {
-      return (getSafeItem('accent') as AccentKey) || 'gold'
-    }
-    return 'gold'
-  })
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    setSafeItem('theme', theme)
-  }, [theme])
-
-  useEffect(() => {
-    const root = document.documentElement
-    const themeSet = ACCENT_THEMES[accent][theme]
-    
-    root.style.setProperty('--accent', themeSet.accent)
-    root.style.setProperty('--accent-hover', themeSet.accentHover)
-    root.style.setProperty('--accent-dim', themeSet.accentDim)
-    root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
-    root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
-    root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
-    
-    setSafeItem('accent', accent)
-  }, [accent, theme])
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
-  }
 
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, {
@@ -149,10 +120,54 @@ function Portfolio() {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      return (getSafeItem('theme') as 'dark' | 'light') || 'dark'
+    }
+    return 'dark'
+  })
+
+  const [accent, setAccent] = useState<AccentKey>(() => {
+    if (typeof window !== 'undefined') {
+      return (getSafeItem('accent') as AccentKey) || 'gold'
+    }
+    return 'gold'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    setSafeItem('theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const themeSet = ACCENT_THEMES[accent][theme]
+    
+    root.style.setProperty('--accent', themeSet.accent)
+    root.style.setProperty('--accent-hover', themeSet.accentHover)
+    root.style.setProperty('--accent-dim', themeSet.accentDim)
+    root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
+    root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
+    root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
+    
+    setSafeItem('accent', accent)
+  }, [accent, theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  }
+
   return (
     <Routes>
       <Route path="/admin" element={<AdminPanel />} />
-      <Route path="*" element={<Portfolio />} />
+      <Route path="*" element={
+        <Portfolio 
+          theme={theme}
+          toggleTheme={toggleTheme}
+          accent={accent}
+          setAccent={setAccent}
+        />
+      } />
     </Routes>
   )
 }
