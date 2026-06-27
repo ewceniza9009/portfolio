@@ -382,7 +382,7 @@ function highlightCode(code: string, lang: string): string {
   return text
 }
 
-export function parseMarkdown(md: string, theme?: 'dark' | 'light', _accent?: AccentKey): React.ReactNode[] {
+export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: AccentKey): React.ReactNode[] {
   if (!md) return []
 
   const result: React.ReactNode[] = []
@@ -392,20 +392,17 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', _accent?: Ac
   let codeLang = ''
   let currentBlock: string[] = []
   let keyIndex = 0
+  let currentBlockType: 'paragraph' | 'list-unordered' | 'list-ordered' | 'none' = 'none'
 
   const flushCurrentBlock = () => {
     if (currentBlock.length > 0) {
       const blockText = currentBlock.join('\n').trim()
       if (blockText) {
-        const subBlocks = blockText.split(/\n\s*\n/)
-        subBlocks.forEach(subBlock => {
-          const trimmed = subBlock.trim()
-          if (!trimmed) return
-          result.push(parseBlock(trimmed, keyIndex++))
-        })
+        result.push(parseBlock(blockText, keyIndex++))
       }
       currentBlock = []
     }
+    currentBlockType = 'none'
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -417,7 +414,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', _accent?: Ac
         // End of code block
         const codeText = codeLines.join('\n')
         if (codeLang.toLowerCase() === 'mermaid') {
-          result.push(<MermaidRenderer key={keyIndex++} code={codeText} theme={theme} />)
+          result.push(<MermaidRenderer key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(
@@ -441,19 +438,34 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', _accent?: Ac
       }
     } else {
       if (trimmedLine.startsWith('```')) {
-        // Start of code block
         flushCurrentBlock()
         inCodeBlock = true
         codeLang = trimmedLine.slice(3).trim()
       } else if (trimmedLine.startsWith('#')) {
-        // Header line
         flushCurrentBlock()
         result.push(parseBlock(trimmedLine, keyIndex++))
       } else if (/^[-*_]{3,}$/.test(trimmedLine)) {
-        // Horizontal Rule
         flushCurrentBlock()
         result.push(<hr key={keyIndex++} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />)
+      } else if (trimmedLine === '') {
+        flushCurrentBlock()
+      } else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+        if (currentBlockType !== 'list-unordered') {
+          flushCurrentBlock()
+          currentBlockType = 'list-unordered'
+        }
+        currentBlock.push(line)
+      } else if (/^\d+\.\s/.test(trimmedLine)) {
+        if (currentBlockType !== 'list-ordered') {
+          flushCurrentBlock()
+          currentBlockType = 'list-ordered'
+        }
+        currentBlock.push(line)
       } else {
+        if (currentBlockType !== 'paragraph' && currentBlockType !== 'none') {
+          flushCurrentBlock()
+        }
+        currentBlockType = 'paragraph'
         currentBlock.push(line)
       }
     }
