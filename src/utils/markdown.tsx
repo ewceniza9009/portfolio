@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { AccentKey } from '../data/accents'
-import mermaid from 'mermaid'
+import { ACCENT_THEMES, AccentKey } from '../data/accents'
 
 interface MermaidRendererProps {
   code: string
   theme?: 'dark' | 'light'
+  accent?: AccentKey
 }
 
-function MermaidRenderer({ code, theme = 'dark' }: MermaidRendererProps) {
+function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
   const [svgHtml, setSvgHtml] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
@@ -20,68 +20,95 @@ function MermaidRenderer({ code, theme = 'dark' }: MermaidRendererProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
   const cleanCode = code.trim()
+  
+  // Resolve active theme colors
+  const accentColors = ACCENT_THEMES[accent]?.[theme] || ACCENT_THEMES.gold[theme]
+  const primaryColor = accentColors.accent
+  const secondaryColor = accentColors.accentSecondary
   const isDark = theme === 'dark'
+
+  // Prepend dynamic theme styling variables inside the Mermaid graph configuration
+  const initConfig = `%%{init: {
+    "theme": "${isDark ? 'dark' : 'neutral'}",
+    "themeVariables": {
+      "fontFamily": "Outfit, Inter, system-ui, -apple-system, sans-serif",
+      "primaryColor": "${isDark ? 'rgba(30, 41, 59, 0.8)' : '#f1f5f9'}",
+      "primaryTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
+      "lineColor": "${isDark ? '#475569' : '#94a3b8'}",
+      "mainBkg": "${isDark ? '#0d1117' : '#ffffff'}",
+      "actorBkg": "${isDark ? 'rgba(30, 41, 59, 0.8)' : '#f8fafc'}",
+      "actorTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
+      "actorLineColor": "${primaryColor}",
+      "signalColor": "${secondaryColor}",
+      "signalTextColor": "${isDark ? '#cbd5e1' : '#475569'}",
+      "labelBoxBkgColor": "${isDark ? '#1e293b' : '#f1f5f9'}",
+      "labelBoxBorderColor": "${primaryColor}",
+      "labelTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
+      "loopLimitColor": "${primaryColor}",
+      "loopLimitTextColor": "${isDark ? '#cbd5e1' : '#475569'}",
+      "noteBkgColor": "${isDark ? '#1e293b' : '#fef08a'}",
+      "noteTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
+      "noteBorderColor": "${primaryColor}"
+    },
+    "sequence": {
+      "actorMargin": 85,
+      "messageMargin": 45,
+      "boxMargin": 15,
+      "noteMargin": 15,
+      "messageFontSize": 11,
+      "actorFontSize": 11,
+      "noteFontSize": 11,
+      "actorFontFamily": "Outfit, Inter, system-ui, sans-serif",
+      "noteFontFamily": "Outfit, Inter, system-ui, sans-serif",
+      "messageFontFamily": "Outfit, Inter, system-ui, sans-serif"
+    }
+  }}%%`
+
+  const formattedCode = `${initConfig}\n${cleanCode}`
 
   useEffect(() => {
     let active = true
     setIsLoading(true)
     setHasError(false)
 
-    ;(async () => {
-      try {
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: isDark ? 'dark' : 'default',
-          fontFamily: 'Outfit, Inter, system-ui, sans-serif',
-          themeVariables: {
-            fontFamily: 'Outfit, Inter, system-ui, sans-serif',
-            lineColor: isDark ? '#475569' : '#94a3b8',
-            mainBkg: isDark ? '#0d1117' : '#ffffff',
-            primaryColor: isDark ? '#1e293b' : '#f1f5f9',
-            primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
-            actorBkg: isDark ? '#1e293b' : '#f8fafc',
-            actorTextColor: isDark ? '#f8fafc' : '#0f172a',
-            signalTextColor: isDark ? '#cbd5e1' : '#475569',
-            labelBoxBkgColor: isDark ? '#1e293b' : '#f1f5f9',
-            labelTextColor: isDark ? '#f8fafc' : '#0f172a',
-            noteBkgColor: isDark ? '#1e293b' : '#fef08a',
-            noteTextColor: isDark ? '#f8fafc' : '#0f172a',
-          },
-          sequence: {
-            actorMargin: 85,
-            messageMargin: 45,
-            boxMargin: 15,
-            noteMargin: 15,
-          },
-        })
-
-        // Render into a temporary hidden element, then extract SVG
-        const el = document.createElement('div')
-        el.className = 'mermaid'
-        el.textContent = cleanCode
-        el.style.display = 'none'
-        document.body.appendChild(el)
-
-        await mermaid.run({ nodes: [el] })
-        const svg = el.innerHTML
-        el.remove()
-
-        if (active) {
-          const styled = svg.replace('<svg ', '<svg style="max-width:100%;height:auto" ')
-          setSvgHtml(styled)
-          setIsLoading(false)
-        }
-      } catch (err) {
-        console.error('[Mermaid] error:', err instanceof Error ? err.message : err)
-        if (active) {
-          setHasError(true)
-          setIsLoading(false)
-        }
+    try {
+      const encoder = new TextEncoder()
+      const bytes = encoder.encode(formattedCode)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
       }
-    })()
+      const base64url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+      const url = `https://mermaid.ink/svg/${base64url}`
+      
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('mermaid.ink returned ' + res.status)
+          return res.text()
+        })
+        .then(svgText => {
+          if (active) {
+            setSvgHtml(svgText)
+            setIsLoading(false)
+          }
+        })
+        .catch(err => {
+          console.warn('[Mermaid] fetch failed:', err)
+          if (active) {
+            setHasError(true)
+            setIsLoading(false)
+          }
+        })
+    } catch (e) {
+      console.warn('[Mermaid] encoding error:', e)
+      setHasError(true)
+      setIsLoading(false)
+    }
 
-    return () => { active = false }
-  }, [cleanCode, isDark])
+    return () => {
+      active = false
+    }
+  }, [formattedCode])
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
