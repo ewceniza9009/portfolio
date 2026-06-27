@@ -11,22 +11,59 @@ export default function VantaBackground() {
   const [accent, setAccent] = useState<AccentKey>(() =>
     (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
   )
+  const [isIntersecting, setIsIntersecting] = useState(true)
 
+  // 1. Intersection Observer to disable WebGL off-screen
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const currentTheme = document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
-      const currentAccent = (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
-      setTheme(currentTheme)
-      setAccent(currentAccent)
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] })
+    if (!vantaRef.current) return
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsIntersecting(entry.isIntersecting)
+    }, { threshold: 0.01 })
+    
+    observer.observe(vantaRef.current)
     return () => observer.disconnect()
   }, [])
 
+  // 2. Mutation Observer with delayed theme switch to keep transitions smooth
+  useEffect(() => {
+    let timeoutId: any;
+    const observer = new MutationObserver(() => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
+      const currentAccent = (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
+      
+      // Delay theme state update if it changed, to avoid blocking startViewTransition animations
+      if (currentTheme !== theme) {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => {
+          setTheme(currentTheme)
+        }, 500)
+      } else {
+        setTheme(currentTheme)
+      }
+      setAccent(currentAccent)
+    })
+    
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] })
+    return () => {
+      observer.disconnect()
+      clearTimeout(timeoutId)
+    }
+  }, [theme])
+
+  // 3. Vanta effect initialization
   useEffect(() => {
     // Check for reduced motion preference
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
+    }
+
+    // If canvas is scrolled off-screen, completely unload WebGL to free GPU
+    if (!isIntersecting) {
+      if (effectRef.current) {
+        effectRef.current.destroy()
+        effectRef.current = null
+      }
+      return
     }
 
     async function init() {
@@ -65,7 +102,7 @@ export default function VantaBackground() {
         effectRef.current = null
       }
     }
-  }, [theme, accent])
+  }, [theme, accent, isIntersecting])
 
   return (
     <div

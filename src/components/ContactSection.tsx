@@ -165,8 +165,8 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
 
   return (
     <section id="contact" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section)' }}>
-      <div className="absolute top-1/2 left-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent)' }} />
-      <div className="absolute top-1/2 right-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] opacity-20 pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
+      <div className="bg-glow-blob absolute top-1/2 left-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] pointer-events-none" style={{ background: 'var(--accent)' }} />
+      <div className="bg-glow-blob absolute top-1/2 right-1/4 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] -translate-y-1/2 rounded-full blur-[100px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
 
       <div className="section-divider max-w-3xl mx-auto mb-32 relative z-10" />
 

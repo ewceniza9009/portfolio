@@ -18,6 +18,8 @@ export default function CursorFollower() {
     let ringX = -100
     let ringY = -100
 
+    let animId: number;
+
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX
       mouseY = e.clientY
@@ -29,7 +31,7 @@ export default function CursorFollower() {
       ringX += (mouseX - ringX) * easing
       ringY += (mouseY - ringY) * easing
       cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
-      requestAnimationFrame(animateRing)
+      animId = requestAnimationFrame(animateRing)
     }
 
     const onMouseOver = (e: MouseEvent) => {
@@ -53,12 +55,12 @@ export default function CursorFollower() {
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseover', onMouseOver)
-    const animFrame = requestAnimationFrame(animateRing)
+    animId = requestAnimationFrame(animateRing)
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseover', onMouseOver)
-      cancelAnimationFrame(animFrame)
+      cancelAnimationFrame(animId)
       cursorRing.remove()
       document.body.classList.remove('custom-cursor-active')
     }

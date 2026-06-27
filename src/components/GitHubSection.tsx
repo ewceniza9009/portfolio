@@ -33,7 +33,7 @@ export default function GitHubSection({ theme = 'dark', accent = 'gold' }: GitHu
     <section id="github" className="py-32 px-6 relative" style={{ background: 'var(--bg-secondary)' }}>
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[50%] rounded-full opacity-10 blur-[100px]" style={{ background: 'var(--accent)' }} />
+        <div className="bg-glow-blob absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[50%] rounded-full blur-[100px]" style={{ background: 'var(--accent)' }} />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10" ref={sectionRef}>

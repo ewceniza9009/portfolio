@@ -67,6 +67,7 @@ function ImageWithFallback({
       alt={alt}
       className={className}
       onError={() => setError(true)}
+      loading="lazy"
     />
   );
 }
@@ -210,6 +211,7 @@ function ProjectCard({
           <video
             ref={videoRef}
             src={project.video}
+            preload="none"
             muted
             loop
             playsInline

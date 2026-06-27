@@ -598,3 +598,13 @@ a {
     cursor: var(--custom-pointer, pointer) !important;
   }
 }
+
+/* ── Glowing Background Blobs ── */
+.bg-glow-blob {
+  opacity: 0.05 !important;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="light"] .bg-glow-blob {
+  opacity: 0 !important;
+}

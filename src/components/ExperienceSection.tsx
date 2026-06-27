@@ -34,8 +34,8 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
       <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_var(--text-primary)_1.5px,_transparent_1.5px)] [background-size:32px_32px] pointer-events-none" />
       
       {/* Subtle glowing accents */}
-      <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full opacity-[0.07] blur-[120px] pointer-events-none" style={{ background: 'var(--accent)' }} />
-      <div className="absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[120px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
+      <div className="bg-glow-blob absolute top-20 -left-20 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'var(--accent)' }} />
+      <div className="bg-glow-blob absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
 
       {/* Tech Doodles / Floating Accents */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ opacity: 0.12, color: 'var(--text-secondary)' }}>

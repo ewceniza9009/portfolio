@@ -208,8 +208,8 @@ export default function App() {
           clipPath: clipPath,
         },
         {
-          duration: 450,
-          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          duration: 350,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
           pseudoElement: '::view-transition-new(root)',
         }
       );
