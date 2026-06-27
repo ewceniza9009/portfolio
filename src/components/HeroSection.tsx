@@ -6,9 +6,7 @@ import {
   ChevronDown,
   ArrowRight,
   Download,
-  BookOpen,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import VantaBackground from "./VantaBackground";
 
 interface HeroSectionProps {
@@ -208,13 +206,7 @@ export default function HeroSection({
             >
               <Download size={18} /> Resume
             </button>
-            <Link
-              to="/blogs"
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
-              style={{ color: "var(--text-primary)" }}
-            >
-              <BookOpen size={18} /> Blog
-            </Link>
+
             <a
               href="https://github.com/ewceniza9009"
               target="_blank"

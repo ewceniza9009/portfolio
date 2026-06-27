@@ -9,6 +9,7 @@ import {
 import { parseMarkdown } from '../utils/markdown'
 import type { AccentKey } from '../data/accents'
 import Logo from './Logo'
+import { Link } from 'react-router-dom'
 
 interface Message {
   id: string
@@ -673,7 +674,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
             <ArrowLeft size={16} />
           </a>
           <div className="flex items-center gap-2">
-            <Logo size={28} className="flex-shrink-0" />
+            <Link to="/" className="flex items-center hover:opacity-85 transition-opacity duration-200">
+              <Logo size={28} className="flex-shrink-0" />
+            </Link>
             <span className="text-xs uppercase tracking-widest opacity-60 border-l pl-3 ml-1.5" style={{ borderColor: 'var(--border)' }}>Dashboard</span>
           </div>
         </div>

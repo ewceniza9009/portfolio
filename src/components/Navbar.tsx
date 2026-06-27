@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Sun, Moon, Palette } from 'lucide-react'
+import { Menu, X, Sun, Moon, Palette, BookOpen, Lock } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 import { ACCENT_THEMES } from '../data/accents'
@@ -124,32 +124,8 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
-              const isBlog = item.toLowerCase() === 'blog'
-              const isActive = isBlog 
-                ? location.pathname.startsWith('/blogs')
-                : (isHomePage && activeSection === item.toLowerCase())
+              const isActive = isHomePage && activeSection === item.toLowerCase()
               
-              if (isBlog) {
-                return (
-                  <Link
-                    key={item}
-                    to="/blogs"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="relative px-4 py-2 text-sm font-medium transition-colors rounded-full"
-                    style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="nav-pill"
-                        className="absolute inset-0 nav-pill"
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">{item}</span>
-                  </Link>
-                )
-              }
-
               return isHomePage ? (
                 <a
                   key={item}
@@ -178,6 +154,37 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
                 </Link>
               )
             })}
+
+            <div className="w-px h-6 mx-3" style={{ background: 'var(--border)' }} />
+
+            {/* Highlighted Blog CTA button */}
+            <Link
+              to="/blogs"
+              className="relative px-4 py-1.5 ml-1 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-1.5 border overflow-hidden group shadow-sm hover:scale-105 active:scale-95 select-none"
+              style={{
+                borderColor: 'var(--accent)',
+                color: location.pathname.startsWith('/blogs') ? 'var(--bg-primary)' : 'var(--accent)',
+                background: location.pathname.startsWith('/blogs') ? 'var(--accent)' : 'var(--accent-dim)',
+                boxShadow: '0 0 12px var(--accent-dim)'
+              }}
+            >
+              <BookOpen size={14} className="group-hover:rotate-6 transition-transform" />
+              <span>Blog</span>
+            </Link>
+
+            {/* Admin Portal Button */}
+            <Link
+              to="/admin"
+              className="relative px-4 py-1.5 ml-2 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-1.5 border overflow-hidden group shadow-sm hover:scale-105 active:scale-95 select-none"
+              style={{
+                borderColor: 'var(--border)',
+                color: location.pathname.startsWith('/admin') ? 'var(--accent)' : 'var(--text-secondary)',
+                background: location.pathname.startsWith('/admin') ? 'var(--accent-dim)' : 'var(--bg-card)',
+              }}
+            >
+              <Lock size={12} className="group-hover:rotate-12 transition-transform" />
+              <span>Admin</span>
+            </Link>
 
             <div className="w-px h-6 mx-3" style={{ background: 'var(--border)' }} />
 
@@ -239,27 +246,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               className="px-6 py-4 flex flex-col gap-1"
             >
               {['hero', ...NAV_ITEMS.map(i => i.toLowerCase())].map((item) => {
-                const isBlog = item === 'blog'
-                const isActive = isBlog 
-                  ? location.pathname.startsWith('/blogs')
-                  : (isHomePage && activeSection === item)
-
-                if (isBlog) {
-                  return (
-                    <Link
-                      key={item}
-                      to="/blogs"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
-                      style={{
-                        color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-                        background: isActive ? 'var(--accent-dim)' : 'transparent',
-                      }}
-                    >
-                      {item}
-                    </Link>
-                  )
-                }
+                const isActive = isHomePage && activeSection === item
 
                 return isHomePage ? (
                   <a
@@ -288,6 +275,37 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
                   </Link>
                 )
               })}
+
+              {/* Mobile Blog Button */}
+              <Link
+                to="/blogs"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-3 mx-3 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl text-center flex items-center justify-center gap-2 border select-none transition-all"
+                style={{
+                  borderColor: 'var(--accent)',
+                  color: location.pathname.startsWith('/blogs') ? 'var(--bg-primary)' : 'var(--accent)',
+                  background: location.pathname.startsWith('/blogs') ? 'var(--accent)' : 'var(--accent-dim)',
+                  boxShadow: '0 0 10px var(--accent-dim)'
+                }}
+              >
+                <BookOpen size={14} />
+                <span>Blog</span>
+              </Link>
+
+              {/* Mobile Admin Button */}
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2 mx-3 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl text-center flex items-center justify-center gap-2 border select-none transition-all"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: location.pathname.startsWith('/admin') ? 'var(--accent)' : 'var(--text-secondary)',
+                  background: location.pathname.startsWith('/admin') ? 'var(--accent-dim)' : 'var(--bg-card)',
+                }}
+              >
+                <Lock size={12} />
+                <span>Admin Portal</span>
+              </Link>
 
               {/* Mobile Accent Selector */}
               <div className="mt-4 pt-4 border-t flex flex-col gap-2.5" style={{ borderColor: 'var(--border)' }}>
