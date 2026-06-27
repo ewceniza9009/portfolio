@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Github, Linkedin, ChevronDown, ArrowRight, Download } from "lucide-react";
+import {
+  Github,
+  Linkedin,
+  ChevronDown,
+  ArrowRight,
+  Download,
+  BookOpen,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import VantaBackground from "./VantaBackground";
 
 interface HeroSectionProps {
@@ -52,7 +60,10 @@ function useTypewriter(
   return text;
 }
 
-export default function HeroSection({ onScrollTo, onViewResume }: HeroSectionProps) {
+export default function HeroSection({
+  onScrollTo,
+  onViewResume,
+}: HeroSectionProps) {
   const typedRole = useTypewriter(ROLES);
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -93,7 +104,7 @@ export default function HeroSection({ onScrollTo, onViewResume }: HeroSectionPro
             <img
               src="/img/profile-pic.png"
               alt="Erwin Wilson Ceniza"
-              className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
@@ -197,6 +208,13 @@ export default function HeroSection({ onScrollTo, onViewResume }: HeroSectionPro
             >
               <Download size={18} /> Resume
             </button>
+            <Link
+              to="/blogs"
+              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
+              style={{ color: "var(--text-primary)" }}
+            >
+              <BookOpen size={18} /> Blog
+            </Link>
             <a
               href="https://github.com/ewceniza9009"
               target="_blank"

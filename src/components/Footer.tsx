@@ -1,3 +1,4 @@
+import { Link, useLocation } from 'react-router-dom'
 import { Github, Linkedin, ArrowUp } from 'lucide-react'
 
 interface FooterProps {
@@ -5,27 +6,57 @@ interface FooterProps {
 }
 
 export default function Footer({ onScrollTo }: FooterProps) {
+  const location = useLocation()
+  const isHomePage = location.pathname === '/' || location.pathname === ''
+
+  const handleBackToTop = () => {
+    if (isHomePage) {
+      onScrollTo('hero')
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
     <footer className="py-8 px-6 border-t" style={{ background: 'var(--bg-section)', borderColor: 'var(--border)' }}>
       <div className="max-w-6xl mx-auto">
         {/* Top row: quick links + back to top */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
           <div className="flex flex-wrap justify-center gap-6">
-            {['Experience', 'Projects', 'Skills', 'Contact'].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                onClick={(e) => { e.preventDefault(); onScrollTo(item.toLowerCase()) }}
-                className="text-sm transition-colors hover:opacity-80"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {item}
-              </a>
-            ))}
+            {isHomePage ? (
+              ['Experience', 'Projects', 'Skills', 'Contact'].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  onClick={(e) => { e.preventDefault(); onScrollTo(item.toLowerCase()) }}
+                  className="text-sm transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {item}
+                </a>
+              ))
+            ) : (
+              <>
+                <Link
+                  to="/"
+                  className="text-sm transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/blogs"
+                  className="text-sm transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Blog
+                </Link>
+              </>
+            )}
           </div>
 
           <button
-            onClick={() => onScrollTo('hero')}
+            onClick={handleBackToTop}
             className="flex items-center gap-2 text-sm font-medium transition-all hover:scale-105"
             style={{ color: 'var(--accent)' }}
             aria-label="Back to top"

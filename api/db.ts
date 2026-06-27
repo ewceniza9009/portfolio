@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client'
+import { seedFirstBlog } from './blogSeed.js'
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL!,
@@ -20,6 +21,38 @@ export async function initDb() {
       created_at TEXT DEFAULT (datetime('now'))
     )
   `)
+  
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS blogs (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      summary TEXT,
+      tags TEXT,
+      published INTEGER DEFAULT 0,
+      likes INTEGER DEFAULT 0,
+      read_time TEXT,
+      cover_image TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS blog_comments (
+      id TEXT PRIMARY KEY,
+      blog_id TEXT NOT NULL,
+      author_name TEXT NOT NULL,
+      author_email TEXT,
+      content TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
+    )
+  `)
+
+  // Run seed function to add first EMR telemetry blog post
+  await seedFirstBlog(turso)
 }
 
 export default turso

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Terminal, X, Minimize2, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 type HistoryLine = {
   type: 'command' | 'response' | 'error';
@@ -306,6 +307,8 @@ export default function TerminalFooter() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragControls = useDragControls();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/' || location.pathname === '';
 
   useEffect(() => {
     if (isOpen && bottomRef.current) {
@@ -510,22 +513,27 @@ export default function TerminalFooter() {
     setInput('');
   };
 
+  if (!isHomePage) return null;
+
   return (
     <>
-      {/* Terminal Toggle Button in Footer */}
+      {/* Terminal Toggle Button (Floating FAB) */}
       {!isOpen && (
-        <div className="flex justify-center pb-8" style={{ background: 'var(--bg-section)' }}>
-          <button
+        <div className="fixed bottom-6 right-6 z-50">
+          <motion.button
             onClick={() => setIsOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-mono border transition-colors hover:opacity-80"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-4 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-xl transition-all hover:brightness-110 select-none"
             style={{ 
               background: 'var(--bg-card)', 
-              borderColor: 'var(--border)',
-              color: 'var(--text-secondary)'
+              borderColor: 'var(--accent)',
+              color: 'var(--accent)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px var(--accent-dim)'
             }}
           >
-            <Terminal size={16} /> Open Terminal
-          </button>
+            <Terminal size={14} /> Terminal
+          </motion.button>
         </div>
       )}
 

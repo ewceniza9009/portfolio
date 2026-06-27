@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Sun, Moon, Palette } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 import { ACCENT_THEMES } from '../data/accents'
 import type { AccentKey } from '../data/accents'
@@ -86,6 +87,8 @@ function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, 
 
 export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo, accent, onChangeAccent }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const location = useLocation()
+  const isHomePage = location.pathname === '/' || location.pathname === ''
 
   const handleNavClick = (item: string) => {
     onScrollTo(item.toLowerCase())
@@ -111,8 +114,33 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
-              const isActive = activeSection === item.toLowerCase()
-              return (
+              const isBlog = item.toLowerCase() === 'blog'
+              const isActive = isBlog 
+                ? location.pathname.startsWith('/blogs')
+                : (isHomePage && activeSection === item.toLowerCase())
+              
+              if (isBlog) {
+                return (
+                  <Link
+                    key={item}
+                    to="/blogs"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="relative px-4 py-2 text-sm font-medium transition-colors rounded-full"
+                    style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-pill"
+                        className="absolute inset-0 nav-pill"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{item}</span>
+                  </Link>
+                )
+              }
+
+              return isHomePage ? (
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
@@ -120,7 +148,6 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
                   className="relative px-4 py-2 text-sm font-medium transition-colors rounded-full"
                   style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }}
                 >
-                  {/* Sliding pill background */}
                   {isActive && (
                     <motion.div
                       layoutId="nav-pill"
@@ -130,6 +157,15 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
                   )}
                   <span className="relative z-10">{item}</span>
                 </a>
+              ) : (
+                <Link
+                  key={item}
+                  to={`/#${item.toLowerCase()}`}
+                  className="relative px-4 py-2 text-sm font-medium transition-colors rounded-full"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <span className="relative z-10">{item}</span>
+                </Link>
               )
             })}
 
@@ -192,20 +228,56 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               animate={{ opacity: 1 }}
               className="px-6 py-4 flex flex-col gap-1"
             >
-              {['hero', ...NAV_ITEMS.map(i => i.toLowerCase())].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item}`}
-                  onClick={(e) => { e.preventDefault(); handleNavClick(item) }}
-                  className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
-                  style={{
-                    color: activeSection === item ? 'var(--accent)' : 'var(--text-secondary)',
-                    background: activeSection === item ? 'var(--accent-dim)' : 'transparent',
-                  }}
-                >
-                  {item}
-                </a>
-              ))}
+              {['hero', ...NAV_ITEMS.map(i => i.toLowerCase())].map((item) => {
+                const isBlog = item === 'blog'
+                const isActive = isBlog 
+                  ? location.pathname.startsWith('/blogs')
+                  : (isHomePage && activeSection === item)
+
+                if (isBlog) {
+                  return (
+                    <Link
+                      key={item}
+                      to="/blogs"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
+                      style={{
+                        color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                        background: isActive ? 'var(--accent-dim)' : 'transparent',
+                      }}
+                    >
+                      {item}
+                    </Link>
+                  )
+                }
+
+                return isHomePage ? (
+                  <a
+                    key={item}
+                    href={`#${item}`}
+                    onClick={(e) => { e.preventDefault(); handleNavClick(item) }}
+                    className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
+                    style={{
+                      color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                      background: isActive ? 'var(--accent-dim)' : 'transparent',
+                    }}
+                  >
+                    {item}
+                  </a>
+                ) : (
+                  <Link
+                    key={item}
+                    to={`/#${item}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-medium capitalize px-3 py-2 rounded-lg transition-colors"
+                    style={{
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {item}
+                  </Link>
+                )
+              })}
 
               {/* Mobile Accent Selector */}
               <div className="mt-4 pt-4 border-t flex flex-col gap-2.5" style={{ borderColor: 'var(--border)' }}>

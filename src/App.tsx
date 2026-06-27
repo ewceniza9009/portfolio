@@ -23,6 +23,8 @@ import { ACCENT_THEMES } from './data/accents'
 import type { AccentKey } from './data/accents'
 import CursorFollower from './components/CursorFollower'
 import ResumeModal from './components/ResumeModal'
+import BlogsPage from './components/BlogsPage'
+import BlogPostPage from './components/BlogPostPage'
 
 
 
@@ -74,6 +76,20 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     })
 
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash) {
+      const id = hash.replace('#', '')
+      const timer = setTimeout(() => {
+        const element = document.getElementById(id)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 800)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   const scrollTo = (id: string) => {
@@ -218,7 +234,9 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/admin" element={<AdminPanel theme={theme} accent={accent} />} />
+      <Route path="/blogs" element={<BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
+      <Route path="/blogs/:slug" element={<BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
       <Route path="*" element={
         <Portfolio 
           theme={theme}
