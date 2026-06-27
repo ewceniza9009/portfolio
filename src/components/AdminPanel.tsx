@@ -4,7 +4,7 @@ import {
   MessageSquare, Send, Loader, LogOut, 
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
-  Trash2, Edit, Plus, FileText, Eye, Heart
+  Trash2, Edit, Plus, FileText, Eye, Heart, Settings
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import type { AccentKey } from '../data/accents'
@@ -76,7 +76,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [loginError, setLoginError] = useState('')
   
   // Dashboard Tab selection
-  const [activeTab, setActiveTab] = useState<'messages' | 'blogs'>('messages')
+  const [activeTab, setActiveTab] = useState<'messages' | 'blogs' | 'settings'>('messages')
 
   // ── Tab 1: Messages State ──
   const [messages, setMessages] = useState<Message[]>([])
@@ -117,6 +117,61 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogSaving, setBlogSaving] = useState(false)
   const [blogDeleting, setBlogDeleting] = useState(false)
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(null)
+
+  // ── Tab 3: System Rotation Settings State ──
+  const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
+    return getSafeItem('rotation_theme_enabled') !== 'false'
+  })
+  const [rotationAccentEnabled, setRotationAccentEnabled] = useState(() => {
+    return getSafeItem('rotation_accent_enabled') === 'true'
+  })
+  const [rotationIntervalHours, setRotationIntervalHours] = useState(() => {
+    return Number(getSafeItem('rotation_interval_hours') || '2')
+  })
+
+  const saveSettings = async (updates: Record<string, string>) => {
+    try {
+      await api('/api/settings', {
+        method: 'POST',
+        body: JSON.stringify(updates)
+      })
+    } catch (err) {
+      console.error('Failed to save settings:', err)
+    }
+  }
+
+  const toggleRotationTheme = async () => {
+    const nextVal = !rotationThemeEnabled
+    setRotationThemeEnabled(nextVal)
+    setSafeItem('rotation_theme_enabled', String(nextVal))
+    if (nextVal) {
+      removeSafeItem('theme')
+    }
+    await saveSettings({ 
+      rotation_theme_enabled: String(nextVal),
+      ...(nextVal ? { theme: '' } : {})
+    })
+  }
+
+  const toggleRotationAccent = async () => {
+    const nextVal = !rotationAccentEnabled
+    setRotationAccentEnabled(nextVal)
+    setSafeItem('rotation_accent_enabled', String(nextVal))
+    if (nextVal) {
+      removeSafeItem('accent')
+    }
+    await saveSettings({ 
+      rotation_accent_enabled: String(nextVal),
+      ...(nextVal ? { accent: '' } : {})
+    })
+  }
+
+  const handleIntervalChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.max(1, Math.min(24, Number(e.target.value) || 2))
+    setRotationIntervalHours(val)
+    setSafeItem('rotation_interval_hours', String(val))
+    await saveSettings({ rotation_interval_hours: String(val) })
+  }
 
   const api = async (path: string, options?: RequestInit) => {
     const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
@@ -203,19 +258,42 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     } catch {}
   }
 
+  const fetchSettings = async () => {
+    try {
+      const res = await api('/api/settings')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.rotation_theme_enabled !== undefined) {
+          setRotationThemeEnabled(data.rotation_theme_enabled === 'true')
+        }
+        if (data.rotation_accent_enabled !== undefined) {
+          setRotationAccentEnabled(data.rotation_accent_enabled === 'true')
+        }
+        if (data.rotation_interval_hours !== undefined) {
+          setRotationIntervalHours(Number(data.rotation_interval_hours))
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err)
+    }
+  }
+
   useEffect(() => {
     if (token) { 
       fetchMessages()
       fetchBlogs()
       fetchModels() 
+      fetchSettings()
     }
   }, [token])
 
   const refreshData = () => {
     if (activeTab === 'messages') {
       fetchMessages()
-    } else {
+    } else if (activeTab === 'blogs') {
       fetchBlogs()
+    } else {
+      fetchSettings()
     }
   }
 
@@ -623,6 +701,17 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
           >
             <FileText size={13} />
             Blog Posts
+          </button>
+          <button
+            onClick={() => { setActiveTab('settings'); setSelected(null); setSelectedBlog(null); }}
+            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            style={{ 
+              background: activeTab === 'settings' ? 'var(--accent)' : 'transparent',
+              color: activeTab === 'settings' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+            }}
+          >
+            <Settings size={13} />
+            Settings
           </button>
         </div>
 
@@ -1402,6 +1491,94 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                 )}
               </div>
             </>
+          )}
+
+          {/* TAB 3: SYSTEM SETTINGS */}
+          {activeTab === 'settings' && (
+            <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden"
+                 style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}>
+              
+              <div className="p-6 border-b shrink-0 flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                <Settings size={18} style={{ color: 'var(--accent)' }} />
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider">System Rotation Settings</h3>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Configure automatic theme and accent rotation schedules for your portfolio</p>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                
+                {/* Section 1: Theme Rotation Toggle */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-8 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Automatic Theme Rotation</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Automatically alternate the portfolio website between Light and Dark mode based on the current hour.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex justify-end">
+                    <button
+                      onClick={toggleRotationTheme}
+                      className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
+                      style={{
+                        background: rotationThemeEnabled ? 'var(--accent-dim)' : 'transparent',
+                        borderColor: rotationThemeEnabled ? 'var(--accent)' : 'var(--border)',
+                        color: rotationThemeEnabled ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {rotationThemeEnabled ? 'Enabled' : 'Disabled'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 2: Accent Color Rotation Toggle */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-8 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Automatic Accent Color Rotation</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Automatically cycle between different branding accent colors (Gold, Blue, Emerald, Crimson, etc.) across the website.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex justify-end">
+                    <button
+                      onClick={toggleRotationAccent}
+                      className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
+                      style={{
+                        background: rotationAccentEnabled ? 'var(--accent-dim)' : 'transparent',
+                        borderColor: rotationAccentEnabled ? 'var(--accent)' : 'var(--border)',
+                        color: rotationAccentEnabled ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {rotationAccentEnabled ? 'Enabled' : 'Disabled'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 3: Rotation Hour Interval */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-8 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Rotation Time Interval (Hours)</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Specify the frequency of automatic changes. For example, setting it to 2 will swap themes/accents every 2 hours.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex items-center justify-end gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={rotationIntervalHours}
+                      onChange={handleIntervalChange}
+                      className="w-20 px-3 py-2 rounded-xl text-xs font-bold text-center border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                    />
+                    <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>hours</span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
           )}
 
         </div>

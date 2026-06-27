@@ -145,22 +145,114 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
-      return (getSafeItem('theme') as 'dark' | 'light') || 'dark'
+      const savedTheme = getSafeItem('theme') as 'dark' | 'light'
+      if (savedTheme) return savedTheme
+    }
+    const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false'
+    if (isThemeRotEnabled) {
+      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2')
+      const hour = new Date().getHours()
+      return Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light'
     }
     return 'dark'
   })
 
   const [accent, setAccent] = useState<AccentKey>(() => {
     if (typeof window !== 'undefined') {
-      return (getSafeItem('accent') as AccentKey) || 'gold'
+      const savedAccent = getSafeItem('accent') as AccentKey
+      if (savedAccent) return savedAccent
+    }
+    const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true'
+    if (isAccentRotEnabled) {
+      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2')
+      const hour = new Date().getHours()
+      const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
+      const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length
+      return accentKeys[accentIndex]
     }
     return 'gold'
   })
 
+  // Load settings from backend Turso database on mount
+  useEffect(() => {
+    async function loadGlobalSettings() {
+      try {
+        const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
+          ? 'http://localhost:3000'
+          : ''
+        const res = await fetch(`${baseUrl}/api/settings`)
+        if (res.ok) {
+          const data = await res.json()
+          
+          if (data.rotation_theme_enabled !== undefined) {
+            setSafeItem('rotation_theme_enabled', data.rotation_theme_enabled)
+          }
+          if (data.rotation_accent_enabled !== undefined) {
+            setSafeItem('rotation_accent_enabled', data.rotation_accent_enabled)
+          }
+          if (data.rotation_interval_hours !== undefined) {
+            setSafeItem('rotation_interval_hours', data.rotation_interval_hours)
+          }
+
+          const isThemeRot = data.rotation_theme_enabled !== 'false'
+          const isAccentRot = data.rotation_accent_enabled === 'true'
+          const interval = Number(data.rotation_interval_hours || '2')
+          
+          const savedTheme = getSafeItem('theme')
+          const savedAccent = getSafeItem('accent')
+          const hour = new Date().getHours()
+
+          if (isThemeRot && !savedTheme) {
+            setTheme(Math.floor(hour / interval) % 2 === 0 ? 'dark' : 'light')
+          }
+          if (isAccentRot && !savedAccent) {
+            const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
+            const accentIndex = Math.floor(hour / interval) % accentKeys.length
+            setAccent(accentKeys[accentIndex])
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load global settings:', err)
+      }
+    }
+    
+    loadGlobalSettings()
+  }, [])
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    setSafeItem('theme', theme)
   }, [theme])
+
+  // Checker to dynamically rotate the theme and/or accent color if enabled and no manual override is set
+  useEffect(() => {
+    const rotateBranding = () => {
+      const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false'
+      const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true'
+      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2')
+
+      const savedTheme = getSafeItem('theme')
+      const savedAccent = getSafeItem('accent')
+      const hour = new Date().getHours()
+
+      // Rotate Theme
+      if (isThemeRotEnabled && !savedTheme) {
+        const targetTheme = Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light'
+        setTheme(targetTheme)
+      }
+
+      // Rotate Accent Color
+      if (isAccentRotEnabled && !savedAccent) {
+        const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
+        const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length
+        const targetAccent = accentKeys[accentIndex]
+        setAccent(targetAccent)
+      }
+    }
+
+    rotateBranding()
+    const interval = setInterval(rotateBranding, 60000) // check every minute
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const root = document.documentElement
@@ -199,7 +291,11 @@ export default function App() {
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (!isAppearanceTransition) {
-      setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      setTheme(prev => {
+        const next = prev === 'dark' ? 'light' : 'dark';
+        setSafeItem('theme', next);
+        return next;
+      });
       return;
     }
 
@@ -211,7 +307,11 @@ export default function App() {
     );
 
     const transition = (document as any).startViewTransition(() => {
-      setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      setTheme(prev => {
+        const next = prev === 'dark' ? 'light' : 'dark';
+        setSafeItem('theme', next);
+        return next;
+      });
     });
 
     transition.ready.then(() => {

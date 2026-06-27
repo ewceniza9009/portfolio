@@ -51,6 +51,21 @@ export async function initDb() {
     )
   `)
 
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `)
+
+  // Seed default settings if they don't exist
+  await turso.execute(`
+    INSERT OR IGNORE INTO settings (key, value) VALUES 
+    ('rotation_theme_enabled', 'true'),
+    ('rotation_accent_enabled', 'false'),
+    ('rotation_interval_hours', '2')
+  `)
+
   // Run seed function to add first EMR telemetry blog post
   await seedFirstBlog(turso)
 }
