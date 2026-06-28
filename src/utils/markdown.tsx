@@ -20,31 +20,12 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
   // Interactive zoom & pan states
   const [scale, setScale] = useState(1)
+  const [initialScale, setInitialScale] = useState(0.55)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const renderId = useRef(0)
   const svgRef = useRef<HTMLDivElement>(null)
-
-  // Auto-fit diagram to viewport after render
-  useEffect(() => {
-    if (!svgHtml || hasError) return
-    const el = svgRef.current
-    if (!el) return
-    const svg = el.querySelector('svg')
-    if (!svg) return
-    const viewBox = svg.getAttribute('viewBox') || svg.getAttribute('viewbox')
-    if (viewBox) {
-      const parts = viewBox.split(/[\s,]+/).filter(Boolean).map(Number)
-      if (parts.length === 4 && parts[2] > 0) {
-        svg.style.maxWidth = `${parts[2]}px`
-      }
-    }
-    
-    // The user requested exactly 55% default zoom
-    setScale(0.55)
-    setPosition({ x: 0, y: 0 })
-  }, [svgHtml, hasError])
 
   const cleanCode = code.trim()
     .replace(/&amp;/g, '&')
@@ -54,6 +35,36 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     .replace(/&#39;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, '/')
+
+  // Auto-fit diagram to viewport after render
+  useEffect(() => {
+    if (!svgHtml || hasError) return
+    const el = svgRef.current
+    if (!el) return
+    const svg = el.querySelector('svg')
+    if (!svg) return
+    let calculatedScale = 0.55
+    const viewBox = svg.getAttribute('viewBox') || svg.getAttribute('viewbox')
+    if (viewBox) {
+      const parts = viewBox.split(/[\s,]+/).filter(Boolean).map(Number)
+      if (parts.length === 4 && parts[2] > 0) {
+        svg.style.maxWidth = `${parts[2]}px`
+        // Detect Left-to-Right by aspect ratio
+        if (parts[2] > parts[3]) {
+          calculatedScale = 0.90
+        }
+      }
+    }
+    
+    // Explicit format override
+    if (/\\b(LR|RL)\\b/.test(cleanCode)) {
+      calculatedScale = 0.90
+    }
+
+    setInitialScale(calculatedScale)
+    setScale(calculatedScale)
+    setPosition({ x: 0, y: 0 })
+  }, [svgHtml, hasError, cleanCode])
 
   // Resolve active theme colors
   const accentColors = ACCENT_THEMES[accent]?.[theme] || ACCENT_THEMES.gold[theme]
@@ -173,7 +184,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   }
 
   const handleReset = () => {
-    setScale(0.55)
+    setScale(initialScale)
     setPosition({ x: 0, y: 0 })
   }
 
