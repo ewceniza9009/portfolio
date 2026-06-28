@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import projects from './data/projects'
 import experience from './data/experience'
@@ -177,13 +177,21 @@ export default function App() {
     return 'gold'
   })
 
-  // Record page visit on mount
+  const location = useLocation()
+
+  // Record page visit on mount and route changes
   useEffect(() => {
     const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
       ? 'http://localhost:3000'
       : ''
-    fetch(`${baseUrl}/api/visit`, { method: 'POST' }).catch(() => {})
-  }, [])
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get('ref') || ''
+    fetch(`${baseUrl}/api/visit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: location.pathname, ref }),
+    }).catch(() => {})
+  }, [location.pathname])
 
   // Load settings from backend Turso database on mount
   useEffect(() => {

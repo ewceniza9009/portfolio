@@ -68,7 +68,20 @@ export async function initDb() {
       country TEXT,
       region TEXT,
       city TEXT,
-      loc TEXT
+      loc TEXT,
+      referrer TEXT,
+      ref TEXT
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS page_visits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ip TEXT NOT NULL,
+      path TEXT,
+      referrer TEXT,
+      ref TEXT,
+      visited_at TEXT DEFAULT (datetime('now'))
     )
   `)
 
@@ -79,11 +92,20 @@ export async function initDb() {
     )
   `)
 
-  // Add geolocation columns to visitors table if they don't exist (safe to ignore if already exist)
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS hourly_visits (
+      hour TEXT PRIMARY KEY,
+      count INTEGER DEFAULT 0
+    )
+  `)
+
+  // Migration: add columns that may not exist yet
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN country TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN region TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN city TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN loc TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN referrer TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN ref TEXT') } catch {}
 
   // Seed default settings if they don't exist
   await turso.execute(`

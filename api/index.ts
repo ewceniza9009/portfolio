@@ -410,7 +410,6 @@ app.post('/api/admin/blogs/generate', authMiddleware, async (req, res) => {
 
 // Geolocation lookup helper
 async function geoLookup(ip: string): Promise<{ country: string; region: string; city: string; loc: string }> {
-  // Skip private/local IPs
   if (!ip || ip === 'unknown' || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
     return { country: '', region: '', city: '', loc: '' }
   }
@@ -429,33 +428,69 @@ async function geoLookup(ip: string): Promise<{ country: string; region: string;
   return { country: '', region: '', city: '', loc: '' }
 }
 
+// Telegram alert helper
+async function sendTelegramAlert(message: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!botToken || !chatId) return
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
+    })
+  } catch {}
+}
+
 // POST record a page visit
 app.post('/api/visit', async (req, res) => {
   try {
     const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim()
     const userAgent = req.headers['user-agent'] || ''
+    const referrer = (req.headers['referer'] as string) || ''
+    const path = req.body?.path || '/'
+    const ref = req.body?.ref || ''
 
     const existing = await turso.execute({
       sql: 'SELECT visit_count, country FROM visitors WHERE ip = ?',
       args: [ip],
     })
 
-    if (existing.rows.length > 0) {
+    const isNew = existing.rows.length === 0
+
+    if (!isNew) {
       await turso.execute({
-        sql: 'UPDATE visitors SET visit_count = visit_count + 1, last_visit = datetime(\'now\'), user_agent = ? WHERE ip = ?',
+        sql: "UPDATE visitors SET visit_count = visit_count + 1, last_visit = datetime('now'), user_agent = ? WHERE ip = ?",
         args: [userAgent, ip],
       })
     } else {
       const geo = await geoLookup(ip)
       await turso.execute({
-        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?)',
-        args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc],
+        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc, referrer, ref) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?, ?, ?)',
+        args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc, referrer, ref],
       })
+
+      // Telegram alert for new visitor
+      const locStr = [geo.city, geo.region, geo.country].filter(Boolean).join(', ') || 'Unknown location'
+      const refStr = ref ? ` (ref: ${ref})` : referrer ? ` (via ${new URL(referrer).hostname})` : ''
+      sendTelegramAlert(`👤 <b>New visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
     }
+
+    // Log individual page visit
+    await turso.execute({
+      sql: 'INSERT INTO page_visits (ip, path, referrer, ref) VALUES (?, ?, ?, ?)',
+      args: [ip, path, referrer, ref],
+    })
 
     // Daily visit counter
     await turso.execute({
       sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
+      args: [],
+    })
+
+    // Hourly visit counter
+    await turso.execute({
+      sql: 'INSERT INTO hourly_visits (hour, count) VALUES (strftime(\'%Y-%m-%d %H:00\', \'now\'), 1) ON CONFLICT(hour) DO UPDATE SET count = count + 1',
       args: [],
     })
 
@@ -471,10 +506,29 @@ app.get('/api/visitors', authMiddleware, async (_req, res) => {
   try {
     const visitors = await turso.execute('SELECT * FROM visitors ORDER BY last_visit DESC')
     const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
-    res.json({ visitors: visitors.rows, daily: daily.rows })
+    const hourly = await turso.execute('SELECT * FROM hourly_visits ORDER BY hour DESC LIMIT 48')
+    res.json({ visitors: visitors.rows, daily: daily.rows, hourly: hourly.rows })
   } catch (err) {
     console.error('Fetch visitors error:', err)
     res.status(500).json({ error: 'Failed to fetch visitors' })
+  }
+})
+
+// GET visitor CSV export (protected)
+app.get('/api/visitors/export', authMiddleware, async (_req, res) => {
+  try {
+    const result = await turso.execute('SELECT ip, visit_count, first_visit, last_visit, country, region, city, referrer, ref, user_agent FROM visitors ORDER BY last_visit DESC')
+    const rows = result.rows as any[]
+    const header = 'IP,Visits,First Visit,Last Visit,Country,Region,City,Referrer,Ref,User Agent'
+    const csv = [header, ...rows.map(r =>
+      [r.ip, r.visit_count, r.first_visit, r.last_visit, r.country || '', r.region || '', r.city || '', r.referrer || '', r.ref || '', `"${(r.user_agent || '').replace(/"/g, '""')}"`].join(',')
+    )].join('\n')
+    res.setHeader('Content-Type', 'text/csv')
+    res.setHeader('Content-Disposition', 'attachment; filename="visitors.csv"')
+    res.send(csv)
+  } catch (err) {
+    console.error('Export visitors error:', err)
+    res.status(500).json({ error: 'Failed to export visitors' })
   }
 })
 

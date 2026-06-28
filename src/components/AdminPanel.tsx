@@ -123,7 +123,51 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   // ── Visitor Analytics State ──
   const [visitors, setVisitors] = useState<any[]>([])
   const [dailyVisits, setDailyVisits] = useState<any[]>([])
+  const [hourlyVisits, setHourlyVisits] = useState<any[]>([])
   const [visitorLoading, setVisitorLoading] = useState(false)
+
+  function parseUA(ua: string) {
+    const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+    const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua) && !isMobile
+    const device = isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Desktop'
+    let browser = 'Other'
+    if (/Chrome/i.test(ua) && !/Edg|OPR/i.test(ua)) browser = 'Chrome'
+    else if (/Firefox/i.test(ua)) browser = 'Firefox'
+    else if (/Safari/i.test(ua) && !/Chrome|Edg/i.test(ua)) browser = 'Safari'
+    else if (/Edg/i.test(ua)) browser = 'Edge'
+    else if (/OPR/i.test(ua)) browser = 'Opera'
+    let os = 'Other'
+    if (/Windows/i.test(ua)) os = 'Windows'
+    else if (/Mac OS|macOS/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) os = 'macOS'
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS'
+    else if (/Android/i.test(ua)) os = 'Android'
+    else if (/Linux/i.test(ua)) os = 'Linux'
+    return { device, browser, os }
+  }
+
+  function processUAStats(visitors: any[]) {
+    const deviceCount: Record<string, number> = {}
+    const browserCount: Record<string, number> = {}
+    const osCount: Record<string, number> = {}
+    visitors.forEach((v: any) => {
+      const parsed = parseUA(v.user_agent || '')
+      deviceCount[parsed.device] = (deviceCount[parsed.device] || 0) + Number(v.visit_count || 1)
+      browserCount[parsed.browser] = (browserCount[parsed.browser] || 0) + Number(v.visit_count || 1)
+      osCount[parsed.os] = (osCount[parsed.os] || 0) + Number(v.visit_count || 1)
+    })
+    return { deviceCount, browserCount, osCount }
+  }
+
+  function processCountryStats(visitors: any[]) {
+    const countryCount: Record<string, number> = {}
+    visitors.forEach((v: any) => {
+      const country = v.country || 'Unknown'
+      countryCount[country] = (countryCount[country] || 0) + Number(v.visit_count || 1)
+    })
+    return Object.entries(countryCount)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+  }
 
   // ── Tab 3: System Settings State ──
   const [defaultTheme, setDefaultTheme] = useState<'dark' | 'light' | null>(() => {
@@ -196,6 +240,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         const data = await res.json()
         setVisitors(data.visitors || [])
         setDailyVisits(data.daily || [])
+        setHourlyVisits(data.hourly || [])
       }
     } catch (err) {
       console.error('Failed to fetch visitors:', err)
@@ -204,8 +249,27 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   }, [])
 
+  const exportCSV = useCallback(async () => {
+    try {
+      const res = await api('/api/visitors/export')
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'visitors.csv'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch (err) {
+      console.error('CSV export failed:', err)
+    }
+  }, [])
+
   useEffect(() => {
-    if (activeTab === 'settings') {
+    if (activeTab === 'settings' || activeTab === 'analytics') {
       fetchVisitors()
     }
   }, [activeTab, fetchVisitors])
@@ -1771,11 +1835,24 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                   <RefreshCw size={12} className={visitorLoading ? 'animate-spin' : ''} />
                   {visitorLoading ? 'Loading...' : 'Refresh'}
                 </button>
+                <button
+                  onClick={exportCSV}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
+                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                >
+                  CSV
+                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 {visitorLoading ? (
                   <div className="p-10 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading visitor data...</div>
+                ) : visitors.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="text-4xl mb-4">🌐</div>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>No visitor data yet</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Visit your portfolio to start tracking analytics.</p>
+                  </div>
                 ) : (
                   <>
                     {/* Summary Cards */}
@@ -1794,70 +1871,137 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       ))}
                     </div>
 
-                    {/* Daily Visits Chart */}
-                    {dailyVisits.length > 0 && (
-                      <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic (Last 14 Days)</h4>
-                        <ResponsiveContainer width="100%" height={220}>
-                          <BarChart data={dailyVisits.slice(0, 14).reverse()}>
-                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
-                            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={28} />
-                            <Tooltip
-                              contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12 }}
-                              labelFormatter={(v: any) => String(v)}
-                            />
-                            <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
+                    {/* Daily Visits + Peak Hours */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {dailyVisits.length > 0 && (
+                        <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic</h4>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={dailyVisits.slice(0, 14).reverse()}>
+                              <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
+                              <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={24} />
+                              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
+                              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                      {hourlyVisits.length > 0 && (
+                        <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Peak Hours (Last 48h)</h4>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={[...hourlyVisits].reverse()}>
+                              <XAxis dataKey="hour" tick={{ fontSize: 8, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(11, 16)} axisLine={false} tickLine={false} />
+                              <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={24} />
+                              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
+                              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Top Visitors Table with Location */}
-                    {visitors.length > 0 && (
-                      <div className="rounded-2xl border overflow-hidden bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider p-5 pb-0" style={{ color: 'var(--text-muted)' }}>Visitor Log</h4>
-                        <div className="overflow-x-auto p-5 pt-3">
-                          <table className="w-full text-[11px]">
-                            <thead>
-                              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Location</th>
-                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>IP</th>
-                                <th className="text-right p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Visits</th>
-                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>First Visit</th>
-                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Last Visit</th>
-                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Device</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {[...visitors].sort((a: any, b: any) => Number(b.visit_count) - Number(a.visit_count)).slice(0, 20).map((v: any, i: number) => {
-                                const loc = [v.city, v.region].filter(Boolean).join(', ') || (v.country || '—')
-                                return (
-                                  <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
-                                    <td className="p-3">
-                                      <span className="font-semibold">{loc}</span>
-                                      {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
-                                    </td>
-                                    <td className="p-3 font-mono opacity-70">{v.ip}</td>
-                                    <td className="p-3 text-right font-bold" style={{ color: 'var(--accent)' }}>{v.visit_count}</td>
-                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.first_visit?.replace('T', ' ')?.slice(0, 16)}</td>
-                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.last_visit?.replace('T', ' ')?.slice(0, 16)}</td>
-                                    <td className="p-3 max-w-[120px] truncate" style={{ color: 'var(--text-muted)' }} title={v.user_agent}>{v.user_agent?.slice(0, 40) || '—'}</td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
+                    {/* Country / Device / Browser */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Country</h4>
+                        <div className="space-y-2">
+                          {processCountryStats(visitors).slice(0, 8).map((c: any) => (
+                            <div key={c.name} className="flex items-center gap-3">
+                              <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{c.count}</span>
+                              <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+                                <div className="h-full rounded-md" style={{ width: `${Math.min(100, (c.count / Math.max(...processCountryStats(visitors).slice(0, 8).map((x: any) => x.count))) * 100)}%`, background: 'var(--accent)' }} />
+                              </div>
+                              <span className="text-[10px] w-24 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    )}
-
-                    {visitors.length === 0 && (
-                      <div className="text-center py-16">
-                        <div className="text-4xl mb-4">🌐</div>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>No visitor data yet</p>
-                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Visit your portfolio to start tracking analytics.</p>
+                      <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Device</h4>
+                        <div className="space-y-2">
+                          {Object.entries(processUAStats(visitors).deviceCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
+                            const total = Object.values(processUAStats(visitors).deviceCount).reduce((s: number, v: any) => s + v, 0) as number
+                            const icons: Record<string, string> = { Desktop: '🖥', Mobile: '📱', Tablet: '📟' }
+                            return (
+                              <div key={name} className="flex items-center gap-3">
+                                <span className="text-sm">{icons[name] || '?'}</span>
+                                <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
+                                <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+                                  <div className="h-full rounded-md" style={{ width: `${(count / total) * 100}%`, background: 'var(--accent)' }} />
+                                </div>
+                                <span className="text-[10px] w-12 text-right" style={{ color: 'var(--text-secondary)' }}>{name}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
-                    )}
+                      <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Browser</h4>
+                        <div className="space-y-2">
+                          {Object.entries(processUAStats(visitors).browserCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
+                            const total = Object.values(processUAStats(visitors).browserCount).reduce((s: number, v: any) => s + v, 0) as number
+                            return (
+                              <div key={name} className="flex items-center gap-3">
+                                <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
+                                <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+                                  <div className="h-full rounded-md" style={{ width: `${(count / total) * 100}%`, background: 'var(--accent)' }} />
+                                </div>
+                                <span className="text-[10px] w-16 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{name}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visitor Log Table */}
+                    <div className="rounded-2xl border overflow-hidden bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider p-5 pb-0" style={{ color: 'var(--text-muted)' }}>Visitor Log</h4>
+                      <div className="overflow-x-auto p-5 pt-3">
+                        <table className="w-full text-[11px]">
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Location</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>IP</th>
+                              <th className="text-right p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Visits</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Referrer</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Ref</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>First Visit</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Last Visit</th>
+                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Device</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...visitors].sort((a: any, b: any) => Number(b.visit_count) - Number(a.visit_count)).map((v: any, i: number) => {
+                              const loc = [v.city, v.region].filter(Boolean).join(', ') || (v.country || '—')
+                              const pua = parseUA(v.user_agent || '')
+                              let refDisplay = v.referrer || ''
+                              try { refDisplay = refDisplay ? new URL(refDisplay).hostname : '' } catch {}
+                              return (
+                                <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                  <td className="p-3">
+                                    <span className="font-semibold">{loc}</span>
+                                    {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
+                                  </td>
+                                  <td className="p-3 font-mono opacity-70">{v.ip}</td>
+                                  <td className="p-3 text-right font-bold" style={{ color: 'var(--accent)' }}>{v.visit_count}</td>
+                                  <td className="p-3 max-w-[80px] truncate" style={{ color: 'var(--text-secondary)' }} title={v.referrer || ''}>{refDisplay || '—'}</td>
+                                  <td className="p-3">
+                                    {v.ref ? <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>{v.ref}</span> : '—'}
+                                  </td>
+                                  <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.first_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                  <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.last_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                  <td className="p-3" style={{ color: 'var(--text-muted)' }}>
+                                    <span title={`${pua.browser} / ${pua.os}`}>{pua.device}</span>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
