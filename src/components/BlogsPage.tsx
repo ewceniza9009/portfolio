@@ -394,6 +394,69 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                 ))}
               </div>
             </div>
+          ) : blogs.length === 0 ? (
+            <div className="space-y-16">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20 rounded-3xl border relative overflow-hidden flex flex-col items-center justify-center" 
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[var(--accent)] rounded-full blur-[100px] opacity-[0.05] pointer-events-none" />
+                
+                <div className="relative z-10 w-20 h-20 rounded-3xl flex items-center justify-center mb-6 border" style={{ background: 'color-mix(in srgb, var(--bg-secondary) 50%, transparent)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                  <BookOpen size={32} />
+                </div>
+                
+                <h3 className="relative z-10 text-2xl font-bold mb-3 tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  No Articles Published
+                </h3>
+                <p className="relative z-10 text-sm max-w-md mx-auto mb-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  There are currently no blog posts available in the database. Check back soon for new technical deep-dives and architectural writeups!
+                </p>
+              </motion.div>
+
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-lg font-bold tracking-tight">Coming Soon</h2>
+                  <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {Array.from({ length: 3 }).map((_, placeholderIdx) => (
+                    <motion.div
+                      key={`empty-placeholder-${placeholderIdx}`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 0.85, scale: 1 }}
+                      transition={{ duration: 0.5, delay: placeholderIdx * 0.05 }}
+                      className="flex flex-col justify-between rounded-3xl border border-dashed p-6 min-h-[360px] select-none relative group overflow-hidden"
+                      style={{ borderColor: 'var(--border)' }}
+                    >
+                      <div className="space-y-4 relative z-10">
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-40 border" style={{ background: 'color-mix(in srgb, var(--bg-secondary) 50%, transparent)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                          <BookOpen size={16} />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                            {placeholderIdx === 0 ? 'Writing in Progress...' : placeholderIdx === 1 ? 'Next Case Study Drafting...' : 'Researching New Topics...'}
+                          </h3>
+                          <p className="text-xs leading-relaxed font-medium opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                            {placeholderIdx === 0 
+                              ? 'Drafting the next deep-dive on telemetry loops, scalable architectures, and advanced full-stack systems.' 
+                              : placeholderIdx === 1
+                              ? 'Fleshing out database schema autopsies, microservices migration reports, and cloud platform integrations.'
+                              : 'Exploring the latest trends in software engineering, AI integration, and high-performance computing.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-6 border-t relative z-10 flex items-center justify-between text-[10px] font-bold tracking-widest uppercase opacity-50" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                        <span>Article</span>
+                        <span>Coming Soon</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
           ) : filteredBlogs.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
