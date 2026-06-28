@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap } from 'lucide-react'
+import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap, Activity, Zap, Palette, Coffee, Lightbulb, Gamepad2, Briefcase } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
@@ -105,6 +105,41 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
       icon: <Shield size={13} />,
       gradient: 'from-rose-500/80 to-red-500/80',
       chipGradient: 'from-rose-500/20 to-red-500/20'
+    },
+    Career: {
+      icon: <Briefcase size={13} />,
+      gradient: 'from-blue-500/80 to-indigo-500/80',
+      chipGradient: 'from-blue-500/20 to-indigo-500/20'
+    },
+    Workflow: {
+      icon: <Activity size={13} />,
+      gradient: 'from-teal-500/80 to-emerald-500/80',
+      chipGradient: 'from-teal-500/20 to-emerald-500/20'
+    },
+    Productivity: {
+      icon: <Zap size={13} />,
+      gradient: 'from-yellow-500/80 to-amber-500/80',
+      chipGradient: 'from-yellow-500/20 to-amber-500/20'
+    },
+    Design: {
+      icon: <Palette size={13} />,
+      gradient: 'from-pink-500/80 to-rose-500/80',
+      chipGradient: 'from-pink-500/20 to-rose-500/20'
+    },
+    Life: {
+      icon: <Coffee size={13} />,
+      gradient: 'from-orange-500/80 to-amber-500/80',
+      chipGradient: 'from-orange-500/20 to-amber-500/20'
+    },
+    Thoughts: {
+      icon: <Lightbulb size={13} />,
+      gradient: 'from-violet-500/80 to-purple-500/80',
+      chipGradient: 'from-violet-500/20 to-purple-500/20'
+    },
+    Hobbies: {
+      icon: <Gamepad2 size={13} />,
+      gradient: 'from-fuchsia-500/80 to-pink-500/80',
+      chipGradient: 'from-fuchsia-500/20 to-pink-500/20'
     },
     General: {
       icon: <Folder size={13} />,

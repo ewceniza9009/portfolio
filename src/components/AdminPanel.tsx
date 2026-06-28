@@ -1487,6 +1487,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 <option value="DevOps">DevOps</option>
                                 <option value="Security">Security</option>
                                 <option value="Career">Career</option>
+                                <option value="Workflow">Workflow</option>
+                                <option value="Productivity">Productivity</option>
+                                <option value="Design">Design</option>
+                                <option value="Life">Life</option>
+                                <option value="Thoughts">Thoughts</option>
+                                <option value="Hobbies">Hobbies</option>
                               </select>
                             </div>
                             <div>
