@@ -167,12 +167,23 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setModalScale(1.5)
     setModalPosition({ x: 0, y: 0 })
     setShowModal(true)
+    document.body.style.overflow = 'hidden'
   }
 
   const handleCloseModal = () => {
     setShowModal(false)
     setModalPosition({ x: 0, y: 0 })
+    document.body.style.overflow = ''
   }
+
+  useEffect(() => {
+    if (!showModal) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleCloseModal()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showModal])
 
   const handleModalZoomIn = () => {
     setModalScale(prev => Math.min(5, prev + 0.3))
@@ -199,6 +210,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
   // Modal mouse/touch drag
   const handleModalMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation()
     setModalIsDragging(true)
     setModalDragStart({ x: e.clientX - modalPosition.x, y: e.clientY - modalPosition.y })
   }
@@ -341,7 +353,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
         {/* Viewport Frame */}
         <div 
-          className="w-full h-[360px] md:h-[420px] overflow-hidden flex items-center justify-center p-6 relative cursor-grab active:cursor-grabbing"
+          className="w-full h-[360px] md:h-[420px] overflow-auto flex items-start justify-center p-6 relative cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -397,43 +409,45 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
       {showModal && (
         <div
           className="fixed inset-0 z-[9999] flex flex-col"
-          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
-          onClick={handleCloseModal}
+          style={{ background: isDark ? '#0a0a0f' : '#ffffff', overflow: 'hidden' }}
         >
           <div
-            className="flex items-center justify-between px-4 py-3 shrink-0 select-none"
-            onClick={e => e.stopPropagation()}
+            className="flex items-center justify-between px-5 py-3 shrink-0 select-none"
+            style={{
+              background: isDark ? '#1a1a2e' : '#f1f5f9',
+              borderBottom: '1px solid ' + (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')
+            }}
           >
-            <span className="text-xs font-mono text-white/50 tracking-wider uppercase">
+            <span className="text-xs font-mono tracking-wider uppercase font-semibold" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
               Diagram Viewer
             </span>
-            <div className="flex items-center gap-2">
-              <button onClick={handleModalZoomOut} title="Zoom Out" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                <Minus size={16} />
+            <div className="flex items-center gap-1">
+              <button onClick={handleModalZoomOut} title="Zoom Out" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
+                <Minus size={15} />
               </button>
-              <span className="text-xs font-mono text-white/70 w-10 text-center">
+              <span className="text-xs font-mono w-10 text-center font-medium" style={{ color: isDark ? '#94a3b8' : '#475569' }}>
                 {Math.round(modalScale * 100)}%
               </span>
-              <button onClick={handleModalZoomIn} title="Zoom In" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                <Plus size={16} />
+              <button onClick={handleModalZoomIn} title="Zoom In" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
+                <Plus size={15} />
               </button>
-              <div className="w-px h-5 bg-white/15" />
-              <button onClick={handleModalReset} title="Reset View" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                <RotateCcw size={16} />
+              <div className="w-px h-5 mx-1.5" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+              <button onClick={handleModalReset} title="Reset View" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
+                <RotateCcw size={15} />
               </button>
-              <button onClick={handleDownloadSvg} title="Download SVG" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                <Download size={16} />
+              <button onClick={handleDownloadSvg} title="Download SVG" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
+                <Download size={15} />
               </button>
-              <div className="w-px h-5 bg-white/15" />
-              <button onClick={handleCloseModal} title="Close" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                <X size={18} />
+              <div className="w-px h-5 mx-1.5" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+              <button onClick={handleCloseModal} title="Close" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-red-500/15" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
+                <X size={17} />
               </button>
             </div>
           </div>
           <div
             ref={modalRef}
             className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing"
-            onClick={e => e.stopPropagation()}
+            style={{ background: isDark ? '#0a0a0f' : '#f8fafc' }}
             onMouseDown={handleModalMouseDown}
             onMouseMove={handleModalMouseMove}
             onMouseUp={handleModalMouseUp}
@@ -452,12 +466,6 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
                 dangerouslySetInnerHTML={{ __html: svgHtml }}
               />
             </div>
-          </div>
-          <div
-            className="px-4 py-2 text-center text-[10px] font-mono text-white/30 tracking-wider uppercase shrink-0 select-none"
-            onClick={e => e.stopPropagation()}
-          >
-            Drag to pan &middot; Scroll to zoom &middot; Use controls above
           </div>
         </div>
       )}
