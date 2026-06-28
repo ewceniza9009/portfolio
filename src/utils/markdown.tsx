@@ -35,12 +35,9 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     const rect = svg.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return
     const containerW = el.closest('.cursor-grab')?.clientWidth || 800
-    const containerH = el.closest('.cursor-grab')?.clientHeight || 360
     const padX = 48
-    const padY = 48
-    const fitW = (containerW - padX) / rect.width
-    const fitH = (containerH - padY) / rect.height
-    const fit = Math.min(fitW, fitH, 1)
+    const fitW = Math.min((containerW - padX) / rect.width, 1)
+    const fit = Math.max(fitW, 0.5)
     setScale(Math.round(fit * 100) / 100)
     setPosition({ x: 0, y: 0 })
   }, [svgHtml, hasError])
