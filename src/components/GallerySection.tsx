@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   X, ChevronLeft, ChevronRight 
 } from 'lucide-react'
+import { GALLERY_DESCRIPTIONS } from '../data/gallery-descriptions'
 
 interface GalleryImage {
   id: string
@@ -11,14 +12,14 @@ interface GalleryImage {
   project: string
 }
 
-const PROJECTS: Record<string, { descriptions: string[]; count: number }> = {
-  CloudPallet: { descriptions: Array.from({ length: 20 }, (_, i) => `CloudPallet screenshot ${i + 1}`), count: 16 },
-  Dev2ndBrain: { descriptions: Array.from({ length: 10 }, (_, i) => `Dev2ndBrain screenshot ${i + 1}`), count: 6 },
-  Halkyone: { descriptions: Array.from({ length: 30 }, (_, i) => `Halkyone screenshot ${i + 1}`), count: 28 },
-  JsPlay: { descriptions: Array.from({ length: 10 }, (_, i) => `JsPlay screenshot ${i + 1}`), count: 4 },
-  NexPoint: { descriptions: Array.from({ length: 20 }, (_, i) => `NexPoint screenshot ${i + 1}`), count: 17 },
-  OppStack: { descriptions: Array.from({ length: 10 }, (_, i) => `OppStack screenshot ${i + 1}`), count: 3 },
-  SmashElite: { descriptions: Array.from({ length: 25 }, (_, i) => `SmashElite screenshot ${i + 1}`), count: 20 }
+const PROJECTS: Record<string, { count: number }> = {
+  CloudPallet: { count: 16 },
+  Dev2ndBrain: { count: 6 },
+  Halkyone: { count: 28 },
+  JsPlay: { count: 4 },
+  NexPoint: { count: 17 },
+  OppStack: { count: 3 },
+  SmashElite: { count: 20 }
 }
 
 const PROJECT_ORDER = ['Halkyone', 'NexPoint', 'CloudPallet', 'SmashElite', 'Dev2ndBrain', 'OppStack', 'JsPlay']
@@ -27,12 +28,12 @@ const IMAGES_PER_PAGE = 10
 function buildGalleryImages(): GalleryImage[] {
   const images: GalleryImage[] = []
   PROJECT_ORDER.forEach(project => {
-    const info = PROJECTS[project]
-    for (let i = 1; i <= info.count; i++) {
+    const count = PROJECTS[project].count
+    for (let i = 1; i <= count; i++) {
       images.push({
         id: `${project.toLowerCase()}-${i}`,
         src: `/gallery/${project}/${i}.png`,
-        alt: info.descriptions[(i - 1) % info.descriptions.length],
+        alt: GALLERY_DESCRIPTIONS[project]?.[i] || `${project} screenshot ${i}`,
         project
       })
     }
