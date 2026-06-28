@@ -159,7 +159,7 @@ export default function GallerySection() {
                 return (
                 <div
                   key={image.id}
-                  className={`relative rounded-xl overflow-hidden cursor-pointer group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 hover:z-10 transition-all duration-500
+                  className={`relative rounded-xl overflow-hidden cursor-pointer clickable-item group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 hover:z-10 transition-all duration-500
                     ${isFeatured ? 'col-span-2 row-span-2 md:col-span-2 md:row-span-2' : ''}
                     ${isWide ? 'col-span-2 row-span-1' : ''}
                     ${isTall ? 'col-span-1 row-span-2' : ''}

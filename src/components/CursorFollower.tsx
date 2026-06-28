@@ -53,13 +53,57 @@ export default function CursorFollower() {
       }
     }
 
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const isHoverable = 
+        target.tagName === 'A' || 
+        target.tagName === 'BUTTON' || 
+        target.closest('a') || 
+        target.closest('button') || 
+        target.closest('.project-card') || 
+        target.closest('.contact-card') ||
+        target.closest('.contact-input') ||
+        target.closest('.clickable-item')
+
+      if (isHoverable) {
+        createBurst(e.clientX, e.clientY)
+      }
+    }
+
+    const createRipple = (x: number, y: number, delay: number = 0) => {
+      setTimeout(() => {
+        const ripple = document.createElement('div')
+        ripple.className = 'click-ripple'
+        ripple.style.left = `${x}px`
+        ripple.style.top = `${y}px`
+        document.body.appendChild(ripple)
+        
+        const animation = ripple.animate([
+          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.6, borderWidth: '2px' },
+          { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0, borderWidth: '0px' }
+        ], {
+          duration: 1200,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+        })
+        
+        animation.onfinish = () => ripple.remove()
+      }, delay)
+    }
+
+    const createBurst = (x: number, y: number) => {
+      createRipple(x, y, 0)
+      createRipple(x, y, 250) // Second ripple 250ms later
+    }
+
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseover', onMouseOver)
+    window.addEventListener('click', onClick)
     animId = requestAnimationFrame(animateRing)
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseover', onMouseOver)
+      window.removeEventListener('click', onClick)
       cancelAnimationFrame(animId)
       cursorRing.remove()
       document.body.classList.remove('custom-cursor-active')

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Monitor, Server, Database, Wrench, Lightbulb } from 'lucide-react'
 
 export type SkillItem = { 
@@ -112,13 +112,9 @@ interface SkillsSectionProps {
 function SkillTag({ 
   skill, 
   category, 
-  index, 
-  isDimmed 
 }: { 
   skill: SkillItem; 
   category: string; 
-  index: number;
-  isDimmed: boolean;
 }) {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
   const [isHovered, setIsHovered] = useState(false)
@@ -126,22 +122,21 @@ function SkillTag({
 
   return (
     <motion.span
+      layout
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10px" }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: -20 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className="skill-tag inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all duration-300"
       style={{
         background: isHovered && hoverColors ? hoverColors.bg : defaultBg,
         color: isHovered && hoverColors ? hoverColors.color : 'var(--text-secondary)',
         borderColor: isHovered ? 'var(--accent)' : 'var(--border)',
         boxShadow: isHovered ? '0 2px 8px var(--accent-dim)' : 'none',
-        opacity: isDimmed ? 0.25 : 1,
-        pointerEvents: isDimmed ? 'none' : 'auto',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={isDimmed ? {} : { y: -2, scale: 1.05 }}
+      whileHover={{ y: -2, scale: 1.05 }}
     >
       {skill.icon && React.createElement(skill.icon, { size: 14 })}
       {skill.name}
@@ -254,20 +249,20 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
                   {/* Subtle Background blueprint decoration */}
                   {BACKGROUND_DECORATIONS[category] || null}
 
-                  <div className="relative z-10 flex flex-wrap gap-2.5">
-                    {data.items.map((skill, skillIndex) => {
-                      const isDimmed = filterMode === 'core' && skill.level === 'familiar'
-                      return (
-                        <SkillTag 
-                          key={skill.name} 
-                          skill={skill} 
-                          category={category} 
-                          index={skillIndex} 
-                          isDimmed={isDimmed} 
-                        />
-                      )
-                    })}
-                  </div>
+                  <motion.div layout className="relative z-10 flex flex-wrap gap-2.5">
+                    <AnimatePresence mode="popLayout">
+                      {data.items.map((skill) => {
+                        if (filterMode === 'core' && skill.level === 'familiar') return null;
+                        return (
+                          <SkillTag 
+                            key={skill.name} 
+                            skill={skill} 
+                            category={category} 
+                          />
+                        )
+                      })}
+                    </AnimatePresence>
+                  </motion.div>
                 </div>
               </motion.div>
             )

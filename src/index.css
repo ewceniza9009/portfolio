@@ -543,32 +543,27 @@ a {
   left: -16px;
   width: 32px;
   height: 32px;
-  border: 2.5px solid var(--accent);
+  background-color: transparent;
+  border: 2px solid var(--accent);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
   will-change: transform;
-  opacity: 0.85;
-  box-shadow: 0 0 10px var(--accent), inset 0 0 5px var(--accent);
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
               height 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
               top 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-              left 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-              border-color 0.3s, 
-              background-color 0.3s, 
-              opacity 0.3s,
-              box-shadow 0.3s;
+              left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.3s,
+              border-color 0.3s;
 }
 
 .cursor-ring.cursor-hover {
-  top: -24px;
-  left: -24px;
-  width: 48px;
-  height: 48px;
+  top: -36px;
+  left: -36px;
+  width: 72px;
+  height: 72px;
   background-color: var(--accent-dim);
   border-color: var(--accent);
-  opacity: 1;
-  box-shadow: 0 0 20px var(--accent), inset 0 0 10px var(--accent);
 }
 
 /* ── Theme Wave Transition ── */
@@ -677,4 +672,16 @@ a {
   animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--bg-card) 50%, var(--bg-secondary) 100%);
   background-size: 200% 100%;
+}
+
+/* ── Click Ripple Effect ── */
+.click-ripple {
+  position: fixed;
+  pointer-events: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  z-index: 9999;
+  box-shadow: 0 0 15px var(--accent-dim);
 }
