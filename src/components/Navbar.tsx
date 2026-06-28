@@ -6,7 +6,7 @@ import Logo from './Logo'
 import { ACCENT_THEMES } from '../data/accents'
 import type { AccentKey } from '../data/accents'
 
-const NAV_ITEMS = ['Experience', 'Awards', 'Projects', 'GitHub', 'Skills', 'Contact']
+const NAV_ITEMS = ['Experience', 'Awards', 'Projects', 'Gallery', 'GitHub', 'Skills', 'Contact']
 
 interface NavbarProps {
   activeSection: string

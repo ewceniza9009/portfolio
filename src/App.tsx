@@ -25,6 +25,7 @@ import CursorFollower from './components/CursorFollower'
 import ResumeModal from './components/ResumeModal'
 import BlogsPage from './components/BlogsPage'
 import BlogPostPage from './components/BlogPostPage'
+import GallerySection from './components/GallerySection'
 
 
 
@@ -56,7 +57,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   })
 
   useEffect(() => {
-    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'github', 'skills', 'contact']
+    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -129,6 +130,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           <AwardsSection awards={awards} />
           <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
           <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
+          <GallerySection />
           <GitHubSection theme={theme} accent={accent} />
           <SkillsSection skills={skills} />
           <ContactSection theme={theme} />
