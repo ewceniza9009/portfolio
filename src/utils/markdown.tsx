@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
-import { Copy, Check, ExternalLink } from 'lucide-react'
+import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import mermaid from 'mermaid'
 
 mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
@@ -155,61 +155,74 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setPosition({ x: 0, y: 0 })
   }
 
-  const handleOpenNewTab = () => {
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Mermaid Diagram</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: ${isDark ? '#0a0a0f' : '#f8fafc'};
-      color: ${isDark ? '#e2e8f0' : '#0f172a'};
-      font-family: system-ui, -apple-system, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-    .diagram-container {
-      max-width: 100%;
-      overflow: visible;
-    }
-    .diagram-container svg {
-      max-width: 100%;
-      height: auto;
-    }
-    .diagram-container svg .node rect,
-    .diagram-container svg .node circle,
-    .diagram-container svg .node polygon {
-      fill: ${isDark ? '#1e293b' : '#ffffff'} !important;
-      stroke: ${primaryColor} !important;
-      stroke-width: 1.5px !important;
-    }
-    .diagram-container svg .node text,
-    .diagram-container svg .node tspan {
-      fill: ${isDark ? '#e2e8f0' : '#0f172a'} !important;
-    }
-    .diagram-container svg path {
-      stroke: ${isDark ? '#475569' : '#94a3b8'} !important;
-    }
-    .diagram-container svg .edgeLabel {
-      background-color: ${isDark ? '#1e293b' : '#ffffff'} !important;
-      color: ${isDark ? '#cbd5e1' : '#475569'} !important;
-    }
-  </style>
-</head>
-<body>
-  <div class="diagram-container">${svgHtml}</div>
-</body>
-</html>`)
-    win.document.close()
+  // Modal full-screen viewer state
+  const [showModal, setShowModal] = useState(false)
+  const [modalScale, setModalScale] = useState(1.5)
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
+  const [modalIsDragging, setModalIsDragging] = useState(false)
+  const [modalDragStart, setModalDragStart] = useState({ x: 0, y: 0 })
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  const handleOpenModal = () => {
+    setModalScale(1.5)
+    setModalPosition({ x: 0, y: 0 })
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setModalPosition({ x: 0, y: 0 })
+  }
+
+  const handleModalZoomIn = () => {
+    setModalScale(prev => Math.min(5, prev + 0.3))
+  }
+
+  const handleModalZoomOut = () => {
+    setModalScale(prev => Math.max(0.3, prev - 0.3))
+  }
+
+  const handleModalReset = () => {
+    setModalScale(1.5)
+    setModalPosition({ x: 0, y: 0 })
+  }
+
+  const handleDownloadSvg = () => {
+    const blob = new Blob([svgHtml], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'diagram.svg'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // Modal mouse/touch drag
+  const handleModalMouseDown = (e: React.MouseEvent) => {
+    setModalIsDragging(true)
+    setModalDragStart({ x: e.clientX - modalPosition.x, y: e.clientY - modalPosition.y })
+  }
+
+  const handleModalMouseMove = (e: React.MouseEvent) => {
+    if (!modalIsDragging) return
+    setModalPosition({ x: e.clientX - modalDragStart.x, y: e.clientY - modalDragStart.y })
+  }
+
+  const handleModalMouseUp = () => {
+    setModalIsDragging(false)
+  }
+
+  const handleModalTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return
+    setModalIsDragging(true)
+    const t = e.touches[0]
+    setModalDragStart({ x: t.clientX - modalPosition.x, y: t.clientY - modalPosition.y })
+  }
+
+  const handleModalTouchMove = (e: React.TouchEvent) => {
+    if (!modalIsDragging || e.touches.length !== 1) return
+    const t = e.touches[0]
+    setModalPosition({ x: t.clientX - modalDragStart.x, y: t.clientY - modalDragStart.y })
   }
 
   return (
@@ -306,15 +319,15 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
           <div className="w-[1px] h-3 bg-white/10 mx-1" />
 
-          {/* Open in New Tab */}
+          {/* Expand to Fullscreen Modal */}
           <button
-            onClick={handleOpenNewTab}
-            title="Open in New Tab"
+            onClick={handleOpenModal}
+            title="Fullscreen View"
             disabled={!svgHtml}
             className="p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <ExternalLink size={14} strokeWidth={2.5} />
+            <Maximize2 size={14} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -378,6 +391,75 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
         >
           <code>{cleanCode}</code>
         </pre>
+      )}
+
+      {/* Fullscreen Modal Overlay */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+          onClick={handleCloseModal}
+        >
+          <div
+            className="flex items-center justify-between px-4 py-3 shrink-0 select-none"
+            onClick={e => e.stopPropagation()}
+          >
+            <span className="text-xs font-mono text-white/50 tracking-wider uppercase">
+              Diagram Viewer
+            </span>
+            <div className="flex items-center gap-2">
+              <button onClick={handleModalZoomOut} title="Zoom Out" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                <Minus size={16} />
+              </button>
+              <span className="text-xs font-mono text-white/70 w-10 text-center">
+                {Math.round(modalScale * 100)}%
+              </span>
+              <button onClick={handleModalZoomIn} title="Zoom In" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                <Plus size={16} />
+              </button>
+              <div className="w-px h-5 bg-white/15" />
+              <button onClick={handleModalReset} title="Reset View" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                <RotateCcw size={16} />
+              </button>
+              <button onClick={handleDownloadSvg} title="Download SVG" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                <Download size={16} />
+              </button>
+              <div className="w-px h-5 bg-white/15" />
+              <button onClick={handleCloseModal} title="Close" className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          <div
+            ref={modalRef}
+            className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing"
+            onClick={e => e.stopPropagation()}
+            onMouseDown={handleModalMouseDown}
+            onMouseMove={handleModalMouseMove}
+            onMouseUp={handleModalMouseUp}
+            onMouseLeave={handleModalMouseUp}
+            onTouchStart={handleModalTouchStart}
+            onTouchMove={handleModalTouchMove}
+            onTouchEnd={handleModalMouseUp}
+          >
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ transform: `translate(${modalPosition.x}px, ${modalPosition.y}px) scale(${modalScale})` }}
+            >
+              <div
+                className="mermaid-svg-container"
+                style={{ maxWidth: 'none', width: 'auto' }}
+                dangerouslySetInnerHTML={{ __html: svgHtml }}
+              />
+            </div>
+          </div>
+          <div
+            className="px-4 py-2 text-center text-[10px] font-mono text-white/30 tracking-wider uppercase shrink-0 select-none"
+            onClick={e => e.stopPropagation()}
+          >
+            Drag to pan &middot; Scroll to zoom &middot; Use controls above
+          </div>
+        </div>
       )}
     </div>
   )
