@@ -266,10 +266,35 @@ export default function GallerySection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999999] flex items-center justify-center"
+            className="fixed inset-0 z-[999999] flex items-center justify-center overflow-hidden"
             style={{ background: 'rgba(0,0,0,0.97)' }}
             onClick={() => setLightboxIndex(null)}
           >
+            {/* Tech doodles background */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none z-0"
+              style={{ opacity: 0.08 }}
+              viewBox="0 0 1200 800"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              <pattern id="galleryDots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.5" fill="var(--accent)" />
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#galleryDots)" />
+              <text x="60" y="100" fontSize="48" fontFamily="monospace" fontWeight="700" fill="var(--accent)">{"< />"}</text>
+              <text x="900" y="180" fontSize="36" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)">{"{}"}</text>
+              <text x="100" y="350" fontSize="24" fontFamily="monospace" fill="var(--accent)">const</text>
+              <text x="950" y="450" fontSize="28" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)">{"=>"}</text>
+              <text x="150" y="550" fontSize="20" fontFamily="monospace" fill="var(--accent)">async</text>
+              <line x1="180" y1="110" x2="320" y2="110" stroke="var(--accent)" strokeWidth="1" />
+              <line x1="150" y1="230" x2="280" y2="230" stroke="var(--accent-secondary)" strokeWidth="1" />
+              <circle cx="1100" cy="80" r="6" fill="var(--accent)" />
+              <circle cx="80" cy="480" r="8" fill="var(--accent-secondary)" />
+              <circle cx="1050" cy="700" r="5" fill="var(--accent)" />
+              <text x="50" y="200" fontSize="80" fontFamily="monospace" fontWeight="700" fill="none" stroke="var(--accent)" strokeWidth="0.5">01</text>
+              <text x="900" y="550" fontSize="60" fontFamily="monospace" fontWeight="700" fill="none" stroke="var(--accent-secondary)" strokeWidth="0.5">02</text>
+            </svg>
+
             {/* Top bar */}
             <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20 bg-gradient-to-b from-black/80 to-transparent">
               <div className="flex items-center gap-4">
