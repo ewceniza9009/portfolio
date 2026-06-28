@@ -406,6 +406,78 @@ app.post('/api/admin/blogs/generate', authMiddleware, async (req, res) => {
   }
 })
 
+// ── Visitor Tracking ──
+
+// Geolocation lookup helper
+async function geoLookup(ip: string): Promise<{ country: string; region: string; city: string; loc: string }> {
+  // Skip private/local IPs
+  if (!ip || ip === 'unknown' || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+    return { country: '', region: '', city: '', loc: '' }
+  }
+  try {
+    const resp = await fetch(`http://ip-api.com/json/${ip}?fields=country,regionName,city,lat,lon`)
+    const data = await resp.json() as any
+    if (data && data.country) {
+      return {
+        country: data.country || '',
+        region: data.regionName || '',
+        city: data.city || '',
+        loc: data.lat && data.lon ? `${data.lat},${data.lon}` : '',
+      }
+    }
+  } catch {}
+  return { country: '', region: '', city: '', loc: '' }
+}
+
+// POST record a page visit
+app.post('/api/visit', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim()
+    const userAgent = req.headers['user-agent'] || ''
+
+    const existing = await turso.execute({
+      sql: 'SELECT visit_count, country FROM visitors WHERE ip = ?',
+      args: [ip],
+    })
+
+    if (existing.rows.length > 0) {
+      await turso.execute({
+        sql: 'UPDATE visitors SET visit_count = visit_count + 1, last_visit = datetime(\'now\'), user_agent = ? WHERE ip = ?',
+        args: [userAgent, ip],
+      })
+    } else {
+      const geo = await geoLookup(ip)
+      await turso.execute({
+        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?)',
+        args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc],
+      })
+    }
+
+    // Daily visit counter
+    await turso.execute({
+      sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
+      args: [],
+    })
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Visit tracking error:', err)
+    res.status(500).json({ error: 'Failed to record visit' })
+  }
+})
+
+// GET visitor stats (protected)
+app.get('/api/visitors', authMiddleware, async (_req, res) => {
+  try {
+    const visitors = await turso.execute('SELECT * FROM visitors ORDER BY last_visit DESC')
+    const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
+    res.json({ visitors: visitors.rows, daily: daily.rows })
+  } catch (err) {
+    console.error('Fetch visitors error:', err)
+    res.status(500).json({ error: 'Failed to fetch visitors' })
+  }
+})
+
 // GET system settings
 app.get('/api/settings', async (_req, res) => {
   try {

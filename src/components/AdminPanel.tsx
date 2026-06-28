@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   MessageSquare, Send, Loader, LogOut, 
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
-  Trash2, Edit, Plus, FileText, Eye, Heart, Settings
+  Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
-import type { AccentKey } from '../data/accents'
+import { ACCENT_THEMES, type AccentKey } from '../data/accents'
 import Logo from './Logo'
 import { Link } from 'react-router-dom'
 
@@ -77,7 +78,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [loginError, setLoginError] = useState('')
   
   // Dashboard Tab selection
-  const [activeTab, setActiveTab] = useState<'messages' | 'blogs' | 'settings'>('messages')
+  const [activeTab, setActiveTab] = useState<'messages' | 'blogs' | 'settings' | 'analytics'>('messages')
 
   // ── Tab 1: Messages State ──
   const [messages, setMessages] = useState<Message[]>([])
@@ -119,7 +120,20 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogDeleting, setBlogDeleting] = useState(false)
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(null)
 
-  // ── Tab 3: System Rotation Settings State ──
+  // ── Visitor Analytics State ──
+  const [visitors, setVisitors] = useState<any[]>([])
+  const [dailyVisits, setDailyVisits] = useState<any[]>([])
+  const [visitorLoading, setVisitorLoading] = useState(false)
+
+  // ── Tab 3: System Settings State ──
+  const [defaultTheme, setDefaultTheme] = useState<'dark' | 'light' | null>(() => {
+    const saved = getSafeItem('default_theme')
+    return saved === 'light' || saved === 'dark' ? saved : null
+  })
+  const [defaultAccent, setDefaultAccent] = useState<string | null>(() => {
+    const saved = getSafeItem('default_accent')
+    return saved && saved in ACCENT_THEMES ? saved : null
+  })
   const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
     return getSafeItem('rotation_theme_enabled') !== 'false'
   })
@@ -172,6 +186,60 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setRotationIntervalHours(val)
     setSafeItem('rotation_interval_hours', String(val))
     await saveSettings({ rotation_interval_hours: String(val) })
+  }
+
+  const fetchVisitors = useCallback(async () => {
+    setVisitorLoading(true)
+    try {
+      const res = await api('/api/visitors')
+      if (res.ok) {
+        const data = await res.json()
+        setVisitors(data.visitors || [])
+        setDailyVisits(data.daily || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch visitors:', err)
+    } finally {
+      setVisitorLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      fetchVisitors()
+    }
+  }, [activeTab, fetchVisitors])
+
+  const handleDefaultThemeChange = async (val: string) => {
+    if (val === 'dark' || val === 'light') {
+      setDefaultTheme(val)
+      setSafeItem('default_theme', val)
+      setRotationThemeEnabled(false)
+      setSafeItem('rotation_theme_enabled', 'false')
+      await saveSettings({ default_theme: val, rotation_theme_enabled: 'false' })
+    } else {
+      setDefaultTheme(null)
+      removeSafeItem('default_theme')
+      setRotationThemeEnabled(true)
+      setSafeItem('rotation_theme_enabled', 'true')
+      await saveSettings({ default_theme: '', rotation_theme_enabled: 'true' })
+    }
+  }
+
+  const handleDefaultAccentChange = async (val: string) => {
+    if (val && val !== 'auto') {
+      setDefaultAccent(val)
+      setSafeItem('default_accent', val)
+      setRotationAccentEnabled(false)
+      setSafeItem('rotation_accent_enabled', 'false')
+      await saveSettings({ default_accent: val, rotation_accent_enabled: 'false' })
+    } else {
+      setDefaultAccent(null)
+      removeSafeItem('default_accent')
+      setRotationAccentEnabled(true)
+      setSafeItem('rotation_accent_enabled', 'true')
+      await saveSettings({ default_accent: '', rotation_accent_enabled: 'true' })
+    }
   }
 
   const api = async (path: string, options?: RequestInit) => {
@@ -264,6 +332,26 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       const res = await api('/api/settings')
       if (res.ok) {
         const data = await res.json()
+        if (data.default_theme !== undefined) {
+          const val = data.default_theme
+          if (val === 'dark' || val === 'light') {
+            setDefaultTheme(val)
+            setSafeItem('default_theme', val)
+          } else {
+            setDefaultTheme(null)
+            removeSafeItem('default_theme')
+          }
+        }
+        if (data.default_accent !== undefined) {
+          const val = String(data.default_accent)
+          if (val && val in ACCENT_THEMES) {
+            setDefaultAccent(val)
+            setSafeItem('default_accent', val)
+          } else {
+            setDefaultAccent(null)
+            removeSafeItem('default_accent')
+          }
+        }
         if (data.rotation_theme_enabled !== undefined) {
           setRotationThemeEnabled(data.rotation_theme_enabled === 'true')
         }
@@ -715,6 +803,17 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
           >
             <Settings size={13} />
             Settings
+          </button>
+          <button
+            onClick={() => { setActiveTab('analytics'); setSelected(null); setSelectedBlog(null); }}
+            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            style={{ 
+              background: activeTab === 'analytics' ? 'var(--accent)' : 'transparent',
+              color: activeTab === 'analytics' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+            }}
+          >
+            <BarChart3 size={13} />
+            Analytics
           </button>
         </div>
 
@@ -1510,8 +1609,76 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                
-                {/* Section 1: Theme Rotation Toggle */}
+
+                {/* Section 1: Default Theme */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-8 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Default Theme</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Set a fixed fallback theme. Selecting a specific theme disables automatic rotation.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex justify-end gap-2">
+                    <button
+                      onClick={() => handleDefaultThemeChange('auto')}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
+                      style={{
+                        background: defaultTheme === null ? 'var(--accent-dim)' : 'transparent',
+                        borderColor: defaultTheme === null ? 'var(--accent)' : 'var(--border)',
+                        color: defaultTheme === null ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      Auto
+                    </button>
+                    <button
+                      onClick={() => handleDefaultThemeChange('dark')}
+                      className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95"
+                      style={{
+                        background: defaultTheme === 'dark' ? 'var(--accent-dim)' : 'transparent',
+                        borderColor: defaultTheme === 'dark' ? 'var(--accent)' : 'var(--border)',
+                        color: defaultTheme === 'dark' ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      Dark
+                    </button>
+                    <button
+                      onClick={() => handleDefaultThemeChange('light')}
+                      className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95"
+                      style={{
+                        background: defaultTheme === 'light' ? 'var(--accent-dim)' : 'transparent',
+                        borderColor: defaultTheme === 'light' ? 'var(--accent)' : 'var(--border)',
+                        color: defaultTheme === 'light' ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      Light
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 2: Default Accent Color */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-8 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Default Accent Color</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Set a fixed fallback accent. Selecting a specific accent disables automatic rotation.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 flex justify-end">
+                    <select
+                      value={defaultAccent === null ? 'auto' : defaultAccent}
+                      onChange={(e) => handleDefaultAccentChange(e.target.value)}
+                      className="w-full max-w-[160px] px-3 py-2 rounded-xl text-xs font-bold border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                    >
+                      <option value="auto">Auto (Rotation)</option>
+                      {Object.entries(ACCENT_THEMES).map(([key, theme]) => (
+                        <option key={key} value={key}>{theme.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Section 3: Theme Rotation Toggle */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                   <div className="md:col-span-8 space-y-1">
                     <h4 className="text-xs font-bold uppercase tracking-wide">Automatic Theme Rotation</h4>
@@ -1579,6 +1746,120 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                   </div>
                 </div>
 
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 4: ANALYTICS */}
+          {activeTab === 'analytics' && (
+            <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden"
+                 style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}>
+              
+              <div className="p-6 border-b shrink-0 flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                <BarChart3 size={18} style={{ color: 'var(--accent)' }} />
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider">Visitor Analytics</h3>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Track and analyze your portfolio visitors, locations, and engagement</p>
+                </div>
+                <button
+                  onClick={fetchVisitors}
+                  className="ml-auto px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                  disabled={visitorLoading}
+                >
+                  <RefreshCw size={12} className={visitorLoading ? 'animate-spin' : ''} />
+                  {visitorLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                {visitorLoading ? (
+                  <div className="p-10 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading visitor data...</div>
+                ) : (
+                  <>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Unique Visitors', value: visitors.length, icon: '👤' },
+                        { label: 'Total Visits', value: visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), icon: '📊' },
+                        { label: "Today's Visits", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
+                        { label: 'Yesterday', value: dailyVisits.find((d: any) => d.date === new Date(Date.now() - 86400000).toISOString().slice(0,10))?.count || 0, icon: '📆' },
+                      ].map((stat, i) => (
+                        <div key={i} className="rounded-2xl border p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <div className="text-2xl mb-2">{stat.icon}</div>
+                          <div className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>{stat.value}</div>
+                          <div className="text-[10px] font-semibold uppercase tracking-wider mt-1.5" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Daily Visits Chart */}
+                    {dailyVisits.length > 0 && (
+                      <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic (Last 14 Days)</h4>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={dailyVisits.slice(0, 14).reverse()}>
+                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={28} />
+                            <Tooltip
+                              contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 12 }}
+                              labelFormatter={(v: any) => String(v)}
+                            />
+                            <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* Top Visitors Table with Location */}
+                    {visitors.length > 0 && (
+                      <div className="rounded-2xl border overflow-hidden bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider p-5 pb-0" style={{ color: 'var(--text-muted)' }}>Visitor Log</h4>
+                        <div className="overflow-x-auto p-5 pt-3">
+                          <table className="w-full text-[11px]">
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Location</th>
+                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>IP</th>
+                                <th className="text-right p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Visits</th>
+                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>First Visit</th>
+                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Last Visit</th>
+                                <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Device</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...visitors].sort((a: any, b: any) => Number(b.visit_count) - Number(a.visit_count)).slice(0, 20).map((v: any, i: number) => {
+                                const loc = [v.city, v.region].filter(Boolean).join(', ') || (v.country || '—')
+                                return (
+                                  <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                    <td className="p-3">
+                                      <span className="font-semibold">{loc}</span>
+                                      {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
+                                    </td>
+                                    <td className="p-3 font-mono opacity-70">{v.ip}</td>
+                                    <td className="p-3 text-right font-bold" style={{ color: 'var(--accent)' }}>{v.visit_count}</td>
+                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.first_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.last_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                    <td className="p-3 max-w-[120px] truncate" style={{ color: 'var(--text-muted)' }} title={v.user_agent}>{v.user_agent?.slice(0, 40) || '—'}</td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {visitors.length === 0 && (
+                      <div className="text-center py-16">
+                        <div className="text-4xl mb-4">🌐</div>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>No visitor data yet</p>
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Visit your portfolio to start tracking analytics.</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
             </div>

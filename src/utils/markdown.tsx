@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
 import { Copy, Check } from 'lucide-react'
+import mermaid from 'mermaid'
+
+mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
 
 interface MermaidRendererProps {
   code: string
@@ -9,107 +12,99 @@ interface MermaidRendererProps {
 }
 
 function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
-  const [svgHtml, setSvgHtml] = useState<string>('')
+  const [svgHtml, setSvgHtml] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [showCode, setShowCode] = useState(false)
-  
+
   // Interactive zoom & pan states
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const renderId = useRef(0)
 
   const cleanCode = code.trim()
-  
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+
   // Resolve active theme colors
   const accentColors = ACCENT_THEMES[accent]?.[theme] || ACCENT_THEMES.gold[theme]
   const primaryColor = accentColors.accent
   const secondaryColor = accentColors.accentSecondary
   const isDark = theme === 'dark'
 
-  // Prepend dynamic theme styling variables inside the Mermaid graph configuration
-  const initConfig = `%%{init: {
-    "theme": "${isDark ? 'dark' : 'neutral'}",
-    "themeVariables": {
-      "fontFamily": "Outfit, Inter, system-ui, -apple-system, sans-serif",
-      "primaryColor": "${isDark ? 'rgba(30, 41, 59, 0.8)' : '#f1f5f9'}",
-      "primaryTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
-      "lineColor": "${isDark ? '#475569' : '#94a3b8'}",
-      "mainBkg": "${isDark ? '#0d1117' : '#ffffff'}",
-      "actorBkg": "${isDark ? 'rgba(30, 41, 59, 0.8)' : '#f8fafc'}",
-      "actorTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
-      "actorLineColor": "${primaryColor}",
-      "signalColor": "${secondaryColor}",
-      "signalTextColor": "${isDark ? '#cbd5e1' : '#475569'}",
-      "labelBoxBkgColor": "${isDark ? '#1e293b' : '#f1f5f9'}",
-      "labelBoxBorderColor": "${primaryColor}",
-      "labelTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
-      "loopLimitColor": "${primaryColor}",
-      "loopLimitTextColor": "${isDark ? '#cbd5e1' : '#475569'}",
-      "noteBkgColor": "${isDark ? '#1e293b' : '#fef08a'}",
-      "noteTextColor": "${isDark ? '#f8fafc' : '#0f172a'}",
-      "noteBorderColor": "${primaryColor}"
+  // Build Mermaid config matching the previously embedded init syntax
+  const mermaidConfig = {
+    theme: (isDark ? 'dark' : 'neutral') as 'dark' | 'neutral',
+    themeVariables: {
+      fontFamily: 'Outfit, Inter, system-ui, -apple-system, sans-serif',
+      primaryColor: isDark ? '#1e293b' : '#f1f5f9',
+      primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
+      lineColor: isDark ? '#475569' : '#94a3b8',
+      mainBkg: isDark ? '#0d1117' : '#ffffff',
+      actorBkg: isDark ? '#1e293b' : '#f8fafc',
+      actorTextColor: isDark ? '#f8fafc' : '#0f172a',
+      actorLineColor: primaryColor,
+      signalColor: secondaryColor,
+      signalTextColor: isDark ? '#cbd5e1' : '#475569',
+      labelBoxBkgColor: isDark ? '#1e293b' : '#f1f5f9',
+      labelBoxBorderColor: primaryColor,
+      labelTextColor: isDark ? '#f8fafc' : '#0f172a',
+      loopLimitColor: primaryColor,
+      loopLimitTextColor: isDark ? '#cbd5e1' : '#475569',
+      noteBkgColor: isDark ? '#1e293b' : '#fef08a',
+      noteTextColor: isDark ? '#f8fafc' : '#0f172a',
+      noteBorderColor: primaryColor,
     },
-    "sequence": {
-      "actorMargin": 85,
-      "messageMargin": 45,
-      "boxMargin": 15,
-      "noteMargin": 15,
-      "messageFontSize": 11,
-      "actorFontSize": 11,
-      "noteFontSize": 11,
-      "actorFontFamily": "Outfit, Inter, system-ui, sans-serif",
-      "noteFontFamily": "Outfit, Inter, system-ui, sans-serif",
-      "messageFontFamily": "Outfit, Inter, system-ui, sans-serif"
-    }
-  }}%%`
-
-  const formattedCode = `${initConfig}\n${cleanCode}`
+    sequence: {
+      actorMargin: 85,
+      messageMargin: 45,
+      boxMargin: 15,
+      noteMargin: 15,
+      messageFontSize: 11,
+      actorFontSize: 11,
+      noteFontSize: 11,
+      actorFontFamily: 'Outfit, Inter, system-ui, sans-serif',
+      noteFontFamily: 'Outfit, Inter, system-ui, sans-serif',
+      messageFontFamily: 'Outfit, Inter, system-ui, sans-serif',
+    },
+  }
 
   useEffect(() => {
     let active = true
     setIsLoading(true)
     setHasError(false)
+    setSvgHtml('')
 
-    try {
-      const encoder = new TextEncoder()
-      const bytes = encoder.encode(formattedCode)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i])
+    const id = `mermaid-${renderId.current++}-${Date.now()}`
+
+    async function render() {
+      try {
+        mermaid.initialize(mermaidConfig)
+        const { svg } = await mermaid.render(id, cleanCode)
+        if (active) {
+          setSvgHtml(svg)
+          setIsLoading(false)
+        }
+      } catch (e) {
+        console.warn('[Mermaid] render error:', e)
+        if (active) {
+          setHasError(true)
+          setIsLoading(false)
+        }
       }
-      const base64url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-      const url = `https://mermaid.ink/svg/${base64url}`
-      
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('mermaid.ink returned ' + res.status)
-          return res.text()
-        })
-        .then(svgText => {
-          if (active) {
-            setSvgHtml(svgText)
-            setIsLoading(false)
-          }
-        })
-        .catch(err => {
-          console.warn('[Mermaid] fetch failed:', err)
-          if (active) {
-            setHasError(true)
-            setIsLoading(false)
-          }
-        })
-    } catch (e) {
-      console.warn('[Mermaid] encoding error:', e)
-      setHasError(true)
-      setIsLoading(false)
     }
 
-    return () => {
-      active = false
-    }
-  }, [formattedCode])
+    render()
+
+    return () => { active = false }
+  }, [cleanCode, theme, accent, primaryColor, secondaryColor])
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -160,29 +155,6 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setPosition({ x: 0, y: 0 })
   }
 
-  if (isLoading) {
-    return (
-      <div className="my-8 flex justify-center items-center py-10 select-none">
-        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)' }} />
-      </div>
-    )
-  }
-
-  if (hasError || !svgHtml) {
-    return (
-      <pre 
-        className="border rounded-xl p-4 overflow-x-auto my-4 text-xs font-mono select-text" 
-        style={{ 
-          background: '#0d1117', 
-          color: '#c9d1d9', 
-          borderColor: 'rgba(255, 255, 255, 0.15)' 
-        }}
-      >
-        <code>{cleanCode}</code>
-      </pre>
-    )
-  }
-
   return (
     <div className="my-8 flex flex-col space-y-3 w-full">
       <style>{`
@@ -191,11 +163,9 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           max-width: 900px !important;
           height: auto !important;
         }
-        /* Ensure connector lines (and all other paths by default) are visible in both dark and light modes */
         .mermaid-svg-container svg path {
           stroke: var(--text-muted) !important;
         }
-        /* Ensure node background shapes adapt to the active theme with perfect contrast */
         .mermaid-svg-container svg .node rect,
         .mermaid-svg-container svg .node circle,
         .mermaid-svg-container svg .node path,
@@ -208,7 +178,6 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           stroke: var(--accent) !important;
           stroke-width: 1.5px !important;
         }
-        /* Ensure node text labels are high contrast in both themes */
         .mermaid-svg-container svg .node text,
         .mermaid-svg-container svg .node tspan,
         .mermaid-svg-container svg .mindmap-node text,
@@ -216,13 +185,12 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           fill: var(--text-primary) !important;
           color: var(--text-primary) !important;
         }
-        /* Ensure HTML labels inside foreignObject nodes are readable */
         .mermaid-svg-container svg .node foreignObject *,
         .mermaid-svg-container svg .mindmap-node foreignObject * {
           color: var(--text-primary) !important;
         }
       `}</style>
-      
+
       {/* Interactive Sandbox Container */}
       <div 
         className="w-full relative rounded-3xl border glass bg-white/5 overflow-hidden flex flex-col select-none" 
@@ -299,15 +267,32 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           onTouchMove={handleTouchMove}
           onTouchEnd={handleMouseUp}
         >
-          <div 
-            className="w-full flex justify-center mermaid-svg-container"
-            style={{ 
-              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-              transformOrigin: 'center center',
-              transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-            dangerouslySetInnerHTML={{ __html: svgHtml }}
-          />
+          {isLoading && !hasError && (
+            <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'var(--bg-primary)' }}>
+              <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)' }} />
+            </div>
+          )}
+          {hasError || !svgHtml ? (
+            <pre 
+              className="w-full h-full overflow-auto text-xs font-mono select-text p-4 m-0" 
+              style={{ 
+                background: '#0d1117', 
+                color: '#c9d1d9' 
+              }}
+            >
+              <code>{cleanCode}</code>
+            </pre>
+          ) : (
+            <div 
+              className="w-full flex justify-center mermaid-svg-container"
+              style={{ 
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transformOrigin: 'center center',
+                transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              dangerouslySetInnerHTML={{ __html: svgHtml }}
+            />
+          )}
         </div>
       </div>
 

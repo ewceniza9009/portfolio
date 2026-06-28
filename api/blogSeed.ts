@@ -1,7 +1,18 @@
 import fs from 'fs'
 import path from 'path'
 
+let lastCheckedMtime = 0
+
 export async function seedFirstBlog(turso: any) {
+  const markdownPath = path.join(process.cwd(), 'api', 'engineering-realtime-telemetry-signalr.md')
+  let currentMtime: number
+  try {
+    currentMtime = fs.statSync(markdownPath).mtime.getTime()
+  } catch {
+    return
+  }
+  if (currentMtime <= lastCheckedMtime && lastCheckedMtime !== 0) return
+  lastCheckedMtime = currentMtime
   const slug = 'engineering-realtime-telemetry-signalr'
   
   try {
@@ -25,13 +36,7 @@ export async function seedFirstBlog(turso: any) {
     const tags = 'SignalR, WebSockets, Real-Time, IoT, HealthTech, .NET, React'
     const readTime = '8 min read'
     
-    // Read the markdown content dynamically from the static file on disk.
-    const markdownPath = path.join(process.cwd(), 'api', 'engineering-realtime-telemetry-signalr.md')
     const content = fs.readFileSync(markdownPath, 'utf8')
-
-    // Get the file's last modified timestamp on disk
-    const fileStats = fs.statSync(markdownPath)
-    const fileMtime = fileStats.mtime.getTime()
 
     if (check.rows.length > 0) {
       const row = check.rows[0]
@@ -44,14 +49,12 @@ export async function seedFirstBlog(turso: any) {
       const dbMtime = new Date(dbUpdatedStr.replace(' ', 'T') + 'Z').getTime()
 
       // Sync from disk ONLY if the markdown file on disk has been edited more recently than the database row
-      if (fileMtime > dbMtime + 2000) {
+      if (currentMtime > dbMtime + 2000) {
         await turso.execute({
           sql: 'UPDATE blogs SET title = ?, content = ?, summary = ?, tags = ?, read_time = ?, likes = ?, updated_at = datetime(\'now\') WHERE slug = ?',
           args: [title, content, summary, tags, readTime, targetLikes, slug]
         })
-        console.log(`Successfully synced EMR blog post content from disk (File was updated).`)
-      } else {
-        console.log(`Skipped syncing EMR blog post: DB is up to date (or newer than disk file).`)
+        console.log('Synced EMR blog post from disk (file was updated).')
       }
       return
     }

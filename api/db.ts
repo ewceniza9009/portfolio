@@ -58,6 +58,33 @@ export async function initDb() {
     )
   `)
 
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS visitors (
+      ip TEXT PRIMARY KEY,
+      visit_count INTEGER DEFAULT 1,
+      first_visit TEXT DEFAULT (datetime('now')),
+      last_visit TEXT DEFAULT (datetime('now')),
+      user_agent TEXT,
+      country TEXT,
+      region TEXT,
+      city TEXT,
+      loc TEXT
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS daily_visits (
+      date TEXT PRIMARY KEY,
+      count INTEGER DEFAULT 0
+    )
+  `)
+
+  // Add geolocation columns to visitors table if they don't exist (safe to ignore if already exist)
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN country TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN region TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN city TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN loc TEXT') } catch {}
+
   // Seed default settings if they don't exist
   await turso.execute(`
     INSERT OR IGNORE INTO settings (key, value) VALUES 

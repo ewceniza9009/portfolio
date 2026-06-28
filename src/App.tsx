@@ -154,6 +154,8 @@ export default function App() {
       const hour = new Date().getHours()
       return Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light'
     }
+    const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null
+    if (defaultTheme === 'light' || defaultTheme === 'dark') return defaultTheme
     return 'dark'
   })
 
@@ -170,8 +172,18 @@ export default function App() {
       const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length
       return accentKeys[accentIndex]
     }
+    const defaultAccent = getSafeItem('default_accent') as AccentKey | null
+    if (defaultAccent && defaultAccent in ACCENT_THEMES) return defaultAccent
     return 'gold'
   })
+
+  // Record page visit on mount
+  useEffect(() => {
+    const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
+      ? 'http://localhost:3000'
+      : ''
+    fetch(`${baseUrl}/api/visit`, { method: 'POST' }).catch(() => {})
+  }, [])
 
   // Load settings from backend Turso database on mount
   useEffect(() => {
@@ -184,6 +196,12 @@ export default function App() {
         if (res.ok) {
           const data = await res.json()
           
+          if (data.default_theme !== undefined) {
+            setSafeItem('default_theme', data.default_theme)
+          }
+          if (data.default_accent !== undefined) {
+            setSafeItem('default_accent', data.default_accent)
+          }
           if (data.rotation_theme_enabled !== undefined) {
             setSafeItem('rotation_theme_enabled', data.rotation_theme_enabled)
           }
