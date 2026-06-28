@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles } from 'lucide-react'
+import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
@@ -15,6 +15,7 @@ interface Blog {
   content: string
   summary: string | null
   tags: string | null
+  category: string | null
   published: number
   likes: number
   read_time: string | null
@@ -34,6 +35,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const getApiUrl = (path: string) => {
     const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
@@ -68,7 +70,50 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
     )
   )
 
-  // Filter blogs based on search query and selected tag
+  // Extract all unique categories
+  const allCategories = Array.from(
+    new Set(
+      blogs
+        .map(b => b.category || 'General')
+        .filter(Boolean)
+    )
+  ).sort()
+
+  // Category config for elite styling
+  const categoryMeta: Record<string, { icon: React.ReactNode; gradient: string; chipGradient: string }> = {
+    Engineering: {
+      icon: <Code size={13} />,
+      gradient: 'from-cyan-500/80 to-blue-500/80',
+      chipGradient: 'from-cyan-500/20 to-blue-500/20'
+    },
+    Tutorial: {
+      icon: <GraduationCap size={13} />,
+      gradient: 'from-emerald-500/80 to-teal-500/80',
+      chipGradient: 'from-emerald-500/20 to-teal-500/20'
+    },
+    Architecture: {
+      icon: <Layers size={13} />,
+      gradient: 'from-purple-500/80 to-pink-500/80',
+      chipGradient: 'from-purple-500/20 to-pink-500/20'
+    },
+    DevOps: {
+      icon: <Server size={13} />,
+      gradient: 'from-amber-500/80 to-orange-500/80',
+      chipGradient: 'from-amber-500/20 to-orange-500/20'
+    },
+    Security: {
+      icon: <Shield size={13} />,
+      gradient: 'from-rose-500/80 to-red-500/80',
+      chipGradient: 'from-rose-500/20 to-red-500/20'
+    },
+    General: {
+      icon: <Folder size={13} />,
+      gradient: 'from-indigo-500/80 to-purple-500/80',
+      chipGradient: 'from-indigo-500/20 to-purple-500/20'
+    }
+  }
+
+  // Filter blogs based on search query, selected tag, and selected category
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = 
       blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,11 +123,14 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
     const blogTags = blog.tags ? blog.tags.split(',').map(t => t.trim()) : []
     const matchesTag = !selectedTag || blogTags.includes(selectedTag)
 
-    return matchesSearch && matchesTag
+    const blogCategory = blog.category || 'General'
+    const matchesCategory = !selectedCategory || blogCategory === selectedCategory
+
+    return matchesSearch && matchesTag && matchesCategory
   })
 
   // Separate the latest article as Featured (if no filters are active)
-  const isFiltering = searchQuery !== '' || selectedTag !== null
+  const isFiltering = searchQuery !== '' || selectedTag !== null || selectedCategory !== null
   const featuredBlog = !isFiltering && filteredBlogs.length > 0 ? filteredBlogs[0] : null
   const gridBlogs = featuredBlog ? filteredBlogs.slice(1) : filteredBlogs
 
@@ -162,19 +210,19 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
         {/* Dynamic Aurora Backdrop */}
         <div className="aurora-container">
           <div 
-            className="aurora-blob w-[500px] h-[500px] -top-40 -left-40 blob-1" 
+            className="aurora-blob w-[600px] h-[600px] -top-20 -left-20 blob-1" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
-              opacity: theme === 'dark' ? 0.12 : 0.06,
-              animation: 'blob-float-1 25s infinite alternate ease-in-out'
+              background: 'radial-gradient(circle, var(--accent) 0%, transparent 60%)',
+              opacity: theme === 'dark' ? 0.08 : 0.02,
+              animation: 'blob-float-1 20s infinite alternate ease-in-out'
             }} 
           />
           <div 
-            className="aurora-blob w-[600px] h-[600px] top-[40vh] -right-40 blob-2" 
+            className="aurora-blob w-[700px] h-[700px] top-[30vh] -right-20 blob-2" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%)',
-              opacity: theme === 'dark' ? 0.1 : 0.05,
-              animation: 'blob-float-2 30s infinite alternate ease-in-out'
+              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 60%)',
+              opacity: theme === 'dark' ? 0.05 : 0.01,
+              animation: 'blob-float-2 25s infinite alternate ease-in-out'
             }} 
           />
         </div>
@@ -196,19 +244,19 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider mb-5 shadow-sm"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--accent)' }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider mb-6 backdrop-blur-md"
+              style={{ borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 5%, transparent)', color: 'var(--accent)' }}
             >
-              <Sparkles size={12} className="animate-pulse" />
+              <Sparkles size={14} className="animate-pulse" />
               <span>THE DEVELOPER LOGS</span>
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5"
+              className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tighter mb-6"
             >
-              Stories & <span className="gradient-text">Insights</span>
+              Stories & <span style={{ color: 'var(--accent)' }}>Insights</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}
@@ -224,14 +272,14 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
           {/* Controls: Search and Filters */}
           <div className="mb-16 space-y-6">
             <div className="max-w-xl mx-auto relative group">
-              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] opacity-10 group-focus-within:opacity-20 blur transition-all duration-300 pointer-events-none" />
-              <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 transition-colors group-focus-within:text-[var(--accent)]" style={{ color: 'var(--text-muted)' }} />
+              <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] opacity-[0.05] group-focus-within:opacity-[0.1] blur-md transition-all duration-500 pointer-events-none" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-[var(--accent)]" />
               <input
                 type="text"
                 placeholder="Search articles by title, summary or tag..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-2xl text-xs sm:text-sm transition-all focus:outline-none focus:border-[var(--accent)] glass relative z-10 border"
+                className="w-full pl-14 pr-5 py-4 rounded-2xl text-sm transition-all focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 relative z-10 border bg-white/5 backdrop-blur-xl"
                 style={{ 
                   color: 'var(--text-primary)', 
                   borderColor: 'var(--border)'
@@ -239,17 +287,55 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               />
             </div>
 
+            {/* Category Pills */}
+            {allCategories.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
+                <button
+                  onClick={() => { setSelectedCategory(null); setSelectedTag(null) }}
+                  className="relative px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border active:scale-95 overflow-hidden group shadow-sm hover:shadow-md"
+                  style={{
+                    background: selectedCategory === null && selectedTag === null ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                    borderColor: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--border)',
+                    color: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--text-secondary)'
+                  }}
+                >
+                  <Sparkles size={12} className="inline-block mr-1.5 -mt-0.5" />
+                  All
+                </button>
+                {allCategories.map(cat => {
+                  const meta = categoryMeta[cat] || categoryMeta.General
+                  const active = selectedCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(active ? null : cat)}
+                      className={`relative px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border active:scale-95 overflow-hidden group shadow-sm hover:shadow-md`}
+                      style={{
+                        background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                        borderColor: active ? 'var(--accent)' : 'var(--border)',
+                        color: active ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        {meta.icon}
+                        {cat}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
             {/* Tag Badges */}
             {allTags.length > 0 && (
               <div className="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto select-none">
                 <button
                   onClick={() => setSelectedTag(null)}
-                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border active:scale-95 hover:brightness-110"
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border active:scale-95"
                   style={{
-                    background: selectedTag === null ? 'var(--accent)' : 'var(--bg-secondary)',
+                    background: selectedTag === null ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
                     borderColor: selectedTag === null ? 'var(--accent)' : 'var(--border)',
-                    color: selectedTag === null ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                    boxShadow: selectedTag === null ? '0 4px 12px var(--accent-dim)' : 'none'
+                    color: selectedTag === null ? 'var(--accent)' : 'var(--text-secondary)'
                   }}
                 >
                   All Posts
@@ -260,15 +346,14 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                     <button
                       key={tag}
                       onClick={() => setSelectedTag(active ? null : tag)}
-                      className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-1.5 active:scale-95 hover:brightness-110"
+                      className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-1.5 active:scale-95 hover:border-[var(--text-muted)]"
                       style={{
-                        background: active ? 'var(--accent)' : 'var(--bg-secondary)',
+                        background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
                         borderColor: active ? 'var(--accent)' : 'var(--border)',
-                        color: active ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                        boxShadow: active ? '0 4px 12px var(--accent-dim)' : 'none'
+                        color: active ? 'var(--accent)' : 'var(--text-secondary)'
                       }}
                     >
-                      <Tag size={10} />
+                      <Tag size={10} className={active ? '' : 'opacity-50'} />
                       {tag}
                     </button>
                   )
@@ -310,17 +395,34 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               </div>
             </div>
           ) : filteredBlogs.length === 0 ? (
-            <div className="text-center py-24 rounded-3xl border glass" style={{ borderColor: 'var(--border)' }}>
-              <BookOpen size={48} className="mx-auto mb-4 opacity-30 text-accent animate-pulse" style={{ color: 'var(--accent)' }} />
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>No articles match your filters.</p>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-32 rounded-3xl border relative overflow-hidden flex flex-col items-center justify-center" 
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[var(--accent)] rounded-full blur-[100px] opacity-[0.05] pointer-events-none" />
+              
+              <div className="relative z-10 w-20 h-20 rounded-3xl flex items-center justify-center mb-6 border" style={{ background: 'color-mix(in srgb, var(--bg-secondary) 50%, transparent)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                <Search size={32} />
+              </div>
+              
+              <h3 className="relative z-10 text-2xl font-bold mb-3 tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                No Archives Found
+              </h3>
+              <p className="relative z-10 text-sm max-w-md mx-auto mb-8 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                We couldn't find any articles matching "{searchQuery}" or your selected filters. Try adjusting your search parameters to explore the database.
+              </p>
+              
               <button 
-                onClick={() => { setSearchQuery(''); setSelectedTag(null) }}
-                className="mt-4 text-xs font-bold uppercase tracking-wider text-accent border border-[var(--accent)] px-4 py-2 rounded-xl transition-all hover:bg-[var(--accent-dim)]"
-                style={{ color: 'var(--accent)' }}
+                onClick={() => { setSearchQuery(''); setSelectedTag(null); setSelectedCategory(null) }}
+                className="relative z-10 text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-xl transition-all hover:scale-105 border flex items-center gap-2"
+                style={{ background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', borderColor: 'var(--accent)' }}
               >
-                Clear Search & Tags
+                <Sparkles size={14} />
+                Clear All Filters
               </button>
-            </div>
+            </motion.div>
           ) : (
             <div className="space-y-12">
               
@@ -330,12 +432,13 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="group rounded-3xl overflow-hidden border glass transition-all hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] shadow-md"
+                  className="group rounded-3xl overflow-hidden border transition-all hover:shadow-xl relative"
                   style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:h-[400px]">
+                  <div className="absolute inset-0 bg-[var(--accent)] opacity-0 group-hover:opacity-[0.02] transition-opacity z-0" />
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:h-[400px] relative z-10">
                     {/* Left: Featured Image Cover */}
-                    <div className="md:col-span-7 h-64 md:h-full overflow-hidden relative">
+                    <div className="md:col-span-7 h-64 md:h-full overflow-hidden relative border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--border)' }}>
                       <Link to={`/blogs/${featuredBlog.slug}`} className="w-full h-full block">
                         {featuredBlog.cover_image ? (
                           <img 
@@ -344,23 +447,31 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className={`w-full h-full bg-gradient-to-br ${getGradient(featuredBlog.slug)} flex items-center justify-center p-6 transition-transform duration-700 group-hover:scale-[1.03]`}>
-                            <div className="absolute inset-0 bg-black/10" />
-                            <span className="font-mono text-xs text-white/90 uppercase tracking-widest border border-white/20 px-4 py-2 rounded-full backdrop-blur-md z-10 shadow-lg">
-                              ★ Featured Article
-                            </span>
+                          <div className={`w-full h-full bg-gradient-to-br ${getGradient(featuredBlog.slug)} flex items-center justify-center p-6 transition-transform duration-700 group-hover:scale-[1.03] opacity-90`}>
+                            <div className="absolute inset-0 bg-black/20" />
                           </div>
                         )}
                       </Link>
                     </div>
 
                     {/* Right: Featured Text Metadata */}
-                    <div className="md:col-span-5 p-8 flex flex-col justify-between h-full border-t md:border-t-0 md:border-l" style={{ borderColor: 'var(--border)' }}>
+                    <div className="md:col-span-5 p-8 flex flex-col justify-between h-full">
                       <div>
                         {/* Featured Badge */}
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-accent mb-4" style={{ color: 'var(--accent)' }}>
-                          <Sparkles size={12} className="animate-pulse" />
-                          <span>Latest Post</span>
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-4">
+                          <span style={{ color: 'var(--accent)' }} className="flex items-center gap-1.5">
+                            <Sparkles size={12} />
+                            Featured
+                          </span>
+                          {featuredBlog.category && (
+                            <>
+                              <span style={{ color: 'var(--text-muted)' }} className="opacity-30">·</span>
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold tracking-wider"
+                                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                                {featuredBlog.category}
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         {/* Title */}
@@ -391,13 +502,13 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
 
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                            <Heart size={12} className="text-red-500 fill-current" />
+                            <Heart size={12} />
                             {featuredBlog.likes} likes
                           </span>
                           <Link 
                             to={`/blogs/${featuredBlog.slug}`} 
-                            className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all group-hover:gap-2.5 text-accent"
-                            style={{ color: 'var(--accent)' }}
+                            className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all group-hover:gap-2.5 px-4 py-2 rounded-xl border border-transparent hover:border-[var(--accent)]/30"
+                            style={{ color: '#ffffff', background: 'var(--accent)' }}
                           >
                             Read Article
                             <ArrowRight size={14} />
@@ -413,9 +524,10 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               {(gridBlogs.length > 0 || featuredBlog) && (
                 <div className="space-y-6">
                   {featuredBlog && (
-                    <h2 className="text-xs uppercase font-mono tracking-widest border-b pb-3 mb-6" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-                      Recent Articles
-                    </h2>
+                    <div className="flex items-center gap-4 mb-8">
+                      <h2 className="text-lg font-bold tracking-tight">Recent Posts</h2>
+                      <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
+                    </div>
                   )}
 
                   <motion.div 
@@ -433,11 +545,12 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.4, delay: idx * 0.05 }}
-                            className="group flex flex-col rounded-3xl overflow-hidden border glass transition-all hover:-translate-y-1.5 hover:shadow-[0_10px_25px_rgba(0,0,0,0.12)] hover:border-[var(--accent)] shadow-md"
-                            style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
+                            className="group flex flex-col rounded-3xl overflow-hidden border transition-all hover:-translate-y-1.5 hover:shadow-xl hover:border-[var(--accent)] relative bg-transparent"
+                            style={{ borderColor: 'var(--border)' }}
                           >
+                            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.02] transition-opacity z-0" />
                             {/* Card Image Banner */}
-                            <Link to={`/blogs/${blog.slug}`} className="relative h-44 w-full overflow-hidden block">
+                            <Link to={`/blogs/${blog.slug}`} className="relative h-44 w-full overflow-hidden block border-b" style={{ borderColor: 'var(--border)' }}>
                               {blog.cover_image ? (
                                 <img 
                                   src={blog.cover_image} 
@@ -445,11 +558,8 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
                               ) : (
-                                <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.slug)} flex items-center justify-center relative p-6 transition-transform duration-500 group-hover:scale-105`}>
+                                <div className={`w-full h-full bg-gradient-to-br ${blog.category ? categoryMeta[blog.category]?.gradient || getGradient(blog.slug) : getGradient(blog.slug)} flex items-center justify-center relative transition-transform duration-500 group-hover:scale-105 opacity-90`}>
                                   <div className="absolute inset-0 bg-black/10" />
-                                  <span className="font-mono text-[10px] text-white/80 uppercase tracking-widest border border-white/20 px-3 py-1.5 rounded-full backdrop-blur-md z-10">
-                                    Technical writeup
-                                  </span>
                                 </div>
                               )}
                             </Link>
@@ -463,14 +573,17 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                     <Calendar size={11} />
                                     {formatDate(blog.created_at)}
                                   </span>
-                                  <span className="flex items-center gap-1">
-                                    <Clock size={11} />
-                                    {blog.read_time || '3 min read'}
+                                  <span className="flex items-center gap-1.5">
+                                    {blog.category && (
+                                      <span className="flex items-center gap-1" style={{ color: 'var(--accent)' }}>
+                                        {blog.category}
+                                      </span>
+                                    )}
                                   </span>
                                 </div>
 
                                 {/* Title */}
-                                <Link to={`/blogs/${blog.slug}`}>
+                                <Link to={`/blogs/${blog.slug}`} className="relative z-10">
                                   <h3 className="text-base font-bold mb-2.5 transition-colors group-hover:text-[var(--accent)] line-clamp-2 leading-snug tracking-tight">
                                     {blog.title}
                                   </h3>
@@ -483,11 +596,11 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                               </div>
 
                               {/* Card Footer tags and button */}
-                              <div>
+                              <div className="relative z-10 flex-1 flex flex-col justify-end">
                                 {tagsArray.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mb-4 select-none">
                                     {tagsArray.slice(0, 3).map(t => (
-                                      <span key={t} className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                                      <span key={t} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                                         {t}
                                       </span>
                                     ))}
@@ -495,16 +608,16 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 )}
 
                                 <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                                  <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                                    <Heart size={11} className="text-red-500 fill-current" />
-                                    {blog.likes}
-                                  </span>
+                                  <div className="flex items-center gap-3 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                    <span className="flex items-center gap-1"><Heart size={12} /> {blog.likes}</span>
+                                    <span className="flex items-center gap-1"><Clock size={12} /> {blog.read_time || '3 min'}</span>
+                                  </div>
                                   <Link 
                                     to={`/blogs/${blog.slug}`} 
-                                    className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all group-hover:gap-2 text-accent"
-                                    style={{ color: 'var(--accent)' }}
+                                    className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-1 transition-all group-hover:gap-2.5 px-3 py-1.5 rounded-lg border border-transparent hover:border-[var(--accent)]/30"
+                                    style={{ color: '#ffffff', background: 'var(--accent)' }}
                                   >
-                                    Read More
+                                    Read
                                     <ArrowRight size={13} />
                                   </Link>
                                 </div>
@@ -521,26 +634,25 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 0.85, scale: 1 }}
                           transition={{ duration: 0.5, delay: (gridBlogs.length + placeholderIdx) * 0.05 }}
-                          className="flex flex-col justify-between rounded-3xl border-2 border-dashed p-6 min-h-[360px] bg-white/[0.01] backdrop-blur-sm select-none relative group overflow-hidden"
+                          className="flex flex-col justify-between rounded-3xl border border-dashed p-6 min-h-[360px] select-none relative group overflow-hidden"
                           style={{ borderColor: 'var(--border)' }}
                         >
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/[0.01]" />
                           <div className="space-y-4 relative z-10">
-                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-40" style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', color: 'var(--accent)' }}>
-                              <Sparkles size={16} className="animate-pulse" />
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center opacity-40 border" style={{ background: 'color-mix(in srgb, var(--bg-secondary) 50%, transparent)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                              <BookOpen size={16} />
                             </div>
                             <div className="space-y-2">
-                              <h3 className="text-sm font-semibold tracking-tight text-[var(--text-muted)] opacity-60">
+                              <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                                 {placeholderIdx === 0 ? 'Writing in Progress...' : 'Next Case Study Drafting...'}
                               </h3>
-                              <p className="text-xs leading-relaxed text-[var(--text-muted)] opacity-40">
+                              <p className="text-xs leading-relaxed font-medium opacity-70" style={{ color: 'var(--text-secondary)' }}>
                                 {placeholderIdx === 0 
                                   ? 'Drafting the next deep-dive on telemetry loops, scalable architectures, and advanced full-stack systems.' 
                                   : 'Fleshing out database schema autopsies, microservices migration reports, and cloud platform integrations.'}
                               </p>
                             </div>
                           </div>
-                          <div className="pt-6 border-t relative z-10 flex items-center justify-between text-[10px] font-mono tracking-widest text-[var(--text-muted)] opacity-35 uppercase" style={{ borderColor: 'var(--border)' }}>
+                          <div className="pt-6 border-t relative z-10 flex items-center justify-between text-[10px] font-bold tracking-widest uppercase opacity-50" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
                             <span>Article</span>
                             <span>Coming Soon</span>
                           </div>
