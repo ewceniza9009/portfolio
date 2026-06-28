@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import mermaid from 'mermaid'
@@ -32,13 +33,16 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     if (!el) return
     const svg = el.querySelector('svg')
     if (!svg) return
-    const rect = svg.getBoundingClientRect()
-    if (rect.width === 0 || rect.height === 0) return
-    const containerW = el.closest('.cursor-grab')?.clientWidth || 800
-    const padX = 48
-    const fitW = Math.min((containerW - padX) / rect.width, 1)
-    const fit = Math.max(fitW, 0.5)
-    setScale(Math.round(fit * 100) / 100)
+    const viewBox = svg.getAttribute('viewBox') || svg.getAttribute('viewbox')
+    if (viewBox) {
+      const parts = viewBox.split(/[\s,]+/).filter(Boolean).map(Number)
+      if (parts.length === 4 && parts[2] > 0) {
+        svg.style.maxWidth = `${parts[2]}px`
+      }
+    }
+    
+    // The user requested exactly 55% default zoom
+    setScale(0.55)
     setPosition({ x: 0, y: 0 })
   }, [svgHtml, hasError])
 
@@ -169,20 +173,21 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   }
 
   const handleReset = () => {
-    setScale(1)
+    setScale(0.55)
     setPosition({ x: 0, y: 0 })
   }
 
   // Modal full-screen viewer state
   const [showModal, setShowModal] = useState(false)
-  const [modalScale, setModalScale] = useState(1.5)
+  const [modalScale, setModalScale] = useState(1)
+  const [modalAutoScale, setModalAutoScale] = useState(1)
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
   const [modalIsDragging, setModalIsDragging] = useState(false)
   const [modalDragStart, setModalDragStart] = useState({ x: 0, y: 0 })
   const modalRef = useRef<HTMLDivElement>(null)
+  const modalSvgRef = useRef<HTMLDivElement>(null)
 
   const handleOpenModal = () => {
-    setModalScale(1.5)
     setModalPosition({ x: 0, y: 0 })
     setShowModal(true)
     document.body.style.overflow = 'hidden'
@@ -203,6 +208,31 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     return () => window.removeEventListener('keydown', onKey)
   }, [showModal])
 
+  // Auto-fit diagram in modal to fit both width and height
+  useEffect(() => {
+    if (!showModal || !svgHtml || hasError) return
+    const el = modalRef.current
+    if (!el) return
+    const svg = el.querySelector('svg')
+    if (!svg) return
+    const viewBox = svg.getAttribute('viewBox') || svg.getAttribute('viewbox')
+    if (!viewBox) return
+    const parts = viewBox.split(/[\s,]+/).filter(Boolean).map(Number)
+    if (parts.length !== 4) return
+    const [, , vbW, vbH] = parts
+    if (!vbW || !vbH) return
+    const containerW = el.clientWidth
+    const containerH = el.clientHeight
+    const padY = 48
+    const fitW = containerW / vbW
+    const fitH = (containerH - padY) / vbH
+    const fit = Math.max(Math.min(fitW, fitH, 1), 0.5)
+    const clamped = Math.round(fit * 100) / 100
+    setModalAutoScale(clamped)
+    setModalScale(clamped)
+    setModalPosition({ x: 0, y: 0 })
+  }, [showModal, svgHtml, hasError])
+
   const handleModalZoomIn = () => {
     setModalScale(prev => Math.min(5, prev + 0.3))
   }
@@ -212,7 +242,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   }
 
   const handleModalReset = () => {
-    setModalScale(1.5)
+    setModalScale(modalAutoScale)
     setModalPosition({ x: 0, y: 0 })
   }
 
@@ -259,9 +289,8 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     <div className="my-8 flex flex-col space-y-3 w-full">
       <style>{`
         .mermaid-svg-container svg {
-          width: 100% !important;
-          max-width: 900px !important;
           height: auto !important;
+          margin: 0 auto;
         }
         .mermaid-svg-container svg path {
           stroke: var(--text-muted) !important;
@@ -371,7 +400,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
         {/* Viewport Frame */}
         <div 
-          className="w-full h-[360px] md:h-[420px] overflow-auto flex items-start justify-center p-6 relative cursor-grab active:cursor-grabbing"
+          className="w-full h-[360px] md:h-[420px] overflow-auto flex items-center justify-center p-6 relative cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -425,48 +454,46 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
       )}
 
       {/* Fullscreen Modal Overlay */}
-      {showModal && (
+      {showModal && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex flex-col"
-          style={{ background: isDark ? '#0a0a0f' : '#ffffff', overflow: 'hidden' }}
+          className="fixed inset-0 flex flex-col"
+          style={{ background: isDark ? '#000000' : '#ffffff', overflow: 'hidden', zIndex: 999999 }}
         >
+
           <div
-            className="flex items-center justify-between px-5 py-3 shrink-0 select-none"
-            style={{
-              background: isDark ? '#1a1a2e' : '#f1f5f9',
-              borderBottom: '1px solid ' + (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')
-            }}
+            className="flex items-center justify-between px-4 py-2.5 shrink-0 select-none"
+            style={{ background: isDark ? '#111827' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#1f2937' : '#e2e8f0'}` }}
           >
-            <span className="text-xs font-mono tracking-wider uppercase font-semibold" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
+            <span className={`text-xs font-mono tracking-wider uppercase font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               Diagram Viewer
             </span>
-            <div className="flex items-center gap-1">
-              <button onClick={handleModalZoomOut} title="Zoom Out" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
-                <Minus size={15} />
+            <div className="flex items-center gap-1.5">
+              <button onClick={handleModalZoomOut} title="Zoom Out" className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}>
+                <Minus size={16} />
               </button>
-              <span className="text-xs font-mono w-10 text-center font-medium" style={{ color: isDark ? '#94a3b8' : '#475569' }}>
+              <span className={`text-sm font-mono w-10 text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {Math.round(modalScale * 100)}%
               </span>
-              <button onClick={handleModalZoomIn} title="Zoom In" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
-                <Plus size={15} />
+              <button onClick={handleModalZoomIn} title="Zoom In" className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}>
+                <Plus size={16} />
               </button>
-              <div className="w-px h-5 mx-1.5" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
-              <button onClick={handleModalReset} title="Reset View" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
-                <RotateCcw size={15} />
+              <div className={`w-px h-6 mx-1 ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`} />
+              <button onClick={handleModalReset} title="Reset View" className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}>
+                <RotateCcw size={16} />
               </button>
-              <button onClick={handleDownloadSvg} title="Download SVG" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
-                <Download size={15} />
+              <button onClick={handleDownloadSvg} title="Download SVG" className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}>
+                <Download size={16} />
               </button>
-              <div className="w-px h-5 mx-1.5" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
-              <button onClick={handleCloseModal} title="Close" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-red-500/15" style={{ color: isDark ? '#94a3b8' : '#475569', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
-                <X size={17} />
+              <div className={`w-px h-6 mx-1 ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`} />
+              <button onClick={handleCloseModal} title="Close (Esc)" className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${isDark ? 'bg-red-900/60 hover:bg-red-700 text-red-200' : 'bg-red-100 hover:bg-red-200 text-red-600'}`}>
+                <X size={18} />
               </button>
             </div>
           </div>
           <div
             ref={modalRef}
             className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing"
-            style={{ background: isDark ? '#0a0a0f' : '#f8fafc' }}
+            style={{ background: isDark ? '#0a0a0f' : '#ffffff' }}
             onMouseDown={handleModalMouseDown}
             onMouseMove={handleModalMouseMove}
             onMouseUp={handleModalMouseUp}
@@ -480,13 +507,15 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
               style={{ transform: `translate(${modalPosition.x}px, ${modalPosition.y}px) scale(${modalScale})` }}
             >
               <div
+                ref={modalSvgRef}
                 className="mermaid-svg-container"
-                style={{ maxWidth: 'none', width: 'auto' }}
+                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
                 dangerouslySetInnerHTML={{ __html: svgHtml }}
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
