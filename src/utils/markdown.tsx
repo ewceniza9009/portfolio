@@ -23,6 +23,27 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const renderId = useRef(0)
+  const svgRef = useRef<HTMLDivElement>(null)
+
+  // Auto-fit diagram to viewport after render
+  useEffect(() => {
+    if (!svgHtml || hasError) return
+    const el = svgRef.current
+    if (!el) return
+    const svg = el.querySelector('svg')
+    if (!svg) return
+    const rect = svg.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+    const containerW = el.closest('.cursor-grab')?.clientWidth || 800
+    const containerH = el.closest('.cursor-grab')?.clientHeight || 360
+    const padX = 48
+    const padY = 48
+    const fitW = (containerW - padX) / rect.width
+    const fitH = (containerH - padY) / rect.height
+    const fit = Math.min(fitW, fitH, 1)
+    setScale(Math.round(fit * 100) / 100)
+    setPosition({ x: 0, y: 0 })
+  }, [svgHtml, hasError])
 
   const cleanCode = code.trim()
     .replace(/&amp;/g, '&')
@@ -379,6 +400,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
             </pre>
           ) : (
             <div 
+              ref={svgRef}
               className="w-full flex justify-center mermaid-svg-container"
               style={{ 
                 transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
