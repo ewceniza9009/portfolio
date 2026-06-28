@@ -12,13 +12,13 @@ interface GalleryImage {
 }
 
 const PROJECTS: Record<string, { descriptions: string[]; count: number }> = {
-  CloudPallet: { descriptions: ['Cold storage WMS dashboard overview','Receiving workflow interface','Yard management dock scheduling','Inventory location mapping','Temperature zone configuration','Billing and invoice generation','Pick list confirmation screen','Putaway task assignment','Real-time dock monitoring','Warehouse room temperature settings','Material registration form','Account management interface','Carrier setup configuration','Cargo manifest creation','VAS service recording screen','Report generation interface'], count: 16 },
-  Dev2ndBrain: { descriptions: ['Knowledge base dashboard','Article editor interface','Category organization view','Search functionality demonstration','Note-taking interface','Code snippet storage'], count: 6 },
-  Halkyone: { descriptions: ['E-commerce product catalog','Shopping cart interface','Checkout flow step one','User authentication screen','Order history page','Product detail view','Category filter sidebar','Search results page','Account settings panel','Wishlist management','Payment method setup','Address book interface','Email notification settings','Mobile responsive header','Footer navigation design','Promotional banner area','Featured products section','New arrival showcase','Best sellers display','Newsletter subscription form','Social media links footer','FAQ help section','Contact form interface','Size guide popup','Color variant selector','Stock availability indicator','Customer review section'], count: 28 },
-  JsPlay: { descriptions: ['JavaScript playground interface','Code editor with syntax highlighting','Output console display','Library import selector','Share functionality','Preset templates gallery'], count: 4 },
-  NexPoint: { descriptions: ['SaaS dashboard overview','Analytics metrics display','User management interface','API integration settings','Billing subscription page','Notification preferences','Team collaboration view','Project workspace layout','File upload interface','Data visualization charts','Export functionality','Search and filter bar','Mobile app preview','Settings configuration','Audit log viewer','Security settings panel'], count: 17 },
-  OppStack: { descriptions: ['Opportunity pipeline view','Deal details interface','Contact management screen','Activity timeline display','Quote generation form','Win/loss analysis chart'], count: 3 },
-  SmashElite: { descriptions: ['Gaming leaderboard interface','Player profile card design','Match history display','Tournament bracket view','Team roster management','Stats comparison panel','Achievement unlock screen','Skill rating display','Game mode selection','Character selection screen','Map vote interface','Lobby waiting room','Spectator mode view','Replay review interface','Settings configuration panel','Audio controls display','Video settings options','Keybind configuration','Controller mapping screen','Notification toast design'], count: 20 }
+  CloudPallet: { descriptions: Array.from({ length: 20 }, (_, i) => `CloudPallet screenshot ${i + 1}`), count: 16 },
+  Dev2ndBrain: { descriptions: Array.from({ length: 10 }, (_, i) => `Dev2ndBrain screenshot ${i + 1}`), count: 6 },
+  Halkyone: { descriptions: Array.from({ length: 30 }, (_, i) => `Halkyone screenshot ${i + 1}`), count: 28 },
+  JsPlay: { descriptions: Array.from({ length: 10 }, (_, i) => `JsPlay screenshot ${i + 1}`), count: 4 },
+  NexPoint: { descriptions: Array.from({ length: 20 }, (_, i) => `NexPoint screenshot ${i + 1}`), count: 17 },
+  OppStack: { descriptions: Array.from({ length: 10 }, (_, i) => `OppStack screenshot ${i + 1}`), count: 3 },
+  SmashElite: { descriptions: Array.from({ length: 25 }, (_, i) => `SmashElite screenshot ${i + 1}`), count: 20 }
 }
 
 const PROJECT_ORDER = ['Halkyone', 'NexPoint', 'CloudPallet', 'SmashElite', 'Dev2ndBrain', 'OppStack', 'JsPlay']
