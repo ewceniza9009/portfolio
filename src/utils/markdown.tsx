@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
-import { Copy, Check } from 'lucide-react'
+import { Copy, Check, ExternalLink } from 'lucide-react'
 import mermaid from 'mermaid'
 
 mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
@@ -155,6 +155,63 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setPosition({ x: 0, y: 0 })
   }
 
+  const handleOpenNewTab = () => {
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mermaid Diagram</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: ${isDark ? '#0a0a0f' : '#f8fafc'};
+      color: ${isDark ? '#e2e8f0' : '#0f172a'};
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .diagram-container {
+      max-width: 100%;
+      overflow: visible;
+    }
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .diagram-container svg .node rect,
+    .diagram-container svg .node circle,
+    .diagram-container svg .node polygon {
+      fill: ${isDark ? '#1e293b' : '#ffffff'} !important;
+      stroke: ${primaryColor} !important;
+      stroke-width: 1.5px !important;
+    }
+    .diagram-container svg .node text,
+    .diagram-container svg .node tspan {
+      fill: ${isDark ? '#e2e8f0' : '#0f172a'} !important;
+    }
+    .diagram-container svg path {
+      stroke: ${isDark ? '#475569' : '#94a3b8'} !important;
+    }
+    .diagram-container svg .edgeLabel {
+      background-color: ${isDark ? '#1e293b' : '#ffffff'} !important;
+      color: ${isDark ? '#cbd5e1' : '#475569'} !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">${svgHtml}</div>
+</body>
+</html>`)
+    win.document.close()
+  }
+
   return (
     <div className="my-8 flex flex-col space-y-3 w-full">
       <style>{`
@@ -245,6 +302,19 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
             style={{ color: showCode ? 'var(--accent)' : 'var(--text-secondary)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          </button>
+
+          <div className="w-[1px] h-3 bg-white/10 mx-1" />
+
+          {/* Open in New Tab */}
+          <button
+            onClick={handleOpenNewTab}
+            title="Open in New Tab"
+            disabled={!svgHtml}
+            className="p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <ExternalLink size={14} strokeWidth={2.5} />
           </button>
         </div>
 
