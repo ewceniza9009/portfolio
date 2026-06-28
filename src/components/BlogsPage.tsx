@@ -691,7 +691,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                       })}
 
                       {/* Render Coming Soon Placeholders to fill the 3-column grid */}
-                      {Array.from({ length: Math.max(0, 3 - gridBlogs.length) }).map((_, placeholderIdx) => (
+                      {Array.from({ length: 3 - (gridBlogs.length % 3) }).map((_, placeholderIdx) => (
                         <motion.div
                           key={`placeholder-${placeholderIdx}`}
                           initial={{ opacity: 0, scale: 0.95 }}
