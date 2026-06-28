@@ -226,15 +226,21 @@ export default function App() {
           
           const savedTheme = getSafeItem('theme')
           const savedAccent = getSafeItem('accent')
+          const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null
+          const defaultAccent = getSafeItem('default_accent') as AccentKey | null
           const hour = new Date().getHours()
 
           if (isThemeRot && !savedTheme) {
             setTheme(Math.floor(hour / interval) % 2 === 0 ? 'dark' : 'light')
+          } else if (!savedTheme && !isThemeRot && (defaultTheme === 'dark' || defaultTheme === 'light')) {
+            setTheme(defaultTheme)
           }
           if (isAccentRot && !savedAccent) {
             const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
             const accentIndex = Math.floor(hour / interval) % accentKeys.length
             setAccent(accentKeys[accentIndex])
+          } else if (!savedAccent && !isAccentRot && defaultAccent && defaultAccent in ACCENT_THEMES) {
+            setAccent(defaultAccent)
           }
         }
       } catch (err) {

@@ -816,73 +816,91 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     <div className="min-h-screen flex flex-col transition-all duration-300" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       
       {/* Dashboard Header */}
-      <header className="border-b px-6 py-4 flex items-center justify-between sticky top-0 z-30 glass shadow-sm" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-4">
+      <header className="border-b px-3 md:px-6 py-3 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between sticky top-0 z-30 glass shadow-sm gap-3" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <a
             href="/"
-            className="w-9 h-9 rounded-full flex items-center justify-center border transition-all hover:scale-105"
+            className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center border transition-all hover:scale-105 shrink-0"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={14} />
           </a>
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center hover:opacity-85 transition-opacity duration-200">
-              <Logo size={28} className="flex-shrink-0" />
+              <Logo size={24} className="flex-shrink-0" />
             </Link>
-            <span className="text-xs uppercase tracking-widest opacity-60 border-l pl-3 ml-1.5" style={{ borderColor: 'var(--border)' }}>Dashboard</span>
+            <span className="text-[10px] md:text-xs uppercase tracking-widest opacity-60 border-l pl-2 ml-1" style={{ borderColor: 'var(--border)' }}>Dashboard</span>
+          </div>
+          <div className="flex items-center gap-2 ml-auto md:hidden">
+            <button
+              onClick={refreshData}
+              disabled={loading}
+              className="w-8 h-8 rounded-full flex items-center justify-center border"
+              style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+            >
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold border"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+            >
+              <LogOut size={11} />
+            </button>
           </div>
         </div>
 
         {/* Tab Selector */}
-        <div className="flex p-1 rounded-xl border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <div className="flex p-1 rounded-xl border overflow-x-auto w-full md:w-auto flex-nowrap" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
           <button
             onClick={() => { setActiveTab('messages'); setSelected(null); setSelectedBlog(null); }}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
             style={{ 
               background: activeTab === 'messages' ? 'var(--accent)' : 'transparent',
               color: activeTab === 'messages' ? 'var(--bg-primary)' : 'var(--text-secondary)'
             }}
           >
-            <MessageSquare size={13} />
-            Inquiries {inboxCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+            <MessageSquare size={11} />
+            <span className="hidden sm:inline">Inquiries</span>
+            {inboxCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />}
           </button>
           <button
             onClick={() => { setActiveTab('blogs'); setSelected(null); setSelectedBlog(null); }}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
             style={{ 
               background: activeTab === 'blogs' ? 'var(--accent)' : 'transparent',
               color: activeTab === 'blogs' ? 'var(--bg-primary)' : 'var(--text-secondary)'
             }}
           >
-            <FileText size={13} />
-            Blog Posts
+            <FileText size={11} />
+            <span className="hidden sm:inline">Blogs</span>
           </button>
           <button
             onClick={() => { setActiveTab('settings'); setSelected(null); setSelectedBlog(null); }}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
             style={{ 
               background: activeTab === 'settings' ? 'var(--accent)' : 'transparent',
               color: activeTab === 'settings' ? 'var(--bg-primary)' : 'var(--text-secondary)'
             }}
           >
-            <Settings size={13} />
-            Settings
+            <Settings size={11} />
+            <span className="hidden sm:inline">Settings</span>
           </button>
           <button
             onClick={() => { setActiveTab('analytics'); setSelected(null); setSelectedBlog(null); }}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
             style={{ 
               background: activeTab === 'analytics' ? 'var(--accent)' : 'transparent',
               color: activeTab === 'analytics' ? 'var(--bg-primary)' : 'var(--text-secondary)'
             }}
           >
-            <BarChart3 size={13} />
-            Analytics
+            <BarChart3 size={11} />
+            <span className="hidden sm:inline">Analytics</span>
           </button>
         </div>
 
-        {/* Header Right Actions */}
-        <div className="flex items-center gap-3">
+        {/* Header Right Actions (desktop) */}
+        <div className="hidden md:flex items-center gap-3">
           <button
             onClick={refreshData}
             disabled={loading}
@@ -902,8 +920,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 h-[calc(100vh-80px)] overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full items-stretch">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 h-[calc(100vh-var(--header-h,80px))] overflow-y-auto md:overflow-hidden" style={{ '--header-h': activeTab === 'analytics' || activeTab === 'settings' ? '140px' : '80px' } as any}>
+        <div className="grid grid-cols-1 gap-3 md:gap-6 h-full items-stretch md:grid-cols-12">
           
           {/* TAB 1: MESSAGES DASHBOARD */}
           {activeTab === 'messages' && (
@@ -1817,34 +1835,35 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
           {/* TAB 4: ANALYTICS */}
           {activeTab === 'analytics' && (
-            <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden"
-                 style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}>
+            <div className="col-span-12 flex flex-col rounded-2xl border overflow-hidden max-h-full" style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}>
               
-              <div className="p-6 border-b shrink-0 flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
-                <BarChart3 size={18} style={{ color: 'var(--accent)' }} />
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider">Visitor Analytics</h3>
-                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Track and analyze your portfolio visitors, locations, and engagement</p>
+              <div className="p-4 md:p-6 border-b shrink-0 flex flex-wrap items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                <BarChart3 size={16} style={{ color: 'var(--accent)' }} />
+                <div className="min-w-0">
+                  <h3 className="text-xs md:text-sm font-bold uppercase tracking-wider truncate">Visitor Analytics</h3>
+                  <p className="text-[9px] md:text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>Track and analyze your portfolio visitors</p>
                 </div>
-                <button
-                  onClick={fetchVisitors}
-                  className="ml-auto px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-                  disabled={visitorLoading}
-                >
-                  <RefreshCw size={12} className={visitorLoading ? 'animate-spin' : ''} />
-                  {visitorLoading ? 'Loading...' : 'Refresh'}
-                </button>
-                <button
-                  onClick={exportCSV}
-                  className="px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-2"
-                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-                >
-                  CSV
-                </button>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    onClick={fetchVisitors}
+                    className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                    disabled={visitorLoading}
+                  >
+                    <RefreshCw size={10} className={visitorLoading ? 'animate-spin' : ''} />
+                    <span className="hidden sm:inline">{visitorLoading ? 'Loading...' : 'Refresh'}</span>
+                  </button>
+                  <button
+                    onClick={exportCSV}
+                    className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5"
+                    style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                  >
+                    CSV
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 custom-scrollbar">
                 {visitorLoading ? (
                   <div className="p-10 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading visitor data...</div>
                 ) : visitors.length === 0 ? (
@@ -1856,47 +1875,51 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                 ) : (
                   <>
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                       {[
-                        { label: 'Unique Visitors', value: visitors.length, icon: '👤' },
+                        { label: 'Unique', value: visitors.length, icon: '👤' },
                         { label: 'Total Visits', value: visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), icon: '📊' },
-                        { label: "Today's Visits", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
+                        { label: "Today", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
                         { label: 'Yesterday', value: dailyVisits.find((d: any) => d.date === new Date(Date.now() - 86400000).toISOString().slice(0,10))?.count || 0, icon: '📆' },
                       ].map((stat, i) => (
-                        <div key={i} className="rounded-2xl border p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                          <div className="text-2xl mb-2">{stat.icon}</div>
-                          <div className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>{stat.value}</div>
-                          <div className="text-[10px] font-semibold uppercase tracking-wider mt-1.5" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
+                        <div key={i} className="rounded-xl md:rounded-2xl border p-3 md:p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <div className="text-lg md:text-2xl mb-1 md:mb-2">{stat.icon}</div>
+                          <div className="text-xl md:text-3xl font-bold" style={{ color: 'var(--accent)' }}>{stat.value}</div>
+                          <div className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider mt-0.5 md:mt-1.5" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
                         </div>
                       ))}
                     </div>
 
                     {/* Daily Visits + Peak Hours */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       {dailyVisits.length > 0 && (
-                        <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic</h4>
-                          <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={dailyVisits.slice(0, 14).reverse()}>
-                              <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
-                              <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={24} />
-                              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
-                              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
-                            </BarChart>
-                          </ResponsiveContainer>
+                        <div className="rounded-xl md:rounded-2xl border p-3 md:p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic</h4>
+                          <div className="w-full" style={{ height: 160 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={dailyVisits.slice(0, 14).reverse()}>
+                                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={20} />
+                                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
+                                <Bar dataKey="count" radius={[4, 4, 0, 0]} fill="var(--accent)" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       )}
                       {hourlyVisits.length > 0 && (
-                        <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Peak Hours (Last 48h)</h4>
-                          <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={[...hourlyVisits].reverse()}>
-                              <XAxis dataKey="hour" tick={{ fontSize: 8, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(11, 16)} axisLine={false} tickLine={false} />
-                              <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={24} />
-                              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
-                              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent)" />
-                            </BarChart>
-                          </ResponsiveContainer>
+                        <div className="rounded-xl md:rounded-2xl border p-3 md:p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                          <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4" style={{ color: 'var(--text-muted)' }}>Peak Hours</h4>
+                          <div className="w-full" style={{ height: 160 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[...hourlyVisits].reverse().slice(-24)}>
+                                <XAxis dataKey="hour" tick={{ fontSize: 8, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(11, 16)} axisLine={false} tickLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={20} />
+                                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
+                                <Bar dataKey="count" radius={[4, 4, 0, 0]} fill="var(--accent)" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       )}
                     </div>
