@@ -79,8 +79,8 @@ export default function CursorFollower() {
         document.body.appendChild(ripple)
         
         const animation = ripple.animate([
-          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.6, borderWidth: '2px' },
-          { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0, borderWidth: '0px' }
+          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.6 },
+          { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0 }
         ], {
           duration: 1200,
           easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
