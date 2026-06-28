@@ -302,15 +302,15 @@ app.get('/api/admin/blogs', authMiddleware, async (_req, res) => {
 // Create a new blog post
 app.post('/api/admin/blogs', authMiddleware, async (req, res) => {
   try {
-    const { title, slug, content, summary, tags, published, read_time, cover_image } = req.body
+    const { title, slug, content, summary, tags, category, published, read_time, cover_image } = req.body
     if (!title || !slug || !content) {
       return res.status(400).json({ error: 'Title, slug, and content are required' })
     }
 
     const id = uuidv4()
     await turso.execute({
-      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, published, read_time, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [id, slug, title, content, summary || null, tags || null, published ? 1 : 0, read_time || null, cover_image || null] as any,
+      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, category, published, read_time, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [id, slug, title, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null] as any,
     })
 
     res.json({ success: true, id })
@@ -326,14 +326,14 @@ app.post('/api/admin/blogs', authMiddleware, async (req, res) => {
 // Update an existing blog post
 app.put('/api/admin/blogs/:id', authMiddleware, async (req, res) => {
   try {
-    const { title, slug, content, summary, tags, published, read_time, cover_image } = req.body
+    const { title, slug, content, summary, tags, category, published, read_time, cover_image } = req.body
     if (!title || !slug || !content) {
       return res.status(400).json({ error: 'Title, slug, and content are required' })
     }
 
     await turso.execute({
-      sql: 'UPDATE blogs SET title = ?, slug = ?, content = ?, summary = ?, tags = ?, published = ?, read_time = ?, cover_image = ?, updated_at = datetime(\'now\') WHERE id = ?',
-      args: [title, slug, content, summary || null, tags || null, published ? 1 : 0, read_time || null, cover_image || null, req.params.id] as any,
+      sql: 'UPDATE blogs SET title = ?, slug = ?, content = ?, summary = ?, tags = ?, category = ?, published = ?, read_time = ?, cover_image = ?, updated_at = datetime(\'now\') WHERE id = ?',
+      args: [title, slug, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null, req.params.id] as any,
     })
 
     res.json({ success: true })

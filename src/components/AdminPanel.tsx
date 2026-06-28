@@ -32,6 +32,7 @@ interface Blog {
   content: string
   summary: string | null
   tags: string | null
+  category: string | null
   published: number
   likes: number
   read_time: string | null
@@ -107,6 +108,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogContent, setBlogContent] = useState('')
   const [blogSummary, setBlogSummary] = useState('')
   const [blogTags, setBlogTags] = useState('')
+  const [blogCategory, setBlogCategory] = useState('General')
   const [blogPublished, setBlogPublished] = useState(false)
   const [blogReadTime, setBlogReadTime] = useState('')
   const [blogCoverImage, setBlogCoverImage] = useState('')
@@ -536,6 +538,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setBlogContent(blog.content)
     setBlogSummary(blog.summary || '')
     setBlogTags(blog.tags || '')
+    setBlogCategory(blog.category || 'General')
     setBlogPublished(blog.published === 1)
     setBlogReadTime(blog.read_time || '')
     setBlogCoverImage(blog.cover_image || '')
@@ -564,6 +567,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       content: '',
       summary: '',
       tags: '',
+      category: 'General',
       published: 0,
       likes: 0,
       read_time: '5 min read',
@@ -577,6 +581,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setBlogContent('')
     setBlogSummary('')
     setBlogTags('')
+    setBlogCategory('General')
     setBlogPublished(false)
     setBlogReadTime('5 min read')
     setBlogCoverImage('')
@@ -595,6 +600,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       content: blogContent,
       summary: blogSummary,
       tags: blogTags,
+      category: blogCategory,
       published: blogPublished ? 1 : 0,
       read_time: blogReadTime,
       cover_image: blogCoverImage
@@ -1346,13 +1352,21 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             </p>
 
                             <div className="flex items-center justify-between w-full mt-1">
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider" 
-                                    style={{ 
-                                      background: blog.published === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                                      color: blog.published === 1 ? '#10b981' : '#f59e0b'
-                                    }}>
-                                {blog.published === 1 ? 'Published' : 'Draft'}
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider" 
+                                      style={{ 
+                                        background: blog.published === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                        color: blog.published === 1 ? '#10b981' : '#f59e0b'
+                                      }}>
+                                  {blog.published === 1 ? 'Published' : 'Draft'}
+                                </span>
+                                {blog.category && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                                        style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                                    {blog.category}
+                                  </span>
+                                )}
+                              </div>
                               {!isNew && (
                                 <span className="text-[9px] flex items-center gap-1 font-semibold" style={{ color: 'var(--text-muted)' }}>
                                   <Heart size={10} className="text-red-500 fill-current" />
@@ -1446,7 +1460,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">Tags (comma-separated)</label>
                               <input
@@ -1457,6 +1471,23 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
                                 placeholder="React, TypeScript, CSS"
                               />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">Category</label>
+                              <select
+                                value={blogCategory}
+                                onChange={e => setBlogCategory(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-xl text-xs border appearance-none cursor-pointer"
+                                style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                              >
+                                <option value="General">General</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Tutorial">Tutorial</option>
+                                <option value="Architecture">Architecture</option>
+                                <option value="DevOps">DevOps</option>
+                                <option value="Security">Security</option>
+                                <option value="Career">Career</option>
+                              </select>
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">Reading Time</label>

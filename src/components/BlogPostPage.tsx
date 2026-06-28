@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag } from 'lucide-react'
+import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
@@ -16,6 +16,7 @@ interface Blog {
   content: string
   summary: string | null
   tags: string | null
+  category: string | null
   published: number
   likes: number
   read_time: string | null
@@ -351,6 +352,16 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
                 <Clock size={13} />
                 {blog.read_time || '5 min read'}
               </span>
+              {blog.category && (
+                <Link 
+                  to={`/blogs?category=${encodeURIComponent(blog.category)}`}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border transition-all hover:brightness-110"
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--accent)' }}
+                >
+                  <Folder size={11} />
+                  {blog.category}
+                </Link>
+              )}
               <span className="flex items-center gap-1.5">
                 <Heart size={13} className="text-red-500 fill-current" />
                 {likes} likes

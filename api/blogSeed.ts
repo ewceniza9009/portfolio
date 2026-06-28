@@ -51,8 +51,8 @@ export async function seedFirstBlog(turso: any) {
       // Sync from disk ONLY if the markdown file on disk has been edited more recently than the database row
       if (currentMtime > dbMtime + 2000) {
         await turso.execute({
-          sql: 'UPDATE blogs SET title = ?, content = ?, summary = ?, tags = ?, read_time = ?, likes = ?, updated_at = datetime(\'now\') WHERE slug = ?',
-          args: [title, content, summary, tags, readTime, targetLikes, slug]
+          sql: 'UPDATE blogs SET title = ?, content = ?, summary = ?, tags = ?, category = ?, read_time = ?, likes = ?, updated_at = datetime(\'now\') WHERE slug = ?',
+          args: [title, content, summary, tags, 'Engineering', readTime, targetLikes, slug]
         })
         console.log('Synced EMR blog post from disk (file was updated).')
       }
@@ -60,8 +60,8 @@ export async function seedFirstBlog(turso: any) {
     }
 
     await turso.execute({
-      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, published, likes, read_time, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, datetime(\'now\'))',
-      args: [blogId, slug, title, content, summary, tags, readTime]
+      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, category, published, likes, read_time, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, datetime(\'now\'))',
+      args: [blogId, slug, title, content, summary, tags, 'Engineering', readTime]
     })
     
     console.log('Successfully seeded EMR blog post from disk!')
