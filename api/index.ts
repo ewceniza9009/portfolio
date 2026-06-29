@@ -567,7 +567,7 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
     const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
     const hourly = await turso.execute('SELECT * FROM hourly_visits ORDER BY hour DESC LIMIT 48')
 
-    const countries = await turso.execute('SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != "" ORDER BY country')
+    const countries = await turso.execute("SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != '' ORDER BY country")
 
     res.json({
       visitors: visitors.rows,
