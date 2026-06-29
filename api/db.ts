@@ -113,10 +113,11 @@ export async function initDb() {
 
   // Seed default settings if they don't exist
   await turso.execute(`
-    INSERT OR IGNORE INTO settings (key, value) VALUES 
+    INSERT OR IGNORE INTO settings (key, value) VALUES
     ('rotation_theme_enabled', 'true'),
     ('rotation_accent_enabled', 'false'),
-    ('rotation_interval_hours', '2')
+    ('rotation_interval_hours', '2'),
+    ('paypal_donate_url', 'https://paypal.me/ewceniza')
   `)
 
   // Run seed function to add first EMR telemetry blog post

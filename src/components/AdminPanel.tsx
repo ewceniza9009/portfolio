@@ -149,8 +149,21 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [refreshing, setRefreshing] = useState(false)
   const [loginError, setLoginError] = useState('')
   
-  // Dashboard Tab selection
-  const [activeTab, setActiveTab] = useState<'messages' | 'blogs' | 'settings' | 'analytics'>('messages')
+  // Dashboard Tab selection (persisted across refresh)
+  const [activeTab, setActiveTabState] = useState<'messages' | 'blogs' | 'settings' | 'analytics'>(() => {
+    try {
+      const saved = localStorage.getItem('admin_active_tab')
+      if (saved === 'messages' || saved === 'blogs' || saved === 'settings' || saved === 'analytics') {
+        return saved
+      }
+    } catch {}
+    return 'messages'
+  })
+
+  const setActiveTab = (tab: 'messages' | 'blogs' | 'settings' | 'analytics') => {
+    setActiveTabState(tab)
+    try { localStorage.setItem('admin_active_tab', tab) } catch {}
+  }
 
   // ── Tab 1: Messages State ──
   const [messages, setMessages] = useState<Message[]>([])
@@ -293,6 +306,31 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     const saved = getSafeItem('default_accent')
     return saved && saved in ACCENT_THEMES ? saved : null
   })
+  const [paypalDonateUrl, setPaypalDonateUrl] = useState<string>('')
+  const [paypalSaved, setPaypalSaved] = useState<boolean>(false)
+
+  const loadPaypalUrl = useCallback(async () => {
+    try {
+      const res = await api('/api/settings')
+      if (res.ok) {
+        const data = await res.json()
+        setPaypalDonateUrl(data?.paypal_donate_url || '')
+      }
+    } catch {}
+  }, [])
+
+  const handlePaypalSave = async () => {
+    await saveSettings({ paypal_donate_url: paypalDonateUrl.trim() })
+    setPaypalSaved(true)
+    setTimeout(() => setPaypalSaved(false), 1500)
+    try { sessionStorage.setItem('paypal_donate_url', paypalDonateUrl.trim()) } catch {}
+  }
+
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      loadPaypalUrl()
+    }
+  }, [activeTab, loadPaypalUrl])
   const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
     return getSafeItem('rotation_theme_enabled') !== 'false'
   })
@@ -2114,6 +2152,37 @@ const res = await api(`/api/visitors?${params.toString()}`)
                       style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
                     />
                     <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>hours</span>
+                  </div>
+                </div>
+
+                {/* Section 4: PayPal Donate URL */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-7 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">PayPal Donate URL</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      The donate button on every blog post uses this URL. Leave blank to hide the button.
+                    </p>
+                  </div>
+                  <div className="md:col-span-5 flex items-center justify-end gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://paypal.me/yourname"
+                      value={paypalDonateUrl}
+                      onChange={(e) => setPaypalDonateUrl(e.target.value)}
+                      className="flex-1 max-w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                    />
+                    <button
+                      onClick={handlePaypalSave}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 shrink-0"
+                      style={{
+                        background: paypalSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: paypalSaved ? 'var(--accent)' : 'var(--border)',
+                        color: paypalSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {paypalSaved ? 'Saved' : 'Save'}
+                    </button>
                   </div>
                 </div>
 

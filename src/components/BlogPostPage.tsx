@@ -7,6 +7,7 @@ import Footer from './Footer'
 import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import { parseMarkdown } from '../utils/markdown'
+import PayPalDonate from './PayPalDonate'
 import type { AccentKey } from '../data/accents'
 
 function getApiUrl(path: string): string {
@@ -128,10 +129,13 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // Likes state
   const [likes, setLikes] = useState(0)
   const [hasLiked, setHasLiked] = useState(false)
+
+  // PayPal donate URL fetched from /api/settings
+  const [paypalUrl, setPaypalUrl] = useState<string>('')
 
   // Share menu state
   const [shareOpen, setShareOpen] = useState(false)
@@ -185,6 +189,26 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
       fetchBlogAndComments()
     }
   }, [slug])
+
+  // Fetch PayPal donate URL once at mount (cached, not per blog)
+  useEffect(() => {
+    let aborted = false
+    const cached = sessionStorage.getItem('paypal_donate_url')
+    if (cached !== null) {
+      setPaypalUrl(cached)
+      return
+    }
+    fetch(getApiUrl('/api/settings'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (aborted) return
+        const url = data?.paypal_donate_url || ''
+        setPaypalUrl(url)
+        try { sessionStorage.setItem('paypal_donate_url', url) } catch {}
+      })
+      .catch(() => {})
+    return () => { aborted = true }
+  }, [])
 
   const handleLike = async () => {
     if (!blog || hasLiked) return
@@ -415,6 +439,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
             {parsedContent}
           </article>
 
+          <PayPalDonate url={paypalUrl} variant="inline" />
+
           {/* Written By Author Card */}
           <section className="p-6 rounded-3xl border glass mb-16 flex flex-col sm:flex-row items-center gap-5 select-none" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
@@ -432,8 +458,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </section>
 
           {/* Reader Actions (Likes + Sharing) */}
-          <div className="flex items-center justify-between border-t border-b py-6 mb-16 select-none" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between border-t border-b py-6 mb-16 select-none flex-wrap gap-3" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-4 flex-wrap">
               <motion.button
                 onClick={handleLike}
                 disabled={hasLiked}
@@ -449,6 +475,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
                 <span>{hasLiked ? 'Liked!' : 'Like Article'}</span>
                 <span className="opacity-80 border-l pl-2.5" style={{ borderColor: 'var(--border)' }}>{likes}</span>
               </motion.button>
+              <PayPalDonate url={paypalUrl} variant="compact" />
             </div>
 
             {/* Share Popover */}
