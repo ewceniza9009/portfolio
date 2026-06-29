@@ -569,12 +569,17 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
 
     const countries = await turso.execute("SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != '' ORDER BY country")
 
+    const unfilteredTotal = await turso.execute('SELECT COUNT(*) as count FROM visitors')
+    const unfilteredVisits = await turso.execute('SELECT SUM(visit_count) as count FROM visitors')
+
     res.json({
       visitors: visitors.rows,
       daily: daily.rows,
       hourly: hourly.rows,
       countries: countries.rows.map(r => r.country),
       pagination: { page, limit, total, totalPages },
+      unfiltered_total: Number(unfilteredTotal.rows[0]?.count || 0),
+      unfiltered_visits: Number(unfilteredVisits.rows[0]?.count || 0),
     })
   } catch (err) {
     console.error('Fetch visitors error:', err)

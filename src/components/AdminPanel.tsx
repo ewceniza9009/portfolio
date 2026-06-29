@@ -5,12 +5,15 @@ import {
   MessageSquare, Send, Loader, LogOut, 
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
-  Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3
+  Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
+  Maximize2, Minimize2, Bold, Italic, Heading1, Heading2, Code,
+  List, Link as LinkIcon, Quote, Image, Minus, Table
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
 import Logo from './Logo'
 import { Link } from 'react-router-dom'
+import MarkdownEditor, { useMarkdownInsert } from './MarkdownEditor'
 
 interface Message {
   id: string
@@ -169,6 +172,15 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null)
   const [blogSearchQuery, setBlogSearchQuery] = useState('')
   const [blogFilterTab, setBlogFilterTab] = useState<'all' | 'drafts' | 'published'>('all')
+
+  const blogWords = useMemo(() => {
+    const wordSet = new Set<string>()
+    for (const blog of blogs) {
+      const matches = (blog.title + ' ' + blog.content + ' ' + (blog.summary || '')).match(/[a-zA-Z]{3,}/g) || []
+      for (const m of matches) wordSet.add(m)
+    }
+    return Array.from(wordSet)
+  }, [blogs])
   
   // Blog Form Fields
   const [blogTitle, setBlogTitle] = useState('')
@@ -189,6 +201,17 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogSaving, setBlogSaving] = useState(false)
   const [blogDeleting, setBlogDeleting] = useState(false)
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(null)
+  const [focusContentMode, setFocusContentMode] = useState(false)
+  const { setEditor: setMonacoEditor, insertMarkdown } = useMarkdownInsert()
+
+  useEffect(() => {
+    if (focusContentMode) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [focusContentMode])
 
   // ── Visitor Analytics State ──
   const [visitors, setVisitors] = useState<any[]>([])
@@ -196,6 +219,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [hourlyVisits, setHourlyVisits] = useState<any[]>([])
   const [visitorLoading, setVisitorLoading] = useState(false)
   const [visitorRefreshing, setVisitorRefreshing] = useState(false)
+  const [unfilteredTotal, setUnfilteredTotal] = useState(0)
+  const [unfilteredVisits, setUnfilteredVisits] = useState(0)
 
   // ── Cleanup State ──
   const [cleanupOpen, setCleanupOpen] = useState(false)
@@ -224,7 +249,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const browserTotal = useMemo(() => Object.values(uaStats.browserCount).reduce((s, v) => s + (v as number), 0), [uaStats])
 
   // Analytics summary (avoid recomputation in JSX)
-  const totalVisits = useMemo(() => visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), [visitors])
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const yesterdayDate = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10) }, [])
   const todayCount = useMemo(() => dailyVisits.find((d: any) => d.date === todayStr)?.count || 0, [dailyVisits, todayStr])
@@ -335,16 +359,18 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       if (gridSearch) params.set('search', gridSearch)
       if (gridCountry) params.set('country', gridCountry)
 
-      const res = await api(`/api/visitors?${params.toString()}`)
-      if (res.ok) {
-        const data = await res.json()
-        setVisitors(data.visitors || [])
-        setDailyVisits(data.daily || [])
-        setHourlyVisits(data.hourly || [])
-        setGridPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
-        setGridCountries(data.countries || [])
-        visitorsLoadedRef.current = true
-      }
+const res = await api(`/api/visitors?${params.toString()}`)
+        if (res.ok) {
+          const data = await res.json()
+          setVisitors(data.visitors || [])
+          setDailyVisits(data.daily || [])
+          setHourlyVisits(data.hourly || [])
+          setGridPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
+          setGridCountries(data.countries || [])
+          setUnfilteredTotal(data.unfiltered_total || 0)
+          setUnfilteredVisits(data.unfiltered_visits || 0)
+          visitorsLoadedRef.current = true
+        }
     } catch (err) {
       console.error('Failed to fetch visitors:', err)
     } finally {
@@ -1570,26 +1596,42 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       </div>
 
                       {/* Edit / Preview Tabs */}
-                      <div className="flex p-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+                      <div className="flex items-center gap-2">
+                        <div className="flex p-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+                          <button
+                            onClick={() => setBlogEditorTab('edit')}
+                            className="px-3 py-1 rounded flex items-center gap-1"
+                            style={{ 
+                              background: blogEditorTab === 'edit' ? 'var(--accent)' : 'transparent',
+                              color: blogEditorTab === 'edit' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                            }}
+                          >
+                            <Edit size={10} /> Edit
+                          </button>
+                          <button
+                            onClick={() => setBlogEditorTab('preview')}
+                            className="px-3 py-1 rounded flex items-center gap-1"
+                            style={{ 
+                              background: blogEditorTab === 'preview' ? 'var(--accent)' : 'transparent',
+                              color: blogEditorTab === 'preview' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                            }}
+                          >
+                            <Eye size={10} /> Live Preview
+                          </button>
+                        </div>
                         <button
-                          onClick={() => setBlogEditorTab('edit')}
-                          className="px-3 py-1 rounded flex items-center gap-1"
-                          style={{ 
-                            background: blogEditorTab === 'edit' ? 'var(--accent)' : 'transparent',
-                            color: blogEditorTab === 'edit' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                          type="button"
+                          onClick={handleSaveBlog}
+                          disabled={blogSaving || !blogTitle || !blogSlug || !blogContent}
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:brightness-110 active:scale-[0.98]"
+                          style={{
+                            background: 'var(--accent)',
+                            color: 'var(--bg-primary)',
+                            opacity: blogSaving || !blogTitle || !blogSlug || !blogContent ? 0.6 : 1
                           }}
                         >
-                          <Edit size={10} /> Edit
-                        </button>
-                        <button
-                          onClick={() => setBlogEditorTab('preview')}
-                          className="px-3 py-1 rounded flex items-center gap-1"
-                          style={{ 
-                            background: blogEditorTab === 'preview' ? 'var(--accent)' : 'transparent',
-                            color: blogEditorTab === 'preview' ? 'var(--bg-primary)' : 'var(--text-secondary)'
-                          }}
-                        >
-                          <Eye size={10} /> Live Preview
+                          {blogSaving && <Loader size={11} className="animate-spin" />}
+                          Save Changes
                         </button>
                       </div>
                     </div>
@@ -1697,15 +1739,64 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           </div>
 
                           <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">Markdown Body Content *</label>
-                            <textarea
-                              value={blogContent}
-                              onChange={e => setBlogContent(e.target.value)}
-                              rows={15}
-                              className="w-full px-4 py-3 rounded-xl text-xs font-mono resize-y border custom-scrollbar"
-                              style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
-                              placeholder="Write your article in Markdown syntax (# headers, **bold**, lists, ```code blocks)..."
-                            />
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-wider opacity-60">Markdown Body Content *</label>
+                              <button
+                                type="button"
+                                onClick={() => setFocusContentMode(true)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border hover:brightness-110 transition-all"
+                                style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                              >
+                                <Maximize2 size={10} /> Focus Mode
+                              </button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-0.5 p-1.5 rounded-t-xl border border-b-0" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                              {[
+                                { icon: <Heading1 size={13} />, action: () => insertMarkdown('# ', '', 'Heading'), tip: 'Heading 1' },
+                                { icon: <Heading2 size={13} />, action: () => insertMarkdown('## ', '', 'Heading'), tip: 'Heading 2' },
+                                { icon: <Bold size={13} />, action: () => insertMarkdown('**', '**', 'bold text'), tip: 'Bold' },
+                                { icon: <Italic size={13} />, action: () => insertMarkdown('*', '*', 'italic text'), tip: 'Italic' },
+                                { icon: <Code size={13} />, action: () => insertMarkdown('`', '`', 'code'), tip: 'Inline Code' },
+                                { icon: <Quote size={13} />, action: () => insertMarkdown('> ', '', 'quote'), tip: 'Blockquote' },
+                                { icon: <List size={13} />, action: () => insertMarkdown('- ', '', 'list item'), tip: 'List' },
+                                { icon: <LinkIcon size={13} />, action: () => insertMarkdown('[', '](url)', 'link text'), tip: 'Link' },
+                                { icon: <Image size={13} />, action: () => insertMarkdown('![', '](url)', 'alt text'), tip: 'Image' },
+                                { icon: <Minus size={13} />, action: () => insertMarkdown('\n---\n'), tip: 'Divider' },
+                                { icon: <Table size={13} />, action: () => insertMarkdown('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n'), tip: 'Table' },
+                              ].map((btn, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={btn.action}
+                                  title={btn.tip}
+                                  className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
+                                  style={{ color: 'var(--text-muted)' }}
+                                >
+                                  {btn.icon}
+                                </button>
+                              ))}
+                              <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
+                              <button
+                                type="button"
+                                onClick={() => insertMarkdown('\n```\n', '\n```\n', 'code block')}
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors font-mono"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                {'```'}
+                              </button>
+                            </div>
+
+                            <div className="rounded-b-xl border overflow-hidden" style={{ borderColor: 'var(--border)', borderTopLeftRadius: 0, borderTopRightRadius: 0, height: '350px' }}>
+                              <MarkdownEditor
+                                value={blogContent}
+                                onChange={setBlogContent}
+                                height="350px"
+                                autoFocus
+                                onEditorMount={setMonacoEditor}
+                                extraWords={blogWords}
+                              />
+                            </div>
                           </div>
 
                           {/* AI Copilot Writing Panel */}
@@ -1848,21 +1939,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       >
                         {blogDeleting ? <Loader size={12} className="animate-spin" /> : <Trash2 size={12} />}
                         Delete Post
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleSaveBlog}
-                        disabled={blogSaving || !blogTitle || !blogSlug || !blogContent}
-                        className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 active:scale-[0.98]"
-                        style={{
-                          background: 'var(--accent)',
-                          color: 'var(--bg-primary)',
-                          opacity: blogSaving || !blogTitle || !blogSlug || !blogContent ? 0.6 : 1
-                        }}
-                      >
-                        {blogSaving && <Loader size={12} className="animate-spin" />}
-                        Save Changes
                       </button>
                     </div>
                   </div>
@@ -2093,8 +2169,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                       {[
-                        { label: 'Unique', value: visitors.length, icon: '👤' },
-                        { label: 'Total Visits', value: totalVisits, icon: '📊' },
+                        { label: 'Unique', value: unfilteredTotal, icon: '👤' },
+                        { label: 'Total Visits', value: unfilteredVisits, icon: '📊' },
                         { label: "Today (UTC)", value: todayCount, icon: '📅' },
                         { label: 'Yesterday (UTC)', value: yesterdayCount, icon: '📆' },
                       ].map((stat, i) => (
@@ -2144,7 +2220,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Country</h4>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                           {countryStats.slice(0, 8).map((c: any) => (
                             <div key={c.name} className="flex items-center gap-3">
                               <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{c.count}</span>
@@ -2530,6 +2606,124 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
             </div>
           )}
+
+          {/* ── Focus Mode Overlay ── */}
+          <AnimatePresence>
+            {focusContentMode && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[9999] flex flex-col"
+                style={{ background: 'var(--bg-primary)' }}
+              >
+                {/* Focus Header */}
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--glass-bg)' }}>
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} style={{ color: 'var(--accent)' }} />
+                    <span className="text-xs font-bold uppercase tracking-wider">Focus Editor</span>
+                    {blogTitle && <span className="text-xs opacity-50">— {blogTitle}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Toolbar in header */}
+                    <div className="hidden sm:flex items-center gap-0.5 mr-2">
+                      {[
+                        { icon: <Heading1 size={14} />, action: () => insertMarkdown('# ', '', 'Heading'), tip: 'Heading 1' },
+                        { icon: <Heading2 size={14} />, action: () => insertMarkdown('## ', '', 'Heading'), tip: 'Heading 2' },
+                        { icon: <Bold size={14} />, action: () => insertMarkdown('**', '**', 'bold text'), tip: 'Bold' },
+                        { icon: <Italic size={14} />, action: () => insertMarkdown('*', '*', 'italic text'), tip: 'Italic' },
+                        { icon: <Code size={14} />, action: () => insertMarkdown('`', '`', 'code'), tip: 'Inline Code' },
+                        { icon: <Quote size={14} />, action: () => insertMarkdown('> ', '', 'quote'), tip: 'Blockquote' },
+                        { icon: <List size={14} />, action: () => insertMarkdown('- ', '', 'list item'), tip: 'List' },
+                        { icon: <LinkIcon size={14} />, action: () => insertMarkdown('[', '](url)', 'link text'), tip: 'Link' },
+                        { icon: <Image size={14} />, action: () => insertMarkdown('![', '](url)', 'alt text'), tip: 'Image' },
+                        { icon: <Minus size={14} />, action: () => insertMarkdown('\n---\n'), tip: 'Divider' },
+                        { icon: <Table size={14} />, action: () => insertMarkdown('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n'), tip: 'Table' },
+                      ].map((btn, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={btn.action}
+                          title={btn.tip}
+                          className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {btn.icon}
+                        </button>
+                      ))}
+                      <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('\n```\n', '\n```\n', 'code block')}
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors font-mono"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        {'```'}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFocusContentMode(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border hover:brightness-110 transition-all"
+                      style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+                    >
+                      <Minimize2 size={12} /> Exit Focus
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile toolbar */}
+                <div className="flex sm:hidden items-center gap-0.5 px-3 py-1.5 border-b overflow-x-auto shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--glass-bg)' }}>
+                  {[
+                    { icon: <Heading1 size={14} />, action: () => insertMarkdown('# ', '', 'Heading') },
+                    { icon: <Heading2 size={14} />, action: () => insertMarkdown('## ', '', 'Heading') },
+                    { icon: <Bold size={14} />, action: () => insertMarkdown('**', '**', 'bold') },
+                    { icon: <Italic size={14} />, action: () => insertMarkdown('*', '*', 'italic') },
+                    { icon: <Code size={14} />, action: () => insertMarkdown('`', '`', 'code') },
+                    { icon: <Quote size={14} />, action: () => insertMarkdown('> ', '', 'quote') },
+                    { icon: <List size={14} />, action: () => insertMarkdown('- ', '', 'item') },
+                    { icon: <LinkIcon size={14} />, action: () => insertMarkdown('[', '](url)', 'link') },
+                    { icon: <Image size={14} />, action: () => insertMarkdown('![', '](url)', 'img') },
+                  ].map((btn, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={btn.action}
+                      className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors shrink-0"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      {btn.icon}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 w-full">
+                  <MarkdownEditor
+                    value={blogContent}
+                    onChange={setBlogContent}
+                    height="100%"
+                    autoFocus
+                    onEditorMount={setMonacoEditor}
+                    extraWords={blogWords}
+                  />
+                </div>
+
+                {/* Focus Footer */}
+                <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-t text-[10px] shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--glass-bg)', color: 'var(--text-muted)' }}>
+                  <span>{blogContent.split(/\s+/).filter(Boolean).length} words · {blogContent.length} chars · {blogContent.split('\n').length} lines</span>
+                  <button
+                    type="button"
+                    onClick={() => setFocusContentMode(false)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold border hover:brightness-110 transition-all sm:hidden"
+                    style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+                  >
+                    <Minimize2 size={12} /> Exit
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
       </main>
