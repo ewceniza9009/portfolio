@@ -1,5 +1,5 @@
 import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import React, { useRef } from 'react'
 import { Award as AwardIcon, Calendar, Building2 } from 'lucide-react'
 import { Award } from '../data/awards'
 
@@ -7,7 +7,7 @@ interface AwardsSectionProps {
   awards: Award[]
 }
 
-export default function AwardsSection({ awards }: AwardsSectionProps) {
+export default React.memo(function AwardsSection({ awards }: AwardsSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
 
@@ -93,6 +93,7 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   src={award.image}
                   alt={award.title}
+                  loading="lazy"
                   className="w-auto h-56 md:h-64 object-contain relative z-10 rounded-2xl drop-shadow-md saturate-[1.15] contrast-[1.1] brightness-[1.05]"
                 />
               </div>
@@ -130,4 +131,4 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
       </div>
     </section>
   )
-}
+})

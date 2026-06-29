@@ -1,5 +1,8 @@
+import { useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Github, Linkedin, ArrowUp } from 'lucide-react'
+
+const CURRENT_YEAR = new Date().getFullYear()
 
 interface FooterProps {
   onScrollTo: (id: string) => void
@@ -9,13 +12,13 @@ export default function Footer({ onScrollTo }: FooterProps) {
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
 
-  const handleBackToTop = () => {
+  const handleBackToTop = useCallback(() => {
     if (isHomePage) {
       onScrollTo('hero')
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }
+  }, [isHomePage, onScrollTo])
 
   return (
     <footer className="py-8 px-6 border-t" style={{ background: 'var(--bg-section)', borderColor: 'var(--border)' }}>
@@ -72,7 +75,7 @@ export default function Footer({ onScrollTo }: FooterProps) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              © {new Date().getFullYear()} Erwin Wilson Ceniza
+              © {CURRENT_YEAR} Erwin Wilson Ceniza
             </p>
             <span className="hidden md:inline text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>

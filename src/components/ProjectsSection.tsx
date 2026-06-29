@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Github, ExternalLink, Play, Search, X } from "lucide-react";
 import {
@@ -132,7 +132,7 @@ function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
   return { tilt, handleMouseEnter, handleMouseMove, handleMouseLeave };
 }
 
-function ProjectCard({
+const ProjectCard = React.memo(function ProjectCard({
   project,
   index,
   onSelectProject,
@@ -348,7 +348,7 @@ function ProjectCard({
       </div>
     </motion.div>
   );
-}
+})
 
 export default function ProjectsSection({
   projects,
@@ -357,31 +357,26 @@ export default function ProjectsSection({
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      project.title.toLowerCase().includes(search.toLowerCase()) ||
-      project.subtitle.toLowerCase().includes(search.toLowerCase()) ||
-      project.description.toLowerCase().includes(search.toLowerCase()) ||
-      project.tech.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const matchesSearch =
+        project.title.toLowerCase().includes(search.toLowerCase()) ||
+        project.subtitle.toLowerCase().includes(search.toLowerCase()) ||
+        project.description.toLowerCase().includes(search.toLowerCase()) ||
+        project.tech.some((t) => t.toLowerCase().includes(search.toLowerCase()));
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (filter === "all") return true;
-    if (filter === "commercial") return project.type === "Commercialized";
-    if (filter === "saas")
-      return ["Full-Stack SaaS", "Deployed", "Microservices"].includes(
-        project.type
-      );
-    if (filter === "emerging") return project.type === "Emerging";
-    return true;
-  });
-
-  const filterTabs = [
-    { id: "all", label: "All Projects" },
-    { id: "commercial", label: "Commercial ERP" },
-    { id: "saas", label: "SaaS & Cloud" },
-    { id: "emerging", label: "Emerging Tech" },
-  ];
+      if (filter === "all") return true;
+      if (filter === "commercial") return project.type === "Commercialized";
+      if (filter === "saas")
+        return ["Full-Stack SaaS", "Deployed", "Microservices"].includes(
+          project.type
+        );
+      if (filter === "emerging") return project.type === "Emerging";
+      return true;
+    });
+  }, [filter, search, projects]);
 
   return (
     <section
@@ -486,6 +481,13 @@ export default function ProjectsSection({
     </section>
   );
 }
+
+const filterTabs = [
+  { id: "all", label: "All Projects" },
+  { id: "commercial", label: "Commercial ERP" },
+  { id: "saas", label: "SaaS & Cloud" },
+  { id: "emerging", label: "Emerging Tech" },
+];
 
 // Re-export utilities for the modal
 export { TechIcon, ImageWithFallback };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Github,
@@ -58,7 +58,7 @@ function useTypewriter(
   return text;
 }
 
-export default function HeroSection({
+export default React.memo(function HeroSection({
   onScrollTo,
   onViewResume,
 }: HeroSectionProps) {
@@ -250,4 +250,4 @@ export default function HeroSection({
       </motion.div>
     </section>
   );
-}
+})

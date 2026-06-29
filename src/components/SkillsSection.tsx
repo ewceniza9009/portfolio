@@ -109,9 +109,9 @@ interface SkillsSectionProps {
   skills: SkillsData
 }
 
-const SkillTag = React.forwardRef<HTMLSpanElement, { 
-  skill: SkillItem; 
-  category: string; 
+const SkillTag = React.memo(React.forwardRef<HTMLSpanElement, {
+  skill: SkillItem;
+  category: string;
 }>(({ skill, category }, ref) => {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
   const [isHovered, setIsHovered] = useState(false)
@@ -140,7 +140,7 @@ const SkillTag = React.forwardRef<HTMLSpanElement, {
       {skill.name}
     </motion.span>
   )
-})
+}))
 
 const getBentoClasses = (index: number) => {
   switch (index) {

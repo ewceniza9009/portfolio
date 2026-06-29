@@ -40,22 +40,14 @@ export default function VantaBackground() {
       observer.disconnect()
       clearTimeout(timeoutId)
     }
-  }, [theme])
+  }, [])
 
-  // 3. Vanta effect initialization (mount/unmount/intersection)
+  // 3. Vanta effect initialization (mount/unmount only)
   useEffect(() => {
     let isMounted = true;
 
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
-    }
-
-    if (!isIntersecting) {
-      if (effectRef.current) {
-        effectRef.current.destroy()
-        effectRef.current = null
-      }
-      return
     }
 
     async function init() {
@@ -91,14 +83,25 @@ export default function VantaBackground() {
 
     return () => {
       isMounted = false;
-      // Only destroy on unmount or when not intersecting
       if (effectRef.current) {
         effectRef.current.destroy()
         effectRef.current = null
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isIntersecting]) // Only re-run when intersection changes
+  }, []) // Only run on mount
+
+  // 4. Pause/resume rendering based on intersection (no destroy/recreate)
+  useEffect(() => {
+    if (!effectRef.current) return
+    if (effectRef.current.renderer) {
+      if (isIntersecting) {
+        effectRef.current.renderer.setAnimationLoop?.(effectRef.current.render?.bind(effectRef.current))
+      } else {
+        effectRef.current.renderer.setAnimationLoop?.(null)
+      }
+    }
+  }, [isIntersecting])
 
   // 4. Update Vanta colors without destroying the context
   useEffect(() => {
@@ -121,6 +124,8 @@ export default function VantaBackground() {
       style={{
         WebkitMaskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",
         maskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",
+        opacity: isIntersecting ? 1 : 0,
+        willChange: "opacity",
       }}
     />
   )

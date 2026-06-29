@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import React, { useRef } from "react";
 
-export default function AboutSection() {
+export default React.memo(function AboutSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -67,4 +67,4 @@ export default function AboutSection() {
       </div>
     </section>
   );
-}
+})

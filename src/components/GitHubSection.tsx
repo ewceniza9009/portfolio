@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { Github, ExternalLink, Activity, Star } from "lucide-react";
 import { ACCENT_THEMES } from "../data/accents";
 import type { AccentKey } from "../data/accents";
@@ -11,7 +11,7 @@ interface GitHubSectionProps {
   accent?: AccentKey;
 }
 
-export default function GitHubSection({
+export default memo(function GitHubSection({
   theme = "dark",
   accent = "gold",
 }: GitHubSectionProps) {
@@ -112,6 +112,8 @@ export default function GitHubSection({
                 <img
                   src={`https://ghchart.rshah.org/${accentColorHex}/${GITHUB_USERNAME}`}
                   alt={`${GITHUB_USERNAME}'s GitHub Contributions Heatmap`}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-auto max-h-32 object-contain"
                   style={{
                     filter:
@@ -152,6 +154,8 @@ export default function GitHubSection({
               <img
                 src={`https://github-readme-stats-eight-theta.vercel.app/api/top-langs/?username=${GITHUB_USERNAME}&theme=transparent&hide_border=${borderHidden}&title_color=${titleColor}&text_color=${textColor}&bg_color=${bgColor}&layout=compact&langs_count=8`}
                 alt="Top languages used across repositories"
+                loading="lazy"
+                decoding="async"
                 className="w-full max-w-3xl h-full max-h-56 object-contain drop-shadow-sm"
               />
             </div>
@@ -186,6 +190,8 @@ export default function GitHubSection({
               <img
                 src={`https://github-readme-stats-eight-theta.vercel.app/api?username=${GITHUB_USERNAME}&theme=transparent&hide_border=${borderHidden}&title_color=${titleColor}&text_color=${textColor}&bg_color=${bgColor}&show_icons=true&count_private=true&hide_rank=true&custom_title=GitHub%20Stats&include_all_commits=true`}
                 alt="Overall GitHub Stats"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full max-h-56 object-contain drop-shadow-sm origin-left translate-x-10 sm:translate-x-14 scale-125 sm:scale-[1.60]"
               />
             </div>
@@ -194,4 +200,4 @@ export default function GitHubSection({
       </div>
     </section>
   );
-}
+})

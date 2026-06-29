@@ -2,9 +2,39 @@ import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
-import mermaid from 'mermaid'
 
-mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
+const MERMAID_STYLES = `
+  .mermaid-svg-container svg {
+    height: auto !important;
+    margin: 0 auto;
+  }
+  .mermaid-svg-container svg path {
+    stroke: var(--text-muted) !important;
+  }
+  .mermaid-svg-container svg .node rect,
+  .mermaid-svg-container svg .node circle,
+  .mermaid-svg-container svg .node path,
+  .mermaid-svg-container svg .node polygon,
+  .mermaid-svg-container svg .mindmap-node rect,
+  .mermaid-svg-container svg .mindmap-node circle,
+  .mermaid-svg-container svg .mindmap-node path,
+  .mermaid-svg-container svg .mindmap-node polygon {
+    fill: var(--bg-card) !important;
+    stroke: var(--accent) !important;
+    stroke-width: 1.5px !important;
+  }
+  .mermaid-svg-container svg .node text,
+  .mermaid-svg-container svg .node tspan,
+  .mermaid-svg-container svg .mindmap-node text,
+  .mermaid-svg-container svg .mindmap-node tspan {
+    fill: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+  }
+  .mermaid-svg-container svg .node foreignObject *,
+  .mermaid-svg-container svg .mindmap-node foreignObject * {
+    color: var(--text-primary) !important;
+  }
+`
 
 interface MermaidRendererProps {
   code: string
@@ -119,6 +149,8 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
     async function render() {
       try {
+        const mermaidModule = await import('mermaid')
+        const mermaid = mermaidModule.default
         mermaid.initialize(mermaidConfig)
         const { svg } = await mermaid.render(id, cleanCode)
         if (active) {
@@ -298,38 +330,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
   return (
     <div className="my-8 flex flex-col space-y-3 w-full">
-      <style>{`
-        .mermaid-svg-container svg {
-          height: auto !important;
-          margin: 0 auto;
-        }
-        .mermaid-svg-container svg path {
-          stroke: var(--text-muted) !important;
-        }
-        .mermaid-svg-container svg .node rect,
-        .mermaid-svg-container svg .node circle,
-        .mermaid-svg-container svg .node path,
-        .mermaid-svg-container svg .node polygon,
-        .mermaid-svg-container svg .mindmap-node rect,
-        .mermaid-svg-container svg .mindmap-node circle,
-        .mermaid-svg-container svg .mindmap-node path,
-        .mermaid-svg-container svg .mindmap-node polygon {
-          fill: var(--bg-card) !important;
-          stroke: var(--accent) !important;
-          stroke-width: 1.5px !important;
-        }
-        .mermaid-svg-container svg .node text,
-        .mermaid-svg-container svg .node tspan,
-        .mermaid-svg-container svg .mindmap-node text,
-        .mermaid-svg-container svg .mindmap-node tspan {
-          fill: var(--text-primary) !important;
-          color: var(--text-primary) !important;
-        }
-        .mermaid-svg-container svg .node foreignObject *,
-        .mermaid-svg-container svg .mindmap-node foreignObject * {
-          color: var(--text-primary) !important;
-        }
-      `}</style>
+      <style>{MERMAID_STYLES}</style>
 
       {/* Interactive Sandbox Container */}
       <div 

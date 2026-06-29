@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { GALLERY_DESCRIPTIONS } from "../data/gallery-descriptions";
@@ -47,7 +47,7 @@ function buildGalleryImages(): GalleryImage[] {
   return images;
 }
 
-function GalleryTile({ 
+const GalleryTile = memo(function GalleryTile({ 
   image, 
   index, 
   currentPage, 
@@ -141,7 +141,7 @@ function GalleryTile({
       </div>
     </div>
   );
-}
+});
 
 export default function GallerySection() {
   const allImages = useMemo(() => buildGalleryImages(), []);

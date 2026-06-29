@@ -1,6 +1,6 @@
 import { motion, useInView } from 'framer-motion'
 import { MapPin } from 'lucide-react'
-import { useRef } from 'react'
+import React, { useRef } from 'react'
 
 interface Experience {
   year: string
@@ -15,7 +15,7 @@ interface ExperienceSectionProps {
   experience: Experience[]
 }
 
-export default function ExperienceSection({ experience }: ExperienceSectionProps) {
+export default React.memo(function ExperienceSection({ experience }: ExperienceSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
 
@@ -247,4 +247,4 @@ export default function ExperienceSection({ experience }: ExperienceSectionProps
       </div>
     </section>
   )
-}
+})

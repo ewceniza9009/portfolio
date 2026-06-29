@@ -105,6 +105,8 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
 }
 
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 interface ContactSectionProps {
   theme?: 'dark' | 'light'
 }
@@ -118,16 +120,14 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
     catch { return [] }
   })
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
-  }
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
-    if (!emailRegex.test(form.email)) {
+    if (!EMAIL_REGEX.test(form.email)) {
       setToast({ type: 'error', text: 'Please enter a valid email address.' })
       setTimeout(() => setToast(null), 4000)
       return
@@ -156,7 +156,7 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
       setSending(false)
       setTimeout(() => setToast(null), 4000)
     }
-  }
+  }, [form, savedEmails])
 
   return (
     <section id="contact" className="py-32 px-6 relative overflow-hidden" style={{ background: 'var(--bg-section)' }}>

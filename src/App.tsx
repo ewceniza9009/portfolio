@@ -87,13 +87,16 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     }
   }, [])
 
-  const scrollTo = (id: string) => {
+  const scrollTo = useCallback((id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
-  const selectedProjectData = selectedProject
-    ? projects.find(p => p.id === selectedProject) || null
-    : null
+  const selectedProjectData = useMemo(
+    () => selectedProject
+      ? projects.find(p => p.id === selectedProject) || null
+      : null,
+    [selectedProject]
+  )
 
   const handleViewResume = useCallback(() => setIsResumeOpen(true), [])
   const handleCloseResume = useCallback(() => setIsResumeOpen(false), [])
@@ -294,6 +297,27 @@ export default function App() {
     return () => clearInterval(interval)
   }, [])
 
+  const cursorCursors = useMemo(() => {
+    try {
+      const fillColor = theme === 'dark' ? '#000000' : '#ffffff';
+      const strokeColor = theme === 'dark' ? '#ffffff' : '#0d1117';
+      
+      const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/></svg>`;
+      const pointerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="${strokeColor}" stroke-width="2"/><circle cx="10" cy="10" r="2.5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1"/></svg>`;
+      
+      const base64Arrow = btoa(arrowSvg);
+      const base64Pointer = btoa(pointerSvg);
+      
+      return {
+        cursor: `url('data:image/svg+xml;base64,${base64Arrow}') 8 8, auto`,
+        pointer: `url('data:image/svg+xml;base64,${base64Pointer}') 10 10, pointer`,
+      }
+    } catch (e) {
+      console.warn("Custom hardware cursor generation failed:", e);
+      return null
+    }
+  }, [accent, theme])
+
   useEffect(() => {
     const root = document.documentElement
     const themeSet = ACCENT_THEMES[accent][theme]
@@ -309,24 +333,13 @@ export default function App() {
     setSafeItem('accent', accent)
 
     // Dynamic Hardware Cursors matching active accent theme
-    try {
-      const fillColor = theme === 'dark' ? '#000000' : '#ffffff';
-      const strokeColor = theme === 'dark' ? '#ffffff' : '#0d1117';
-      
-      const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/></svg>`;
-      const pointerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="${strokeColor}" stroke-width="2"/><circle cx="10" cy="10" r="2.5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1"/></svg>`;
-      
-      const base64Arrow = btoa(arrowSvg);
-      const base64Pointer = btoa(pointerSvg);
-      
-      root.style.setProperty('--custom-cursor', `url('data:image/svg+xml;base64,${base64Arrow}') 8 8, auto`);
-      root.style.setProperty('--custom-pointer', `url('data:image/svg+xml;base64,${base64Pointer}') 10 10, pointer`);
-    } catch (e) {
-      console.warn("Custom hardware cursor generation failed:", e);
+    if (cursorCursors) {
+      root.style.setProperty('--custom-cursor', cursorCursors.cursor);
+      root.style.setProperty('--custom-pointer', cursorCursors.pointer);
     }
-  }, [accent, theme])
+  }, [accent, theme, cursorCursors])
 
-  const toggleTheme = (event?: React.MouseEvent) => {
+  const toggleTheme = useCallback((event?: React.MouseEvent) => {
     const isAppearanceTransition = (document as any).startViewTransition && 
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -376,7 +389,7 @@ export default function App() {
         );
       });
     }, 50);
-  };
+  }, [])
 
   return (
     <Routes>

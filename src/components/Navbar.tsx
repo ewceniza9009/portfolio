@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Sun, Moon, Palette, BookOpen } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -6,7 +6,22 @@ import Logo from './Logo'
 import { ACCENT_THEMES } from '../data/accents'
 import type { AccentKey } from '../data/accents'
 
-const NAV_ITEMS = ['About', 'Experience', 'Awards', 'Projects', 'Gallery', 'GitHub', 'Skills', 'Contact']
+const NAV_ITEMS = ['About', 'Experience', 'Awards', 'Projects', 'Gallery', 'Skills', 'GitHub', 'Contact']
+
+const NAV_STYLE = { background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderColor: 'var(--border)' } as const
+
+const ACCENT_DROPDOWN_STYLE = { background: 'var(--glass-bg)', borderColor: 'var(--border)' } as const
+
+const MOBILE_MENU_STYLE = { borderColor: 'var(--border)', background: 'var(--bg-secondary)' } as const
+
+const BLOG_BTN_DESKTOP_STYLE = (locationPathname: string) => ({
+  borderColor: 'var(--accent)',
+  color: locationPathname.startsWith('/blogs') ? 'var(--bg-primary)' : 'var(--accent)',
+  background: locationPathname.startsWith('/blogs') ? 'var(--accent)' : 'var(--accent-dim)',
+  boxShadow: '0 0 12px var(--accent-dim)'
+} as const)
+
+const THEME_TOGGLE_STYLE = { borderColor: 'var(--border)', background: 'var(--bg-card)' } as const
 
 interface NavbarProps {
   activeSection: string
@@ -55,7 +70,7 @@ function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, 
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             className="absolute right-0 mt-2 w-48 rounded-2xl p-2 glass shadow-xl z-50 border"
-            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+            style={ACCENT_DROPDOWN_STYLE}
           >
             <div className="text-[10px] uppercase font-bold tracking-wider px-3 py-1 mb-1 text-muted" style={{ color: 'var(--text-muted)' }}>
               Branding Color
@@ -90,16 +105,16 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
 
-  const handleNavClick = (item: string) => {
+  const handleNavClick = useCallback((item: string) => {
     onScrollTo(item.toLowerCase())
     setMobileMenuOpen(false)
-  }
+  }, [onScrollTo])
 
   return (
     <>
       <nav
         className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
-        style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderColor: 'var(--border)' }}
+        style={NAV_STYLE}
       >
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           {isHomePage ? (
@@ -161,12 +176,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
             <Link
               to="/blogs"
               className="relative px-4 py-1.5 ml-1 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-1.5 border overflow-hidden group shadow-sm hover:scale-105 active:scale-95 select-none"
-              style={{
-                borderColor: 'var(--accent)',
-                color: location.pathname.startsWith('/blogs') ? 'var(--bg-primary)' : 'var(--accent)',
-                background: location.pathname.startsWith('/blogs') ? 'var(--accent)' : 'var(--accent-dim)',
-                boxShadow: '0 0 12px var(--accent-dim)'
-              }}
+              style={BLOG_BTN_DESKTOP_STYLE(location.pathname)}
             >
               <BookOpen size={14} className="group-hover:rotate-6 transition-transform" />
               <span>Blog</span>
@@ -183,7 +193,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               onClick={onToggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               className="no-ripple theme-toggle-btn w-10 h-10 rounded-full flex items-center justify-center border"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
+              style={THEME_TOGGLE_STYLE}
               whileTap={{ scale: 0.9, rotate: 180 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
@@ -210,7 +220,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               onClick={onToggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               className="theme-toggle-btn w-10 h-10 rounded-full flex items-center justify-center border"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
+              style={THEME_TOGGLE_STYLE}
               whileTap={{ scale: 0.9, rotate: 180 }}
             >
               {theme === 'dark' ? <Sun size={18} style={{ color: 'var(--accent)' }} /> : <Moon size={18} style={{ color: 'var(--accent)' }} />}
@@ -225,7 +235,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          <div className="md:hidden border-t" style={MOBILE_MENU_STYLE}>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder } from 'lucide-react'
@@ -8,6 +8,89 @@ import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import { parseMarkdown } from '../utils/markdown'
 import type { AccentKey } from '../data/accents'
+
+function getApiUrl(path: string): string {
+  const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
+    ? 'http://localhost:3000'
+    : ''
+  return `${baseUrl}${path}`
+}
+
+function getGradient(slug: string): string {
+  const gradients = [
+    'from-rose-500/80 to-orange-500/80',
+    'from-emerald-500/80 to-teal-500/80',
+    'from-cyan-500/80 to-blue-500/80',
+    'from-purple-500/80 to-pink-500/80',
+    'from-amber-500/80 to-red-500/80',
+    'from-indigo-500/80 to-purple-500/80'
+  ]
+  let hash = 0
+  for (let i = 0; i < (slug || '').length; i++) {
+    hash = slug.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % gradients.length
+  return gradients[index]
+}
+
+function getAvatarColor(name: string): string {
+  const colors = [
+    'bg-red-500/20 text-red-500 border-red-500/30',
+    'bg-orange-500/20 text-orange-500 border-orange-500/30',
+    'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+    'bg-green-500/20 text-green-500 border-green-500/30',
+    'bg-blue-500/20 text-blue-500 border-blue-500/30',
+    'bg-indigo-500/20 text-indigo-500 border-indigo-500/30',
+    'bg-purple-500/20 text-purple-500 border-purple-500/30',
+    'bg-pink-500/20 text-pink-500 border-pink-500/30'
+  ]
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+const BLOG_POST_STYLES = `
+  @keyframes blob-float-1 {
+    0% { transform: translate(0px, 0px) scale(1); }
+    50% { transform: translate(80px, -60px) scale(1.15); }
+    100% { transform: translate(-30px, 30px) scale(0.9); }
+  }
+  @keyframes blob-float-2 {
+    0% { transform: translate(0px, 0px) scale(1.1); }
+    50% { transform: translate(-70px, 80px) scale(0.85); }
+    100% { transform: translate(40px, -30px) scale(1.05); }
+  }
+  .aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: screen;
+  }
+  .aurora-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .article-content h1, 
+  .article-content h2, 
+  .article-content h3 {
+    scroll-margin-top: 100px;
+  }
+`
 
 interface Blog {
   id: string
@@ -67,13 +150,6 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     damping: 30,
     restDelta: 0.001
   })
-
-  const getApiUrl = (path: string) => {
-    const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-      ? 'http://localhost:3000'
-      : ''
-    return `${baseUrl}${path}`
-  }
 
   useEffect(() => {
     async function fetchBlogAndComments() {
@@ -168,49 +244,6 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     }
   }
 
-  const getGradient = (slug: string) => {
-    const gradients = [
-      'from-rose-500/80 to-orange-500/80',
-      'from-emerald-500/80 to-teal-500/80',
-      'from-cyan-500/80 to-blue-500/80',
-      'from-purple-500/80 to-pink-500/80',
-      'from-amber-500/80 to-red-500/80',
-      'from-indigo-500/80 to-purple-500/80'
-    ]
-    let hash = 0
-    for (let i = 0; i < (slug || '').length; i++) {
-      hash = slug.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % gradients.length
-    return gradients[index]
-  }
-
-  const getAvatarColor = (name: string) => {
-    const colors = [
-      'bg-red-500/20 text-red-500 border-red-500/30',
-      'bg-orange-500/20 text-orange-500 border-orange-500/30',
-      'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
-      'bg-green-500/20 text-green-500 border-green-500/30',
-      'bg-blue-500/20 text-blue-500 border-blue-500/30',
-      'bg-indigo-500/20 text-indigo-500 border-indigo-500/30',
-      'bg-purple-500/20 text-purple-500 border-purple-500/30',
-      'bg-pink-500/20 text-pink-500 border-pink-500/30'
-    ]
-    let hash = 0
-    for (let i = 0; i < (name || '').length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    return colors[Math.abs(hash) % colors.length]
-  }
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
@@ -246,40 +279,11 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this writeup: "${blog.title}"`)}&url=${encodeURIComponent(window.location.href)}`
   const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
 
+  const parsedContent = useMemo(() => parseMarkdown(blog.content, theme, accent), [blog.content, theme, accent])
+
   return (
     <>
-      <style>{`
-        @keyframes blob-float-1 {
-          0% { transform: translate(0px, 0px) scale(1); }
-          50% { transform: translate(80px, -60px) scale(1.15); }
-          100% { transform: translate(-30px, 30px) scale(0.9); }
-        }
-        @keyframes blob-float-2 {
-          0% { transform: translate(0px, 0px) scale(1.1); }
-          50% { transform: translate(-70px, 80px) scale(0.85); }
-          100% { transform: translate(40px, -30px) scale(1.05); }
-        }
-        .aurora-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(140px);
-          pointer-events: none;
-          z-index: 0;
-          mix-blend-mode: screen;
-        }
-        .aurora-container {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          pointer-events: none;
-          z-index: 0;
-        }
-        .article-content h1, 
-        .article-content h2, 
-        .article-content h3 {
-          scroll-margin-top: 100px;
-        }
-      `}</style>
+      <style>{BLOG_POST_STYLES}</style>
       
       <CursorFollower />
       
@@ -380,6 +384,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
                 src={blog.cover_image} 
                 alt={blog.title}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.slug)} flex items-center justify-center relative p-6`}>
@@ -407,7 +412,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
           {/* Article Render Content */}
           <article className="prose max-w-none mb-16 leading-relaxed select-text text-sm sm:text-base article-content">
-            {parseMarkdown(blog.content, theme, accent)}
+            {parsedContent}
           </article>
 
           {/* Written By Author Card */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap, Activity, Zap, Palette, Coffee, Lightbulb, Gamepad2, Briefcase } from 'lucide-react'
@@ -30,19 +30,154 @@ interface BlogsPageProps {
   setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
 }
 
+const getApiUrl = (path: string) => {
+  const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
+    ? 'http://localhost:3000'
+    : ''
+  return `${baseUrl}${path}`
+}
+
+const getGradient = (slug: string) => {
+  const gradients = [
+    'from-rose-500/80 to-orange-500/80',
+    'from-emerald-500/80 to-teal-500/80',
+    'from-cyan-500/80 to-blue-500/80',
+    'from-purple-500/80 to-pink-500/80',
+    'from-amber-500/80 to-red-500/80',
+    'from-indigo-500/80 to-purple-500/80'
+  ]
+  let hash = 0
+  for (let i = 0; i < slug.length; i++) {
+    hash = slug.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % gradients.length
+  return gradients[index]
+}
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const categoryMeta: Record<string, { icon: React.ReactNode; gradient: string; chipGradient: string }> = {
+  Engineering: {
+    icon: <Code size={13} />,
+    gradient: 'from-cyan-500/80 to-blue-500/80',
+    chipGradient: 'from-cyan-500/20 to-blue-500/20'
+  },
+  Tutorial: {
+    icon: <GraduationCap size={13} />,
+    gradient: 'from-emerald-500/80 to-teal-500/80',
+    chipGradient: 'from-emerald-500/20 to-teal-500/20'
+  },
+  Architecture: {
+    icon: <Layers size={13} />,
+    gradient: 'from-purple-500/80 to-pink-500/80',
+    chipGradient: 'from-purple-500/20 to-pink-500/20'
+  },
+  DevOps: {
+    icon: <Server size={13} />,
+    gradient: 'from-amber-500/80 to-orange-500/80',
+    chipGradient: 'from-amber-500/20 to-orange-500/20'
+  },
+  Security: {
+    icon: <Shield size={13} />,
+    gradient: 'from-rose-500/80 to-red-500/80',
+    chipGradient: 'from-rose-500/20 to-red-500/20'
+  },
+  Career: {
+    icon: <Briefcase size={13} />,
+    gradient: 'from-blue-500/80 to-indigo-500/80',
+    chipGradient: 'from-blue-500/20 to-indigo-500/20'
+  },
+  Workflow: {
+    icon: <Activity size={13} />,
+    gradient: 'from-teal-500/80 to-emerald-500/80',
+    chipGradient: 'from-teal-500/20 to-emerald-500/20'
+  },
+  Productivity: {
+    icon: <Zap size={13} />,
+    gradient: 'from-yellow-500/80 to-amber-500/80',
+    chipGradient: 'from-yellow-500/20 to-amber-500/20'
+  },
+  Design: {
+    icon: <Palette size={13} />,
+    gradient: 'from-pink-500/80 to-rose-500/80',
+    chipGradient: 'from-pink-500/20 to-rose-500/20'
+  },
+  Life: {
+    icon: <Coffee size={13} />,
+    gradient: 'from-orange-500/80 to-amber-500/80',
+    chipGradient: 'from-orange-500/20 to-amber-500/20'
+  },
+  Thoughts: {
+    icon: <Lightbulb size={13} />,
+    gradient: 'from-violet-500/80 to-purple-500/80',
+    chipGradient: 'from-violet-500/20 to-purple-500/20'
+  },
+  Hobbies: {
+    icon: <Gamepad2 size={13} />,
+    gradient: 'from-fuchsia-500/80 to-pink-500/80',
+    chipGradient: 'from-fuchsia-500/20 to-pink-500/20'
+  },
+  General: {
+    icon: <Folder size={13} />,
+    gradient: 'from-indigo-500/80 to-purple-500/80',
+    chipGradient: 'from-indigo-500/20 to-purple-500/20'
+  }
+}
+
+const BLOG_PAGE_STYLES = `
+  @keyframes blob-float-1 {
+    0% { transform: translate(0px, 0px) scale(1); }
+    50% { transform: translate(80px, -60px) scale(1.15); }
+    100% { transform: translate(-30px, 30px) scale(0.9); }
+  }
+  @keyframes blob-float-2 {
+    0% { transform: translate(0px, 0px) scale(1.1); }
+    50% { transform: translate(-70px, 80px) scale(0.85); }
+    100% { transform: translate(40px, -30px) scale(1.05); }
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .bg-shimmer {
+    background: linear-gradient(
+      90deg, 
+      var(--bg-secondary) 25%, 
+      var(--border) 37%, 
+      var(--bg-secondary) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.8s ease-in-out infinite;
+  }
+  .aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: screen;
+  }
+  .aurora-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+`
+
 export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: BlogsPageProps) {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-
-  const getApiUrl = (path: string) => {
-    const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-      ? 'http://localhost:3000'
-      : ''
-    return `${baseUrl}${path}`
-  }
 
   useEffect(() => {
     async function fetchBlogs() {
@@ -61,95 +196,23 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
     fetchBlogs()
   }, [])
 
-  // Extract all unique tags
-  const allTags = Array.from(
+  const allTags = useMemo(() => Array.from(
     new Set(
       blogs
         .flatMap(b => b.tags ? b.tags.split(',').map(t => t.trim()) : [])
         .filter(Boolean)
     )
-  )
+  ), [blogs])
 
-  // Extract all unique categories
-  const allCategories = Array.from(
+  const allCategories = useMemo(() => Array.from(
     new Set(
       blogs
         .map(b => b.category || 'General')
         .filter(Boolean)
     )
-  ).sort()
+  ).sort(), [blogs])
 
-  // Category config for elite styling
-  const categoryMeta: Record<string, { icon: React.ReactNode; gradient: string; chipGradient: string }> = {
-    Engineering: {
-      icon: <Code size={13} />,
-      gradient: 'from-cyan-500/80 to-blue-500/80',
-      chipGradient: 'from-cyan-500/20 to-blue-500/20'
-    },
-    Tutorial: {
-      icon: <GraduationCap size={13} />,
-      gradient: 'from-emerald-500/80 to-teal-500/80',
-      chipGradient: 'from-emerald-500/20 to-teal-500/20'
-    },
-    Architecture: {
-      icon: <Layers size={13} />,
-      gradient: 'from-purple-500/80 to-pink-500/80',
-      chipGradient: 'from-purple-500/20 to-pink-500/20'
-    },
-    DevOps: {
-      icon: <Server size={13} />,
-      gradient: 'from-amber-500/80 to-orange-500/80',
-      chipGradient: 'from-amber-500/20 to-orange-500/20'
-    },
-    Security: {
-      icon: <Shield size={13} />,
-      gradient: 'from-rose-500/80 to-red-500/80',
-      chipGradient: 'from-rose-500/20 to-red-500/20'
-    },
-    Career: {
-      icon: <Briefcase size={13} />,
-      gradient: 'from-blue-500/80 to-indigo-500/80',
-      chipGradient: 'from-blue-500/20 to-indigo-500/20'
-    },
-    Workflow: {
-      icon: <Activity size={13} />,
-      gradient: 'from-teal-500/80 to-emerald-500/80',
-      chipGradient: 'from-teal-500/20 to-emerald-500/20'
-    },
-    Productivity: {
-      icon: <Zap size={13} />,
-      gradient: 'from-yellow-500/80 to-amber-500/80',
-      chipGradient: 'from-yellow-500/20 to-amber-500/20'
-    },
-    Design: {
-      icon: <Palette size={13} />,
-      gradient: 'from-pink-500/80 to-rose-500/80',
-      chipGradient: 'from-pink-500/20 to-rose-500/20'
-    },
-    Life: {
-      icon: <Coffee size={13} />,
-      gradient: 'from-orange-500/80 to-amber-500/80',
-      chipGradient: 'from-orange-500/20 to-amber-500/20'
-    },
-    Thoughts: {
-      icon: <Lightbulb size={13} />,
-      gradient: 'from-violet-500/80 to-purple-500/80',
-      chipGradient: 'from-violet-500/20 to-purple-500/20'
-    },
-    Hobbies: {
-      icon: <Gamepad2 size={13} />,
-      gradient: 'from-fuchsia-500/80 to-pink-500/80',
-      chipGradient: 'from-fuchsia-500/20 to-pink-500/20'
-    },
-    General: {
-      icon: <Folder size={13} />,
-      gradient: 'from-indigo-500/80 to-purple-500/80',
-      chipGradient: 'from-indigo-500/20 to-purple-500/20'
-    }
-  }
-
-  // Filter blogs based on search query, selected tag, and selected category
-  const filteredBlogs = blogs.filter(blog => {
+  const filteredBlogs = useMemo(() => blogs.filter(blog => {
     const matchesSearch = 
       blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (blog.summary && blog.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -162,81 +225,16 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
     const matchesCategory = !selectedCategory || blogCategory === selectedCategory
 
     return matchesSearch && matchesTag && matchesCategory
-  })
+  }), [blogs, searchQuery, selectedTag, selectedCategory])
 
   // Separate the latest article as Featured (if no filters are active)
   const isFiltering = searchQuery !== '' || selectedTag !== null || selectedCategory !== null
   const featuredBlog = !isFiltering && filteredBlogs.length > 0 ? filteredBlogs[0] : null
   const gridBlogs = featuredBlog ? filteredBlogs.slice(1) : filteredBlogs
 
-  const getGradient = (slug: string) => {
-    const gradients = [
-      'from-rose-500/80 to-orange-500/80',
-      'from-emerald-500/80 to-teal-500/80',
-      'from-cyan-500/80 to-blue-500/80',
-      'from-purple-500/80 to-pink-500/80',
-      'from-amber-500/80 to-red-500/80',
-      'from-indigo-500/80 to-purple-500/80'
-    ]
-    let hash = 0
-    for (let i = 0; i < slug.length; i++) {
-      hash = slug.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % gradients.length
-    return gradients[index]
-  }
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
   return (
     <>
-      <style>{`
-        @keyframes blob-float-1 {
-          0% { transform: translate(0px, 0px) scale(1); }
-          50% { transform: translate(80px, -60px) scale(1.15); }
-          100% { transform: translate(-30px, 30px) scale(0.9); }
-        }
-        @keyframes blob-float-2 {
-          0% { transform: translate(0px, 0px) scale(1.1); }
-          50% { transform: translate(-70px, 80px) scale(0.85); }
-          100% { transform: translate(40px, -30px) scale(1.05); }
-        }
-        @keyframes skeleton-shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        .bg-shimmer {
-          background: linear-gradient(
-            90deg, 
-            var(--bg-secondary) 25%, 
-            var(--border) 37%, 
-            var(--bg-secondary) 63%
-          );
-          background-size: 400% 100%;
-          animation: skeleton-shimmer 1.8s ease-in-out infinite;
-        }
-        .aurora-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(140px);
-          pointer-events: none;
-          z-index: 0;
-          mix-blend-mode: screen;
-        }
-        .aurora-container {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          pointer-events: none;
-          z-index: 0;
-        }
-      `}</style>
+      <style>{BLOG_PAGE_STYLES}</style>
       
       <CursorFollower />
       
@@ -542,6 +540,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                           <img 
                             src={featuredBlog.cover_image} 
                             alt={featuredBlog.title}
+                            loading="lazy"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                           />
                         ) : (
@@ -653,6 +652,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 <img 
                                   src={blog.cover_image} 
                                   alt={blog.title}
+                                  loading="lazy"
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
                               ) : (
