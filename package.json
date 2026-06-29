@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "vercel": "vercel dev",
+    "sitemap": "node generate-sitemap.mjs",
+    "prebuild": "node generate-sitemap.mjs",
+    "predev": "node generate-sitemap.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
