@@ -61,12 +61,12 @@ export default function GallerySection() {
   useEffect(() => { setCurrentPage(1) }, [activeFilter])
 
   const handleNext = useCallback(() => {
-    setLightboxIndex(prev => prev !== null ? (prev + 1) % paginatedImages.length : null)
-  }, [paginatedImages.length])
+    setLightboxIndex(prev => prev !== null ? (prev + 1) % filteredImages.length : null)
+  }, [filteredImages.length])
 
   const handlePrev = useCallback(() => {
-    setLightboxIndex(prev => prev !== null ? (prev - 1 + paginatedImages.length) % paginatedImages.length : null)
-  }, [paginatedImages.length])
+    setLightboxIndex(prev => prev !== null ? (prev - 1 + filteredImages.length) % filteredImages.length : null)
+  }, [filteredImages.length])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,7 +89,7 @@ export default function GallerySection() {
     }
   }, [lightboxIndex, handleNext, handlePrev])
 
-  const currentLightboxImage = lightboxIndex !== null ? paginatedImages[lightboxIndex] : null
+  const currentLightboxImage = lightboxIndex !== null ? filteredImages[lightboxIndex] : null
 
   return (
     <>
@@ -177,7 +177,7 @@ export default function GallerySection() {
                     e.currentTarget.style.borderColor = 'var(--border)'
                     e.currentTarget.style.boxShadow = '0 4px 15px -3px var(--accent-dim)'
                   }}
-                  onClick={() => setLightboxIndex(index)}
+                  onClick={() => setLightboxIndex(index + (currentPage - 1) * IMAGES_PER_PAGE)}
                 >
                   <img
                     src={image.src}
@@ -303,7 +303,7 @@ export default function GallerySection() {
                   {currentLightboxImage.project}
                 </span>
                 <span className="text-sm font-mono text-white/80">
-                  {lightboxIndex! + 1} / {paginatedImages.length}
+                  {lightboxIndex! + 1} / {filteredImages.length}
                 </span>
               </div>
               <button
@@ -345,8 +345,11 @@ export default function GallerySection() {
                 className="w-full h-full object-contain"
                 style={{ filter: 'drop-shadow(0 0 20px rgba(0,0,0,0.5))' }}
               />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center pointer-events-none">
-                <p className="text-lg text-white font-medium drop-shadow-md text-center max-w-3xl">
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black via-black/60 to-transparent flex justify-center pointer-events-none">
+                <p 
+                  className="text-lg md:text-xl text-white font-medium text-center max-w-4xl tracking-wide"
+                  style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8), 0 0 30px rgba(0,0,0,0.6)' }}
+                >
                   {currentLightboxImage.alt}
                 </p>
               </div>
