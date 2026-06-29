@@ -102,18 +102,96 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   const secondaryColor = accentColors.accentSecondary
   const isDark = theme === 'dark'
 
-  // Build Mermaid config — use neutral base theme with CSS variable overrides only where needed
   const mermaidConfig = {
     startOnLoad: false,
-    theme: 'neutral' as const,
+    theme: isDark ? ('dark' as const) : ('base' as const),
     themeVariables: {
       fontFamily: 'Outfit, Inter, system-ui, -apple-system, sans-serif',
-      primaryColor: isDark ? '#1e293b' : '#f1f5f9',
-      primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
-      lineColor: isDark ? '#475569' : '#94a3b8',
-      secondaryColor: secondaryColor,
-      tertiaryColor: isDark ? '#334155' : '#e2e8f0',
       fontSize: '12px',
+      // Primary palette
+      primaryColor: isDark ? '#1e293b' : '#f1f5f9',
+      primaryBorderColor: isDark ? '#3b82f6' : '#3b82f6',
+      primaryTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      // Lines and edges
+      lineColor: isDark ? '#60a5fa' : '#475569',
+      lineBorderColor: isDark ? '#3b82f6' : '#475569',
+      // Secondary elements
+      secondaryColor: isDark ? '#1e3a5f' : secondaryColor,
+      tertiaryColor: isDark ? '#0f172a' : '#e2e8f0',
+      // Node backgrounds
+      clusterBkg: isDark ? '#1e293b' : '#f1f5f9',
+      clusterBorder: isDark ? '#3b82f6' : '#cbd5e1',
+      // Section/box backgrounds
+      sectionBkgColor: isDark ? '#1e3a5f' : '#eff6ff',
+      sectionBkgColor2: isDark ? '#172554' : '#dbeafe',
+      // Subgraph backgrounds
+      subgraphBkgColor: isDark ? '#1e293b' : '#ffffff',
+      subgraphBorder: isDark ? '#3b82f6' : '#94a3b8',
+      // Note/box
+      noteBkgColor: isDark ? '#1c1c2e' : '#fff9c4',
+      noteTextColor: isDark ? '#f8f8f2' : '#1a1a1a',
+      noteBorderColor: isDark ? '#bd93f9' : '#f59e0b',
+      // Task/sequence bars
+      fillType0: isDark ? '#1e3a5f' : '#dbeafe',
+      fillType1: isDark ? '#1e293b' : '#f1f5f9',
+      fillType2: isDark ? '#172554' : '#e0f2fe',
+      fillType3: isDark ? '#0f172a' : '#e2e8f0',
+      fillType4: isDark ? '#020617' : '#cbd5e1',
+      fillType5: isDark ? '#111827' : '#94a3b8',
+      fillType6: isDark ? '#1f2937' : '#9ca3af',
+      fillType7: isDark ? '#374151' : '#6b7280',
+      // Sequence diagram
+      activationBorderColor: isDark ? '#60a5fa' : '#3b82f6',
+      activationBkgColor: isDark ? '#1e3a5f' : '#dbeafe',
+      sequenceNumberColor: isDark ? '#0f172a' : '#ffffff',
+      sequenceLineColor: isDark ? '#60a5fa' : '#475569',
+      // State
+      stateBkg: isDark ? '#1e293b' : '#f1f5f9',
+      stateBorder: isDark ? '#3b82f6' : '#94a3b8',
+      stateTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      stateSecondaryColor: isDark ? '#1e3a5f' : '#e2e8f0',
+      // Entity colors
+      entityColor: isDark ? '#1e293b' : '#f1f5f9',
+      entityBorderColor: isDark ? '#3b82f6' : '#3b82f6',
+      entityTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      entityTitleColor: isDark ? '#60a5fa' : '#1d4ed8',
+      // Class diagram
+      classBkg: isDark ? '#1e293b' : '#ffffff',
+      classBorder: isDark ? '#3b82f6' : '#3b82f6',
+      classTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      attributeBackgroundColor: isDark ? '#1e3a5f' : '#eff6ff',
+      attributeBorderColor: isDark ? '#60a5fa' : '#3b82f6',
+      attributeTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      attributeIconColor: isDark ? '#f1f5f9' : '#0f172a',
+      // Requirement diagram
+      requirementBackgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+      requirementBorderColor: isDark ? '#3b82f6' : '#3b82f6',
+      requirementTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      // Pie chart
+      pie1: isDark ? '#3b82f6' : '#3b82f6',
+      pie2: isDark ? '#60a5fa' : '#60a5fa',
+      pie3: isDark ? '#93c5fd' : '#93c5fd',
+      pie4: isDark ? '#1e3a5f' : '#dbeafe',
+      pie5: isDark ? '#172554' : '#bfdbfe',
+      pie6: isDark ? '#0f172a' : '#e0f2fe',
+      pie7: isDark ? '#020617' : '#f1f5f9',
+      pie8: isDark ? '#111827' : '#e2e8f0',
+      pie9: isDark ? '#1f2937' : '#cbd5e1',
+      pie10: isDark ? '#374151' : '#94a3b8',
+      pie11: isDark ? '#4b5563' : '#6b7280',
+      pie12: isDark ? '#6b7280' : '#9ca3af',
+      // Gantt chart
+      gridColor: isDark ? '#334155' : '#e2e8f0',
+      doneTaskBkgColor: isDark ? '#166534' : '#bbf7d0',
+      doneTaskBorderColor: isDark ? '#22c55e' : '#22c55e',
+      activeTaskBkgColor: isDark ? '#1e3a5f' : '#bfdbfe',
+      activeTaskBorderColor: isDark ? '#3b82f6' : '#3b82f6',
+      critBkgColor: isDark ? '#7f1d1d' : '#fee2e2',
+      critBorderColor: isDark ? '#ef4444' : '#ef4444',
+      taskTextColor: isDark ? '#f1f5f9' : '#0f172a',
+      taskTextOutsideColor: isDark ? '#f1f5f9' : '#0f172a',
+      taskBorderColor: isDark ? '#334155' : '#cbd5e1',
+      todayLineColor: isDark ? '#f59e0b' : '#f59e0b',
     },
   }
 
