@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -128,6 +128,27 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [hourlyVisits, setHourlyVisits] = useState<any[]>([])
   const [visitorLoading, setVisitorLoading] = useState(false)
 
+  // ── Cleanup State ──
+  const [cleanupOpen, setCleanupOpen] = useState(false)
+  const [cleanupFrom, setCleanupFrom] = useState('')
+  const [cleanupTo, setCleanupTo] = useState('')
+  const [cleanupTables, setCleanupTables] = useState<string[]>(['daily', 'hourly'])
+  const [cleanupPreview, setCleanupPreview] = useState<{ daily: number; hourly: number; visitors: number } | null>(null)
+  const [cleanupLoading, setCleanupLoading] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<string | null>(null)
+  const [cleanupConfirm, setCleanupConfirm] = useState(false)
+
+  // ── Grid State (pagination, sort, search, filters) ──
+  const [gridPage, setGridPage] = useState(1)
+  const [gridLimit, setGridLimit] = useState(20)
+  const [gridSort, setGridSort] = useState('last_visit')
+  const [gridOrder, setGridOrder] = useState<'asc' | 'desc'>('desc')
+  const [gridSearch, setGridSearch] = useState('')
+  const [gridCountry, setGridCountry] = useState('')
+  const [gridPagination, setGridPagination] = useState<{ page: number; limit: number; total: number; totalPages: number }>({ page: 1, limit: 20, total: 0, totalPages: 0 })
+  const [gridCountries, setGridCountries] = useState<string[]>([])
+  const [searchDebounced, setSearchDebounced] = useState('')
+
   function parseUA(ua: string) {
     const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
     const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua) && !isMobile
@@ -170,6 +191,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
   }
+
+  const countryStats = useMemo(() => processCountryStats(visitors), [visitors])
+  const uaStats = useMemo(() => processUAStats(visitors), [visitors])
+  const deviceTotal = useMemo(() => Object.values(uaStats.deviceCount).reduce((s, v) => s + (v as number), 0), [uaStats])
+  const browserTotal = useMemo(() => Object.values(uaStats.browserCount).reduce((s, v) => s + (v as number), 0), [uaStats])
 
   // ── Tab 3: System Settings State ──
   const [defaultTheme, setDefaultTheme] = useState<'dark' | 'light' | null>(() => {
@@ -237,19 +263,29 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const fetchVisitors = useCallback(async () => {
     setVisitorLoading(true)
     try {
-      const res = await api('/api/visitors')
+      const params = new URLSearchParams()
+      params.set('page', String(gridPage))
+      params.set('limit', String(gridLimit))
+      params.set('sort', gridSort)
+      params.set('order', gridOrder)
+      if (searchDebounced) params.set('search', searchDebounced)
+      if (gridCountry) params.set('country', gridCountry)
+
+      const res = await api(`/api/visitors?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setVisitors(data.visitors || [])
         setDailyVisits(data.daily || [])
         setHourlyVisits(data.hourly || [])
+        setGridPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
+        setGridCountries(data.countries || [])
       }
     } catch (err) {
       console.error('Failed to fetch visitors:', err)
     } finally {
       setVisitorLoading(false)
     }
-  }, [])
+  }, [gridPage, gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
 
   const exportCSV = useCallback(async () => {
     try {
@@ -270,11 +306,73 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   }, [])
 
+  const previewCleanup = useCallback(async () => {
+    if (!cleanupFrom || !cleanupTo) return
+    setCleanupLoading(true)
+    setCleanupPreview(null)
+    try {
+      const res = await api('/api/visitors/cleanup/preview', {
+        method: 'POST',
+        body: JSON.stringify({ from: cleanupFrom, to: cleanupTo }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setCleanupPreview(data)
+      }
+    } catch (err) {
+      console.error('Cleanup preview failed:', err)
+    } finally {
+      setCleanupLoading(false)
+    }
+  }, [cleanupFrom, cleanupTo])
+
+  const executeCleanup = useCallback(async () => {
+    if (!cleanupFrom || !cleanupTo || !cleanupConfirm) return
+    setCleanupLoading(true)
+    setCleanupResult(null)
+    try {
+      const res = await api('/api/visitors/cleanup', {
+        method: 'POST',
+        body: JSON.stringify({ from: cleanupFrom, to: cleanupTo, tables: cleanupTables }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { deleted: Record<string, number> }
+        const parts = Object.entries(data.deleted).filter(([_, v]) => v > 0).map(([k, v]) => `${k}: ${v}`)
+        setCleanupResult(parts.length > 0 ? `Deleted ${parts.join(', ')}` : 'No rows matched')
+        setCleanupPreview(null)
+        setCleanupConfirm(false)
+        fetchVisitors()
+      }
+    } catch (err) {
+      console.error('Cleanup failed:', err)
+    } finally {
+      setCleanupLoading(false)
+    }
+  }, [cleanupFrom, cleanupTo, cleanupTables, cleanupConfirm, fetchVisitors])
+
   useEffect(() => {
-    if (activeTab === 'settings' || activeTab === 'analytics') {
+    if (activeTab === 'analytics') {
       fetchVisitors()
     }
-  }, [activeTab, fetchVisitors])
+  }, [activeTab]) // only re-fetch on tab change, grid changes have their own effect
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounced(gridSearch), 300)
+    return () => clearTimeout(timer)
+  }, [gridSearch])
+
+  // Re-fetch when grid params change (but not on initial mount)
+  const [gridInitialized, setGridInitialized] = useState(false)
+  useEffect(() => {
+    if (!gridInitialized) { setGridInitialized(true); return }
+    fetchVisitors()
+  }, [gridPage, gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
+
+  // Reset to page 1 when limit, sort, order, search, or country changes
+  useEffect(() => {
+    if (gridInitialized) setGridPage(1)
+  }, [gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
 
   const handleDefaultThemeChange = async (val: string) => {
     if (val === 'dark' || val === 'light') {
@@ -447,6 +545,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       fetchMessages()
     } else if (activeTab === 'blogs') {
       fetchBlogs()
+    } else if (activeTab === 'analytics') {
+      fetchVisitors()
     } else {
       fetchSettings()
     }
@@ -1916,8 +2016,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       {[
                         { label: 'Unique', value: visitors.length, icon: '👤' },
                         { label: 'Total Visits', value: visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), icon: '📊' },
-                        { label: "Today", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
-                        { label: 'Yesterday', value: dailyVisits.find((d: any) => d.date === new Date(Date.now() - 86400000).toISOString().slice(0,10))?.count || 0, icon: '📆' },
+                        { label: "Today (UTC)", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
+                        { label: 'Yesterday (UTC)', value: dailyVisits.find((d: any) => d.date === new Date(Date.now() - 86400000).toISOString().slice(0,10))?.count || 0, icon: '📆' },
                       ].map((stat, i) => (
                         <div key={i} className="rounded-xl md:rounded-2xl border p-3 md:p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                           <div className="text-lg md:text-2xl mb-1 md:mb-2">{stat.icon}</div>
@@ -1966,11 +2066,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Country</h4>
                         <div className="space-y-2">
-                          {processCountryStats(visitors).slice(0, 8).map((c: any) => (
+                          {countryStats.slice(0, 8).map((c: any) => (
                             <div key={c.name} className="flex items-center gap-3">
                               <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{c.count}</span>
                               <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                <div className="h-full rounded-md" style={{ width: `${Math.min(100, (c.count / Math.max(...processCountryStats(visitors).slice(0, 8).map((x: any) => x.count))) * 100)}%`, background: 'var(--accent)' }} />
+                                <div className="h-full rounded-md" style={{ width: `${Math.min(100, (c.count / Math.max(...countryStats.slice(0, 8).map((x: any) => x.count))) * 100)}%`, background: 'var(--accent)' }} />
                               </div>
                               <span className="text-[10px] w-24 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
                             </div>
@@ -1980,15 +2080,14 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Device</h4>
                         <div className="space-y-2">
-                          {Object.entries(processUAStats(visitors).deviceCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
-                            const total = Object.values(processUAStats(visitors).deviceCount).reduce((s: number, v: any) => s + v, 0) as number
+                          {Object.entries(uaStats.deviceCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
                             const icons: Record<string, string> = { Desktop: '🖥', Mobile: '📱', Tablet: '📟' }
                             return (
                               <div key={name} className="flex items-center gap-3">
                                 <span className="text-sm">{icons[name] || '?'}</span>
                                 <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
                                 <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                  <div className="h-full rounded-md" style={{ width: `${(count / total) * 100}%`, background: 'var(--accent)' }} />
+                                  <div className="h-full rounded-md" style={{ width: `${(count / deviceTotal) * 100}%`, background: 'var(--accent)' }} />
                                 </div>
                                 <span className="text-[10px] w-12 text-right" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                               </div>
@@ -1999,13 +2098,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Browser</h4>
                         <div className="space-y-2">
-                          {Object.entries(processUAStats(visitors).browserCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
-                            const total = Object.values(processUAStats(visitors).browserCount).reduce((s: number, v: any) => s + v, 0) as number
+                          {Object.entries(uaStats.browserCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
                             return (
                               <div key={name} className="flex items-center gap-3">
                                 <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
                                 <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                  <div className="h-full rounded-md" style={{ width: `${(count / total) * 100}%`, background: 'var(--accent)' }} />
+                                  <div className="h-full rounded-md" style={{ width: `${(count / browserTotal) * 100}%`, background: 'var(--accent)' }} />
                                 </div>
                                 <span className="text-[10px] w-16 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                               </div>
@@ -2017,50 +2115,359 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
                     {/* Visitor Log Table */}
                     <div className="rounded-2xl border overflow-hidden bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider p-5 pb-0" style={{ color: 'var(--text-muted)' }}>Visitor Log</h4>
-                      <div className="overflow-x-auto p-5 pt-3">
+                      {/* Toolbar */}
+                      <div className="p-4 md:p-5 pb-0 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Visitor Log</h4>
+                          <span className="text-[10px] font-semibold" style={{ color: 'var(--text-muted)' }}>
+                            {gridPagination.total.toLocaleString()} total
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Search */}
+                          <div className="relative flex-1 min-w-[180px]">
+                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                            <input
+                              type="text"
+                              placeholder="Search IP, country, city, referrer..."
+                              value={gridSearch}
+                              onChange={e => setGridSearch(e.target.value)}
+                              className="w-full pl-8 pr-3 py-1.5 rounded-lg border text-[11px] outline-none focus:ring-1 transition-shadow"
+                              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            />
+                            {gridSearch && (
+                              <button onClick={() => setGridSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
+                                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>x</span>
+                              </button>
+                            )}
+                          </div>
+                          {/* Country filter */}
+                          <select
+                            value={gridCountry}
+                            onChange={e => setGridCountry(e.target.value)}
+                            className="px-2.5 py-1.5 rounded-lg border text-[11px] outline-none cursor-pointer"
+                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                          >
+                            <option value="">All Countries</option>
+                            {gridCountries.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          {/* Page size */}
+                          <select
+                            value={gridLimit}
+                            onChange={e => setGridLimit(Number(e.target.value))}
+                            className="px-2.5 py-1.5 rounded-lg border text-[11px] outline-none cursor-pointer"
+                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                          >
+                            {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Table */}
+                      <div className="overflow-x-auto p-4 md:p-5 pt-3">
                         <table className="w-full text-[11px]">
                           <thead>
                             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Location</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>IP</th>
-                              <th className="text-right p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Visits</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Referrer</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Ref</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>First Visit</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Last Visit</th>
-                              <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Device</th>
+                              {[
+                                { key: 'country', label: 'Location', align: 'left' },
+                                { key: 'ip', label: 'IP', align: 'left' },
+                                { key: 'visit_count', label: 'Visits', align: 'right' },
+                                { key: null, label: 'Referrer', align: 'left' },
+                                { key: null, label: 'Ref', align: 'left' },
+                                { key: 'first_visit', label: 'First Visit', align: 'left' },
+                                { key: 'last_visit', label: 'Last Visit', align: 'left' },
+                              ].map(col => (
+                                <th
+                                  key={col.label}
+                                  className={`p-3 font-semibold cursor-pointer select-none transition-colors hover:opacity-70 ${col.align === 'right' ? 'text-right' : 'text-left'}`}
+                                  style={{ color: 'var(--text-muted)' }}
+                                  onClick={() => {
+                                    if (!col.key) return
+                                    if (gridSort === col.key) {
+                                      setGridOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+                                    } else {
+                                      setGridSort(col.key)
+                                      setGridOrder('desc')
+                                    }
+                                  }}
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    {col.label}
+                                    {col.key && gridSort === col.key && (
+                                      <span style={{ color: 'var(--accent)' }}>{gridOrder === 'asc' ? '↑' : '↓'}</span>
+                                    )}
+                                  </span>
+                                </th>
+                              ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {[...visitors].sort((a: any, b: any) => Number(b.visit_count) - Number(a.visit_count)).map((v: any, i: number) => {
-                              const loc = [v.city, v.region].filter(Boolean).join(', ') || (v.country || '—')
-                              const pua = parseUA(v.user_agent || '')
-                              let refDisplay = v.referrer || ''
-                              try { refDisplay = refDisplay ? new URL(refDisplay).hostname : '' } catch {}
-                              return (
-                                <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
-                                  <td className="p-3">
-                                    <span className="font-semibold">{loc}</span>
-                                    {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
-                                  </td>
-                                  <td className="p-3 font-mono opacity-70">{v.ip}</td>
-                                  <td className="p-3 text-right font-bold" style={{ color: 'var(--accent)' }}>{v.visit_count}</td>
-                                  <td className="p-3 max-w-[80px] truncate" style={{ color: 'var(--text-secondary)' }} title={v.referrer || ''}>{refDisplay || '—'}</td>
-                                  <td className="p-3">
-                                    {v.ref ? <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>{v.ref}</span> : '—'}
-                                  </td>
-                                  <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.first_visit?.replace('T', ' ')?.slice(0, 16)}</td>
-                                  <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.last_visit?.replace('T', ' ')?.slice(0, 16)}</td>
-                                  <td className="p-3" style={{ color: 'var(--text-muted)' }}>
-                                    <span title={`${pua.browser} / ${pua.os}`}>{pua.device}</span>
-                                  </td>
-                                </tr>
-                              )
-                            })}
+                            {visitors.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="p-8 text-center text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                                  {gridSearch || gridCountry ? 'No visitors match your filters' : 'No visitors yet'}
+                                </td>
+                              </tr>
+                            ) : (
+                              visitors.map((v: any, i: number) => {
+                                const loc = [v.city, v.region].filter(Boolean).join(', ') || (v.country || '—')
+                                let refDisplay = v.referrer || ''
+                                try { refDisplay = refDisplay ? new URL(refDisplay).hostname : '' } catch {}
+                                return (
+                                  <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                    <td className="p-3">
+                                      <span className="font-semibold">{loc}</span>
+                                      {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
+                                    </td>
+                                    <td className="p-3 font-mono opacity-70">{v.ip}</td>
+                                    <td className="p-3 text-right font-bold" style={{ color: 'var(--accent)' }}>{v.visit_count}</td>
+                                    <td className="p-3 max-w-[80px] truncate" style={{ color: 'var(--text-secondary)' }} title={v.referrer || ''}>{refDisplay || '—'}</td>
+                                    <td className="p-3">
+                                      {v.ref ? <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>{v.ref}</span> : '—'}
+                                    </td>
+                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.first_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                    <td className="p-3" style={{ color: 'var(--text-secondary)' }}>{v.last_visit?.replace('T', ' ')?.slice(0, 16)}</td>
+                                  </tr>
+                                )
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
+
+                      {/* Pagination */}
+                      {gridPagination.totalPages > 1 && (
+                        <div className="px-4 md:px-5 pb-4 md:pb-5 flex items-center justify-between gap-3">
+                          <div className="text-[10px] font-semibold" style={{ color: 'var(--text-muted)' }}>
+                            Page {gridPagination.page} of {gridPagination.totalPages}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setGridPage(1)}
+                              disabled={gridPagination.page <= 1}
+                              className="px-2 py-1 rounded border text-[10px] font-bold transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            >
+                              &laquo;
+                            </button>
+                            <button
+                              onClick={() => setGridPage(p => Math.max(1, p - 1))}
+                              disabled={gridPagination.page <= 1}
+                              className="px-2 py-1 rounded border text-[10px] font-bold transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            >
+                              &lsaquo;
+                            </button>
+                            {(() => {
+                              const current = gridPagination.page
+                              const total = gridPagination.totalPages
+                              const pages: (number | '...')[] = []
+                              if (total <= 7) {
+                                for (let i = 1; i <= total; i++) pages.push(i)
+                              } else {
+                                pages.push(1)
+                                if (current > 3) pages.push('...')
+                                const start = Math.max(2, current - 1)
+                                const end = Math.min(total - 1, current + 1)
+                                for (let i = start; i <= end; i++) pages.push(i)
+                                if (current < total - 2) pages.push('...')
+                                pages.push(total)
+                              }
+                              return pages.map((p, idx) =>
+                                p === '...' ? (
+                                  <span key={`e${idx}`} className="px-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>...</span>
+                                ) : (
+                                  <button
+                                    key={p}
+                                    onClick={() => setGridPage(p as number)}
+                                    className="w-7 h-7 rounded border text-[10px] font-bold transition-all active:scale-95"
+                                    style={{
+                                      borderColor: current === p ? 'var(--accent)' : 'var(--border)',
+                                      background: current === p ? 'var(--accent)' : 'transparent',
+                                      color: current === p ? 'var(--bg)' : 'var(--text-secondary)',
+                                    }}
+                                  >
+                                    {p}
+                                  </button>
+                                )
+                              )
+                            })()}
+                            <button
+                              onClick={() => setGridPage(p => Math.min(gridPagination.totalPages, p + 1))}
+                              disabled={gridPagination.page >= gridPagination.totalPages}
+                              className="px-2 py-1 rounded border text-[10px] font-bold transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            >
+                              &rsaquo;
+                            </button>
+                            <button
+                              onClick={() => setGridPage(gridPagination.totalPages)}
+                              disabled={gridPagination.page >= gridPagination.totalPages}
+                              className="px-2 py-1 rounded border text-[10px] font-bold transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            >
+                              &raquo;
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Data Cleanup Panel */}
+                    <div className="rounded-2xl border overflow-hidden bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                      <button
+                        onClick={() => setCleanupOpen(!cleanupOpen)}
+                        className="w-full p-4 md:p-5 flex items-center gap-3 text-left transition-colors hover:bg-white/[0.02]"
+                      >
+                        <Trash2 size={14} style={{ color: 'var(--accent)' }} />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Data Cleanup</h4>
+                          <p className="text-[9px] md:text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Remove analytics data by date range</p>
+                        </div>
+                        <ChevronDown
+                          size={12}
+                          style={{ color: 'var(--text-muted)', transition: 'transform 0.2s', transform: cleanupOpen ? 'rotate(180deg)' : 'rotate(0)' }}
+                        />
+                      </button>
+
+                      {cleanupOpen && (
+                        <div className="px-4 md:px-5 pb-4 md:pb-5 space-y-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                          {/* Date Range */}
+                          <div className="flex flex-wrap items-end gap-3 pt-4">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>From</label>
+                              <input
+                                type="date"
+                                value={cleanupFrom}
+                                onChange={e => { setCleanupFrom(e.target.value); setCleanupPreview(null); setCleanupResult(null); setCleanupConfirm(false) }}
+                                className="px-3 py-1.5 rounded-lg border text-[11px] outline-none focus:ring-1"
+                                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>To</label>
+                              <input
+                                type="date"
+                                value={cleanupTo}
+                                onChange={e => { setCleanupTo(e.target.value); setCleanupPreview(null); setCleanupResult(null); setCleanupConfirm(false) }}
+                                className="px-3 py-1.5 rounded-lg border text-[11px] outline-none focus:ring-1"
+                                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                              />
+                            </div>
+                            <div className="flex gap-1.5">
+                              {[
+                                { label: '7d', from: () => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().slice(0,10) } },
+                                { label: '30d', from: () => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0,10) } },
+                                { label: '90d', from: () => { const d = new Date(); d.setDate(d.getDate() - 90); return d.toISOString().slice(0,10) } },
+                                { label: 'All', from: () => '2020-01-01' },
+                              ].map(p => (
+                                <button
+                                  key={p.label}
+                                  onClick={() => { setCleanupFrom(p.from()); setCleanupTo(new Date().toISOString().slice(0,10)); setCleanupPreview(null); setCleanupResult(null); setCleanupConfirm(false) }}
+                                  className="px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all hover:opacity-80 active:scale-95"
+                                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                                >
+                                  {p.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Table Checkboxes */}
+                          <div className="flex flex-wrap gap-3">
+                            {[
+                              { key: 'daily', label: 'Daily Visits' },
+                              { key: 'hourly', label: 'Hourly Visits' },
+                              { key: 'visitors', label: 'Visitor Records' },
+                            ].map(t => (
+                              <label key={t.key} className="flex items-center gap-1.5 cursor-pointer group">
+                                <input
+                                  type="checkbox"
+                                  checked={cleanupTables.includes(t.key)}
+                                  onChange={e => {
+                                    setCleanupTables(prev => e.target.checked ? [...prev, t.key] : prev.filter(x => x !== t.key))
+                                    setCleanupPreview(null)
+                                    setCleanupResult(null)
+                                    setCleanupConfirm(false)
+                                  }}
+                                  className="rounded accent-[var(--accent)]"
+                                />
+                                <span className="text-[10px] font-semibold group-hover:opacity-80 transition-opacity" style={{ color: 'var(--text-secondary)' }}>{t.label}</span>
+                              </label>
+                            ))}
+                          </div>
+
+                          {/* Preview Button */}
+                          {cleanupFrom && cleanupTo && cleanupTables.length > 0 && !cleanupPreview && (
+                            <button
+                              onClick={previewCleanup}
+                              disabled={cleanupLoading}
+                              className="px-4 py-2 rounded-xl border text-[10px] md:text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                            >
+                              {cleanupLoading ? <Loader size={10} className="animate-spin" /> : <Eye size={10} />}
+                              Preview Impact
+                            </button>
+                          )}
+
+                          {/* Preview Results */}
+                          {cleanupPreview && (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-3 gap-2">
+                                {[
+                                  { key: 'daily', label: 'Daily Rows', color: '#f59e0b' },
+                                  { key: 'hourly', label: 'Hourly Rows', color: '#3b82f6' },
+                                  { key: 'visitors', label: 'Visitors', color: '#ef4444' },
+                                ].filter(item => cleanupTables.includes(item.key)).map(item => (
+                                  <div key={item.key} className="rounded-xl border p-3 text-center" style={{ borderColor: 'var(--border)' }}>
+                                    <div className="text-lg font-bold" style={{ color: item.color }}>{cleanupPreview[item.key as keyof typeof cleanupPreview] || 0}</div>
+                                    <div className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{item.label}</div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {!cleanupConfirm ? (
+                                <button
+                                  onClick={() => setCleanupConfirm(true)}
+                                  className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                                  style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+                                >
+                                  <Trash2 size={10} />
+                                  Confirm Delete
+                                </button>
+                              ) : (
+                                <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ borderColor: '#ef4444', background: 'rgba(239,68,68,0.05)' }}>
+                                  <span className="text-[10px] font-semibold" style={{ color: '#ef4444' }}>This cannot be undone. Delete now?</span>
+                                  <button
+                                    onClick={executeCleanup}
+                                    disabled={cleanupLoading}
+                                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 flex items-center gap-1"
+                                    style={{ background: '#ef4444', color: '#fff' }}
+                                  >
+                                    {cleanupLoading ? <Loader size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                                    Delete
+                                  </button>
+                                  <button
+                                    onClick={() => setCleanupConfirm(false)}
+                                    className="px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all active:scale-95"
+                                    style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Result Message */}
+                          {cleanupResult && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ borderColor: 'var(--accent)', background: 'rgba(var(--accent-rgb), 0.05)' }}>
+                              <CheckCircle2 size={12} style={{ color: 'var(--accent)' }} />
+                              <span className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>{cleanupResult}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

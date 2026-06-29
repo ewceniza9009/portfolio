@@ -12,6 +12,11 @@ const app = express()
 app.use(cors({ origin: '*' }))
 app.use(express.json())
 
+// In-memory rate limiting for visit tracking (per IP, max 30 requests per minute)
+const visitRateLimit = new Map<string, { count: number; resetTime: number }>()
+const VISIT_RATE_LIMIT = 30
+const VISIT_RATE_WINDOW = 60 * 1000
+
 let dbInitialized: Promise<void> | null = null
 
 function ensureDb() {
@@ -446,6 +451,22 @@ async function sendTelegramAlert(message: string) {
 app.post('/api/visit', async (req, res) => {
   try {
     const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim()
+
+    // Rate limit check
+    const now = Date.now()
+    const entry = visitRateLimit.get(ip)
+    if (entry) {
+      if (now < entry.resetTime) {
+        if (entry.count >= VISIT_RATE_LIMIT) {
+          return res.status(429).json({ error: 'Rate limit exceeded' })
+        }
+        entry.count += 1
+      } else {
+        visitRateLimit.set(ip, { count: 1, resetTime: now + VISIT_RATE_WINDOW })
+      }
+    } else {
+      visitRateLimit.set(ip, { count: 1, resetTime: now + VISIT_RATE_WINDOW })
+    }
     const userAgent = req.headers['user-agent'] || ''
     const referrer = (req.headers['referer'] as string) || ''
     const path = req.body?.path || '/'
@@ -476,12 +497,6 @@ app.post('/api/visit', async (req, res) => {
       sendTelegramAlert(`👤 <b>New visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
     }
 
-    // Log individual page visit
-    await turso.execute({
-      sql: 'INSERT INTO page_visits (ip, path, referrer, ref) VALUES (?, ?, ?, ?)',
-      args: [ip, path, referrer, ref],
-    })
-
     // Daily visit counter
     await turso.execute({
       sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
@@ -501,13 +516,65 @@ app.post('/api/visit', async (req, res) => {
   }
 })
 
-// GET visitor stats (protected)
-app.get('/api/visitors', authMiddleware, async (_req, res) => {
+// GET visitor stats with server-side pagination, sorting, search, and filters (protected)
+app.get('/api/visitors', authMiddleware, async (req, res) => {
   try {
-    const visitors = await turso.execute('SELECT * FROM visitors ORDER BY last_visit DESC')
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20))
+    const offset = (page - 1) * limit
+    const sort = (req.query.sort as string) || 'last_visit'
+    const order = (req.query.order as string)?.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+    const search = (req.query.search as string) || ''
+    const country = (req.query.country as string) || ''
+
+    const allowedSorts: Record<string, string> = {
+      visit_count: 'visit_count',
+      first_visit: 'first_visit',
+      last_visit: 'last_visit',
+      country: 'country',
+      ip: 'ip',
+    }
+    const sortColumn = allowedSorts[sort] || 'last_visit'
+
+    const conditions: string[] = []
+    const args: any[] = []
+
+    if (search) {
+      conditions.push(`(ip LIKE ? OR country LIKE ? OR city LIKE ? OR region LIKE ? OR referrer LIKE ? OR ref LIKE ? OR user_agent LIKE ?)`)
+      const like = `%${search}%`
+      args.push(like, like, like, like, like, like, like)
+    }
+    if (country) {
+      conditions.push('country = ?')
+      args.push(country)
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+    const countResult = await turso.execute({
+      sql: `SELECT COUNT(*) as total FROM visitors ${where}`,
+      args,
+    })
+    const total = Number(countResult.rows[0]?.total || 0)
+    const totalPages = Math.ceil(total / limit)
+
+    const visitors = await turso.execute({
+      sql: `SELECT * FROM visitors ${where} ORDER BY ${sortColumn} ${order} LIMIT ? OFFSET ?`,
+      args: [...args, limit, offset],
+    })
+
     const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
     const hourly = await turso.execute('SELECT * FROM hourly_visits ORDER BY hour DESC LIMIT 48')
-    res.json({ visitors: visitors.rows, daily: daily.rows, hourly: hourly.rows })
+
+    const countries = await turso.execute('SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != "" ORDER BY country')
+
+    res.json({
+      visitors: visitors.rows,
+      daily: daily.rows,
+      hourly: hourly.rows,
+      countries: countries.rows.map(r => r.country),
+      pagination: { page, limit, total, totalPages },
+    })
   } catch (err) {
     console.error('Fetch visitors error:', err)
     res.status(500).json({ error: 'Failed to fetch visitors' })
@@ -529,6 +596,73 @@ app.get('/api/visitors/export', authMiddleware, async (_req, res) => {
   } catch (err) {
     console.error('Export visitors error:', err)
     res.status(500).json({ error: 'Failed to export visitors' })
+  }
+})
+
+// POST preview analytics cleanup (protected)
+app.post('/api/visitors/cleanup/preview', authMiddleware, async (req, res) => {
+  try {
+    const { from, to } = req.body
+    if (!from || !to) return res.status(400).json({ error: 'from and to dates required' })
+
+    const daily = await turso.execute({
+      sql: 'SELECT COUNT(*) as count FROM daily_visits WHERE date >= ? AND date <= ?',
+      args: [from, to],
+    })
+    const hourly = await turso.execute({
+      sql: 'SELECT COUNT(*) as count FROM hourly_visits WHERE hour >= ? AND hour <= ?',
+      args: [from + ' 00:00', to + ' 23:59'],
+    })
+    const visitorsResult = await turso.execute({
+      sql: 'SELECT COUNT(*) as count FROM visitors WHERE last_visit >= ? AND last_visit <= ?',
+      args: [from + ' 00:00', to + ' 23:59'],
+    })
+
+    res.json({
+      daily: Number(daily.rows[0]?.count || 0),
+      hourly: Number(hourly.rows[0]?.count || 0),
+      visitors: Number(visitorsResult.rows[0]?.count || 0),
+    })
+  } catch (err) {
+    console.error('Cleanup preview error:', err)
+    res.status(500).json({ error: 'Failed to preview cleanup' })
+  }
+})
+
+// POST execute analytics cleanup (protected)
+app.post('/api/visitors/cleanup', authMiddleware, async (req, res) => {
+  try {
+    const { from, to, tables } = req.body
+    if (!from || !to || !Array.isArray(tables)) return res.status(400).json({ error: 'from, to, and tables required' })
+
+    const results: Record<string, number> = {}
+
+    if (tables.includes('daily')) {
+      const r = await turso.execute({
+        sql: 'DELETE FROM daily_visits WHERE date >= ? AND date <= ?',
+        args: [from, to],
+      })
+      results.daily = Number(r.rowsAffected || 0)
+    }
+    if (tables.includes('hourly')) {
+      const r = await turso.execute({
+        sql: 'DELETE FROM hourly_visits WHERE hour >= ? AND hour <= ?',
+        args: [from + ' 00:00', to + ' 23:59'],
+      })
+      results.hourly = Number(r.rowsAffected || 0)
+    }
+    if (tables.includes('visitors')) {
+      const r = await turso.execute({
+        sql: 'DELETE FROM visitors WHERE last_visit >= ? AND last_visit <= ?',
+        args: [from + ' 00:00', to + ' 23:59'],
+      })
+      results.visitors = Number(r.rowsAffected || 0)
+    }
+
+    res.json({ success: true, deleted: results })
+  } catch (err) {
+    console.error('Cleanup error:', err)
+    res.status(500).json({ error: 'Failed to cleanup analytics' })
   }
 })
 
