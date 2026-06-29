@@ -23,8 +23,6 @@ export default function GitHubSection({
   // Extract the color hex without '#' for the contribution chart and stats widgets
   const themeSet = ACCENT_THEMES[accent]?.[theme];
   const accentColorHex = themeSet?.accent.replace("#", "") || "f3ca65";
-  const accentSecondaryColorHex =
-    themeSet?.accentSecondary.replace("#", "") || "cca03d";
 
   // Theme-aware GitHub stats parameters
   const bgColor = isLight ? "ffffff" : "181818";
