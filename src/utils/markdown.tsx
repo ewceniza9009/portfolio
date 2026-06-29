@@ -42,10 +42,13 @@ interface MermaidRendererProps {
   accent?: AccentKey
 }
 
+// Module-level counter ensures globally unique IDs across all MermaidRenderer instances
+let _mermaidIdCounter = 0
+
 function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
   const [svgHtml, setSvgHtml] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
+  const [isError, setIsError] = useState(false)
   const [showCode, setShowCode] = useState(false)
 
   // Interactive zoom & pan states
@@ -54,21 +57,22 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const renderId = useRef(0)
   const svgRef = useRef<HTMLDivElement>(null)
+  // Track current render cycle to ignore stale renders
+  const renderCycleRef = useRef(0)
 
   const cleanCode = code.trim()
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
     .replace(/&#x2F;/g, '/')
 
-  // Auto-fit diagram to viewport after render
+// Auto-fit diagram to viewport after render
   useEffect(() => {
-    if (!svgHtml || hasError) return
+    if (!svgHtml || isError) return
     const el = svgRef.current
     if (!el) return
     const svg = el.querySelector('svg')
@@ -79,22 +83,19 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
       const parts = viewBox.split(/[\s,]+/).filter(Boolean).map(Number)
       if (parts.length === 4 && parts[2] > 0) {
         svg.style.maxWidth = `${parts[2]}px`
-        // Detect Left-to-Right by aspect ratio
         if (parts[2] > parts[3]) {
           calculatedScale = 0.90
         }
       }
     }
-    
-    // Explicit format override
-    if (/\\b(LR|RL)\\b/.test(cleanCode)) {
+    if (/\b(LR|RL)\b/.test(cleanCode)) {
       calculatedScale = 0.90
     }
 
     setInitialScale(calculatedScale)
     setScale(calculatedScale)
     setPosition({ x: 0, y: 0 })
-  }, [svgHtml, hasError, cleanCode])
+  }, [svgHtml, isError, cleanCode])
 
   // Resolve active theme colors
   const accentColors = ACCENT_THEMES[accent]?.[theme] || ACCENT_THEMES.gold[theme]
@@ -117,31 +118,36 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
   }
 
   useEffect(() => {
-    let active = true
-    setIsLoading(true)
-    setHasError(false)
-    setSvgHtml('')
+    let cancelled = false
+    const cycle = ++renderCycleRef.current
 
-    const id = `mermaid-${renderId.current++}-${Date.now()}`
+    setIsLoading(true)
+    setIsError(false)
+    setSvgHtml('')
 
     async function render() {
       try {
         const mermaidModule = await import('mermaid')
         const mermaid = mermaidModule.default
         mermaid.initialize(mermaidConfig)
+        // Use module counter + cycle + timestamp for truly unique IDs
+        const id = `mermaid-${++_mermaidIdCounter}-${cycle}-${Date.now()}`
         const result = await mermaid.render(id, cleanCode)
-        const svg = typeof result === 'string' ? result : (result as any).svg
-        if (active && svg) {
+        const svg = typeof result === 'string' ? result : (result as { svg?: string }).svg
+        // Ignore result if this render cycle was cancelled or superseded
+        if (cancelled || cycle !== renderCycleRef.current) return
+        if (svg) {
           setSvgHtml(svg)
-          setIsLoading(false)
-        } else if (active) {
-          setHasError(true)
-          setIsLoading(false)
+        } else {
+          setIsError(true)
         }
       } catch (e) {
         console.warn('[Mermaid] render error:', e)
-        if (active) {
-          setHasError(true)
+        if (!cancelled && cycle === renderCycleRef.current) {
+          setIsError(true)
+        }
+      } finally {
+        if (!cancelled && cycle === renderCycleRef.current) {
           setIsLoading(false)
         }
       }
@@ -149,7 +155,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
     render()
 
-    return () => { active = false }
+    return () => { cancelled = true }
   }, [cleanCode, theme, accent])
 
   // Mouse Drag handlers
@@ -234,7 +240,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
   // Auto-fit diagram in modal to fit both width and height
   useEffect(() => {
-    if (!showModal || !svgHtml || hasError) return
+    if (!showModal || !svgHtml || isError) return
     const el = modalRef.current
     if (!el) return
     const svg = el.querySelector('svg')
@@ -255,7 +261,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     setModalAutoScale(clamped)
     setModalScale(clamped)
     setModalPosition({ x: 0, y: 0 })
-  }, [showModal, svgHtml, hasError])
+  }, [showModal, svgHtml, isError])
 
   const handleModalZoomIn = () => {
     setModalScale(prev => Math.min(5, prev + 0.3))
@@ -402,12 +408,12 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
           onTouchMove={handleTouchMove}
           onTouchEnd={handleMouseUp}
         >
-          {isLoading && !hasError && (
+          {isLoading && !isError && (
             <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'var(--bg-primary)' }}>
               <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)' }} />
             </div>
           )}
-          {hasError || !svgHtml ? (
+          {isError || !svgHtml ? (
             <pre 
               className="w-full h-full overflow-auto text-xs font-mono select-text p-4 m-0" 
               style={{ 
