@@ -8,6 +8,7 @@ import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import { parseMarkdown } from '../utils/markdown'
 import PayPalDonate from './PayPalDonate'
+import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 
 function getApiUrl(path: string): string {
@@ -307,6 +308,14 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
   return (
     <>
+      <HeadTags
+        title={blog.title}
+        description={blog.summary || undefined}
+        url={`/blogs/${blog.slug}`}
+        image={blog.cover_image || undefined}
+        type="article"
+        imageAlt={blog.title}
+      />
       <style>{BLOG_POST_STYLES}</style>
       
       <CursorFollower />

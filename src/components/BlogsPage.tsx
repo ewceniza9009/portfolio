@@ -6,6 +6,7 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
+import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 
 interface Blog {
@@ -234,6 +235,11 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
 
   return (
     <>
+      <HeadTags
+        title="Blog"
+        description="Engineering deep-dives, architecture patterns, and real-world lessons from building ERP and AI applications."
+        url="/blogs"
+      />
       <style>{BLOG_PAGE_STYLES}</style>
       
       <CursorFollower />

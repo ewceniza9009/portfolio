@@ -28,6 +28,7 @@ import ResumeModal from './components/ResumeModal'
 import BlogsPage from './components/BlogsPage'
 import BlogPostPage from './components/BlogPostPage'
 import GallerySection from './components/GallerySection'
+import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
 
 interface PortfolioProps {
@@ -118,6 +119,10 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
   return (
     <>
+      <HeadTags
+        description="Full Stack Software Developer with 10+ years building ERP, LOB & AI applications. Hire me for .NET, React, Angular, Node.js projects."
+        url="/"
+      />
       <CursorFollower />
       <AnimatePresence>
         {isLoading && (
