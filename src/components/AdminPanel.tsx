@@ -60,6 +60,74 @@ const removeSafeItem = (key: string): void => {
   try { localStorage.removeItem(key) } catch {}
 }
 
+function parseUA(ua: string) {
+  const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+  const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua) && !isMobile
+  const device = isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Desktop'
+  let browser = 'Other'
+  if (/Chrome/i.test(ua) && !/Edg|OPR/i.test(ua)) browser = 'Chrome'
+  else if (/Firefox/i.test(ua)) browser = 'Firefox'
+  else if (/Safari/i.test(ua) && !/Chrome|Edg/i.test(ua)) browser = 'Safari'
+  else if (/Edg/i.test(ua)) browser = 'Edge'
+  else if (/OPR/i.test(ua)) browser = 'Opera'
+  let os = 'Other'
+  if (/Windows/i.test(ua)) os = 'Windows'
+  else if (/Mac OS|macOS/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) os = 'macOS'
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS'
+  else if (/Android/i.test(ua)) os = 'Android'
+  else if (/Linux/i.test(ua)) os = 'Linux'
+  return { device, browser, os }
+}
+
+function processUAStats(visitors: any[]) {
+  const deviceCount: Record<string, number> = {}
+  const browserCount: Record<string, number> = {}
+  const osCount: Record<string, number> = {}
+  visitors.forEach((v: any) => {
+    const parsed = parseUA(v.user_agent || '')
+    deviceCount[parsed.device] = (deviceCount[parsed.device] || 0) + Number(v.visit_count || 1)
+    browserCount[parsed.browser] = (browserCount[parsed.browser] || 0) + Number(v.visit_count || 1)
+    osCount[parsed.os] = (osCount[parsed.os] || 0) + Number(v.visit_count || 1)
+  })
+  return { deviceCount, browserCount, osCount }
+}
+
+function processCountryStats(visitors: any[]) {
+  const countryCount: Record<string, number> = {}
+  visitors.forEach((v: any) => {
+    const country = v.country || 'Unknown'
+    countryCount[country] = (countryCount[country] || 0) + Number(v.visit_count || 1)
+  })
+  return Object.entries(countryCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
+
+const VISITOR_TABLE_COLUMNS = [
+  { key: 'country', label: 'Location', align: 'left' as const },
+  { key: 'ip', label: 'IP', align: 'left' as const },
+  { key: 'visit_count', label: 'Visits', align: 'right' as const },
+  { key: null, label: 'Referrer', align: 'left' as const },
+  { key: null, label: 'Ref', align: 'left' as const },
+  { key: 'first_visit', label: 'First Visit', align: 'left' as const },
+  { key: 'last_visit', label: 'Last Visit', align: 'left' as const },
+]
+
 const AI_PRESETS = [
   { label: 'Accept Offer', prompt: 'Draft a warm, professional acceptance email. Express enthusiasm about the opportunity to collaborate, thank them for the offer, and ask about next onboarding steps.' },
   { label: 'Polite Decline', prompt: 'Draft a professional decline email. Polite and appreciative tone. State that I am currently at capacity and cannot take on new work, but thank them for reaching out.' },
@@ -75,7 +143,7 @@ interface AdminPanelProps {
 function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [token, setToken] = useState<string | null>(getSafeItem('admin_token'))
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [loginError, setLoginError] = useState('')
   
   // Dashboard Tab selection
@@ -148,54 +216,49 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [gridCountry, setGridCountry] = useState('')
   const [gridPagination, setGridPagination] = useState<{ page: number; limit: number; total: number; totalPages: number }>({ page: 1, limit: 20, total: 0, totalPages: 0 })
   const [gridCountries, setGridCountries] = useState<string[]>([])
-
-  function parseUA(ua: string) {
-    const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
-    const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua) && !isMobile
-    const device = isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Desktop'
-    let browser = 'Other'
-    if (/Chrome/i.test(ua) && !/Edg|OPR/i.test(ua)) browser = 'Chrome'
-    else if (/Firefox/i.test(ua)) browser = 'Firefox'
-    else if (/Safari/i.test(ua) && !/Chrome|Edg/i.test(ua)) browser = 'Safari'
-    else if (/Edg/i.test(ua)) browser = 'Edge'
-    else if (/OPR/i.test(ua)) browser = 'Opera'
-    let os = 'Other'
-    if (/Windows/i.test(ua)) os = 'Windows'
-    else if (/Mac OS|macOS/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) os = 'macOS'
-    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS'
-    else if (/Android/i.test(ua)) os = 'Android'
-    else if (/Linux/i.test(ua)) os = 'Linux'
-    return { device, browser, os }
-  }
-
-  function processUAStats(visitors: any[]) {
-    const deviceCount: Record<string, number> = {}
-    const browserCount: Record<string, number> = {}
-    const osCount: Record<string, number> = {}
-    visitors.forEach((v: any) => {
-      const parsed = parseUA(v.user_agent || '')
-      deviceCount[parsed.device] = (deviceCount[parsed.device] || 0) + Number(v.visit_count || 1)
-      browserCount[parsed.browser] = (browserCount[parsed.browser] || 0) + Number(v.visit_count || 1)
-      osCount[parsed.os] = (osCount[parsed.os] || 0) + Number(v.visit_count || 1)
-    })
-    return { deviceCount, browserCount, osCount }
-  }
-
-  function processCountryStats(visitors: any[]) {
-    const countryCount: Record<string, number> = {}
-    visitors.forEach((v: any) => {
-      const country = v.country || 'Unknown'
-      countryCount[country] = (countryCount[country] || 0) + Number(v.visit_count || 1)
-    })
-    return Object.entries(countryCount)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-  }
+  const visitorsLoadedRef = useRef(false)
 
   const countryStats = useMemo(() => processCountryStats(visitors), [visitors])
   const uaStats = useMemo(() => processUAStats(visitors), [visitors])
   const deviceTotal = useMemo(() => Object.values(uaStats.deviceCount).reduce((s, v) => s + (v as number), 0), [uaStats])
   const browserTotal = useMemo(() => Object.values(uaStats.browserCount).reduce((s, v) => s + (v as number), 0), [uaStats])
+
+  // Analytics summary (avoid recomputation in JSX)
+  const totalVisits = useMemo(() => visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), [visitors])
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const yesterdayDate = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10) }, [])
+  const todayCount = useMemo(() => dailyVisits.find((d: any) => d.date === todayStr)?.count || 0, [dailyVisits, todayStr])
+  const yesterdayCount = useMemo(() => dailyVisits.find((d: any) => d.date === yesterdayDate)?.count || 0, [dailyVisits, yesterdayDate])
+
+  // Chart data (avoid spread/reverse/slice on every render)
+  const dailyChartData = useMemo(() => dailyVisits.slice(0, 14).reverse(), [dailyVisits])
+  const hourlyChartData = useMemo(() => [...hourlyVisits].reverse().slice(-24), [hourlyVisits])
+
+  // Sorted bar chart entries (avoid sort on every render)
+  const sortedDevices = useMemo(() => Object.entries(uaStats.deviceCount).sort((a: any, b: any) => b[1] - a[1]), [uaStats])
+  const sortedBrowsers = useMemo(() => Object.entries(uaStats.browserCount).sort((a: any, b: any) => b[1] - a[1]), [uaStats])
+
+  // Max country count (avoid Math.max inside .map())
+  const maxCountryCount = useMemo(() => Math.max(...countryStats.slice(0, 8).map(x => x.count), 1), [countryStats])
+
+  // Pagination pages (avoid IIFE in JSX)
+  const paginationPages = useMemo(() => {
+    const current = gridPagination.page
+    const total = gridPagination.totalPages
+    const pages: (number | '...')[] = []
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i)
+    } else {
+      pages.push(1)
+      if (current > 3) pages.push('...')
+      const start = Math.max(2, current - 1)
+      const end = Math.min(total - 1, current + 1)
+      for (let i = start; i <= end; i++) pages.push(i)
+      if (current < total - 2) pages.push('...')
+      pages.push(total)
+    }
+    return pages
+  }, [gridPagination.page, gridPagination.totalPages])
 
   // ── Tab 3: System Settings State ──
   const [defaultTheme, setDefaultTheme] = useState<'dark' | 'light' | null>(() => {
@@ -261,8 +324,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   const fetchVisitors = useCallback(async () => {
-    const isInitial = visitors.length === 0
-    if (isInitial) setVisitorLoading(true)
+    if (!visitorsLoadedRef.current) setVisitorLoading(true)
     else setVisitorRefreshing(true)
     try {
       const params = new URLSearchParams()
@@ -281,6 +343,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         setHourlyVisits(data.hourly || [])
         setGridPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
         setGridCountries(data.countries || [])
+        visitorsLoadedRef.current = true
       }
     } catch (err) {
       console.error('Failed to fetch visitors:', err)
@@ -464,7 +527,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   const fetchMessages = async () => {
-    setLoading(true)
     try {
       const res = await api('/api/messages')
       if (res.status === 401) {
@@ -475,13 +537,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       setMessages(data)
     } catch (err) {
       console.error('Failed to fetch messages:', err)
-    } finally {
-      setLoading(false)
     }
   }
 
   const fetchBlogs = async () => {
-    setLoading(true)
     try {
       const res = await api('/api/admin/blogs')
       if (res.status === 401) {
@@ -492,8 +551,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       setBlogs(data)
     } catch (err) {
       console.error('Failed to fetch blogs:', err)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -549,23 +606,27 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   useEffect(() => {
-    if (token) { 
-      fetchMessages()
-      fetchBlogs()
-      fetchModels() 
-      fetchSettings()
+    if (token) {
+      // Non-blocking: defer data fetches so login transition isn't blocked
+      setTimeout(() => { fetchMessages(); fetchBlogs() }, 0)
+      setTimeout(() => { fetchModels(); fetchSettings() }, 50)
     }
   }, [token])
 
-  const refreshData = () => {
-    if (activeTab === 'messages') {
-      fetchMessages()
-    } else if (activeTab === 'blogs') {
-      fetchBlogs()
-    } else if (activeTab === 'analytics') {
-      fetchVisitors()
-    } else {
-      fetchSettings()
+  const refreshData = async () => {
+    setRefreshing(true)
+    try {
+      if (activeTab === 'messages') {
+        await fetchMessages()
+      } else if (activeTab === 'blogs') {
+        await fetchBlogs()
+      } else if (activeTab === 'analytics') {
+        fetchVisitors()
+      } else {
+        await fetchSettings()
+      }
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -631,14 +692,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   // ── Tab 2: Blogs Handlers ──
-  const slugify = (text: string) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
 
   const handleBlogTitleChange = (val: string) => {
     setBlogTitle(val)
@@ -838,14 +891,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   }
 
-  const formatDate = (d: string) => {
-    return new Date(d).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-    })
-  }
-
   // Filter messages dynamically based on tab and search query
-  const filteredMessages = messages.filter(msg => {
+  const filteredMessages = useMemo(() => messages.filter(msg => {
     const matchesSearch = 
       msg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       msg.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -855,10 +902,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     if (filterTab === 'unreplied') return matchesSearch && msg.replied === 0
     if (filterTab === 'replied') return matchesSearch && msg.replied === 1
     return matchesSearch
-  })
+  }), [messages, searchQuery, filterTab])
 
   // Filter blogs dynamically
-  const filteredBlogs = blogs.filter(blog => {
+  const filteredBlogs = useMemo(() => blogs.filter(blog => {
     const matchesSearch = 
       blog.title.toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
       (blog.summary && blog.summary.toLowerCase().includes(blogSearchQuery.toLowerCase())) ||
@@ -867,14 +914,15 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     if (blogFilterTab === 'drafts') return matchesSearch && blog.published === 0
     if (blogFilterTab === 'published') return matchesSearch && blog.published === 1
     return matchesSearch
-  })
+  }), [blogs, blogSearchQuery, blogFilterTab])
 
-  // Count summaries
-  const inboxCount = messages.filter(m => m.replied === 0).length
-  const repliedCount = messages.filter(m => m.replied === 1).length
-  
-  const draftCount = blogs.filter(b => b.published === 0).length
-  const publishedCount = blogs.filter(b => b.published === 1).length
+  // Count summaries (single pass)
+  const { inboxCount, repliedCount, draftCount, publishedCount } = useMemo(() => {
+    let inbox = 0, replied = 0, drafts = 0, published = 0
+    for (const m of messages) { if (m.replied === 0) inbox++; else replied++ }
+    for (const b of blogs) { if (b.published === 0) drafts++; else published++ }
+    return { inboxCount: inbox, repliedCount: replied, draftCount: drafts, publishedCount: published }
+  }, [messages, blogs])
 
   // Login view
   if (!token) {
@@ -957,11 +1005,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
           <div className="flex items-center gap-2 ml-auto md:hidden">
             <button
               onClick={refreshData}
-              disabled={loading}
+              disabled={refreshing}
               className="w-8 h-8 rounded-full flex items-center justify-center border"
               style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
             >
-              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={handleLogout}
@@ -1026,11 +1074,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={refreshData}
-            disabled={loading}
+            disabled={refreshing}
             className="w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95"
             style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={handleLogout}
@@ -1095,7 +1143,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
                 {/* List View Scroll Container */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
-                  {loading ? (
+                  {refreshing ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted space-y-3">
                       <Loader size={20} className="animate-spin" style={{ color: 'var(--accent)' }} />
                       <span className="text-xs">Fetching records...</span>
@@ -1428,7 +1476,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
                 {/* List View Scroll Container */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
-                  {loading ? (
+                  {refreshing ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted space-y-3">
                       <Loader size={20} className="animate-spin" style={{ color: 'var(--accent)' }} />
                       <span className="text-xs">Loading records...</span>
@@ -2017,9 +2065,23 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 custom-scrollbar">
+              <div className={`flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 custom-scrollbar transition-opacity duration-200 ${visitorRefreshing ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
                 {visitorLoading && visitors.length === 0 ? (
-                  <div className="p-10 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading visitor data...</div>
+                  <div className="space-y-4 animate-pulse">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="rounded-2xl border p-5 space-y-3" style={{ borderColor: 'var(--border)' }}>
+                          <div className="w-8 h-8 rounded-lg" style={{ background: 'var(--bg-secondary)' }} />
+                          <div className="w-16 h-6 rounded" style={{ background: 'var(--bg-secondary)' }} />
+                          <div className="w-12 h-3 rounded" style={{ background: 'var(--bg-secondary)' }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="rounded-2xl border p-6 space-y-3" style={{ borderColor: 'var(--border)' }}>
+                      <div className="w-24 h-3 rounded" style={{ background: 'var(--bg-secondary)' }} />
+                      <div className="w-full h-40 rounded-xl" style={{ background: 'var(--bg-secondary)' }} />
+                    </div>
+                  </div>
                 ) : visitors.length === 0 ? (
                   <div className="text-center py-16">
                     <div className="text-4xl mb-4">🌐</div>
@@ -2032,9 +2094,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                       {[
                         { label: 'Unique', value: visitors.length, icon: '👤' },
-                        { label: 'Total Visits', value: visitors.reduce((s: number, v: any) => s + Number(v.visit_count || 0), 0), icon: '📊' },
-                        { label: "Today (UTC)", value: dailyVisits.find((d: any) => d.date === new Date().toISOString().slice(0,10))?.count || 0, icon: '📅' },
-                        { label: 'Yesterday (UTC)', value: dailyVisits.find((d: any) => d.date === new Date(Date.now() - 86400000).toISOString().slice(0,10))?.count || 0, icon: '📆' },
+                        { label: 'Total Visits', value: totalVisits, icon: '📊' },
+                        { label: "Today (UTC)", value: todayCount, icon: '📅' },
+                        { label: 'Yesterday (UTC)', value: yesterdayCount, icon: '📆' },
                       ].map((stat, i) => (
                         <div key={i} className="rounded-xl md:rounded-2xl border p-3 md:p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                           <div className="text-lg md:text-2xl mb-1 md:mb-2">{stat.icon}</div>
@@ -2051,7 +2113,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4" style={{ color: 'var(--text-muted)' }}>Daily Traffic</h4>
                           <div className="w-full" style={{ height: 160 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={dailyVisits.slice(0, 14).reverse()}>
+                              <BarChart data={dailyChartData}>
                                 <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} />
                                 <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={20} />
                                 <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
@@ -2066,7 +2128,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4" style={{ color: 'var(--text-muted)' }}>Peak Hours</h4>
                           <div className="w-full" style={{ height: 160 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={[...hourlyVisits].reverse().slice(-24)}>
+                              <BarChart data={hourlyChartData}>
                                 <XAxis dataKey="hour" tick={{ fontSize: 8, fill: 'var(--text-secondary)' }} tickFormatter={(v: string) => v.slice(11, 16)} axisLine={false} tickLine={false} />
                                 <YAxis allowDecimals={false} tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={20} />
                                 <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelFormatter={(v: any) => String(v)} />
@@ -2087,7 +2149,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             <div key={c.name} className="flex items-center gap-3">
                               <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{c.count}</span>
                               <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                <div className="h-full rounded-md" style={{ width: `${Math.min(100, (c.count / Math.max(...countryStats.slice(0, 8).map((x: any) => x.count))) * 100)}%`, background: 'var(--accent)' }} />
+                                <div className="h-full rounded-md transition-all duration-500 ease-out" style={{ width: `${Math.min(100, (c.count / maxCountryCount) * 100)}%`, background: 'var(--accent)' }} />
                               </div>
                               <span className="text-[10px] w-24 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
                             </div>
@@ -2097,14 +2159,14 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Device</h4>
                         <div className="space-y-2">
-                          {Object.entries(uaStats.deviceCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
+                          {sortedDevices.map(([name, count]: any) => {
                             const icons: Record<string, string> = { Desktop: '🖥', Mobile: '📱', Tablet: '📟' }
                             return (
                               <div key={name} className="flex items-center gap-3">
                                 <span className="text-sm">{icons[name] || '?'}</span>
                                 <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
                                 <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                  <div className="h-full rounded-md" style={{ width: `${(count / deviceTotal) * 100}%`, background: 'var(--accent)' }} />
+                                  <div className="h-full rounded-md transition-all duration-500 ease-out" style={{ width: `${(count / deviceTotal) * 100}%`, background: 'var(--accent)' }} />
                                 </div>
                                 <span className="text-[10px] w-12 text-right" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                               </div>
@@ -2115,12 +2177,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       <div className="rounded-2xl border p-6 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Browser</h4>
                         <div className="space-y-2">
-                          {Object.entries(uaStats.browserCount).sort((a: any, b: any) => b[1] - a[1]).map(([name, count]: any) => {
+                          {sortedBrowsers.map(([name, count]: any) => {
                             return (
                               <div key={name} className="flex items-center gap-3">
                                 <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
                                 <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                                  <div className="h-full rounded-md" style={{ width: `${(count / browserTotal) * 100}%`, background: 'var(--accent)' }} />
+                                  <div className="h-full rounded-md transition-all duration-500 ease-out" style={{ width: `${(count / browserTotal) * 100}%`, background: 'var(--accent)' }} />
                                 </div>
                                 <span className="text-[10px] w-16 text-right truncate" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                               </div>
@@ -2149,7 +2211,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                               placeholder="Search IP, country, city, referrer..."
                               value={gridSearch}
                               onChange={e => setGridSearch(e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 rounded-lg border text-[11px] outline-none focus:ring-1 transition-shadow"
+                              className="w-full pl-8 pr-3 py-1.5 rounded-lg border text-[11px] outline-none transition-all duration-200 focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
                               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
                             />
                             {gridSearch && (
@@ -2185,15 +2247,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                         <table className="w-full text-[11px]">
                           <thead>
                             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                              {[
-                                { key: 'country', label: 'Location', align: 'left' },
-                                { key: 'ip', label: 'IP', align: 'left' },
-                                { key: 'visit_count', label: 'Visits', align: 'right' },
-                                { key: null, label: 'Referrer', align: 'left' },
-                                { key: null, label: 'Ref', align: 'left' },
-                                { key: 'first_visit', label: 'First Visit', align: 'left' },
-                                { key: 'last_visit', label: 'Last Visit', align: 'left' },
-                              ].map(col => (
+                              {VISITOR_TABLE_COLUMNS.map(col => (
                                 <th
                                   key={col.label}
                                   className={`p-3 font-semibold cursor-pointer select-none transition-colors hover:opacity-70 ${col.align === 'right' ? 'text-right' : 'text-left'}`}
@@ -2231,7 +2285,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 let refDisplay = v.referrer || ''
                                 try { refDisplay = refDisplay ? new URL(refDisplay).hostname : '' } catch {}
                                 return (
-                                  <tr key={v.ip} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                  <tr key={v.ip} className="transition-colors duration-150 hover:bg-white/[0.04]" style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
                                     <td className="p-3">
                                       <span className="font-semibold">{loc}</span>
                                       {v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}
@@ -2275,40 +2329,24 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             >
                               &lsaquo;
                             </button>
-                            {(() => {
-                              const current = gridPagination.page
-                              const total = gridPagination.totalPages
-                              const pages: (number | '...')[] = []
-                              if (total <= 7) {
-                                for (let i = 1; i <= total; i++) pages.push(i)
-                              } else {
-                                pages.push(1)
-                                if (current > 3) pages.push('...')
-                                const start = Math.max(2, current - 1)
-                                const end = Math.min(total - 1, current + 1)
-                                for (let i = start; i <= end; i++) pages.push(i)
-                                if (current < total - 2) pages.push('...')
-                                pages.push(total)
-                              }
-                              return pages.map((p, idx) =>
-                                p === '...' ? (
-                                  <span key={`e${idx}`} className="px-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>...</span>
-                                ) : (
-                                  <button
-                                    key={p}
-                                    onClick={() => setGridPage(p as number)}
-                                    className="w-7 h-7 rounded border text-[10px] font-bold transition-all active:scale-95"
-                                    style={{
-                                      borderColor: current === p ? 'var(--accent)' : 'var(--border)',
-                                      background: current === p ? 'var(--accent)' : 'transparent',
-                                      color: current === p ? 'var(--bg)' : 'var(--text-secondary)',
-                                    }}
-                                  >
-                                    {p}
-                                  </button>
-                                )
+                            {paginationPages.map((p, idx) =>
+                              p === '...' ? (
+                                <span key={`e${idx}`} className="px-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>...</span>
+                              ) : (
+                                <button
+                                  key={p}
+                                  onClick={() => setGridPage(p as number)}
+                                  className="w-7 h-7 rounded border text-[10px] font-bold transition-all active:scale-95"
+                                  style={{
+                                    borderColor: gridPagination.page === p ? 'var(--accent)' : 'var(--border)',
+                                    background: gridPagination.page === p ? 'var(--accent)' : 'transparent',
+                                    color: gridPagination.page === p ? 'var(--bg)' : 'var(--text-secondary)',
+                                  }}
+                                >
+                                  {p}
+                                </button>
                               )
-                            })()}
+                            )}
                             <button
                               onClick={() => setGridPage(p => Math.min(gridPagination.totalPages, p + 1))}
                               disabled={gridPagination.page >= gridPagination.totalPages}
