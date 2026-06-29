@@ -150,17 +150,17 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [loginError, setLoginError] = useState('')
   
   // Dashboard Tab selection (persisted across refresh)
-  const [activeTab, setActiveTabState] = useState<'messages' | 'blogs' | 'settings' | 'analytics'>(() => {
+  const [activeTab, setActiveTabState] = useState<'messages' | 'blogs' | 'analytics' | 'settings'>(() => {
     try {
       const saved = localStorage.getItem('admin_active_tab')
-      if (saved === 'messages' || saved === 'blogs' || saved === 'settings' || saved === 'analytics') {
+      if (saved === 'messages' || saved === 'blogs' || saved === 'analytics' || saved === 'settings') {
         return saved
       }
     } catch {}
     return 'messages'
   })
 
-  const setActiveTab = (tab: 'messages' | 'blogs' | 'settings' | 'analytics') => {
+  const setActiveTab = (tab: 'messages' | 'blogs' | 'analytics' | 'settings') => {
     setActiveTabState(tab)
     try { localStorage.setItem('admin_active_tab', tab) } catch {}
   }
@@ -1111,17 +1111,6 @@ const res = await api(`/api/visitors?${params.toString()}`)
             <span className="hidden sm:inline">Blogs</span>
           </button>
           <button
-            onClick={() => { setActiveTab('settings'); setSelected(null); setSelectedBlog(null); }}
-            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-            style={{ 
-              background: activeTab === 'settings' ? 'var(--accent)' : 'transparent',
-              color: activeTab === 'settings' ? 'var(--bg-primary)' : 'var(--text-secondary)'
-            }}
-          >
-            <Settings size={11} />
-            <span className="hidden sm:inline">Settings</span>
-          </button>
-          <button
             onClick={() => { setActiveTab('analytics'); setSelected(null); setSelectedBlog(null); }}
             className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
             style={{ 
@@ -1131,6 +1120,17 @@ const res = await api(`/api/visitors?${params.toString()}`)
           >
             <BarChart3 size={11} />
             <span className="hidden sm:inline">Analytics</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab('settings'); setSelected(null); setSelectedBlog(null); }}
+            className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+            style={{ 
+              background: activeTab === 'settings' ? 'var(--accent)' : 'transparent',
+              color: activeTab === 'settings' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+            }}
+          >
+            <Settings size={11} />
+            <span className="hidden sm:inline">Settings</span>
           </button>
         </div>
 
