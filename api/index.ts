@@ -519,13 +519,14 @@ app.post('/api/visit', async (req, res) => {
 // GET visitor stats with server-side pagination, sorting, search, and filters (protected)
 app.get('/api/visitors', authMiddleware, async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page as string) || 1)
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20))
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '') || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '') || 20))
     const offset = (page - 1) * limit
-    const sort = (req.query.sort as string) || 'last_visit'
-    const order = (req.query.order as string)?.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
-    const search = (req.query.search as string) || ''
-    const country = (req.query.country as string) || ''
+    const sort = url.searchParams.get('sort') || 'last_visit'
+    const order = url.searchParams.get('order')?.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+    const search = url.searchParams.get('search') || ''
+    const country = url.searchParams.get('country') || ''
 
     const allowedSorts: Record<string, string> = {
       visit_count: 'visit_count',
