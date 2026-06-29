@@ -115,9 +115,11 @@ function registerCompletionProvider(monaco: typeof import('monaco-editor'), extr
 
 export default function MarkdownEditor({ value, onChange, height = '100%', className = '', autoFocus = false, onEditorMount, extraWords = [] }: MarkdownEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const monacoRef = useRef<Parameters<OnMount>[1] | null>(null)
 
   const handleMount: OnMount = useCallback((editorInstance, monaco) => {
     editorRef.current = editorInstance
+    monacoRef.current = monaco
 
     monaco.editor.setTheme(getTheme())
     registerCompletionProvider(monaco, extraWords)
@@ -158,10 +160,8 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      if (editorRef.current) {
-        import('monaco-editor').then(({ editor: e }) => {
-          e?.setTheme?.(getTheme())
-        })
+      if (monacoRef.current && editorRef.current) {
+        monacoRef.current.editor.setTheme(getTheme())
       }
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
