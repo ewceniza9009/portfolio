@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { GALLERY_DESCRIPTIONS } from "../data/gallery-descriptions";
 
 interface GalleryImage {
@@ -17,7 +17,7 @@ const PROJECTS: Record<string, { count: number }> = {
   JsPlay: { count: 4 },
   NexPoint: { count: 17 },
   OppStack: { count: 3 },
-  SmashElite: { count: 20 },
+  SmashElite: { count: 19 },
 };
 
 const PROJECT_ORDER = [
@@ -35,30 +35,129 @@ function buildGalleryImages(): GalleryImage[] {
   const images: GalleryImage[] = [];
   PROJECT_ORDER.forEach((project) => {
     const count = PROJECTS[project].count;
-    let actualImageIndex = 1;
     for (let i = 1; i <= count; i++) {
       images.push({
         id: `${project.toLowerCase()}-${i}`,
-        src: `/gallery/${project}/${actualImageIndex}.png`,
+        src: `/gallery/${project}/${i}.png`,
         alt: GALLERY_DESCRIPTIONS[project]?.[i] || `${project} screenshot ${i}`,
         project,
       });
-      actualImageIndex++;
     }
   });
   return images;
 }
 
+function GalleryTile({ 
+  image, 
+  index, 
+  currentPage, 
+  setLightboxIndex 
+}: { 
+  image: GalleryImage; 
+  index: number; 
+  currentPage: number; 
+  setLightboxIndex: (idx: number) => void;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(image.src.replace('.png', '.webp'));
+
+  // Generate a stable pseudo-random number based on the image ID to determine size
+  const hash = image.id
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const isFeatured = hash % 7 === 0;
+  const isWide = hash % 5 === 0 && !isFeatured;
+  const isTall = hash % 8 === 0 && !isFeatured && !isWide;
+
+  return (
+    <div
+      className={`relative rounded-xl overflow-hidden cursor-pointer clickable-item group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 hover:z-10 transition-all duration-500
+      ${isFeatured ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : ""}
+      ${isWide ? "col-span-2 row-span-1" : ""}
+      ${isTall ? "col-span-1 row-span-2" : ""}
+      ${!isFeatured && !isWide && !isTall ? "col-span-1 row-span-1" : ""}
+    `}
+      style={{
+        borderColor: "var(--border)",
+        boxShadow: "0 4px 15px -3px var(--accent-dim)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "transparent";
+        e.currentTarget.style.boxShadow =
+          "0 0 0 2px var(--accent), 0 10px 25px -2px var(--accent-dim)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.boxShadow =
+          "0 4px 15px -3px var(--accent-dim)";
+      }}
+      onClick={() => setLightboxIndex(index + (currentPage - 1) * IMAGES_PER_PAGE)}
+    >
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
+      )}
+      {hasError ? (
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center" style={{ background: 'var(--bg-secondary)' }}>
+          <span className="text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>{image.project}</span>
+          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Image unavailable</span>
+        </div>
+      ) : (
+        <img
+          src={imgSrc}
+          alt={image.alt}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => {
+            if (imgSrc.endsWith('.webp')) {
+              setImgSrc(image.src);
+            } else {
+              setHasError(true);
+            }
+          }}
+          className={`w-full h-full object-cover transform group-hover:scale-105 group-hover:rotate-1 transition-all duration-700 ease-out group-hover:blur-0 ${isLoaded ? 'opacity-100 blur-[0.4px]' : 'opacity-0 blur-md'}`}
+          style={{
+            imageRendering: "auto",
+            WebkitFontSmoothing: "antialiased",
+            transform: "translate3d(0,0,0)",
+          }}
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
+        <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+          <span
+            className="inline-block px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mb-2"
+            style={{
+              background: "var(--accent)",
+              color: "var(--bg-primary)",
+            }}
+          >
+            {image.project}
+          </span>
+          <p className="text-white text-sm font-medium drop-shadow-lg leading-snug line-clamp-3">
+            {image.alt}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GallerySection() {
   const allImages = useMemo(() => buildGalleryImages(), []);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const filteredImages = useMemo(() => {
-    if (activeFilter === "all") return allImages;
-    return allImages.filter((img) => img.project === activeFilter);
-  }, [allImages, activeFilter]);
+    let results = activeFilter === "all" ? allImages : allImages.filter((img) => img.project === activeFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      results = results.filter((img) => img.alt.toLowerCase().includes(q));
+    }
+    return results;
+  }, [allImages, activeFilter, search]);
 
   const totalPages = Math.ceil(filteredImages.length / IMAGES_PER_PAGE);
   const paginatedImages = useMemo(() => {
@@ -68,7 +167,7 @@ export default function GallerySection() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeFilter]);
+  }, [activeFilter, search]);
 
   const handleNext = useCallback(() => {
     setLightboxIndex((prev) =>
@@ -135,6 +234,28 @@ export default function GallerySection() {
               </p>
             </div>
 
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search descriptions..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-56 pl-9 pr-8 py-1.5 rounded-full text-xs transition-all duration-300 border focus:outline-none"
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: search ? 'var(--accent)' : 'var(--border)' }}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-[var(--accent-dim)]"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setActiveFilter("all")}
@@ -171,6 +292,7 @@ export default function GallerySection() {
                   {p}
                 </button>
               ))}
+            </div>
             </div>
           </div>
 
@@ -349,74 +471,15 @@ export default function GallerySection() {
             </svg>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 auto-rows-[100px] md:auto-rows-[130px] grid-flow-dense relative z-10">
-              {paginatedImages.map((image, index) => {
-                // Generate a stable pseudo-random number based on the image ID to determine size
-                const hash = image.id
-                  .split("")
-                  .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                const isFeatured = hash % 7 === 0;
-                const isWide = hash % 5 === 0 && !isFeatured;
-                const isTall = hash % 8 === 0 && !isFeatured && !isWide;
-
-                return (
-                  <div
-                    key={image.id}
-                    className={`relative rounded-xl overflow-hidden cursor-pointer clickable-item group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 hover:z-10 transition-all duration-500
-                    ${isFeatured ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : ""}
-                    ${isWide ? "col-span-2 row-span-1" : ""}
-                    ${isTall ? "col-span-1 row-span-2" : ""}
-                    ${!isFeatured && !isWide && !isTall ? "col-span-1 row-span-1" : ""}
-                  `}
-                    style={{
-                      borderColor: "var(--border)",
-                      boxShadow: "0 4px 15px -3px var(--accent-dim)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "transparent";
-                      e.currentTarget.style.boxShadow =
-                        "0 0 0 2px var(--accent), 0 10px 25px -2px var(--accent-dim)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 15px -3px var(--accent-dim)";
-                    }}
-                    onClick={() =>
-                      setLightboxIndex(
-                        index + (currentPage - 1) * IMAGES_PER_PAGE,
-                      )
-                    }
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      loading="lazy"
-                      className="w-full h-full object-cover transform group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700 ease-out blur-[0.4px] group-hover:blur-0"
-                      style={{
-                        imageRendering: "auto",
-                        WebkitFontSmoothing: "antialiased",
-                        transform: "translate3d(0,0,0)",
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
-                      <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                        <span
-                          className="inline-block px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mb-2"
-                          style={{
-                            background: "var(--accent)",
-                            color: "var(--bg-primary)",
-                          }}
-                        >
-                          {image.project}
-                        </span>
-                        <p className="text-white text-sm font-medium drop-shadow-lg leading-snug line-clamp-3">
-                          {image.alt}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {paginatedImages.map((image, index) => (
+                <GalleryTile 
+                  key={image.id}
+                  image={image}
+                  index={index}
+                  currentPage={currentPage}
+                  setLightboxIndex={setLightboxIndex}
+                />
+              ))}
             </div>
           </div>
 

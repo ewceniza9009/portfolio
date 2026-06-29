@@ -1,0 +1,9 @@
+const getSafeItem = (key: string): string | null => {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+
+const setSafeItem = (key: string, value: string): void => {
+  try { localStorage.setItem(key, value) } catch {}
+}
+
+export { getSafeItem, setSafeItem }

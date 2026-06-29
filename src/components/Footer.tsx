@@ -72,7 +72,7 @@ export default function Footer({ onScrollTo }: FooterProps) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              © 2026 Erwin Wilson Ceniza
+              © {new Date().getFullYear()} Erwin Wilson Ceniza
             </p>
             <span className="hidden md:inline text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>

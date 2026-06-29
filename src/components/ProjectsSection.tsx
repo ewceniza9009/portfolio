@@ -211,6 +211,7 @@ function ProjectCard({
           <video
             ref={videoRef}
             src={project.video}
+            poster={project.image}
             preload="none"
             muted
             loop

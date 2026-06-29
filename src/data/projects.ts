@@ -87,7 +87,7 @@ const projects = [
       "**Coaching & Meetups** : Streamlines training sessions and open play meetups with capacity limits, registration workflows, and admin approval systems.",
       "**Real-Time Architecture** : Employs Socket.IO namespaced connections for live updates across tournament scores, order tracking, and cross-platform notifications."
     ],
-    tech: ["React 19", "Node.js", "Express", "SQLite/Turso", "Socket.IO"],
+    tech: ["React 18", "Node.js", "Express", "SQLite/Turso", "Socket.IO"],
     year: "2026",
     type: "Full-Stack SaaS",
     color: "#00ffcc",

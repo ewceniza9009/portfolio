@@ -7,6 +7,7 @@ import experience from './data/experience'
 import skills from './data/skills'
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
+import AboutSection from './components/AboutSection'
 import ExperienceSection from './components/ExperienceSection'
 import ProjectsSection from './components/ProjectsSection'
 import ProjectModal from './components/ProjectModal'
@@ -27,15 +28,7 @@ import ResumeModal from './components/ResumeModal'
 import BlogsPage from './components/BlogsPage'
 import BlogPostPage from './components/BlogPostPage'
 import GallerySection from './components/GallerySection'
-
-
-
-const getSafeItem = (key: string): string | null => {
-  try { return localStorage.getItem(key) } catch { return null }
-}
-const setSafeItem = (key: string, value: string): void => {
-  try { localStorage.setItem(key, value) } catch {}
-}
+import { getSafeItem, setSafeItem } from './utils/storage'
 
 interface PortfolioProps {
   theme: 'dark' | 'light'
@@ -58,7 +51,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   })
 
   useEffect(() => {
-    const sectionIds = ['hero', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
+    const sectionIds = ['hero', 'about', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -109,6 +102,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const staticSections = useMemo(() => (
     <>
       <HeroSection onScrollTo={scrollTo} onViewResume={handleViewResume} />
+      <AboutSection />
       <ExperienceSection experience={experience} />
       <AwardsSection awards={awards} />
       <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />

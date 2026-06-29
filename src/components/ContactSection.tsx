@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide-react'
+import { getSafeItem, setSafeItem } from '../utils/storage'
 
 function CopyToast({ message }: { message: string }) {
   return (
@@ -103,12 +104,6 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
   )
 }
 
-const getSafeItem = (key: string): string | null => {
-  try { return localStorage.getItem(key) } catch { return null }
-}
-const setSafeItem = (key: string, value: string): void => {
-  try { localStorage.setItem(key, value) } catch {}
-}
 
 interface ContactSectionProps {
   theme?: 'dark' | 'light'

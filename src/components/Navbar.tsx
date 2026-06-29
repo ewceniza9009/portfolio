@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Sun, Moon, Palette, BookOpen, Lock } from 'lucide-react'
+import { Menu, X, Sun, Moon, Palette, BookOpen } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 import { ACCENT_THEMES } from '../data/accents'
 import type { AccentKey } from '../data/accents'
 
-const NAV_ITEMS = ['Experience', 'Awards', 'Projects', 'Gallery', 'GitHub', 'Skills', 'Contact']
+const NAV_ITEMS = ['About', 'Experience', 'Awards', 'Projects', 'Gallery', 'GitHub', 'Skills', 'Contact']
 
 interface NavbarProps {
   activeSection: string
@@ -172,20 +172,6 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               <span>Blog</span>
             </Link>
 
-            {/* Admin Portal Button */}
-            <Link
-              to="/admin"
-              className="relative px-4 py-1.5 ml-2 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-1.5 border overflow-hidden group shadow-sm hover:scale-105 active:scale-95 select-none"
-              style={{
-                borderColor: 'var(--border)',
-                color: location.pathname.startsWith('/admin') ? 'var(--accent)' : 'var(--text-secondary)',
-                background: location.pathname.startsWith('/admin') ? 'var(--accent-dim)' : 'var(--bg-card)',
-              }}
-            >
-              <Lock size={12} className="group-hover:rotate-12 transition-transform" />
-              <span>Admin</span>
-            </Link>
-
             <div className="w-px h-6 mx-3" style={{ background: 'var(--border)' }} />
 
             <AccentDropdown accent={accent} onChangeAccent={onChangeAccent} theme={theme} />
@@ -290,21 +276,6 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
               >
                 <BookOpen size={14} />
                 <span>Blog</span>
-              </Link>
-
-              {/* Mobile Admin Button */}
-              <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-2 mx-3 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl text-center flex items-center justify-center gap-2 border select-none transition-all"
-                style={{
-                  borderColor: 'var(--border)',
-                  color: location.pathname.startsWith('/admin') ? 'var(--accent)' : 'var(--text-secondary)',
-                  background: location.pathname.startsWith('/admin') ? 'var(--accent-dim)' : 'var(--bg-card)',
-                }}
-              >
-                <Lock size={12} />
-                <span>Admin Portal</span>
               </Link>
 
               {/* Mobile Accent Selector */}

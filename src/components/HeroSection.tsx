@@ -207,24 +207,28 @@ export default function HeroSection({
               <Download size={18} /> Resume
             </button>
 
-            <a
-              href="https://github.com/ewceniza9009"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
-              style={{ color: "var(--text-primary)" }}
-            >
-              <Github size={18} /> GitHub
-            </a>
-            <a
-              href="https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
-              style={{ color: "var(--text-primary)" }}
-            >
-              <Linkedin size={18} /> LinkedIn
-            </a>
+            <div className="flex items-center gap-3 border-l pl-4 ml-2" style={{ borderColor: 'var(--border)' }}>
+              <a
+                href="https://github.com/ewceniza9009"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-full transition-all hover:scale-110 glass hover:bg-[var(--bg-card-hover)]"
+                style={{ color: "var(--text-primary)" }}
+                aria-label="GitHub"
+              >
+                <Github size={20} />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-full transition-all hover:scale-110 glass hover:bg-[var(--bg-card-hover)]"
+                style={{ color: "var(--text-primary)" }}
+                aria-label="LinkedIn"
+              >
+                <Linkedin size={20} />
+              </a>
+            </div>
           </div>
         </motion.div>
 
