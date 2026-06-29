@@ -63,24 +63,13 @@ export default function CursorFollower() {
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       
-      // Prevent ripples on specific elements (like theme togglers)
+      // Prevent ripples only on explicitly opted-out elements
       if (target.closest('.no-ripple')) {
         return;
       }
 
-      const isHoverable = 
-        target.tagName === 'A' || 
-        target.tagName === 'BUTTON' || 
-        target.closest('a') || 
-        target.closest('button') || 
-        target.closest('.project-card') || 
-        target.closest('.contact-card') ||
-        target.closest('.contact-input') ||
-        target.closest('.clickable-item')
-
-      if (isHoverable) {
-        createBurst(e.clientX, e.clientY)
-      }
+      // Create burst on every click anywhere on the screen
+      createBurst(e.clientX, e.clientY)
     }
 
     const createRipple = (x: number, y: number, isSecondary: boolean = false) => {
