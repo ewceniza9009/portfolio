@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -147,7 +147,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [gridCountry, setGridCountry] = useState('')
   const [gridPagination, setGridPagination] = useState<{ page: number; limit: number; total: number; totalPages: number }>({ page: 1, limit: 20, total: 0, totalPages: 0 })
   const [gridCountries, setGridCountries] = useState<string[]>([])
-  const [searchDebounced, setSearchDebounced] = useState('')
 
   function parseUA(ua: string) {
     const isMobile = /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
@@ -268,7 +267,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       params.set('limit', String(gridLimit))
       params.set('sort', gridSort)
       params.set('order', gridOrder)
-      if (searchDebounced) params.set('search', searchDebounced)
+      if (gridSearch) params.set('search', gridSearch)
       if (gridCountry) params.set('country', gridCountry)
 
       const res = await api(`/api/visitors?${params.toString()}`)
@@ -285,7 +284,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     } finally {
       setVisitorLoading(false)
     }
-  }, [gridPage, gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
+  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry])
 
   const exportCSV = useCallback(async () => {
     try {
@@ -356,23 +355,37 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   }, [activeTab]) // only re-fetch on tab change, grid changes have their own effect
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => setSearchDebounced(gridSearch), 300)
-    return () => clearTimeout(timer)
-  }, [gridSearch])
+  // Single debounced fetch for all grid param changes
+  const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const gridInitializedRef = useRef(false)
+  const prevGridRef = useRef('')
 
-  // Re-fetch when grid params change (but not on initial mount)
-  const [gridInitialized, setGridInitialized] = useState(false)
   useEffect(() => {
-    if (!gridInitialized) { setGridInitialized(true); return }
-    fetchVisitors()
-  }, [gridPage, gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
+    const key = `${gridPage}|${gridLimit}|${gridSort}|${gridOrder}|${gridSearch}|${gridCountry}`
+    if (!gridInitializedRef.current) {
+      gridInitializedRef.current = true
+      prevGridRef.current = key
+      return
+    }
+    if (prevGridRef.current === key) return
+    const prev = prevGridRef.current.split('|')
+    prevGridRef.current = key
 
-  // Reset to page 1 when limit, sort, order, search, or country changes
-  useEffect(() => {
-    if (gridInitialized) setGridPage(1)
-  }, [gridLimit, gridSort, gridOrder, searchDebounced, gridCountry])
+    // Reset to page 1 when non-page params change
+    const cur = key.split('|')
+    const nonPageChanged = cur[1] !== prev[1] || cur[2] !== prev[2] || cur[3] !== prev[3] || cur[4] !== prev[4] || cur[5] !== prev[5]
+    if (nonPageChanged && gridPage !== 1) {
+      setGridPage(1)
+      return // the page change will re-trigger this effect
+    }
+
+    if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current)
+    fetchTimerRef.current = setTimeout(() => {
+      fetchVisitors()
+    }, gridSearch ? 300 : 0)
+
+    return () => { if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current) }
+  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry])
 
   const handleDefaultThemeChange = async (val: string) => {
     if (val === 'dark' || val === 'light') {
