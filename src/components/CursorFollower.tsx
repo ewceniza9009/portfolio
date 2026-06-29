@@ -28,9 +28,16 @@ export default function CursorFollower() {
     const animateRing = () => {
       // Snappier easing (0.28 instead of 0.15) for high accuracy and no delay feeling
       const easing = 0.28
-      ringX += (mouseX - ringX) * easing
-      ringY += (mouseY - ringY) * easing
-      cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
+      
+      const dx = mouseX - ringX
+      const dy = mouseY - ringY
+      
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        ringX += dx * easing
+        ringY += dy * easing
+        cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
+      }
+      
       animId = requestAnimationFrame(animateRing)
     }
 
@@ -55,6 +62,12 @@ export default function CursorFollower() {
 
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
+      
+      // Prevent ripples on specific elements (like theme togglers)
+      if (target.closest('.no-ripple')) {
+        return;
+      }
+
       const isHoverable = 
         target.tagName === 'A' || 
         target.tagName === 'BUTTON' || 
@@ -70,29 +83,27 @@ export default function CursorFollower() {
       }
     }
 
-    const createRipple = (x: number, y: number, delay: number = 0) => {
-      setTimeout(() => {
-        const ripple = document.createElement('div')
-        ripple.className = 'click-ripple'
-        ripple.style.left = `${x}px`
-        ripple.style.top = `${y}px`
-        document.body.appendChild(ripple)
-        
-        const animation = ripple.animate([
-          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.6 },
-          { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0 }
-        ], {
-          duration: 1200,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
-        })
-        
-        animation.onfinish = () => ripple.remove()
-      }, delay)
+    const createRipple = (x: number, y: number, isSecondary: boolean = false) => {
+      const ripple = document.createElement('div')
+      ripple.className = 'click-ripple'
+      ripple.style.left = `${x}px`
+      ripple.style.top = `${y}px`
+      document.body.appendChild(ripple)
+      
+      const animation = ripple.animate([
+        { transform: 'translate(-50%, -50%) scale(0.5)', opacity: isSecondary ? 0.4 : 0.8 },
+        { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0 }
+      ], {
+        duration: isSecondary ? 1500 : 1000,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      })
+      
+      animation.onfinish = () => ripple.remove()
     }
 
     const createBurst = (x: number, y: number) => {
-      createRipple(x, y, 0)
-      createRipple(x, y, 250) // Second ripple 250ms later
+      createRipple(x, y)
+      createRipple(x, y, true) // Second ripple simultaneous but slower
     }
 
     window.addEventListener('mousemove', onMouseMove)

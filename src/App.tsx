@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { flushSync } from 'react-dom'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import projects from './data/projects'
@@ -101,6 +102,23 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     ? projects.find(p => p.id === selectedProject) || null
     : null
 
+  const handleViewResume = useCallback(() => setIsResumeOpen(true), [])
+  const handleCloseResume = useCallback(() => setIsResumeOpen(false), [])
+  const handleCloseProject = useCallback(() => setSelectedProject(null), [])
+  
+  const staticSections = useMemo(() => (
+    <>
+      <HeroSection onScrollTo={scrollTo} onViewResume={handleViewResume} />
+      <ExperienceSection experience={experience} />
+      <AwardsSection awards={awards} />
+      <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
+      <ProjectModal project={selectedProjectData} onClose={handleCloseProject} />
+      <GallerySection />
+      <SkillsSection skills={skills} />
+    </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [selectedProjectData])
+
   return (
     <>
       <CursorFollower />
@@ -115,7 +133,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
         />
       )}
-      <div className="min-h-screen transition-colors duration-300 relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
+      <div className={`min-h-screen relative z-10 overflow-x-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-700`} style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
           theme={theme}
@@ -125,20 +143,14 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           onChangeAccent={setAccent}
         />
         <main>
-          <HeroSection onScrollTo={scrollTo} onViewResume={() => setIsResumeOpen(true)} />
-          <ExperienceSection experience={experience} />
-          <AwardsSection awards={awards} />
-          <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
-          <ProjectModal project={selectedProjectData} onClose={() => setSelectedProject(null)} />
-          <GallerySection />
+          {staticSections}
           <GitHubSection theme={theme} accent={accent} />
-          <SkillsSection skills={skills} />
           <ContactSection theme={theme} />
         </main>
         <TerminalFooter />
         <Footer onScrollTo={scrollTo} />
         <BackToTop />
-        <ResumeModal isOpen={isResumeOpen} onClose={() => setIsResumeOpen(false)} />
+        <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />
       </div>
     </>
   )
@@ -340,30 +352,36 @@ export default function App() {
       Math.max(y, window.innerHeight - y)
     );
 
-    const transition = (document as any).startViewTransition(() => {
-      setTheme(prev => {
-        const next = prev === 'dark' ? 'light' : 'dark';
-        setSafeItem('theme', next);
-        return next;
+    // Delay the heavy View Transition by 50ms so the button's click animation
+    // has time to render, providing immediate visual feedback to the user.
+    setTimeout(() => {
+      const transition = (document as any).startViewTransition(() => {
+        flushSync(() => {
+          setTheme(prev => {
+            const next = prev === 'dark' ? 'light' : 'dark';
+            setSafeItem('theme', next);
+            return next;
+          });
+        });
       });
-    });
 
-    transition.ready.then(() => {
-      const clipPath = [
-        `circle(0px at ${x}px ${y}px)`,
-        `circle(${endRadius}px at ${x}px ${y}px)`,
-      ];
-      document.documentElement.animate(
-        {
-          clipPath: clipPath,
-        },
-        {
-          duration: 350,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        }
-      );
-    });
+      transition.ready.then(() => {
+        const clipPath = [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`,
+        ];
+        document.documentElement.animate(
+          {
+            clipPath: clipPath,
+          },
+          {
+            duration: 350,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            pseudoElement: '::view-transition-new(root)',
+          }
+        );
+      });
+    }, 50);
   };
 
   return (

@@ -31,15 +31,7 @@ export default function VantaBackground() {
       const currentTheme = document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
       const currentAccent = (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
       
-      // Delay theme state update if it changed, to avoid blocking startViewTransition animations
-      if (currentTheme !== theme) {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => {
-          setTheme(currentTheme)
-        }, 500)
-      } else {
-        setTheme(currentTheme)
-      }
+      setTheme(currentTheme)
       setAccent(currentAccent)
     })
     
@@ -50,14 +42,14 @@ export default function VantaBackground() {
     }
   }, [theme])
 
-  // 3. Vanta effect initialization
+  // 3. Vanta effect initialization (mount/unmount/intersection)
   useEffect(() => {
-    // Check for reduced motion preference
+    let isMounted = true;
+
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
-    // If canvas is scrolled off-screen, completely unload WebGL to free GPU
     if (!isIntersecting) {
       if (effectRef.current) {
         effectRef.current.destroy()
@@ -67,19 +59,19 @@ export default function VantaBackground() {
     }
 
     async function init() {
+      if (effectRef.current) return; // Already initialized
+
+      const colorHex = ACCENT_THEMES[accent]?.[theme]?.accent || '#f3ca65'
+      const colorNum = parseInt(colorHex.replace('#', '0x'), 16)
+      const bgColorNum = theme === 'dark' ? 0x0a0a0a : 0xffffff
+
       const three = await import('three')
+      if (!isMounted) return;
       window.THREE = three
       const RINGS = (await import('vanta/dist/vanta.rings.min')).default
+      if (!isMounted) return;
 
       if (vantaRef.current) {
-        if (effectRef.current) {
-          effectRef.current.destroy()
-          effectRef.current = null
-        }
-        
-        const colorHex = ACCENT_THEMES[accent]?.[theme]?.accent || '#f3ca65'
-        const colorNum = parseInt(colorHex.replace('#', '0x'), 16)
-
         effectRef.current = RINGS({
           el: vantaRef.current,
           mouseControls: false,
@@ -90,19 +82,37 @@ export default function VantaBackground() {
           scale: 1.00,
           scaleMobile: 2.00,
           color: colorNum,
-          backgroundColor: theme === 'dark' ? 0x0a0a0a : 0xffffff,
+          backgroundColor: bgColorNum,
           backgroundAlpha: 0,
         })
       }
     }
     init()
+
     return () => {
+      isMounted = false;
+      // Only destroy on unmount or when not intersecting
       if (effectRef.current) {
         effectRef.current.destroy()
         effectRef.current = null
       }
     }
-  }, [theme, accent, isIntersecting])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIntersecting]) // Only re-run when intersection changes
+
+  // 4. Update Vanta colors without destroying the context
+  useEffect(() => {
+    if (!effectRef.current || typeof effectRef.current.setOptions !== 'function') return;
+    
+    const colorHex = ACCENT_THEMES[accent]?.[theme]?.accent || '#f3ca65'
+    const colorNum = parseInt(colorHex.replace('#', '0x'), 16)
+    const bgColorNum = theme === 'dark' ? 0x0a0a0a : 0xffffff
+
+    effectRef.current.setOptions({
+      color: colorNum,
+      backgroundColor: bgColorNum
+    })
+  }, [theme, accent])
 
   return (
     <div

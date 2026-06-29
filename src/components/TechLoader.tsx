@@ -50,8 +50,8 @@ export default function TechLoader({ onComplete }: { onComplete: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
-      transition={{ duration: 0.8, ease: "easeInOut" }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--bg-primary)] font-mono"
     >
       <div className="w-full max-w-md px-6 flex flex-col gap-6">
@@ -61,8 +61,9 @@ export default function TechLoader({ onComplete }: { onComplete: () => void }) {
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
             className="w-24 h-24 relative flex items-center justify-center"
+            style={{ filter: "drop-shadow(0 0 4px var(--accent-dim))", willChange: "transform" }}
           >
-            <svg viewBox="0 0 100 100" className="w-full h-full fill-transparent stroke-[var(--accent)] stroke-[2] drop-shadow-[0_0_8px_var(--accent)]">
+            <svg viewBox="0 0 100 100" className="w-full h-full fill-transparent stroke-[var(--accent)] stroke-[2]">
               <polygon points="50 1 95 25 95 75 50 99 5 75 5 25" />
             </svg>
             <motion.div 

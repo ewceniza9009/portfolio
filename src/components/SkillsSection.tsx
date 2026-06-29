@@ -109,19 +109,17 @@ interface SkillsSectionProps {
   skills: SkillsData
 }
 
-function SkillTag({ 
-  skill, 
-  category, 
-}: { 
+const SkillTag = React.forwardRef<HTMLSpanElement, { 
   skill: SkillItem; 
   category: string; 
-}) {
+}>(({ skill, category }, ref) => {
   const hoverColors = CATEGORY_HOVER_COLORS[category]
   const [isHovered, setIsHovered] = useState(false)
   const defaultBg = hoverColors ? hoverColors.bg.replace('0.12', '0.04') : 'var(--bg-secondary)'
 
   return (
     <motion.span
+      ref={ref}
       layout
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -142,7 +140,7 @@ function SkillTag({
       {skill.name}
     </motion.span>
   )
-}
+})
 
 const getBentoClasses = (index: number) => {
   switch (index) {

@@ -549,12 +549,14 @@ a {
   pointer-events: none;
   z-index: 9998;
   will-change: transform;
+  box-shadow: 0 0 12px var(--accent), inset 0 0 4px var(--accent);
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
               height 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
               top 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
               left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.3s,
-              border-color 0.3s;
+              border-color 0.3s,
+              box-shadow 0.3s;
 }
 
 .cursor-ring.cursor-hover {
@@ -564,6 +566,7 @@ a {
   height: 72px;
   background-color: var(--accent-dim);
   border-color: var(--accent);
+  box-shadow: 0 0 24px var(--accent), inset 0 0 8px var(--accent);
 }
 
 /* ── Theme Wave Transition ── */
@@ -684,4 +687,5 @@ a {
   border-radius: 50%;
   z-index: 9999;
   box-shadow: 0 0 15px var(--accent-dim);
+  will-change: transform, opacity;
 }

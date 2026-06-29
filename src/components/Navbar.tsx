@@ -36,7 +36,7 @@ function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, 
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Customize accent color"
-        className="w-10 h-10 rounded-full flex items-center justify-center border relative transition-transform hover:scale-105"
+        className="no-ripple w-10 h-10 rounded-full flex items-center justify-center border relative transition-transform hover:scale-105"
         style={{ borderColor: 'var(--border)', background: 'var(--bg-card)', color: 'var(--accent)' }}
         whileTap={{ scale: 0.95 }}
       >
@@ -68,7 +68,7 @@ function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, 
                 <button
                   key={key}
                   onClick={() => { onChangeAccent(key as AccentKey); setIsOpen(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors hover:bg-[var(--accent-dim)]"
+                  className="no-ripple w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors hover:bg-[var(--accent-dim)]"
                   style={{ 
                     color: active ? 'var(--accent)' : 'var(--text-secondary)'
                   }}
@@ -98,7 +98,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
         style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderColor: 'var(--border)' }}
       >
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -196,7 +196,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
             <motion.button
               onClick={onToggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="theme-toggle-btn w-10 h-10 rounded-full flex items-center justify-center border"
+              className="no-ripple theme-toggle-btn w-10 h-10 rounded-full flex items-center justify-center border"
               style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
               whileTap={{ scale: 0.9, rotate: 180 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
