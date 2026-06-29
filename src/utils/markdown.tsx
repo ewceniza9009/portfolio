@@ -98,44 +98,21 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
 
   // Resolve active theme colors
   const accentColors = ACCENT_THEMES[accent]?.[theme] || ACCENT_THEMES.gold[theme]
-  const primaryColor = accentColors.accent
   const secondaryColor = accentColors.accentSecondary
   const isDark = theme === 'dark'
 
-  // Build Mermaid config matching the previously embedded init syntax
+  // Build Mermaid config — use neutral base theme with CSS variable overrides only where needed
   const mermaidConfig = {
-    theme: (isDark ? 'dark' : 'neutral') as 'dark' | 'neutral',
+    startOnLoad: false,
+    theme: 'neutral' as const,
     themeVariables: {
       fontFamily: 'Outfit, Inter, system-ui, -apple-system, sans-serif',
       primaryColor: isDark ? '#1e293b' : '#f1f5f9',
       primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
       lineColor: isDark ? '#475569' : '#94a3b8',
-      mainBkg: isDark ? '#0d1117' : '#ffffff',
-      actorBkg: isDark ? '#1e293b' : '#f8fafc',
-      actorTextColor: isDark ? '#f8fafc' : '#0f172a',
-      actorLineColor: primaryColor,
-      signalColor: secondaryColor,
-      signalTextColor: isDark ? '#cbd5e1' : '#475569',
-      labelBoxBkgColor: isDark ? '#1e293b' : '#f1f5f9',
-      labelBoxBorderColor: primaryColor,
-      labelTextColor: isDark ? '#f8fafc' : '#0f172a',
-      loopLimitColor: primaryColor,
-      loopLimitTextColor: isDark ? '#cbd5e1' : '#475569',
-      noteBkgColor: isDark ? '#1e293b' : '#fef08a',
-      noteTextColor: isDark ? '#f8fafc' : '#0f172a',
-      noteBorderColor: primaryColor,
-    },
-    sequence: {
-      actorMargin: 85,
-      messageMargin: 45,
-      boxMargin: 15,
-      noteMargin: 15,
-      messageFontSize: 11,
-      actorFontSize: 11,
-      noteFontSize: 11,
-      actorFontFamily: 'Outfit, Inter, system-ui, sans-serif',
-      noteFontFamily: 'Outfit, Inter, system-ui, sans-serif',
-      messageFontFamily: 'Outfit, Inter, system-ui, sans-serif',
+      secondaryColor: secondaryColor,
+      tertiaryColor: isDark ? '#334155' : '#e2e8f0',
+      fontSize: '12px',
     },
   }
 
@@ -152,9 +129,13 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
         const mermaidModule = await import('mermaid')
         const mermaid = mermaidModule.default
         mermaid.initialize(mermaidConfig)
-        const { svg } = await mermaid.render(id, cleanCode)
-        if (active) {
+        const result = await mermaid.render(id, cleanCode)
+        const svg = typeof result === 'string' ? result : (result as any).svg
+        if (active && svg) {
           setSvgHtml(svg)
+          setIsLoading(false)
+        } else if (active) {
+          setHasError(true)
           setIsLoading(false)
         }
       } catch (e) {
@@ -169,7 +150,7 @@ function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRende
     render()
 
     return () => { active = false }
-  }, [cleanCode, theme, accent, primaryColor, secondaryColor])
+  }, [cleanCode, theme, accent])
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {

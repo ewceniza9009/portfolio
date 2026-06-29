@@ -244,6 +244,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     }
   }
 
+  const parsedContent = useMemo(() => blog ? parseMarkdown(blog.content, theme, accent) : '', [blog, theme, accent])
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
@@ -278,8 +280,6 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   const tagsArray = blog.tags ? blog.tags.split(',').map(t => t.trim()) : []
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this writeup: "${blog.title}"`)}&url=${encodeURIComponent(window.location.href)}`
   const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
-
-  const parsedContent = useMemo(() => parseMarkdown(blog.content, theme, accent), [blog.content, theme, accent])
 
   return (
     <>
