@@ -127,6 +127,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [dailyVisits, setDailyVisits] = useState<any[]>([])
   const [hourlyVisits, setHourlyVisits] = useState<any[]>([])
   const [visitorLoading, setVisitorLoading] = useState(false)
+  const [visitorRefreshing, setVisitorRefreshing] = useState(false)
 
   // ── Cleanup State ──
   const [cleanupOpen, setCleanupOpen] = useState(false)
@@ -260,7 +261,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   const fetchVisitors = useCallback(async () => {
-    setVisitorLoading(true)
+    const isInitial = visitors.length === 0
+    if (isInitial) setVisitorLoading(true)
+    else setVisitorRefreshing(true)
     try {
       const params = new URLSearchParams()
       params.set('page', String(gridPage))
@@ -283,6 +286,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       console.error('Failed to fetch visitors:', err)
     } finally {
       setVisitorLoading(false)
+      setVisitorRefreshing(false)
     }
   }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry])
 
@@ -1998,10 +2002,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     onClick={fetchVisitors}
                     className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5"
                     style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-                    disabled={visitorLoading}
+                    disabled={visitorRefreshing}
                   >
-                    <RefreshCw size={10} className={visitorLoading ? 'animate-spin' : ''} />
-                    <span className="hidden sm:inline">{visitorLoading ? 'Loading...' : 'Refresh'}</span>
+                    <RefreshCw size={10} className={visitorRefreshing ? 'animate-spin' : ''} />
+                    <span className="hidden sm:inline">{visitorRefreshing ? 'Loading...' : 'Refresh'}</span>
                   </button>
                   <button
                     onClick={exportCSV}
@@ -2014,7 +2018,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-8 custom-scrollbar">
-                {visitorLoading ? (
+                {visitorLoading && visitors.length === 0 ? (
                   <div className="p-10 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading visitor data...</div>
                 ) : visitors.length === 0 ? (
                   <div className="text-center py-16">
