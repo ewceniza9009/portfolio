@@ -52,8 +52,41 @@ export default function AwardsSection({ awards }: AwardsSectionProps) {
                 className="w-full md:w-1/3 lg:w-1/4 p-8 flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r relative overflow-hidden" 
                 style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
               >
-                {/* Subtle Background Pattern */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--text-primary)_1px,_transparent_1px)] [background-size:20px_20px]" />
+                {/* Tech doodles background */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none z-0"
+                  style={{ opacity: 0.25 }}
+                  viewBox="0 0 400 600"
+                  preserveAspectRatio="xMidYMid slice"
+                >
+                  {/* Grid dots */}
+                  <pattern id={`awardsDots-${award.id}`} x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1.5" fill="var(--accent)" opacity="0.6" />
+                  </pattern>
+                  <rect width="100%" height="100%" fill={`url(#awardsDots-${award.id})`} />
+
+                  {/* Angle brackets */}
+                  <text x="40" y="80" fontSize="48" fontFamily="monospace" fontWeight="700" fill="var(--accent)" opacity="0.8">&lt;/&gt;</text>
+                  <text x="280" y="140" fontSize="36" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.7">{"{"} {"}"}</text>
+                  <text x="60" y="320" fontSize="28" fontFamily="monospace" fill="var(--accent)" opacity="0.6">const</text>
+                  <text x="300" y="420" fontSize="32" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.65">=&gt;</text>
+                  <text x="80" y="520" fontSize="24" fontFamily="monospace" fill="var(--accent)" opacity="0.55">async</text>
+
+                  {/* Horizontal connector lines */}
+                  <line x1="120" y1="85" x2="200" y2="85" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
+                  <line x1="100" y1="200" x2="150" y2="200" stroke="var(--accent-secondary)" strokeWidth="1" opacity="0.6" />
+                  <line x1="250" y1="350" x2="330" y2="350" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
+
+                  {/* Floating circles */}
+                  <circle cx="350" cy="60" r="6" fill="var(--accent)" opacity="0.7" />
+                  <circle cx="50" cy="420" r="8" fill="var(--accent-secondary)" opacity="0.6" />
+                  <circle cx="320" cy="530" r="5" fill="var(--accent)" opacity="0.8" />
+
+                  {/* Decorative small plus signs */}
+                  <text x="200" y="480" fontSize="20" fontFamily="monospace" fill="var(--accent)" opacity="0.6">+</text>
+                  <text x="340" y="280" fontSize="18" fontFamily="monospace" fill="var(--accent-secondary)" opacity="0.55">*</text>
+                  <text x="100" y="580" fontSize="16" fontFamily="monospace" fill="var(--accent)" opacity="0.5">#</text>
+                </svg>
                 
                 <motion.img
                   whileHover={{ scale: 1.08, rotate: -2 }}

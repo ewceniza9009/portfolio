@@ -93,37 +93,37 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               {/* Tech doodles background */}
               <svg
                 className="absolute inset-0 w-full h-full pointer-events-none z-0"
-                style={{ opacity: 0.15 }}
+                style={{ opacity: 0.25 }}
                 viewBox="0 0 400 600"
                 preserveAspectRatio="xMidYMid slice"
               >
                 {/* Grid dots */}
-                <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <circle cx="2" cy="2" r="1" fill="var(--accent)" />
+                <pattern id="projectModalDots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <circle cx="2" cy="2" r="1.5" fill="var(--accent)" opacity="0.6" />
                 </pattern>
-                <rect width="100%" height="100%" fill="url(#dots)" />
+                <rect width="100%" height="100%" fill="url(#projectModalDots)" />
 
                 {/* Angle brackets */}
-                <text x="40" y="80" fontSize="36" fontFamily="monospace" fontWeight="700" fill="var(--accent)" opacity="0.5">&lt;/&gt;</text>
-                <text x="280" y="140" fontSize="28" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.4">{"{"} {"}"}</text>
-                <text x="60" y="320" fontSize="20" fontFamily="monospace" fill="var(--accent)" opacity="0.3">const</text>
-                <text x="300" y="420" fontSize="22" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.35">=&gt;</text>
-                <text x="80" y="520" fontSize="16" fontFamily="monospace" fill="var(--accent)" opacity="0.25">async</text>
+                <text x="40" y="80" fontSize="48" fontFamily="monospace" fontWeight="700" fill="var(--accent)" opacity="0.8">&lt;/&gt;</text>
+                <text x="280" y="140" fontSize="36" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.7">{"{"} {"}"}</text>
+                <text x="60" y="320" fontSize="28" fontFamily="monospace" fill="var(--accent)" opacity="0.6">const</text>
+                <text x="300" y="420" fontSize="32" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.65">=&gt;</text>
+                <text x="80" y="520" fontSize="24" fontFamily="monospace" fill="var(--accent)" opacity="0.55">async</text>
 
                 {/* Horizontal connector lines */}
-                <line x1="120" y1="85" x2="200" y2="85" stroke="var(--accent)" strokeWidth="0.5" opacity="0.3" />
-                <line x1="100" y1="200" x2="150" y2="200" stroke="var(--accent-secondary)" strokeWidth="0.5" opacity="0.3" />
-                <line x1="250" y1="350" x2="330" y2="350" stroke="var(--accent)" strokeWidth="0.5" opacity="0.3" />
+                <line x1="120" y1="85" x2="200" y2="85" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
+                <line x1="100" y1="200" x2="150" y2="200" stroke="var(--accent-secondary)" strokeWidth="1" opacity="0.6" />
+                <line x1="250" y1="350" x2="330" y2="350" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
 
                 {/* Floating circles */}
-                <circle cx="350" cy="60" r="4" fill="var(--accent)" opacity="0.4" />
-                <circle cx="50" cy="420" r="6" fill="var(--accent-secondary)" opacity="0.3" />
-                <circle cx="320" cy="530" r="3" fill="var(--accent)" opacity="0.5" />
+                <circle cx="350" cy="60" r="6" fill="var(--accent)" opacity="0.7" />
+                <circle cx="50" cy="420" r="8" fill="var(--accent-secondary)" opacity="0.6" />
+                <circle cx="320" cy="530" r="5" fill="var(--accent)" opacity="0.8" />
 
                 {/* Decorative small plus signs */}
-                <text x="200" y="480" fontSize="14" fontFamily="monospace" fill="var(--accent)" opacity="0.3">+</text>
-                <text x="340" y="280" fontSize="12" fontFamily="monospace" fill="var(--accent-secondary)" opacity="0.25">*</text>
-                <text x="100" y="580" fontSize="11" fontFamily="monospace" fill="var(--accent)" opacity="0.2">#</text>
+                <text x="200" y="480" fontSize="20" fontFamily="monospace" fill="var(--accent)" opacity="0.6">+</text>
+                <text x="340" y="280" fontSize="18" fontFamily="monospace" fill="var(--accent-secondary)" opacity="0.55">*</text>
+                <text x="100" y="580" fontSize="16" fontFamily="monospace" fill="var(--accent)" opacity="0.5">#</text>
               </svg>
               {project.video ? (
                 <>

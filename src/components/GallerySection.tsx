@@ -148,7 +148,43 @@ export default function GallerySection() {
               borderColor: 'var(--border)'
             }}
           >
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 auto-rows-[100px] md:auto-rows-[130px] grid-flow-dense">
+            {/* Tech doodles background */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none z-0"
+              style={{ opacity: 0.25 }}
+              viewBox="0 0 1200 600"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              {/* Grid dots */}
+              <pattern id="galleryCanvasDots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.5" fill="var(--accent)" opacity="0.6" />
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#galleryCanvasDots)" />
+
+              {/* Angle brackets */}
+              <text x="40" y="80" fontSize="48" fontFamily="monospace" fontWeight="700" fill="var(--accent)" opacity="0.8">&lt;/&gt;</text>
+              <text x="1080" y="140" fontSize="36" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.7">{"{"} {"}"}</text>
+              <text x="60" y="420" fontSize="28" fontFamily="monospace" fill="var(--accent)" opacity="0.6">const</text>
+              <text x="1100" y="420" fontSize="32" fontFamily="monospace" fontWeight="700" fill="var(--accent-secondary)" opacity="0.65">=&gt;</text>
+              <text x="80" y="520" fontSize="24" fontFamily="monospace" fill="var(--accent)" opacity="0.55">async</text>
+
+              {/* Horizontal connector lines */}
+              <line x1="120" y1="85" x2="200" y2="85" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
+              <line x1="100" y1="200" x2="150" y2="200" stroke="var(--accent-secondary)" strokeWidth="1" opacity="0.6" />
+              <line x1="1050" y1="350" x2="1130" y2="350" stroke="var(--accent)" strokeWidth="1" opacity="0.6" />
+
+              {/* Floating circles */}
+              <circle cx="950" cy="60" r="6" fill="var(--accent)" opacity="0.7" />
+              <circle cx="50" cy="320" r="8" fill="var(--accent-secondary)" opacity="0.6" />
+              <circle cx="1120" cy="530" r="5" fill="var(--accent)" opacity="0.8" />
+
+              {/* Decorative small plus signs */}
+              <text x="300" y="480" fontSize="20" fontFamily="monospace" fill="var(--accent)" opacity="0.6">+</text>
+              <text x="840" y="280" fontSize="18" fontFamily="monospace" fill="var(--accent-secondary)" opacity="0.55">*</text>
+              <text x="100" y="580" fontSize="16" fontFamily="monospace" fill="var(--accent)" opacity="0.5">#</text>
+            </svg>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 auto-rows-[100px] md:auto-rows-[130px] grid-flow-dense relative z-10">
               {paginatedImages.map((image, index) => {
                 // Generate a stable pseudo-random number based on the image ID to determine size
                 const hash = image.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
@@ -274,7 +310,7 @@ export default function GallerySection() {
             {/* Tech doodles background */}
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none z-0"
-              style={{ opacity: 0.08 }}
+              style={{ opacity: 0.15 }}
               viewBox="0 0 1200 800"
               preserveAspectRatio="xMidYMid slice"
             >
