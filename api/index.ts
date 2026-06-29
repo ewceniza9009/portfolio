@@ -560,8 +560,8 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
     const totalPages = Math.ceil(total / limit)
 
     const visitors = await turso.execute({
-      sql: `SELECT * FROM visitors ${where} ORDER BY ${sortColumn} ${order} LIMIT ? OFFSET ?`,
-      args: [...args, limit, offset],
+      sql: `SELECT * FROM visitors ${where} ORDER BY ${sortColumn} ${order} LIMIT ${limit} OFFSET ${offset}`,
+      args,
     })
 
     const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
