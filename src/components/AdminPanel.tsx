@@ -7,7 +7,7 @@ import {
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
   Maximize2, Minimize2, Bold, Italic, Heading1, Heading2, Code,
-  List, Link as LinkIcon, Quote, Image, Minus, Table
+  List, Link as LinkIcon, Quote, Image, Minus, Table, Box
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -1785,6 +1785,17 @@ const res = await api(`/api/visitors?${params.toString()}`)
                               >
                                 {'```'}
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => insertMarkdown(
+                                  '\n```interactive-3d\n<canvas id="scene1"></canvas>\n<script type="module">\n  import * as THREE from \'three\'\n  // Your Three.js code here\n</script>\n```\n'
+                                )}
+                                title="Insert 3D Scene"
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-1"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                <Box size={13} /> 3D
+                              </button>
                             </div>
 
                             <div className="rounded-b-xl border overflow-hidden" style={{ borderColor: 'var(--border)', borderTopLeftRadius: 0, borderTopRightRadius: 0, height: '350px' }}>
@@ -2659,6 +2670,17 @@ const res = await api(`/api/visitors?${params.toString()}`)
                         style={{ color: 'var(--text-muted)' }}
                       >
                         {'```'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown(
+                          '\n```interactive-3d\n<canvas id="scene1"></canvas>\n<script type="module">\n  import * as THREE from \'three\'\n  // Your Three.js code here\n</script>\n```\n'
+                        )}
+                        title="Insert 3D Scene"
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-1"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        <Box size={14} /> 3D
                       </button>
                     </div>
                     <button

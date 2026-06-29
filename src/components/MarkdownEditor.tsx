@@ -141,6 +141,9 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
       quickSuggestions: false,
       tabSize: 2,
       automaticLayout: true,
+      folding: true,
+      showFoldingControls: 'always',
+      foldingStrategy: 'auto',
       scrollbar: {
         verticalScrollbarSize: 6,
         horizontalScrollbarSize: 6,
