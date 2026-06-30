@@ -2797,6 +2797,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
                     autoFocus
                     onEditorMount={setMonacoEditor}
                     extraWords={blogWords}
+                    showToolbar
                   />
                 </div>
 

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ACCENT_THEMES, AccentKey } from '../data/accents'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import Interactive3DBlock from '../components/Interactive3DBlock'
+import InteractiveBlock from '../components/InteractiveBlock'
 
 const MERMAID_STYLES = `
   .mermaid-svg-container svg {
@@ -776,6 +777,8 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<MermaidRenderer key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
         } else if (codeLang.toLowerCase() === 'interactive-3d') {
           result.push(<Interactive3DBlock key={keyIndex++} html={codeText} />)
+        } else if (codeLang.toLowerCase() === 'interactive') {
+          result.push(<InteractiveBlock key={keyIndex++} html={codeText} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(
