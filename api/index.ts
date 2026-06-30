@@ -181,9 +181,51 @@ const FREE_MODELS = [
   'gemini-1.5-pro',
 ]
 
-// ── Admin: List available AI models ──
-app.get('/api/ai/models', authMiddleware, (_req, res) => {
-  res.json({ models: FREE_MODELS })
+// ── Admin: List available AI providers and models ──
+app.get('/api/ai/providers', authMiddleware, async (_req, res) => {
+  try {
+    const providerSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+    const currentProvider = (providerSetting.rows[0] as any)?.value || 'gemini'
+    
+    const providers = {
+      gemini: {
+        name: 'Google Gemini',
+        defaultModel: 'gemini-2.5-flash',
+        freeModels: FREE_MODELS,
+        requiresApiKey: true,
+        apiKeyEnv: 'GEMINI_API_KEY'
+      },
+      puter: {
+        name: 'Puter (Free)',
+        defaultModel: 'gemini-3.5-flash',
+        freeModels: [
+          'gemini-3.5-flash',
+          'gemini-3.1-flash-lite',
+          'gemini-3.1-pro-preview',
+          'gemini-3-flash-preview',
+          'gemini-3-pro-preview',
+          'gemini-2.5-flash-lite-preview-09-2025',
+          'gemini-2.5-flash-preview-09-2025',
+          'gemini-2.5-flash-lite',
+          'gemini-2.5-pro-preview',
+          'gemini-2.5-pro-preview-05-06',
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
+          'gemini-2.0-flash',
+          'gemini-2.0-flash-lite'
+        ],
+        requiresApiKey: false
+      }
+    }
+    
+    res.json({ 
+      currentProvider,
+      providers 
+    })
+  } catch (err) {
+    console.error('Fetch AI providers error:', err)
+    res.status(500).json({ error: 'Failed to fetch AI providers' })
+  }
 })
 
 // ── Admin: AI compose message ──
@@ -192,26 +234,55 @@ app.post('/api/ai/compose', authMiddleware, async (req, res) => {
     const { prompt, context, model: modelName } = req.body
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
+    const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+    const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
+    
+    let selected = modelName || null
+    let providerConfig: any = null
+    
+    if (currentProvider === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
 
-    let selected = modelName && FREE_MODELS.includes(modelName) ? modelName : null
-    if (!selected) {
-      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-      selected = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+      providerConfig = {
+        name: 'Google Gemini',
+        defaultModel: 'gemini-2.5-flash',
+        freeModels: FREE_MODELS,
+        requiresApiKey: true,
+        apiKeyEnv: 'GEMINI_API_KEY'
+      }
+      
+      if (!selected) {
+        const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+        selected = (modelSetting.rows[0] as any)?.value || 'gemini-2.5-flash'
+      }
+      
+      if (!providerConfig.freeModels.includes(selected)) {
+        return res.status(400).json({ error: `Model ${selected} is not available in free tier` })
+      }
+      
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const model = genAI.getGenerativeModel({ model: selected })
+
+      const fullPrompt = context
+        ? `You are helping compose a professional email reply. Context:\n${context}\n\nInstructions: ${prompt}\n\nWrite the email reply body only (no subject line).`
+        : `You are helping compose a professional email. ${prompt}\n\nWrite the email body only (no subject line).`
+
+      const result = await model.generateContent(fullPrompt)
+      const text = result.response.text()
+
+      res.json({ body: text.trim() })
+    } else if (currentProvider === 'puter') {
+      // For Puter, we need to include the Puter.js script in the frontend
+      // This endpoint just checks if Puter is available and returns a message
+      res.json({ 
+        body: 'Puter AI provider is selected. Please ensure you have loaded Puter.js on the client side.',
+        puterAvailable: true,
+        note: 'Puter uses a user-pays model - no API keys required on client side'
+      })
+    } else {
+      return res.status(400).json({ error: 'Invalid AI provider' })
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: selected })
-
-    const fullPrompt = context
-      ? `You are helping compose a professional email reply. Context:\n${context}\n\nInstructions: ${prompt}\n\nWrite the email reply body only (no subject line).`
-      : `You are helping compose a professional email. ${prompt}\n\nWrite the email body only (no subject line).`
-
-    const result = await model.generateContent(fullPrompt)
-    const text = result.response.text()
-
-    res.json({ body: text.trim() })
   } catch (err) {
     console.error('AI compose error:', err)
     res.status(500).json({ error: 'Failed to generate AI response' })
@@ -630,19 +701,23 @@ app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) =>
     if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
 
     const blog = result.rows[0] as any
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
+    const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+    const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
 
-    // Read model from settings
-    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-    const selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+    if (currentProvider === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: selectedModel })
+      // Read model from settings
+      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+      const selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
 
-    const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const genModel = genAI.getGenerativeModel({ model: selectedModel })
 
-    const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:
+      const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
+
+      const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:
 
 1. Start with a hook — casual, first person, like talking to a fellow dev
 2. Say what the article covers in plain language ("It covers..." / "It walks through...")
@@ -665,19 +740,24 @@ Article title: ${blog.title}
 Article content (first 3000 chars):
 ${blog.content?.slice(0, 3000) || blog.summary || ''}`
 
-    const aiResult = await model.generateContent(prompt)
-    const summary = aiResult.response.text()
+      const aiResult = await genModel.generateContent(prompt)
+      const summary = aiResult.response.text()
 
-    const tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
+      const tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
 
-    res.json({
-      original_id: blog.id,
-      title: blog.title,
-      body_markdown: summary,
-      tags,
-      canonical_url: fullUrl,
-      description: blog.summary || `Technical deep-dive: ${blog.title}`,
-    })
+      res.json({
+        original_id: blog.id,
+        title: blog.title,
+        body_markdown: summary,
+        tags,
+        canonical_url: fullUrl,
+        description: blog.summary || `Technical deep-dive: ${blog.title}`,
+      })
+    } else if (currentProvider === 'puter') {
+      return res.status(400).json({ error: 'Puter AI provider requires client-side AI. Switch to Gemini or configure client-side Puter integration.' })
+    } else {
+      return res.status(400).json({ error: 'Invalid AI provider' })
+    }
   } catch (err) {
     console.error('Dev.to summary error:', err)
     res.status(500).json({ error: 'Failed to generate summary' })
@@ -702,29 +782,37 @@ app.delete('/api/admin/comments/:id', authMiddleware, async (req, res) => {
 app.post('/api/admin/blogs/generate', authMiddleware, async (req, res) => {
   try {
     const { prompt, content, title, mode } = req.body
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
-
-    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-    const selected = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: selected })
+    const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+    const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
 
     let fullPrompt = ''
-    if (mode === 'outline') {
-      fullPrompt = `You are a professional tech blogger. Generate a detailed, high-quality blog outline in Markdown for an article titled "${title}". Focus area/idea: ${prompt}. Focus on rendering clean headings, bullet points, and brief section ideas.`
-    } else if (mode === 'polish') {
-      fullPrompt = `You are a professional editor. Rewrite and polish the following draft in Markdown, improving clarity, grammar, flow, and vocabulary, while preserving the exact technical details and context:\n\n${content}`
-    } else if (mode === 'summary') {
-      fullPrompt = `Summarize the following technical blog post in 1 or 2 sentences for an excerpt/summary field (max 150 characters):\n\n${content}`
+    if (currentProvider === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
+
+      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+      const selected = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const genModel = genAI.getGenerativeModel({ model: selected })
+
+      if (mode === 'outline') {
+        fullPrompt = `You are a professional tech blogger. Generate a detailed, high-quality blog outline in Markdown for an article titled "${title}". Focus area/idea: ${prompt}. Focus on rendering clean headings, bullet points, and brief section ideas.`
+      } else if (mode === 'polish') {
+        fullPrompt = `You are a professional editor. Rewrite and polish the following draft in Markdown, improving clarity, grammar, flow, and vocabulary, while preserving the exact technical details and context:\n\n${content}`
+      } else if (mode === 'summary') {
+        fullPrompt = `Summarize the following technical blog post in 1 or 2 sentences for an excerpt/summary field (max 150 characters):\n\n${content}`
+      } else {
+        fullPrompt = `Write or assist in writing a section for a tech blog post about: ${prompt}.\nContext/draft so far:\n${content || ''}\n\nReturn output in clean Markdown format.`
+      }
+
+      const result = await genModel.generateContent(fullPrompt)
+      const text = result.response.text()
+      return res.json({ result: text.trim() })
+    } else if (currentProvider === 'puter') {
+      return res.status(400).json({ error: 'Puter AI provider requires client-side AI. Switch to Gemini or configure client-side Puter integration.' })
     } else {
-      fullPrompt = `Write or assist in writing a section for a tech blog post about: ${prompt}.\nContext/draft so far:\n${content || ''}\n\nReturn output in clean Markdown format.`
+      return res.status(400).json({ error: 'Invalid AI provider' })
     }
-
-    const result = await model.generateContent(fullPrompt)
-    const text = result.response.text()
-
-    res.json({ result: text.trim() })
   } catch (err) {
     console.error('AI blog helper error:', err)
     res.status(500).json({ error: 'Failed to run AI blog helper' })

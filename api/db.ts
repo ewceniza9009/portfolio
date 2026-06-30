@@ -121,6 +121,7 @@ export async function initDb() {
     ('rotation_interval_hours', '2'),
     ('paypal_donate_url', 'https://paypal.me/ewceniza'),
     ('default_ai_model', 'gemini-2.5-flash'),
+    ('ai_provider', 'gemini'),
     ('devto_api_key', ''),
     ('devto_username', ''),
     ('n8n_portfolio_api_key', ''),

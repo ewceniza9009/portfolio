@@ -30,13 +30,14 @@ const projects = [
     id: 5,
     title: "Cloud FMIS",
     subtitle: "Financial Management Information System",
-    description: "A centralized financial backbone for trading and manufacturing operations that consolidates accounting, inventory, and procurement into one authoritative system, giving leadership a real-time, holistic view of the company's financial position.",
+    description: "A centralized financial backbone for trading and manufacturing operations that consolidates accounting, inventory, and procurement into one authoritative system, giving leadership a real-time, holistic view of the company's financial position. Engineered to support multi-dimensional reporting by consignment area and production environment, with specialized capabilities for food and bakery manufacturing including finished goods, assembly items with components, and granular ingredient-level inventory tracking.",
     details: [
-      "**Full-Cycle Accounting** : Handles 5,000+ monthly journal entries across General Ledger, Accounts Payable, and Accounts Receivable with full audit-trail integrity.",
-      "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for **₱1.5M–₱3M** in monthly inventory transactions.",
-      "**On-Demand Financial Statements** : Renders Balance Sheets, Income Statements, and Cash Flow reports on demand — **<1s typical** via custom .NET rendering pipeline.",
-      "**End-to-End Commercial Workflows** : Processes 500+ purchase orders and invoices monthly through the full order-to-cash and procure-to-pay pipelines.",
-      "**Production & Recipe Management** : Handles finished goods, assembly items with components, and ingredient-level inventory with stock ledger and production BOMs — purpose-built for food production, bakery, and process manufacturing."
+      "**Full-Cycle Accounting** : Handles 5,000+ monthly journal entries across General Ledger, Accounts Payable with aging, and Accounts Receivable with aging, with full audit-trail integrity, including entry adjustments.",
+      "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for Ph1.5M-Ph3M in monthly inventory transactions.",
+      "**On-Demand Financial Statements** : Generates Balance Sheets, Income Statements, Cash Flow Statements, and Trial Balances on demand via a custom .NET rendering pipeline. Supports multi-dimensional reporting by company, branch, consignment area, and consolidated views.",
+      "**End-to-End Commercial Workflows** : Processes 500+ purchase orders, invoices, disbursements, and collections monthly through the full order-to-cash and procure-to-pay pipelines.",
+      "**Production & Recipe Management** : Handles finished goods, assembly items with components, and ingredient-level inventory with stock ledger and production BOMs, purpose-built for food production, bakery, and process manufacturing.",
+      "**Bank Reconciliation** : Automated reconciliation of bank transactions with GL and float tracking for cash management."
     ],
     tech: ["ASP.NET MVC", "SQL Server", "Telerik Reports"],
     year: "2019",
