@@ -53,20 +53,29 @@ function ImageWithFallback({
   fallback?: string;
   className?: string;
 }) {
-  const [error, setError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(src);
+  const [error, setError] = useState(0);
+  const webpSrc = src.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+  const [imgSrc, setImgSrc] = useState(webpSrc);
 
   useEffect(() => {
-    setImgSrc(src);
-    setError(false);
+    setImgSrc(webpSrc);
+    setError(0);
   }, [src]);
+
+  const getSrc = () => {
+    if (error === 0) return imgSrc;
+    if (error === 1) return src;
+    if (error === 2 && fallback) return fallback.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+    if (error === 3 && fallback) return fallback;
+    return imgSrc;
+  };
 
   return (
     <img
-      src={error && fallback ? fallback : imgSrc}
+      src={getSrc()}
       alt={alt}
       className={className}
-      onError={() => setError(true)}
+      onError={() => setError(e => e + 1)}
       loading="lazy"
     />
   );
