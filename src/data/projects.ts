@@ -35,7 +35,8 @@ const projects = [
       "**Full-Cycle Accounting** : Handles 5,000+ monthly journal entries across General Ledger, Accounts Payable, and Accounts Receivable with full audit-trail integrity.",
       "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for **₱1.5M–₱3M** in monthly inventory transactions.",
       "**On-Demand Financial Statements** : Renders Balance Sheets, Income Statements, and Cash Flow reports on demand — **<1s typical** via custom .NET rendering pipeline.",
-      "**End-to-End Commercial Workflows** : Processes 500+ purchase orders and invoices monthly through the full order-to-cash and procure-to-pay pipelines."
+      "**End-to-End Commercial Workflows** : Processes 500+ purchase orders and invoices monthly through the full order-to-cash and procure-to-pay pipelines.",
+      "**Production & Recipe Management** : Handles finished goods, assembly items with components, and ingredient-level inventory with stock ledger and production BOMs — purpose-built for food production, bakery, and process manufacturing."
     ],
     tech: ["ASP.NET MVC", "SQL Server", "Telerik Reports"],
     year: "2019",
