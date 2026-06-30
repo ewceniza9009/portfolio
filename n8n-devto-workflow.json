@@ -21,9 +21,8 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/unposted-devto",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "{{BASE_URL}}/api/admin/blogs/unposted-devto",
+        "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
@@ -38,13 +37,7 @@
       "name": "Fetch Unposted Blogs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 0],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "PORTFOLIO_API_KEY",
-          "name": "Portfolio API Key"
-        }
-      }
+      "position": [220, 0]
     },
     {
       "parameters": {
@@ -77,9 +70,8 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/{{ $json.id }}/devto-summary",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.id + '/devto-summary' }}",
+        "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
@@ -94,20 +86,21 @@
       "name": "AI Summarize for Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [660, -100],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "PORTFOLIO_API_KEY",
-          "name": "Portfolio API Key"
-        }
-      }
+      "position": [660, -100]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://dev.to/api/articles",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "{{DEVTO_API_KEY}}"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ article: { title: $json.title, body_markdown: $json.body_markdown, tags: $json.tags, canonical_url: $json.canonical_url, description: $json.description, published: true } }) }}",
@@ -117,20 +110,21 @@
       "name": "Post to Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, -100],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "DEVTO_API_KEY",
-          "name": "Dev.to API Key"
-        }
-      }
+      "position": [880, -100]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/{{ $('AI Summarize for Dev.to').item.json.original_id || $('Fetch Unposted Blogs').item.json[0].id }}/devto-mark",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + ($('AI Summarize for Dev.to').item.json.original_id || $('Fetch Unposted Blogs').item.json[0].id) + '/devto-mark' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -146,13 +140,7 @@
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, -100],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "PORTFOLIO_API_KEY",
-          "name": "Portfolio API Key"
-        }
-      }
+      "position": [1100, -100]
     },
     {
       "parameters": {},
@@ -237,8 +225,6 @@
   "updatedAt": "2026-06-30T00:00:00.000Z",
   "versionId": "1",
   "_meta": {
-    "generatedAt": "{{BASE_URL}}",
-    "devtoUsername": "{{DEVTO_USERNAME}}",
-    "instructions": "1. Import this workflow into n8n 2. Create credential 'PORTFOLIO_API_KEY' with header Authorization = Bearer {{N8N_PORTFOLIO_KEY}} 3. Create credential 'DEVTO_API_KEY' with header api-key = {{N8N_DEVTO_KEY}} 4. Activate"
+    "instructions": "1. Import this workflow 2. No credentials needed — headers are inline 3. Activate. Tokens are baked in. Replace this file if you need to rotate."
   }
 }
