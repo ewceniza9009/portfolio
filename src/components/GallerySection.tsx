@@ -13,6 +13,7 @@ interface GalleryImage {
 const PROJECTS: Record<string, { count: number }> = {
   CloudPallet: { count: 15 },
   Dev2ndBrain: { count: 6 },
+  GenMatrix: { count: 4 },
   Halkyone: { count: 28 },
   JsPlay: { count: 4 },
   NexPoint: { count: 17 },
@@ -25,6 +26,7 @@ const PROJECT_ORDER = [
   "NexPoint",
   "CloudPallet",
   "SmashElite",
+  "GenMatrix",
   "Dev2ndBrain",
   "OppStack",
   "JsPlay",

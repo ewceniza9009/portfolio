@@ -24,6 +24,12 @@ export const GALLERY_DESCRIPTIONS: Record<string, Record<number, string>> = {
     5: "Dev2ndBrain interactive study sessions using flashcards and an intelligent AI scorer with detailed progress reporting.",
     6: "Dev2ndBrain interactive graph view visualizing mind maps of topics, notes, and connections."
   },
+  GenMatrix: {
+    1: "GenMatrix admin dashboard displaying system analytics, commission summaries, and distributor performance metrics.",
+    2: "GenMatrix binary genealogy tree visualization powered by D3, showing distributor network placement and downline structure.",
+    3: "GenMatrix integrated product shop with catalog browsing, shopping cart, and order management for distributors.",
+    4: "GenMatrix wallet dashboard featuring real-time balance, transaction ledger, fund transfers, and withdrawal requests."
+  },
   Halkyone: {
     1: "Halkyone ERP secure login and landing page.",
     2: "Halkyone executive dashboard providing a comprehensive overview of healthcare metrics and quick actions.",
