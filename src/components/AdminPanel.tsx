@@ -433,8 +433,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     if (!getRequiredFieldsFilled()) return
     try {
       setDownloading(true)
-      const tokenSession = sessionStorage.getItem('adminToken') || ''
-      const baseUrl = (window.location.hostname === 'localhost' && window.location.port === '5173')
+      const tokenSession = token || sessionStorage.getItem('admin_token') || ''
+      const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
         ? 'http://localhost:3000'
         : ''
       const res = await fetch(`${baseUrl}/api/admin/n8n-workflow-download`, {
