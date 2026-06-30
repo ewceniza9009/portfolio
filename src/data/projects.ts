@@ -8,7 +8,7 @@ const projects = [
       "**Smart Payroll & Attendance Engine** : Processes 10,000+ attendance records semi-monthly with automatic computation of work hours, tardiness, undertime, overtime, night differentials, statutory contributions, and custom deductions.",
       "**Biometric Facial Recognition** : Replaces traditional timekeeping hardware with AI-powered touchless identification, preventing time fraud while feeding real-time attendance data directly into the payroll pipeline.",
       "**Self-Service Employee Portal** : A cross-platform mobile app that gives employees direct access to payslips, leave filing, overtime requests, and personal record updates - reducing HR's administrative overhead significantly.",
-      "**AI-Powered HR Chatbot** : A multilingual conversational assistant that handles routine HR inquiries around the clock, deflecting repetitive questions from the HR team.",
+      "**AI-Powered HR Intelligence Agent** : A multilingual conversational assistant that queries the database directly, generates charts, diagrams, and tabular reports on demand, surfaces AI-driven insights, forecasts trends from historical data, and deflects repetitive HR inquiries 24/7.",
       "**Intelligent Leave Integration** : Approved leave requests are automatically reflected in payroll calculations, eliminating manual reconciliation between HR and accounting."
     ],
     tech: ["ASP.NET Core", "MAUI.NET", "SQL Server", "OpenCV", "FaceNet"],
@@ -33,8 +33,8 @@ const projects = [
     description: "A centralized financial backbone for trading and manufacturing operations that consolidates accounting, inventory, and procurement into one authoritative system, giving leadership a real-time, holistic view of the company's financial position.",
     details: [
       "**Full-Cycle Accounting** : Handles 5,000+ monthly journal entries across General Ledger, Accounts Payable, and Accounts Receivable with full audit-trail integrity.",
-      "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for $2M+ in monthly inventory transactions.",
-      "**On-Demand Financial Statements** : Generates Balance Sheets, Income Statements, and Cash Flow reports in under 3 seconds using Telerik's reporting suite.",
+      "**Inventory & Costing Engine** : Tracks 10,000+ SKUs with real-time stock valuation integrated into financial ledgers for **₱1.5M–₱3M** in monthly inventory transactions.",
+      "**On-Demand Financial Statements** : Renders Balance Sheets, Income Statements, and Cash Flow reports on demand — **<1s typical** via custom .NET rendering pipeline.",
       "**End-to-End Commercial Workflows** : Processes 500+ purchase orders and invoices monthly through the full order-to-cash and procure-to-pay pipelines."
     ],
     tech: ["ASP.NET MVC", "SQL Server", "Telerik Reports"],
