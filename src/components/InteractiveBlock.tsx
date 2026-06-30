@@ -242,9 +242,11 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
         }
         if (header.length > 0) {
           const safeBody = body.map(line => { const t = line.trimStart(); return (t.startsWith('[') || t.startsWith('(')) ? ' '.repeat(line.length - t.length) + ';' + t : line })
-          const fnBody = header.join('\n') + '\n\n' + safeBody.join('\n')
-          const fn = new Function(`return (async function(){\n${fnBody}\n})()`)
-          fn().catch((e: any) => console.error('[interactive]', e))
+          const containerRef = `var __ib_container = arguments[0];`
+          const patchedBody = safeBody.map(l => l.replace(/document\.currentScript\.parentElement/g, '__ib_container'))
+          const fnBody = containerRef + '\n' + header.join('\n') + '\n\n' + patchedBody.join('\n')
+          const fn = new Function('__ib_container', `return (async function(){\n${fnBody}\n})()`)
+          fn(wrapper).catch((e: any) => console.error('[interactive]', e))
         }
       } else {
         const s = document.createElement('script')

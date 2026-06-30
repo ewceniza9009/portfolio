@@ -1,7 +1,7 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import Editor, { OnMount, BeforeMount } from '@monaco-editor/react'
 import type { editor, languages } from 'monaco-editor'
-import { Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, Link as LinkIcon, Quote, Image, Minus, Table, Box, Layers, HelpCircle, Puzzle } from 'lucide-react'
+import { Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, Link as LinkIcon, Quote, Image, Minus, Table, Box, Layers, HelpCircle, Puzzle, ChevronDown } from 'lucide-react'
 import { STEPS_SNIPPET, QUIZ_SNIPPET, getGenericSnippet, INTERACTIVE3D_SNIPPET, MERMAID_SNIPPET } from '../utils/snippets'
 
 interface MarkdownEditorProps {
@@ -122,6 +122,17 @@ function registerCompletionProvider(monaco: typeof import('monaco-editor'), extr
 export default function MarkdownEditor({ value, onChange, height = '100%', className = '', autoFocus = false, onEditorMount, extraWords = [], showToolbar = false }: MarkdownEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Parameters<OnMount>[1] | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [dropdownOpen])
 
   const insertAtCursor = useCallback((before: string, after = '', placeholder = '') => {
     const ed = editorRef.current
@@ -227,27 +238,38 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
           <button onClick={() => insertAtCursor('\n---\n', '', '')} title="Horizontal Rule" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Minus size={14} /></button>
           <button onClick={() => insertAtCursor('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n', '', '')} title="Table" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Table size={14} /></button>
           <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-          <button onClick={() => insertSnippet(MERMAID_SNIPPET)} title="Insert Mermaid Diagram" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
-            <span className="hidden sm:inline">Mermaid</span>
-          </button>
-          <button onClick={() => insertSnippet(INTERACTIVE3D_SNIPPET)} title="Insert Interactive 3D Block" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--accent)' }}>
-            <Box size={14} />
-            <span className="hidden sm:inline">3D Block</span>
-          </button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-          <button onClick={() => insertSnippet(STEPS_SNIPPET)} title="Insert Step-Through Tutorial" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-            <Layers size={14} />
-            <span className="hidden sm:inline">Steps</span>
-          </button>
-          <button onClick={() => insertSnippet(QUIZ_SNIPPET)} title="Insert Interactive Quiz" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-            <HelpCircle size={14} />
-            <span className="hidden sm:inline">Quiz</span>
-          </button>
-          <button onClick={() => insertSnippet(getGenericSnippet())} title="Insert Custom Interactive Block" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-            <Puzzle size={14} />
-            <span className="hidden sm:inline">Interactive</span>
-          </button>
+          <div className="relative" ref={dropdownRef}>
+            <button onClick={() => setDropdownOpen(!dropdownOpen)} title="Insert Block" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+              <Puzzle size={14} />
+              <span className="hidden sm:inline">Blocks</span>
+              <ChevronDown size={10} />
+            </button>
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-lg border shadow-lg py-1" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                <button onClick={() => { insertSnippet(MERMAID_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+                  Mermaid Diagram
+                </button>
+                <button onClick={() => { insertSnippet(INTERACTIVE3D_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/10 transition-colors" style={{ color: 'var(--accent)' }}>
+                  <Box size={12} />
+                  3D Block
+                </button>
+                <div className="my-1 border-t" style={{ borderColor: 'var(--border)' }} />
+                <button onClick={() => { insertSnippet(STEPS_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <Layers size={12} />
+                  Step-Through Tutorial
+                </button>
+                <button onClick={() => { insertSnippet(QUIZ_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <HelpCircle size={12} />
+                  Interactive Quiz
+                </button>
+                <button onClick={() => { insertSnippet(getGenericSnippet()); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <Puzzle size={12} />
+                  Custom Interactive
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
       <div className="flex-1 min-h-0">
