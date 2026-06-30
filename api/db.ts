@@ -110,6 +110,8 @@ export async function initDb() {
   try { await turso.execute("UPDATE blogs SET category = 'Engineering' WHERE slug LIKE '%engineering%' AND category IS NULL") } catch {}
   try { await turso.execute("UPDATE blogs SET category = 'Engineering' WHERE slug LIKE '%face-recognition%' AND category IS NULL") } catch {}
   try { await turso.execute("UPDATE blogs SET category = 'General' WHERE category IS NULL") } catch {}
+  try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_posted INTEGER DEFAULT 0') } catch {}
+  try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_id TEXT') } catch {}
 
   // Seed default settings if they don't exist
   await turso.execute(`
@@ -117,7 +119,13 @@ export async function initDb() {
     ('rotation_theme_enabled', 'true'),
     ('rotation_accent_enabled', 'false'),
     ('rotation_interval_hours', '2'),
-    ('paypal_donate_url', 'https://paypal.me/ewceniza')
+    ('paypal_donate_url', 'https://paypal.me/ewceniza'),
+    ('default_ai_model', 'gemini-2.5-flash'),
+    ('devto_api_key', ''),
+    ('devto_username', ''),
+    ('n8n_portfolio_api_key', ''),
+    ('n8n_devto_api_key', ''),
+    ('n8n_webhook_url', '')
   `)
 
   // Run seed function to add first EMR telemetry blog post

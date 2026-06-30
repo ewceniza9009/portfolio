@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import turso, { initDb } from './db.js'
 import { seedFirstBlog } from './blogSeed.js'
-import { loginHandler, authMiddleware, rateLimitMiddleware } from './auth.js'
+import { loginHandler, authMiddleware, flexibleAuth, rateLimitMiddleware } from './auth.js'
 
 const app = express()
 
@@ -195,7 +195,11 @@ app.post('/api/ai/compose', authMiddleware, async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
 
-    const selected = modelName && FREE_MODELS.includes(modelName) ? modelName : 'gemini-1.5-flash'
+    let selected = modelName && FREE_MODELS.includes(modelName) ? modelName : null
+    if (!selected) {
+      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+      selected = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+    }
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: selected })
@@ -477,6 +481,125 @@ app.delete('/api/admin/blogs/:id', authMiddleware, async (req, res) => {
   }
 })
 
+// ── Admin: Generate long-lived API token for n8n ──
+app.post('/api/admin/generate-token', authMiddleware, async (_req, res) => {
+  try {
+    const token = uuidv4().replace(/-/g, '') + uuidv4().replace(/-/g, '')
+    await turso.execute({
+      sql: "INSERT INTO settings (key, value) VALUES ('api_token', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      args: [token],
+    })
+    res.json({ token })
+  } catch (err) {
+    console.error('Generate token error:', err)
+    res.status(500).json({ error: 'Failed to generate token' })
+  }
+})
+
+// ── Admin: Revoke API token ──
+app.post('/api/admin/revoke-token', authMiddleware, async (_req, res) => {
+  try {
+    await turso.execute({ sql: "DELETE FROM settings WHERE key = 'api_token'", args: [] })
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Revoke token error:', err)
+    res.status(500).json({ error: 'Failed to revoke token' })
+  }
+})
+
+// ── Admin: Dev.to Sync Endpoints ──
+
+// Get blogs not yet posted to Dev.to (for n8n polling)
+app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
+  try {
+    const result = await turso.execute(
+      "SELECT id, slug, title, content, summary, tags, category, cover_image, created_at FROM blogs WHERE published = 1 AND (devto_posted = 0 OR devto_posted IS NULL) ORDER BY created_at ASC"
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Fetch unposted devto blogs error:', err)
+    res.status(500).json({ error: 'Failed to fetch unposted blogs' })
+  }
+})
+
+// Mark a blog as posted to Dev.to
+app.post('/api/admin/blogs/:id/devto-mark', flexibleAuth, async (req, res) => {
+  try {
+    const { devto_id } = req.body
+    await turso.execute({
+      sql: "UPDATE blogs SET devto_posted = 1, devto_id = ? WHERE id = ?",
+      args: [devto_id || null, req.params.id as string],
+    })
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Mark devto error:', err)
+    res.status(500).json({ error: 'Failed to mark blog as posted' })
+  }
+})
+
+// AI: Summarize blog for Dev.to cross-post
+app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) => {
+  try {
+    const result = await turso.execute({
+      sql: 'SELECT id, slug, title, content, summary, tags, category FROM blogs WHERE id = ?',
+      args: [req.params.id as string],
+    })
+    if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
+
+    const blog = result.rows[0] as any
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
+
+    // Read model from settings
+    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+    const selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: selectedModel })
+
+    const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
+
+    const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:
+
+1. Start with a hook — casual, first person, like talking to a fellow dev
+2. Say what the article covers in plain language ("It covers..." / "It walks through...")
+3. Include 5-8 bullet points of the key technical highlights — be specific, mention real numbers, tools, thresholds, model sizes, etc.
+4. End with a one-liner about real-world issues or lessons learned
+5. Finish with a clear CTA: "Read the full article here:" followed by the link on its own line
+
+Rules:
+- Tone: casual, confident, like a dev talking to peers — NOT formal, NOT salesy
+- Max 250 words
+- Do NOT include a title (added separately)
+- Do NOT include front matter, YAML, or hashtags in the body
+- Do NOT use headings — just paragraphs and bullet points
+- Use markdown bullet points (- item)
+
+Full article URL: ${fullUrl}
+
+Article title: ${blog.title}
+
+Article content (first 3000 chars):
+${blog.content?.slice(0, 3000) || blog.summary || ''}`
+
+    const aiResult = await model.generateContent(prompt)
+    const summary = aiResult.response.text()
+
+    const tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
+
+    res.json({
+      title: blog.title,
+      body_markdown: summary,
+      tags,
+      canonical_url: fullUrl,
+      description: blog.summary || `Technical deep-dive: ${blog.title}`,
+    })
+  } catch (err) {
+    console.error('Dev.to summary error:', err)
+    res.status(500).json({ error: 'Failed to generate summary' })
+  }
+})
+
 // Delete a comment (Moderation)
 app.delete('/api/admin/comments/:id', authMiddleware, async (req, res) => {
   try {
@@ -498,7 +621,8 @@ app.post('/api/admin/blogs/generate', authMiddleware, async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return res.status(500).json({ error: 'AI API key not configured' })
 
-    const selected = 'gemini-1.5-flash'
+    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+    const selected = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: selected })
 

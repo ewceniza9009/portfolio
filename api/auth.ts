@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import turso from './db.js'
 
 if (!process.env.JWT_SECRET) {
   throw new Error('CRITICAL: JWT_SECRET environment variable is missing.')
@@ -57,4 +58,31 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' })
   }
+}
+
+// Accepts both JWT tokens and long-lived API tokens (for n8n integration)
+export function flexibleAuth(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization
+  if (!header) return res.status(401).json({ error: 'Missing authorization' })
+
+  // Try JWT first
+  if (header.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(header.slice(7), JWT_SECRET) as { authenticated: boolean }
+      ;(req as AuthRequest).admin = decoded
+      return next()
+    } catch {}
+  }
+
+  // Try API token from settings
+  const token = header.startsWith('Bearer ') ? header.slice(7) : header
+  turso.execute({ sql: "SELECT value FROM settings WHERE key = 'api_token'", args: [] })
+    .then(result => {
+      if (result.rows.length && (result.rows[0] as any).value === token) {
+        ;(req as AuthRequest).admin = { authenticated: true }
+        return next()
+      }
+      return res.status(401).json({ error: 'Invalid token' })
+    })
+    .catch(() => res.status(500).json({ error: 'Auth check failed' }))
 }

@@ -6,7 +6,7 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2
+  Maximize2, Minimize2, Workflow, BookOpen
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -176,8 +176,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiModels, setAiModels] = useState<string[]>([])
-  const [aiModel, setAiModel] = useState('gemini-2.5-flash')
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
+  const [defaultAiModel, setDefaultAiModel] = useState('gemini-2.5-flash')
+  const [defaultAiModelSaved, setDefaultAiModelSaved] = useState<boolean>(false)
 
   // ── Tab 2: Blogs State ──
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -315,6 +315,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       if (res.ok) {
         const data = await res.json()
         setPaypalDonateUrl(data?.paypal_donate_url || '')
+        setDefaultAiModel(data?.default_ai_model || 'gemini-2.5-flash')
       }
     } catch {}
   }, [])
@@ -326,11 +327,62 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     try { sessionStorage.setItem('paypal_donate_url', paypalDonateUrl.trim()) } catch {}
   }
 
+  const handleDevtoModelSave = async () => {
+    await saveSettings({ default_ai_model: defaultAiModel })
+    setDefaultAiModelSaved(true)
+    setTimeout(() => setDefaultAiModelSaved(false), 1500)
+  }
+
+  // ── n8n Integration Settings ──
+  const [n8nPortfolioKey, setN8nPortfolioKey] = useState('')
+  const [n8nDevtoKey, setN8nDevtoKey] = useState('')
+  const [n8nWebhookUrl, setN8nWebhookUrl] = useState('')
+  const [n8nSaved, setN8nSaved] = useState(false)
+
+  // ── Dev.to Settings ──
+  const [devtoApiKey, setDevtoApiKey] = useState('')
+  const [devtoUsername, setDevtoUsername] = useState('')
+  const [devtoSaved, setDevtoSaved] = useState(false)
+
+  const loadN8nSettings = useCallback(async () => {
+    try {
+      const res = await api('/api/settings')
+      if (res.ok) {
+        const data = await res.json()
+        setN8nPortfolioKey(data?.n8n_portfolio_api_key || '')
+        setN8nDevtoKey(data?.n8n_devto_api_key || '')
+        setN8nWebhookUrl(data?.n8n_webhook_url || '')
+        setDevtoApiKey(data?.devto_api_key || '')
+        setDevtoUsername(data?.devto_username || '')
+      }
+    } catch {}
+  }, [])
+
+  const handleN8nSave = async () => {
+    await saveSettings({
+      n8n_portfolio_api_key: n8nPortfolioKey.trim(),
+      n8n_devto_api_key: n8nDevtoKey.trim(),
+      n8n_webhook_url: n8nWebhookUrl.trim(),
+    })
+    setN8nSaved(true)
+    setTimeout(() => setN8nSaved(false), 1500)
+  }
+
+  const handleDevtoSettingsSave = async () => {
+    await saveSettings({
+      devto_api_key: devtoApiKey.trim(),
+      devto_username: devtoUsername.trim(),
+    })
+    setDevtoSaved(true)
+    setTimeout(() => setDevtoSaved(false), 1500)
+  }
+
   useEffect(() => {
     if (activeTab === 'settings') {
       loadPaypalUrl()
+      loadN8nSettings()
     }
-  }, [activeTab, loadPaypalUrl])
+  }, [activeTab, loadPaypalUrl, loadN8nSettings])
   const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
     return getSafeItem('rotation_theme_enabled') !== 'false'
   })
@@ -624,7 +676,6 @@ const res = await api(`/api/visitors?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setAiModels(data.models)
-        setAiModel(data.models[0])
       }
     } catch {}
   }
@@ -733,9 +784,9 @@ const res = await api(`/api/visitors?${params.toString()}`)
     try {
       const res = await api('/api/ai/compose', {
         method: 'POST',
-        body: JSON.stringify({
+          body: JSON.stringify({
           prompt: promptText,
-          model: aiModel,
+          model: defaultAiModel,
           context: `Original message from ${selected.name} (${selected.email}):\n${selected.message}`,
         }),
       })
@@ -1330,57 +1381,10 @@ const res = await api(`/api/visitors?${params.toString()}`)
                               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>AI Copilot Autocomposer</span>
                             </div>
                             
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all hover:brightness-110 active:scale-[0.98]"
-                                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
-                              >
-                                <Cpu size={12} style={{ color: 'var(--accent)' }} />
-                                <span>{aiModel}</span>
-                                <ChevronDown size={12} className={`transition-transform duration-200 ${modelDropdownOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--text-muted)' }} />
-                              </button>
-
-                              <AnimatePresence>
-                                {modelDropdownOpen && (
-                                  <>
-                                    <div className="fixed inset-0 z-30" onClick={() => setModelDropdownOpen(false)} />
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                                      exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                                      transition={{ duration: 0.15 }}
-                                      className="absolute right-0 top-full mt-1.5 z-40 border rounded-xl shadow-2xl p-1 w-48 overflow-hidden"
-                                      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-                                    >
-                                      <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-0.5 p-0.5 font-sans">
-                                        {aiModels.map(m => {
-                                          const active = m === aiModel
-                                          return (
-                                            <button
-                                              key={m}
-                                              type="button"
-                                              onClick={() => {
-                                                setAiModel(m)
-                                                setModelDropdownOpen(false)
-                                              }}
-                                              className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-semibold transition-all flex items-center justify-between"
-                                              style={{ 
-                                                background: active ? 'var(--accent-dim)' : 'transparent',
-                                                color: active ? 'var(--accent)' : 'var(--text-primary)'
-                                              }}
-                                            >
-                                              <span>{m}</span>
-                                              {active && <Check size={11} style={{ color: 'var(--accent)' }} />}
-                                            </button>
-                                          )
-                                        })}
-                                      </div>
-                                    </motion.div>
-                                  </>
-                                )}
-                              </AnimatePresence>
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold border"
+                              style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                              <Cpu size={12} style={{ color: 'var(--accent)' }} />
+                              <span>{defaultAiModel}</span>
                             </div>
                           </div>
 
@@ -2136,6 +2140,154 @@ const res = await api(`/api/visitors?${params.toString()}`)
                       }}
                     >
                       {paypalSaved ? 'Saved' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 5: AI Default Model */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-7 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">AI Default Model</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Model used for AI Compose, Blog Helper, and Dev.to cross-posts. Configure once, used everywhere.
+                    </p>
+                  </div>
+                  <div className="md:col-span-5 flex items-center justify-end gap-2">
+                    <select
+                      value={defaultAiModel}
+                      onChange={(e) => setDefaultAiModel(e.target.value)}
+                      className="flex-1 max-w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                    >
+                      {aiModels.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                      {aiModels.length === 0 && (
+                        <>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        </>
+                      )}
+                    </select>
+                    <button
+                      onClick={handleDevtoModelSave}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 shrink-0"
+                      style={{
+                        background: defaultAiModelSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: defaultAiModelSaved ? 'var(--accent)' : 'var(--border)',
+                        color: defaultAiModelSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {defaultAiModelSaved ? 'Saved' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 6: Dev.to Settings */}
+                <div className="p-6 rounded-2xl border bg-white/[0.01] space-y-4" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={16} style={{ color: 'var(--accent)' }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wide">Dev.to Cross-Post</h4>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    API key and username for auto-posting blog summaries to Dev.to via n8n.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Dev.to API Key</label>
+                      <input
+                        type="password"
+                        placeholder="devto_..."
+                        value={devtoApiKey}
+                        onChange={(e) => setDevtoApiKey(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Dev.to Username</label>
+                      <input
+                        type="text"
+                        placeholder="your-devto-username"
+                        value={devtoUsername}
+                        onChange={(e) => setDevtoUsername(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleDevtoSettingsSave}
+                      className="px-4 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
+                      style={{
+                        background: devtoSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: devtoSaved ? 'var(--accent)' : 'var(--border)',
+                        color: devtoSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {devtoSaved ? 'Saved' : 'Save Dev.to'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 7: n8n Integration */}
+                <div className="p-6 rounded-2xl border bg-white/[0.01] space-y-4" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2">
+                    <Workflow size={16} style={{ color: 'var(--accent)' }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wide">n8n Workflow Integration</h4>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    Credentials used by n8n to poll unposted blogs and sync to Dev.to. Import the workflow JSON from the repo root.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Portfolio Admin API Token</label>
+                      <input
+                        type="password"
+                        placeholder="Bearer token for /api/admin/* endpoints"
+                        value={n8nPortfolioKey}
+                        onChange={(e) => setN8nPortfolioKey(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Dev.to API Key (for n8n)</label>
+                      <input
+                        type="password"
+                        placeholder="Same as Dev.to API key above, or separate key"
+                        value={n8nDevtoKey}
+                        onChange={(e) => setN8nDevtoKey(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>n8n Webhook URL (optional)</label>
+                      <input
+                        type="url"
+                        placeholder="https://your-n8n-instance.com/webhook/..."
+                        value={n8nWebhookUrl}
+                        onChange={(e) => setN8nWebhookUrl(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleN8nSave}
+                      className="px-4 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
+                      style={{
+                        background: n8nSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: n8nSaved ? 'var(--accent)' : 'var(--border)',
+                        color: n8nSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {n8nSaved ? 'Saved' : 'Save n8n'}
                     </button>
                   </div>
                 </div>
