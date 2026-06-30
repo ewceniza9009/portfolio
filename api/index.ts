@@ -509,6 +509,19 @@ app.post('/api/admin/revoke-token', authMiddleware, async (_req, res) => {
 
 // ── Admin: Dev.to Sync Endpoints ──
 
+// Get all blogs with Dev.to sync status (for debug console)
+app.get('/api/admin/blogs/devto-status', flexibleAuth, async (_req, res) => {
+  try {
+    const result = await turso.execute(
+      "SELECT id, slug, title, devto_posted, devto_id, created_at FROM blogs WHERE published = 1 ORDER BY created_at DESC"
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Fetch devto status error:', err)
+    res.status(500).json({ error: 'Failed to fetch Dev.to status' })
+  }
+})
+
 // Get blogs not yet posted to Dev.to (for n8n polling)
 app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
   try {

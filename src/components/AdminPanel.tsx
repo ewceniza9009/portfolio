@@ -6,7 +6,7 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2, Workflow, BookOpen
+  Maximize2, Minimize2, Workflow, BookOpen, Activity
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -343,6 +343,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [devtoApiKey, setDevtoApiKey] = useState('')
   const [devtoUsername, setDevtoUsername] = useState('')
   const [devtoSaved, setDevtoSaved] = useState(false)
+  const [devtoStatus, setDevtoStatus] = useState<any[]>([])
+  const [devtoStatusLoading, setDevtoStatusLoading] = useState(false)
 
   const loadN8nSettings = useCallback(async () => {
     try {
@@ -356,6 +358,19 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         setDevtoUsername(data?.devto_username || '')
       }
     } catch {}
+  }, [])
+
+  const loadDevtoStatus = useCallback(async () => {
+    try {
+      setDevtoStatusLoading(true)
+      const res = await api('/api/admin/blogs/devto-status')
+      if (res.ok) {
+        const data = await res.json()
+        setDevtoStatus(data)
+      }
+    } catch {} finally {
+      setDevtoStatusLoading(false)
+    }
   }, [])
 
   const handleN8nSave = async () => {
@@ -381,8 +396,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     if (activeTab === 'settings') {
       loadPaypalUrl()
       loadN8nSettings()
+      loadDevtoStatus()
     }
-  }, [activeTab, loadPaypalUrl, loadN8nSettings])
+  }, [activeTab, loadPaypalUrl, loadN8nSettings, loadDevtoStatus])
   const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
     return getSafeItem('rotation_theme_enabled') !== 'false'
   })
@@ -2289,6 +2305,77 @@ const res = await api(`/api/visitors?${params.toString()}`)
                     >
                       {n8nSaved ? 'Saved' : 'Save n8n'}
                     </button>
+                  </div>
+                </div>
+
+                {/* Section 8: Dev.to Sync Status Console */}
+                <div className="p-6 rounded-2xl border bg-white/[0.01] space-y-4" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity size={16} style={{ color: 'var(--accent)' }} />
+                      <h4 className="text-xs font-bold uppercase tracking-wide">Dev.to Sync Status</h4>
+                    </div>
+                    <button
+                      onClick={loadDevtoStatus}
+                      disabled={devtoStatusLoading}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
+                      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                    >
+                      <RefreshCw size={10} className={devtoStatusLoading ? 'animate-spin' : ''} />
+                      Refresh
+                    </button>
+                  </div>
+
+                  {devtoStatusLoading && devtoStatus.length === 0 ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader size={16} className="animate-spin" style={{ color: 'var(--accent)' }} />
+                    </div>
+                  ) : devtoStatus.length === 0 ? (
+                    <p className="text-xs text-center py-6" style={{ color: 'var(--text-muted)' }}>No published blogs found.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                      {devtoStatus.map((blog: any) => (
+                        <div
+                          key={blog.id}
+                          className="flex items-center justify-between p-3 rounded-xl border"
+                          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>{blog.title}</p>
+                            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
+                              {blog.slug} · {new Date(blog.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 ml-3">
+                            {blog.devto_posted ? (
+                              <a
+                                href={`https://dev.to/${devtoUsername || 'dev'}/${blog.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all hover:brightness-110"
+                                style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981' }}
+                              >
+                                <CheckCircle2 size={10} />
+                                Posted
+                              </a>
+                            ) : (
+                              <span
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border"
+                                style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b' }}
+                              >
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    <span className="font-bold">{devtoStatus.filter((b: any) => b.devto_posted).length}</span> posted
+                    <span className="opacity-30">·</span>
+                    <span className="font-bold">{devtoStatus.filter((b: any) => !b.devto_posted).length}</span> pending
                   </div>
                 </div>
 
