@@ -186,6 +186,27 @@ const projects = [
     fallback: "/img/6-thumbnail.jpg"
   },
   {
+    id: 10,
+    title: "GenMatrix",
+    subtitle: "Binary MLM Platform",
+    description: "A full-stack binary multi-level marketing platform that manages distributor networks organized in a binary tree structure, handling everything from enrollment and genealogy visualization through commission calculation, wallet management, KYC verification, and an integrated product shop.",
+    details: [
+      "**Binary Genealogy Tree** : Interactive D3-powered tree visualization with zoom/pan, three view modes (standard, list, matrix), and materialized path pattern for O(1) subtree queries across the distributor network.",
+      "**Commission Engine** : Configurable compensation plan supporting referral bonuses, binary pairing with multiple ratio formats (1:1, 1:2, 2:3), multi-generation matching bonuses, rank advancement rewards, and daily cap carry-forward logic.",
+      "**Wallet & Financial System** : Real-time e-wallet with full transaction ledger, peer-to-peer fund transfers, withdrawal requests with KYC gate, and immutable commission records for lifetime earnings tracking.",
+      "**Security & Compliance** : Two-factor authentication via TOTP, document-based KYC with admin review workflow, JWT-based RBAC, rate limiting, and Helmet HTTP header protection."
+    ],
+    tech: ["React", "TypeScript", "Redux Toolkit", "Node.js", "Express", "MongoDB", "Tailwind CSS", "Vite", "Docker"],
+    year: "2026",
+    type: "Emerging",
+    color: "#8b5cf6",
+    repo: "https://github.com/erwinwilsonceniza/GenMatrix",
+    demo: null,
+    video: "https://github.com/user-attachments/assets/381e6f26-e5a0-4947-80d7-8414c1b4df6e",
+    image: "/img/GenMatrix.png",
+    fallback: "/img/10-thumbnail.jpg"
+  },
+  {
     id: 7,
     title: "POS System",
     subtitle: "Point of Sale (Desktop & Mobile)",
