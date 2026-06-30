@@ -50,8 +50,8 @@
           "conditions": [
             {
               "id": "check-results",
-              "leftValue": "={{ $json.length }}",
-              "rightValue": "0",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
               "operator": {
                 "type": "number",
                 "operation": "gt"
