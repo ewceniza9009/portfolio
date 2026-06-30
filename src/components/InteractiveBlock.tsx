@@ -32,7 +32,7 @@ function StepThrough({ steps, height }: { steps: string[]; height: string }) {
 
   return (
     <div className="flex flex-col" style={{ height }}>
-      <div className="flex-1 overflow-auto p-6 space-y-4">
+      <div className="flex-1 overflow-auto p-6 space-y-4 text-left">
         {steps.map((step, i) => (
           <div key={i} className={`transition-all duration-500 ${revealed.includes(i) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 h-0 overflow-hidden'}`}>
             <div className={`flex items-start gap-3 p-4 rounded-xl border ${i === current ? 'border-[var(--accent)] bg-[var(--accent-dim)]' : 'border-[var(--border)] bg-[var(--bg-card)]'}`}>
@@ -240,14 +240,11 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
           }
           body.push(raw)
         }
-        if (header.length > 0) {
-          const safeBody = body.map(line => { const t = line.trimStart(); return (t.startsWith('[') || t.startsWith('(')) ? ' '.repeat(line.length - t.length) + ';' + t : line })
-          const containerRef = `var __ib_container = arguments[0];`
-          const patchedBody = safeBody.map(l => l.replace(/document\.currentScript\.parentElement/g, '__ib_container'))
-          const fnBody = containerRef + '\n' + header.join('\n') + '\n\n' + patchedBody.join('\n')
-          const fn = new Function('__ib_container', `return (async function(){\n${fnBody}\n})()`)
-          fn(wrapper).catch((e: any) => console.error('[interactive]', e))
-        }
+        const safeBody = body.map(line => { const t = line.trimStart(); return (t.startsWith('[') || t.startsWith('(')) ? ' '.repeat(line.length - t.length) + ';' + t : line })
+        const patchedBody = safeBody.map(l => l.replace(/document\.currentScript\.parentElement/g, '__ib_container'))
+        const fnBody = `var __ib_container = arguments[0];\n` + header.join('\n') + (header.length > 0 ? '\n\n' : '') + patchedBody.join('\n')
+        const fn = new Function('__ib_container', `return (async function(){\n${fnBody}\n})()`)
+        fn(wrapper).catch((e: any) => console.error('[interactive]', e))
       } else {
         const s = document.createElement('script')
         s.textContent = rawCode
