@@ -334,6 +334,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   // ── n8n Integration Settings ──
+  const [n8nPortfolioKey, setN8nPortfolioKey] = useState('')
   const [n8nDevtoKey, setN8nDevtoKey] = useState('')
   const [n8nWebhookUrl, setN8nWebhookUrl] = useState('')
   const [n8nSaved, setN8nSaved] = useState(false)
@@ -350,6 +351,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       const res = await api('/api/settings')
       if (res.ok) {
         const data = await res.json()
+        setN8nPortfolioKey(data?.n8n_portfolio_api_key || '')
         setN8nDevtoKey(data?.n8n_devto_api_key || '')
         setN8nWebhookUrl(data?.n8n_webhook_url || '')
         setDevtoApiKey(data?.devto_api_key || '')
@@ -383,6 +385,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
   const handleN8nSave = async () => {
     await saveSettings({
+      n8n_portfolio_api_key: n8nPortfolioKey.trim(),
       n8n_devto_api_key: n8nDevtoKey.trim(),
       n8n_webhook_url: n8nWebhookUrl.trim(),
     })
@@ -2380,8 +2383,19 @@ const res = await api(`/api/visitors?${params.toString()}`)
                         )}
                       </div>
                       <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
-                        Required for n8n to call portfolio API. Token is server-stored only — not shown to you again.
+                        Required for n8n to call portfolio API. If you lose it, just click "Regenerate".
                       </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Or Paste Existing Token (Optional)</label>
+                      <input
+                        type="password"
+                        placeholder="Paste a token from another source if you have one"
+                        value={n8nPortfolioKey}
+                        onChange={(e) => setN8nPortfolioKey(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Dev.to API Key (for n8n)</label>
