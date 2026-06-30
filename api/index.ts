@@ -671,6 +671,7 @@ ${blog.content?.slice(0, 3000) || blog.summary || ''}`
     const tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
 
     res.json({
+      original_id: blog.id,
       title: blog.title,
       body_markdown: summary,
       tags,
