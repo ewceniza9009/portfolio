@@ -69,6 +69,21 @@
     },
     {
       "parameters": {
+        "options": {
+          "fields": {
+            "include": ["*"],
+            "exclude": []
+          }
+        }
+      },
+      "id": "limit-to-one",
+      "name": "Limit to 1 Blog",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.id + '/devto-summary' }}",
         "sendHeaders": true,
@@ -86,7 +101,7 @@
       "name": "AI Summarize for Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [660, -100]
+      "position": [880, -100]
     },
     {
       "parameters": {
@@ -110,12 +125,26 @@
       "name": "Post to Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, -100]
+      "position": [1100, -100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 30000
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-after-post",
+      "name": "Wait 30s (rate limit)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1320, -100]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + ($('AI Summarize for Dev.to').item.json.original_id || $('Fetch Unposted Blogs').item.json[0].id) + '/devto-mark' }}",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $('AI Summarize for Dev.to').item.json.original_id + '/devto-mark' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -140,7 +169,7 @@
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, -100]
+      "position": [1540, -100]
     },
     {
       "parameters": {},
@@ -178,7 +207,7 @@
       "main": [
         [
           {
-            "node": "AI Summarize for Dev.to",
+            "node": "Limit to 1 Blog",
             "type": "main",
             "index": 0
           }
@@ -186,6 +215,17 @@
         [
           {
             "node": "No Action Needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to 1 Blog": {
+      "main": [
+        [
+          {
+            "node": "AI Summarize for Dev.to",
             "type": "main",
             "index": 0
           }
@@ -207,6 +247,17 @@
       "main": [
         [
           {
+            "node": "Wait 30s (rate limit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s (rate limit)": {
+      "main": [
+        [
+          {
             "node": "Mark as Posted",
             "type": "main",
             "index": 0
@@ -225,6 +276,6 @@
   "updatedAt": "2026-06-30T00:00:00.000Z",
   "versionId": "1",
   "_meta": {
-    "instructions": "1. Import this workflow 2. No credentials needed — headers are inline 3. Activate. Tokens are baked in. Replace this file if you need to rotate."
+    "instructions": "1. Import this workflow 2. Activate — no credentials needed (headers inline) 3. Processes 1 blog per run (Limit to 1) 4. Waits 30s after Dev.to post 4. Auto-retry with 30s backoff on 429/5xx"
   }
 }
