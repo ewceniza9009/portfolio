@@ -69,16 +69,11 @@
     },
     {
       "parameters": {
-        "options": {
-          "fields": {
-            "include": ["*"],
-            "exclude": []
-          }
-        }
+        "functionCode": "return [{json: items[0].json}];"
       },
-      "id": "limit-to-one",
-      "name": "Limit to 1 Blog",
-      "type": "n8n-nodes-base.splitOut",
+      "id": "take-first",
+      "name": "Take First Blog",
+      "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [660, -100]
     },
@@ -125,7 +120,7 @@
       "name": "Post to Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, -100],
+      "position": [880, -100],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 30000
@@ -139,7 +134,7 @@
       "name": "Wait 30s (rate limit)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1320, -100]
+      "position": [1100, -100]
     },
     {
       "parameters": {
@@ -169,7 +164,7 @@
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1540, -100]
+      "position": [1320, -100]
     },
     {
       "parameters": {},
@@ -207,7 +202,7 @@
       "main": [
         [
           {
-            "node": "Limit to 1 Blog",
+            "node": "Take First Blog",
             "type": "main",
             "index": 0
           }
@@ -221,7 +216,7 @@
         ]
       ]
     },
-    "Limit to 1 Blog": {
+    "Take First Blog": {
       "main": [
         [
           {
@@ -276,6 +271,6 @@
   "updatedAt": "2026-06-30T00:00:00.000Z",
   "versionId": "1",
   "_meta": {
-    "instructions": "1. Import this workflow 2. Activate — no credentials needed (headers inline) 3. Processes 1 blog per run (Limit to 1) 4. Waits 30s after Dev.to post 4. Auto-retry with 30s backoff on 429/5xx"
+    "instructions": "1. Import 2. Activate 3. 1 blog per run, 30s wait, auto-retry on 429"
   }
 }
