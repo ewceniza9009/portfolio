@@ -178,6 +178,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [aiModels, setAiModels] = useState<string[]>([])
   const [defaultAiModel, setDefaultAiModel] = useState('gemini-2.5-flash')
   const [defaultAiModelSaved, setDefaultAiModelSaved] = useState<boolean>(false)
+  const [aiProvider, setAiProvider] = useState<string>('gemini')
+  const [aiProvidersConfig, setAiProvidersConfig] = useState<Record<string, { name: string; defaultModel: string; freeModels: string[]; requiresApiKey: boolean; apiKeyEnv?: string }>>({})
+  const [aiProviderSaved, setAiProviderSaved] = useState<boolean>(false)
 
   // ── Tab 2: Blogs State ──
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -331,6 +334,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     await saveSettings({ default_ai_model: defaultAiModel })
     setDefaultAiModelSaved(true)
     setTimeout(() => setDefaultAiModelSaved(false), 1500)
+  }
+
+  const handleProviderSave = async () => {
+    await saveSettings({ ai_provider: aiProvider })
+    setAiProviderSaved(true)
+    setTimeout(() => setAiProviderSaved(false), 1500)
   }
 
   // ── n8n Integration Settings ──
@@ -775,6 +784,17 @@ const res = await api(`/api/visitors?${params.toString()}`)
     } catch {}
   }
 
+  const fetchProviders = async () => {
+    try {
+      const res = await api('/api/ai/providers')
+      if (res.ok) {
+        const data = await res.json()
+        setAiProvider(data.currentProvider || 'gemini')
+        setAiProvidersConfig(data.providers || {})
+      }
+    } catch {}
+  }
+
   const fetchSettings = async () => {
     try {
       const res = await api('/api/settings')
@@ -819,7 +839,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
     if (token) {
       // Non-blocking: defer data fetches so login transition isn't blocked
       setTimeout(() => { fetchMessages(); fetchBlogs() }, 0)
-      setTimeout(() => { fetchModels(); fetchSettings() }, 50)
+      setTimeout(() => { fetchModels(); fetchSettings(); fetchProviders() }, 50)
     }
   }, [token])
 
@@ -877,17 +897,23 @@ const res = await api(`/api/visitors?${params.toString()}`)
 
     setAiLoading(true)
     try {
-      const res = await api('/api/ai/compose', {
-        method: 'POST',
+      if (aiProvider === 'puter' && window.puter?.ai) {
+        const fullPrompt = `You are helping compose a professional email reply. Context:\nOriginal message from ${selected.name} (${selected.email}):\n${selected.message}\n\nInstructions: ${promptText}\n\nWrite the email reply body only (no subject line).`
+        const response = await window.puter.ai.chat(fullPrompt, { model: defaultAiModel })
+        setReplyBody(typeof response === 'string' ? response : String(response))
+      } else {
+        const res = await api('/api/ai/compose', {
+          method: 'POST',
           body: JSON.stringify({
-          prompt: promptText,
-          model: defaultAiModel,
-          context: `Original message from ${selected.name} (${selected.email}):\n${selected.message}`,
-        }),
-      })
-      if (!res.ok) throw new Error('AI generation failed')
-      const data = await res.json()
-      setReplyBody(data.body)
+            prompt: promptText,
+            model: defaultAiModel,
+            context: `Original message from ${selected.name} (${selected.email}):\n${selected.message}`,
+          }),
+        })
+        if (!res.ok) throw new Error('AI generation failed')
+        const data = await res.json()
+        setReplyBody(data.body)
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -1072,26 +1098,44 @@ const res = await api(`/api/visitors?${params.toString()}`)
 
     setBlogAiLoading(true)
     try {
-      const res = await api('/api/admin/blogs/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          prompt: blogAiPrompt || (mode === 'write' ? 'Write a section about full-stack architectures' : ''),
-          content: blogContent,
-          title: blogTitle,
-          mode: mode
-        })
-      })
-      if (!res.ok) throw new Error('AI generation failed')
-      const data = await res.json()
-      
-      if (mode === 'summary') {
-        setBlogSummary(data.result)
-      } else if (mode === 'outline') {
-        setBlogContent(prev => prev ? `${prev}\n\n${data.result}` : data.result)
-      } else if (mode === 'polish') {
-        setBlogContent(data.result)
+      let resultText = ''
+
+      if (aiProvider === 'puter' && window.puter?.ai) {
+        let fullPrompt = ''
+        if (mode === 'outline') {
+          fullPrompt = `You are a professional tech blogger. Generate a detailed, high-quality blog outline in Markdown for an article titled "${blogTitle}". Focus area/idea: ${blogAiPrompt || ''}. Focus on rendering clean headings, bullet points, and brief section ideas.`
+        } else if (mode === 'polish') {
+          fullPrompt = `You are a professional editor. Rewrite and polish the following draft in Markdown, improving clarity, grammar, flow, and vocabulary, while preserving the exact technical details and context:\n\n${blogContent}`
+        } else if (mode === 'summary') {
+          fullPrompt = `Summarize the following technical blog post in 1 or 2 sentences for an excerpt/summary field (max 150 characters):\n\n${blogContent}`
+        } else {
+          fullPrompt = `Write or assist in writing a section for a tech blog post about: ${blogAiPrompt || ''}.\nContext/draft so far:\n${blogContent || ''}\n\nReturn output in clean Markdown format.`
+        }
+        const response = await window.puter.ai.chat(fullPrompt, { model: defaultAiModel })
+        resultText = typeof response === 'string' ? response : String(response)
       } else {
-        setBlogContent(prev => prev ? `${prev}\n\n${data.result}` : data.result)
+        const res = await api('/api/admin/blogs/generate', {
+          method: 'POST',
+          body: JSON.stringify({
+            prompt: blogAiPrompt || (mode === 'write' ? 'Write a section about full-stack architectures' : ''),
+            content: blogContent,
+            title: blogTitle,
+            mode: mode
+          })
+        })
+        if (!res.ok) throw new Error('AI generation failed')
+        const data = await res.json()
+        resultText = data.result
+      }
+
+      if (mode === 'summary') {
+        setBlogSummary(resultText.trim())
+      } else if (mode === 'outline') {
+        setBlogContent(prev => prev ? `${prev}\n\n${resultText.trim()}` : resultText.trim())
+      } else if (mode === 'polish') {
+        setBlogContent(resultText.trim())
+      } else {
+        setBlogContent(prev => prev ? `${prev}\n\n${resultText.trim()}` : resultText.trim())
       }
       setBlogAiPrompt('')
     } catch (err) {
@@ -2239,12 +2283,44 @@ const res = await api(`/api/visitors?${params.toString()}`)
                   </div>
                 </div>
 
+                {/* Section 4b: AI Provider */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-7 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide">AI Provider</h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Switch between Gemini (server-side, requires API key) and Puter (client-side, free, no key needed).
+                    </p>
+                  </div>
+                  <div className="md:col-span-5 flex items-center justify-end gap-2">
+                    <select
+                      value={aiProvider}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className="flex-1 max-w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                      style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                    >
+                      <option value="gemini">Gemini (Server-side)</option>
+                      <option value="puter">Puter (Client-side, Free)</option>
+                    </select>
+                    <button
+                      onClick={handleProviderSave}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 shrink-0"
+                      style={{
+                        background: aiProviderSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: aiProviderSaved ? 'var(--accent)' : 'var(--border)',
+                        color: aiProviderSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {aiProviderSaved ? 'Saved' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Section 5: AI Default Model */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
                   <div className="md:col-span-7 space-y-1">
                     <h4 className="text-xs font-bold uppercase tracking-wide">AI Default Model</h4>
                     <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      Model used for AI Compose, Blog Helper, and Dev.to cross-posts. Configure once, used everywhere.
+                      Model used for AI Compose, Blog Helper, and Dev.to cross-posts. Available models depend on the active provider.
                     </p>
                   </div>
                   <div className="md:col-span-5 flex items-center justify-end gap-2">
@@ -2254,10 +2330,10 @@ const res = await api(`/api/visitors?${params.toString()}`)
                       className="flex-1 max-w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)] appearance-none cursor-pointer"
                       style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
                     >
-                      {aiModels.map(m => (
+                      {(aiProvidersConfig[aiProvider]?.freeModels || aiModels).map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
-                      {aiModels.length === 0 && (
+                      {aiModels.length === 0 && (!aiProvidersConfig[aiProvider] || !aiProvidersConfig[aiProvider]?.freeModels?.length) && (
                         <>
                           <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                           <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
