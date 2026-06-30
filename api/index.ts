@@ -12,6 +12,33 @@ const app = express()
 app.use(cors({ origin: '*' }))
 app.use(express.json())
 
+// ── IndexNow: Instant indexing notification ──
+const INDEXNOW_KEY = '89e86d03dd5eaacd56983cc66c300f05'
+const SITE_URL = 'https://erwinwilsonceniza.qzz.io'
+const INDEXNOW_ENDPOINTS = [
+  'https://api.indexnow.org/indexnow',
+  'https://www.bing.com/indexnow',
+]
+
+async function notifyIndexNow(urls: string[]) {
+  if (!urls.length) return
+  const payload = {
+    host: 'erwinwilsonceniza.qzz.io',
+    key: INDEXNOW_KEY,
+    keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
+    urlList: urls,
+  }
+  for (const endpoint of INDEXNOW_ENDPOINTS) {
+    try {
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify(payload),
+      })
+    } catch {}
+  }
+}
+
 // In-memory rate limiting for visit tracking (per IP, max 30 requests per minute)
 const visitRateLimit = new Map<string, { count: number; resetTime: number }>()
 const VISIT_RATE_LIMIT = 30
@@ -390,6 +417,11 @@ app.post('/api/admin/blogs', authMiddleware, async (req, res) => {
     })
 
     res.json({ success: true, id })
+
+    // Notify search engines of new page
+    if (published) {
+      notifyIndexNow([`${SITE_URL}/blogs/${slug}`])
+    }
   } catch (err: any) {
     console.error('Create blog error:', err)
     if (err.message && err.message.includes('UNIQUE constraint failed')) {
@@ -413,6 +445,11 @@ app.put('/api/admin/blogs/:id', authMiddleware, async (req, res) => {
     })
 
     res.json({ success: true })
+
+    // Notify search engines of updated page
+    if (published) {
+      notifyIndexNow([`${SITE_URL}/blogs/${slug}`])
+    }
   } catch (err: any) {
     console.error('Update blog error:', err)
     if (err.message && err.message.includes('UNIQUE constraint failed')) {
@@ -429,6 +466,10 @@ app.delete('/api/admin/blogs/:id', authMiddleware, async (req, res) => {
       sql: 'DELETE FROM blogs WHERE id = ?',
       args: [req.params.id as string],
     })
+
+    // Notify search engines of removed page (submit homepage to trigger recrawl)
+    notifyIndexNow([`${SITE_URL}/`, `${SITE_URL}/sitemap.xml`])
+
     res.json({ success: true })
   } catch (err) {
     console.error('Delete blog error:', err)
@@ -479,6 +520,21 @@ app.post('/api/admin/blogs/generate', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('AI blog helper error:', err)
     res.status(500).json({ error: 'Failed to run AI blog helper' })
+  }
+})
+
+// ── Admin: Manual IndexNow trigger ──
+app.post('/api/admin/indexnow', authMiddleware, async (req, res) => {
+  try {
+    const { urls } = req.body
+    if (!Array.isArray(urls) || !urls.length) {
+      return res.status(400).json({ error: 'urls array is required' })
+    }
+    await notifyIndexNow(urls)
+    res.json({ success: true, submitted: urls.length })
+  } catch (err) {
+    console.error('IndexNow error:', err)
+    res.status(500).json({ error: 'Failed to notify search engines' })
   }
 })
 
