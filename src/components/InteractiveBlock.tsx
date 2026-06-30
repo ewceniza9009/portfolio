@@ -242,8 +242,8 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
         }
         const safeBody = body.map(line => { const t = line.trimStart(); return (t.startsWith('[') || t.startsWith('(')) ? ' '.repeat(line.length - t.length) + ';' + t : line })
         const patchedBody = safeBody.map(l => l.replace(/document\.currentScript\.parentElement/g, '__ib_container'))
-        const fnBody = `var __ib_container = arguments[0];\n` + header.join('\n') + (header.length > 0 ? '\n\n' : '') + patchedBody.join('\n')
-        const fn = new Function('__ib_container', `return (async function(){\n${fnBody}\n})()`)
+        const fnBody = header.join('\n') + (header.length > 0 ? '\n\n' : '') + patchedBody.join('\n')
+        const fn = new Function('__ib_container', `(async function(__ib_container){\n${fnBody}\n}).call(this, arguments[0])`)
         fn(wrapper).catch((e: any) => console.error('[interactive]', e))
       } else {
         const s = document.createElement('script')
