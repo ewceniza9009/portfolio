@@ -1,5 +1,5 @@
 {
-  "name": "Portfolio → Dev.to Auto-Post (AI Summary)",
+  "name": "Portfolio → Dev.to Auto-Post (AI Summary) — {{DEVTO_USERNAME}}",
   "nodes": [
     {
       "parameters": {
@@ -21,9 +21,17 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.PORTFOLIO_API_URL || 'http://localhost:3000' }}/api/admin/blogs/unposted-devto",
+        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/unposted-devto",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "fetch-unposted",
@@ -69,9 +77,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.PORTFOLIO_API_URL || 'http://localhost:3000' }}/api/admin/blogs/{{ $json.id }}/devto-summary",
+        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/{{ $json.id }}/devto-summary",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "ai-summarize",
@@ -112,7 +128,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.PORTFOLIO_API_URL || 'http://localhost:3000' }}/api/admin/blogs/{{ $('AI Summarize for Dev.to').item.json.original_id || $('Fetch Unposted Blogs').item.json[0].id }}/devto-mark",
+        "url": "={{ {{BASE_URL}} }}/api/admin/blogs/{{ $('AI Summarize for Dev.to').item.json.original_id || $('Fetch Unposted Blogs').item.json[0].id }}/devto-mark",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -218,5 +234,11 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 1,
-  "versionId": "1"
+  "updatedAt": "2026-06-30T00:00:00.000Z",
+  "versionId": "1",
+  "_meta": {
+    "generatedAt": "{{BASE_URL}}",
+    "devtoUsername": "{{DEVTO_USERNAME}}",
+    "instructions": "1. Import this workflow into n8n 2. Create credential 'PORTFOLIO_API_KEY' with header Authorization = Bearer {{N8N_PORTFOLIO_KEY}} 3. Create credential 'DEVTO_API_KEY' with header api-key = {{N8N_DEVTO_KEY}} 4. Activate"
+  }
 }

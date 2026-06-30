@@ -6,7 +6,7 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2, Workflow, BookOpen, Activity
+  Maximize2, Minimize2, Workflow, BookOpen, Activity, Download
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -360,6 +360,16 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     } catch {}
   }, [])
 
+  const loadTokenStatus = useCallback(async () => {
+    try {
+      const res = await api('/api/admin/token-exists')
+      if (res.ok) {
+        const data = await res.json()
+        setTokenExists(!!data.exists)
+      }
+    } catch {}
+  }, [])
+
   const loadDevtoStatus = useCallback(async () => {
     try {
       setDevtoStatusLoading(true)
@@ -383,6 +393,47 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setTimeout(() => setN8nSaved(false), 1500)
   }
 
+  // ── n8n Workflow Download ──
+  const [downloading, setDownloading] = useState(false)
+  const [tokenExists, setTokenExists] = useState<boolean>(false)
+
+  // Required fields: API token generated, Dev.to API key, Dev.to username
+  const getRequiredFieldsFilled = () => {
+    return tokenExists && devtoApiKey.trim().length > 0 && devtoUsername.trim().length > 0
+  }
+
+  const handleDownloadWorkflow = async () => {
+    if (!getRequiredFieldsFilled()) return
+    try {
+      setDownloading(true)
+      const tokenSession = sessionStorage.getItem('adminToken') || ''
+      const baseUrl = (window.location.hostname === 'localhost' && window.location.port === '5173')
+        ? 'http://localhost:3000'
+        : ''
+      const res = await fetch(`${baseUrl}/api/admin/n8n-workflow-download`, {
+        headers: { Authorization: `Bearer ${tokenSession}` }
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.message || `HTTP ${res.status}`)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'portfolio-devto-workflow.json'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed:', err)
+      alert(`Failed to generate workflow: ${(err as Error).message}`)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   const handleDevtoSettingsSave = async () => {
     await saveSettings({
       devto_api_key: devtoApiKey.trim(),
@@ -397,8 +448,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       loadPaypalUrl()
       loadN8nSettings()
       loadDevtoStatus()
+      loadTokenStatus()
     }
-  }, [activeTab, loadPaypalUrl, loadN8nSettings, loadDevtoStatus])
+  }, [activeTab, loadPaypalUrl, loadN8nSettings, loadDevtoStatus, loadTokenStatus])
   const [rotationThemeEnabled, setRotationThemeEnabled] = useState(() => {
     return getSafeItem('rotation_theme_enabled') !== 'false'
   })
@@ -2293,7 +2345,26 @@ const res = await api(`/api/visitors?${params.toString()}`)
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-3 items-center flex-wrap">
+                    <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                      {getRequiredFieldsFilled() ? '✓ All required fields filled' : '⚠ Required fields missing'}
+                    </span>
+                    <button
+                      onClick={handleDownloadWorkflow}
+                      disabled={!getRequiredFieldsFilled() || downloading}
+                      className="px-4 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 flex items-center gap-2"
+                      style={{
+                        background: getRequiredFieldsFilled() ? 'var(--accent)' : 'var(--bg-secondary)',
+                        borderColor: getRequiredFieldsFilled() ? 'var(--accent)' : 'var(--border)',
+                        color: getRequiredFieldsFilled() ? 'var(--bg-primary)' : 'var(--text-muted)',
+                        opacity: !getRequiredFieldsFilled() || downloading ? 0.5 : 1,
+                        cursor: !getRequiredFieldsFilled() ? 'not-allowed' : 'pointer',
+                      }}
+                      title={getRequiredFieldsFilled() ? 'Download workflow.json with all settings pre-filled' : 'Fill required fields first'}
+                    >
+                      <Download size={11} className={downloading ? 'animate-pulse' : ''} />
+                      {downloading ? 'Downloading…' : 'Download Workflow'}
+                    </button>
                     <button
                       onClick={handleN8nSave}
                       className="px-4 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95"

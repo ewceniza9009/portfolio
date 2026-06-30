@@ -507,6 +507,76 @@ app.post('/api/admin/revoke-token', authMiddleware, async (_req, res) => {
   }
 })
 
+// Check if a token exists (without exposing it)
+app.get('/api/admin/token-exists', authMiddleware, async (_req, res) => {
+  try {
+    const result = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'api_token'", args: [] })
+    res.json({ exists: result.rows.length > 0 && !!(result.rows[0] as any).value })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to check token' })
+  }
+})
+
+// ── Admin: Download n8n workflow JSON (with all settings pre-filled) ──
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+app.get('/api/admin/n8n-workflow-download', authMiddleware, async (_req, res) => {
+  try {
+    // Load all required settings
+    const settingKeys = ['api_token', 'devto_api_key', 'devto_username', 'n8n_portfolio_api_key', 'n8n_devto_api_key', 'n8n_webhook_url']
+    const placeholders: Record<string, string> = {}
+    const missing: string[] = []
+
+    for (const key of settingKeys) {
+      const result = await turso.execute({ sql: 'SELECT value FROM settings WHERE key = ?', args: [key] })
+      const val = (result.rows[0] as any)?.value || ''
+      placeholders[key] = val
+      // Required: api_token, devto_api_key, devto_username
+      if (['api_token', 'devto_api_key', 'devto_username'].includes(key) && !val) {
+        missing.push(key)
+      }
+    }
+
+    if (missing.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required settings',
+        missing,
+        message: `Please fill in the following before downloading the workflow: ${missing.join(', ')}`,
+      })
+    }
+
+    // Read the template workflow file
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const templatePath = path.join(__dirname, '..', 'n8n-devto-workflow.json')
+
+    let template = fs.readFileSync(templatePath, 'utf-8')
+
+    // Replace placeholders in the template
+    template = template.replace(/\{\{BASE_URL\}\}/g, SITE_URL)
+    template = template.replace(/\{\{API_TOKEN\}\}/g, placeholders.api_token)
+    template = template.replace(/\{\{DEVTO_API_KEY\}\}/g, placeholders.devto_api_key)
+    template = template.replace(/\{\{DEVTO_USERNAME\}\}/g, placeholders.devto_username)
+    template = template.replace(/\{\{N8N_PORTFOLIO_KEY\}\}/g, placeholders.n8n_portfolio_api_key || placeholders.api_token)
+    template = template.replace(/\{\{N8N_DEVTO_KEY\}\}/g, placeholders.n8n_devto_api_key || placeholders.devto_api_key)
+
+    // Validate JSON parses correctly
+    try {
+      JSON.parse(template)
+    } catch (e) {
+      return res.status(500).json({ error: 'Generated workflow JSON is invalid' })
+    }
+
+    res.set('Content-Type', 'application/json')
+    res.set('Content-Disposition', `attachment; filename="portfolio-devto-workflow.json"`)
+    res.send(template)
+  } catch (err) {
+    console.error('n8n workflow download error:', err)
+    res.status(500).json({ error: 'Failed to generate workflow' })
+  }
+})
+
 // ── Admin: Dev.to Sync Endpoints ──
 
 // Get all blogs with Dev.to sync status (for debug console)
