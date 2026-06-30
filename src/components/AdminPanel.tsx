@@ -215,6 +215,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(null)
   const [focusContentMode, setFocusContentMode] = useState(false)
   const { setEditor: setMonacoEditor } = useMarkdownInsert()
+  const parsedBlogContent = useMemo(() => blogContent ? parseMarkdown(blogContent, theme, accent) : null, [blogContent, theme, accent])
 
   useEffect(() => {
     if (focusContentMode) {
@@ -1877,8 +1878,8 @@ const res = await api(`/api/visitors?${params.toString()}`)
                             {blogTags && <span>Tags: {blogTags}</span>}
                           </div>
                           
-                          {blogContent ? (
-                            parseMarkdown(blogContent, theme, accent)
+                          {parsedBlogContent ? (
+                            parsedBlogContent
                           ) : (
                             <p className="italic text-center text-xs opacity-50 py-10">No markdown content written yet.</p>
                           )}
