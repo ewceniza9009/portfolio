@@ -203,8 +203,8 @@ const projects = [
     repo: "https://github.com/ewceniza9009/GenMatrix",
     demo: null,
     video: "https://github.com/user-attachments/assets/381e6f26-e5a0-4947-80d7-8414c1b4df6e",
-    image: "/img/GenMatrix.png",
-    fallback: "/img/10-thumbnail.jpg"
+    image: "/img/mlm.png",
+    fallback: "/img/mlm.png"
   },
   {
     id: 7,
