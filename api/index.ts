@@ -31,7 +31,7 @@ function ensureDb() {
 }
 
 // Ensure DB is initialized before processing any request
-app.use(async (req, res, next) => {
+app.use(async (_req, res, next) => {
   try {
     await ensureDb()
     next()
@@ -540,7 +540,6 @@ app.post('/api/visit', async (req, res) => {
     }
     const userAgent = req.headers['user-agent'] || ''
     const referrer = (req.headers['referer'] as string) || ''
-    const path = req.body?.path || '/'
     const ref = req.body?.ref || ''
 
     const existing = await turso.execute({
