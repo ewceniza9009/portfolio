@@ -1048,7 +1048,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
   }
 
   return (
-    <div className="min-h-screen flex flex-col transition-all duration-300" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div className="h-screen flex flex-col overflow-hidden transition-all duration-300" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       
       {/* Dashboard Header */}
       <header className="border-b px-3 md:px-6 py-3 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between sticky top-0 z-30 glass shadow-sm gap-3" style={{ borderColor: 'var(--border)' }}>
@@ -1155,7 +1155,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 h-[calc(100vh-var(--header-h,80px))] overflow-y-auto md:overflow-hidden" style={{ '--header-h': activeTab === 'analytics' || activeTab === 'settings' ? '140px' : '80px' } as any}>
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 h-[calc(100vh-var(--header-h,80px))] overflow-hidden" style={{ '--header-h': activeTab === 'analytics' || activeTab === 'settings' ? '140px' : '80px' } as any}>
         <div className="grid grid-cols-1 gap-3 md:gap-6 h-full items-stretch md:grid-cols-12">
           
           {/* TAB 1: MESSAGES DASHBOARD */}
