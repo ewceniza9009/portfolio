@@ -6,8 +6,7 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2, Bold, Italic, Heading1, Heading2, Code,
-  List, Link as LinkIcon, Quote, Image, Minus, Table, Box
+  Maximize2, Minimize2
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -215,7 +214,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogDeleting, setBlogDeleting] = useState(false)
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(null)
   const [focusContentMode, setFocusContentMode] = useState(false)
-  const { setEditor: setMonacoEditor, insertMarkdown } = useMarkdownInsert()
+  const { setEditor: setMonacoEditor } = useMarkdownInsert()
 
   useEffect(() => {
     if (focusContentMode) {
@@ -1789,54 +1788,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
                               </button>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-0.5 p-1.5 rounded-t-xl border border-b-0" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
-                              {[
-                                { icon: <Heading1 size={13} />, action: () => insertMarkdown('# ', '', 'Heading'), tip: 'Heading 1' },
-                                { icon: <Heading2 size={13} />, action: () => insertMarkdown('## ', '', 'Heading'), tip: 'Heading 2' },
-                                { icon: <Bold size={13} />, action: () => insertMarkdown('**', '**', 'bold text'), tip: 'Bold' },
-                                { icon: <Italic size={13} />, action: () => insertMarkdown('*', '*', 'italic text'), tip: 'Italic' },
-                                { icon: <Code size={13} />, action: () => insertMarkdown('`', '`', 'code'), tip: 'Inline Code' },
-                                { icon: <Quote size={13} />, action: () => insertMarkdown('> ', '', 'quote'), tip: 'Blockquote' },
-                                { icon: <List size={13} />, action: () => insertMarkdown('- ', '', 'list item'), tip: 'List' },
-                                { icon: <LinkIcon size={13} />, action: () => insertMarkdown('[', '](url)', 'link text'), tip: 'Link' },
-                                { icon: <Image size={13} />, action: () => insertMarkdown('![', '](url)', 'alt text'), tip: 'Image' },
-                                { icon: <Minus size={13} />, action: () => insertMarkdown('\n---\n'), tip: 'Divider' },
-                                { icon: <Table size={13} />, action: () => insertMarkdown('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n'), tip: 'Table' },
-                              ].map((btn, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={btn.action}
-                                  title={btn.tip}
-                                  className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
-                                  style={{ color: 'var(--text-muted)' }}
-                                >
-                                  {btn.icon}
-                                </button>
-                              ))}
-                              <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-                              <button
-                                type="button"
-                                onClick={() => insertMarkdown('\n```\n', '\n```\n', 'code block')}
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors font-mono"
-                                style={{ color: 'var(--text-muted)' }}
-                              >
-                                {'```'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => insertMarkdown(
-                                  '\n```interactive-3d\n<canvas id="scene1"></canvas>\n<script type="module">\n  import * as THREE from \'three\'\n  // Your Three.js code here\n</script>\n```\n'
-                                )}
-                                title="Insert 3D Scene"
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-1"
-                                style={{ color: 'var(--text-muted)' }}
-                              >
-                                <Box size={13} /> 3D
-                              </button>
-                            </div>
-
-                            <div className="rounded-b-xl border overflow-hidden" style={{ borderColor: 'var(--border)', borderTopLeftRadius: 0, borderTopRightRadius: 0, height: '350px' }}>
+                            <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', height: '350px' }}>
                               <MarkdownEditor
                                 value={blogContent}
                                 onChange={setBlogContent}
@@ -2706,53 +2658,6 @@ const res = await api(`/api/visitors?${params.toString()}`)
                     {blogTitle && <span className="text-xs opacity-50">— {blogTitle}</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Toolbar in header */}
-                    <div className="hidden sm:flex items-center gap-0.5 mr-2">
-                      {[
-                        { icon: <Heading1 size={14} />, action: () => insertMarkdown('# ', '', 'Heading'), tip: 'Heading 1' },
-                        { icon: <Heading2 size={14} />, action: () => insertMarkdown('## ', '', 'Heading'), tip: 'Heading 2' },
-                        { icon: <Bold size={14} />, action: () => insertMarkdown('**', '**', 'bold text'), tip: 'Bold' },
-                        { icon: <Italic size={14} />, action: () => insertMarkdown('*', '*', 'italic text'), tip: 'Italic' },
-                        { icon: <Code size={14} />, action: () => insertMarkdown('`', '`', 'code'), tip: 'Inline Code' },
-                        { icon: <Quote size={14} />, action: () => insertMarkdown('> ', '', 'quote'), tip: 'Blockquote' },
-                        { icon: <List size={14} />, action: () => insertMarkdown('- ', '', 'list item'), tip: 'List' },
-                        { icon: <LinkIcon size={14} />, action: () => insertMarkdown('[', '](url)', 'link text'), tip: 'Link' },
-                        { icon: <Image size={14} />, action: () => insertMarkdown('![', '](url)', 'alt text'), tip: 'Image' },
-                        { icon: <Minus size={14} />, action: () => insertMarkdown('\n---\n'), tip: 'Divider' },
-                        { icon: <Table size={14} />, action: () => insertMarkdown('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n'), tip: 'Table' },
-                      ].map((btn, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={btn.action}
-                          title={btn.tip}
-                          className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
-                          style={{ color: 'var(--text-muted)' }}
-                        >
-                          {btn.icon}
-                        </button>
-                      ))}
-                      <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('\n```\n', '\n```\n', 'code block')}
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors font-mono"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        {'```'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown(
-                          '\n```interactive-3d\n<canvas id="scene1"></canvas>\n<script type="module">\n  import * as THREE from \'three\'\n  // Your Three.js code here\n</script>\n```\n'
-                        )}
-                        title="Insert 3D Scene"
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-1"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        <Box size={14} /> 3D
-                      </button>
-                    </div>
                     <button
                       type="button"
                       onClick={() => setFocusContentMode(false)}
@@ -2762,31 +2667,6 @@ const res = await api(`/api/visitors?${params.toString()}`)
                       <Minimize2 size={12} /> Exit Focus
                     </button>
                   </div>
-                </div>
-
-                {/* Mobile toolbar */}
-                <div className="flex sm:hidden items-center gap-0.5 px-3 py-1.5 border-b overflow-x-auto shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--glass-bg)' }}>
-                  {[
-                    { icon: <Heading1 size={14} />, action: () => insertMarkdown('# ', '', 'Heading') },
-                    { icon: <Heading2 size={14} />, action: () => insertMarkdown('## ', '', 'Heading') },
-                    { icon: <Bold size={14} />, action: () => insertMarkdown('**', '**', 'bold') },
-                    { icon: <Italic size={14} />, action: () => insertMarkdown('*', '*', 'italic') },
-                    { icon: <Code size={14} />, action: () => insertMarkdown('`', '`', 'code') },
-                    { icon: <Quote size={14} />, action: () => insertMarkdown('> ', '', 'quote') },
-                    { icon: <List size={14} />, action: () => insertMarkdown('- ', '', 'item') },
-                    { icon: <LinkIcon size={14} />, action: () => insertMarkdown('[', '](url)', 'link') },
-                    { icon: <Image size={14} />, action: () => insertMarkdown('![', '](url)', 'img') },
-                  ].map((btn, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={btn.action}
-                      className="p-1.5 rounded-lg hover:bg-[var(--accent)]/10 transition-colors shrink-0"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {btn.icon}
-                    </button>
-                  ))}
                 </div>
 
                 {/* Content */}
