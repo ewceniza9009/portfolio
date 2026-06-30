@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap, Activity, Zap, Palette, Coffee, Lightbulb, Gamepad2, Briefcase } from 'lucide-react'
+import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap, Activity, Zap, Palette, Coffee, Lightbulb, Gamepad2, Briefcase, Filter, X } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
@@ -62,6 +62,22 @@ const formatDate = (dateStr: string) => {
     day: 'numeric'
   })
 }
+
+const relativeDate = (dateStr: string) => {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diffMs = now - then
+  const mins = Math.floor(diffMs / 60000)
+  const hours = Math.floor(diffMs / 3600000)
+  const days = Math.floor(diffMs / 86400000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7) return `${days}d ago`
+  return formatDate(dateStr)
+}
+
+const codePatternSvg = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
 
 const categoryMeta: Record<string, { icon: React.ReactNode; gradient: string; chipGradient: string }> = {
   Engineering: {
@@ -179,6 +195,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   useEffect(() => {
     async function fetchBlogs() {
@@ -277,13 +294,13 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
 
         <main className="flex-grow max-w-6xl w-full mx-auto px-6 pt-32 pb-24 relative z-10">
           
-          {/* Header */}
-          <div className="text-center mb-16 relative">
+          {/* Header — Compact */}
+          <div className="text-center mb-10 relative">
             <motion.div
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider mb-6 backdrop-blur-md"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider mb-4 backdrop-blur-md"
               style={{ borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 5%, transparent)', color: 'var(--accent)' }}
             >
               <Sparkles size={14} className="animate-pulse" />
@@ -293,7 +310,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tighter mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-3"
             >
               Stories & <span style={{ color: 'var(--accent)' }}>Insights</span>
             </motion.h1>
@@ -301,104 +318,155 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-xs sm:text-sm max-w-lg mx-auto leading-relaxed"
+              className="text-xs sm:text-sm max-w-lg mx-auto leading-relaxed mb-3"
               style={{ color: 'var(--text-secondary)' }}
             >
-              A sandbox of technical deep-dives, architectural writeups, and software guides. Fully modular, open for commenting, and interactive.
+              Technical deep-dives, architecture patterns, and real-world lessons.
             </motion.p>
+            {/* Inline Stats */}
+            {!loading && blogs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex items-center justify-center gap-3 text-[11px] font-mono tracking-wider"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <span className="flex items-center gap-1">
+                  <BookOpen size={11} style={{ color: 'var(--accent)' }} className="opacity-60" />
+                  <span className="font-bold" style={{ color: 'var(--text-secondary)' }}>{blogs.length}</span> Articles
+                </span>
+                <span className="opacity-20">·</span>
+                <span className="flex items-center gap-1">
+                  <Layers size={11} style={{ color: 'var(--accent)' }} className="opacity-60" />
+                  <span className="font-bold" style={{ color: 'var(--text-secondary)' }}>{allCategories.length}</span> Categories
+                </span>
+                <span className="opacity-20">·</span>
+                <span className="flex items-center gap-1">
+                  <Heart size={11} style={{ color: 'var(--accent)' }} className="opacity-60" />
+                  <span className="font-bold" style={{ color: 'var(--text-secondary)' }}>{blogs.reduce((s, b) => s + b.likes, 0)}</span> Likes
+                </span>
+              </motion.div>
+            )}
           </div>
 
-          {/* Controls: Search and Filters */}
-          <div className="mb-16 space-y-6">
-            <div className="max-w-xl mx-auto relative group">
-              <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] opacity-[0.05] group-focus-within:opacity-[0.1] blur-md transition-all duration-500 pointer-events-none" />
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-[var(--accent)]" />
-              <input
-                type="text"
-                placeholder="Search articles by title, summary or tag..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-5 py-4 rounded-2xl text-sm transition-all focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 relative z-10 border bg-white/5 backdrop-blur-xl"
-                style={{ 
-                  color: 'var(--text-primary)', 
-                  borderColor: 'var(--border)'
+          {/* Controls: Search + Filter Toggle */}
+          <div className="mb-10 space-y-3">
+            <div className="max-w-xl mx-auto flex gap-2">
+              <div className="flex-1 relative group">
+                <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] opacity-[0.05] group-focus-within:opacity-[0.1] blur-md transition-all duration-500 pointer-events-none" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors text-[var(--accent)]" />
+                <input
+                  type="text"
+                  placeholder="Search articles..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 relative z-10 border bg-white/5 backdrop-blur-xl"
+                  style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                />
+              </div>
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="relative px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border active:scale-95 flex items-center gap-2 shrink-0"
+                style={{
+                  background: filtersOpen || selectedCategory || selectedTag
+                    ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
+                    : 'transparent',
+                  borderColor: filtersOpen || selectedCategory || selectedTag
+                    ? 'var(--accent)'
+                    : 'var(--border)',
+                  color: filtersOpen || selectedCategory || selectedTag
+                    ? 'var(--accent)'
+                    : 'var(--text-secondary)'
                 }}
-              />
+              >
+                {filtersOpen ? <X size={14} /> : <Filter size={14} />}
+                <span className="hidden sm:inline">
+                  {(() => {
+                    const count = (selectedCategory ? 1 : 0) + (selectedTag ? 1 : 0)
+                    return count > 0 ? `${count} Active` : 'Filters'
+                  })()}
+                </span>
+              </button>
             </div>
 
-            {/* Category Pills */}
-            {allCategories.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
-                <button
-                  onClick={() => { setSelectedCategory(null); setSelectedTag(null) }}
-                  className="relative px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border active:scale-95 overflow-hidden group shadow-sm hover:shadow-md"
-                  style={{
-                    background: selectedCategory === null && selectedTag === null ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
-                    borderColor: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--border)',
-                    color: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--text-secondary)'
-                  }}
+            {/* Collapsible Filters */}
+            <AnimatePresence>
+              {filtersOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden"
                 >
-                  <Sparkles size={12} className="inline-block mr-1.5 -mt-0.5" />
-                  All
-                </button>
-                {allCategories.map(cat => {
-                  const meta = categoryMeta[cat] || categoryMeta.General
-                  const active = selectedCategory === cat
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(active ? null : cat)}
-                      className={`relative px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border active:scale-95 overflow-hidden group shadow-sm hover:shadow-md`}
-                      style={{
-                        background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
-                        borderColor: active ? 'var(--accent)' : 'var(--border)',
-                        color: active ? 'var(--accent)' : 'var(--text-secondary)'
-                      }}
-                    >
-                      <span className="relative z-10 flex items-center gap-1.5">
-                        {meta.icon}
-                        {cat}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+                  <div className="space-y-4 pt-2">
+                    {/* Category Pills */}
+                    {allCategories.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto select-none">
+                        <button
+                          onClick={() => { setSelectedCategory(null); setSelectedTag(null) }}
+                          className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all border active:scale-95"
+                          style={{
+                            background: selectedCategory === null && selectedTag === null ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                            borderColor: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--border)',
+                            color: selectedCategory === null && selectedTag === null ? 'var(--accent)' : 'var(--text-secondary)'
+                          }}
+                        >
+                          <Sparkles size={11} className="inline-block mr-1 -mt-0.5" />
+                          All
+                        </button>
+                        {allCategories.map(cat => {
+                          const meta = categoryMeta[cat] || categoryMeta.General
+                          const active = selectedCategory === cat
+                          return (
+                            <button
+                              key={cat}
+                              onClick={() => setSelectedCategory(active ? null : cat)}
+                              className="relative px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all border active:scale-95"
+                              style={{
+                                background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                                borderColor: active ? 'var(--accent)' : 'var(--border)',
+                                color: active ? 'var(--accent)' : 'var(--text-secondary)'
+                              }}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                {meta.icon}
+                                {cat}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
 
-            {/* Tag Badges */}
-            {allTags.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto select-none">
-                <button
-                  onClick={() => setSelectedTag(null)}
-                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border active:scale-95"
-                  style={{
-                    background: selectedTag === null ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                    borderColor: selectedTag === null ? 'var(--accent)' : 'var(--border)',
-                    color: selectedTag === null ? 'var(--accent)' : 'var(--text-secondary)'
-                  }}
-                >
-                  All Posts
-                </button>
-                {allTags.map(tag => {
-                  const active = selectedTag === tag
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => setSelectedTag(active ? null : tag)}
-                      className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-1.5 active:scale-95 hover:border-[var(--text-muted)]"
-                      style={{
-                        background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-                        borderColor: active ? 'var(--accent)' : 'var(--border)',
-                        color: active ? 'var(--accent)' : 'var(--text-secondary)'
-                      }}
-                    >
-                      <Tag size={10} className={active ? '' : 'opacity-50'} />
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+                    {/* Tag Badges */}
+                    {allTags.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-2xl mx-auto select-none">
+                        {allTags.map(tag => {
+                          const active = selectedTag === tag
+                          return (
+                            <button
+                              key={tag}
+                              onClick={() => setSelectedTag(active ? null : tag)}
+                              className="px-3 py-1 rounded-full text-[10px] font-semibold transition-all border flex items-center gap-1 active:scale-95"
+                              style={{
+                                background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                                borderColor: active ? 'var(--accent)' : 'var(--border)',
+                                color: active ? 'var(--accent)' : 'var(--text-secondary)'
+                              }}
+                            >
+                              <Tag size={9} className={active ? '' : 'opacity-40'} />
+                              {tag}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Blogs Content Grid */}
@@ -550,11 +618,19 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className={`w-full h-full bg-gradient-to-br ${getGradient(featuredBlog.slug)} flex items-center justify-center p-6 transition-transform duration-700 group-hover:scale-[1.03] opacity-90`}>
+                          <div className={`w-full h-full bg-gradient-to-br ${getGradient(featuredBlog.slug)} flex items-center justify-center p-6 transition-transform duration-700 group-hover:scale-[1.03] opacity-90 relative`}>
+                            <div className="absolute inset-0" style={{ backgroundImage: codePatternSvg, backgroundSize: '60px 60px' }} />
                             <div className="absolute inset-0 bg-black/20" />
                           </div>
                         )}
                       </Link>
+                      {/* Reading Time Badge */}
+                      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg text-[11px] font-bold backdrop-blur-md z-10" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                        <span className="flex items-center gap-1.5">
+                          <Clock size={12} />
+                          {featuredBlog.read_time || '5 min read'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Right: Featured Text Metadata */}
@@ -570,7 +646,8 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                             <>
                               <span style={{ color: 'var(--text-muted)' }} className="opacity-30">·</span>
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold tracking-wider"
-                                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                                style={{ background: `color-mix(in srgb, var(--accent) 12%, transparent)`, color: 'var(--accent)' }}>
+                                {categoryMeta[featuredBlog.category]?.icon || <Folder size={11} />}
                                 {featuredBlog.category}
                               </span>
                             </>
@@ -595,7 +672,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                         <div className="flex items-center justify-between text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
                           <span className="flex items-center gap-1">
                             <Calendar size={12} />
-                            {formatDate(featuredBlog.created_at)}
+                            {relativeDate(featuredBlog.created_at)}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock size={12} />
@@ -663,7 +740,22 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 />
                               ) : (
                                 <div className={`w-full h-full bg-gradient-to-br ${blog.category ? categoryMeta[blog.category]?.gradient || getGradient(blog.slug) : getGradient(blog.slug)} flex items-center justify-center relative transition-transform duration-500 group-hover:scale-105 opacity-90`}>
+                                  <div className="absolute inset-0" style={{ backgroundImage: codePatternSvg, backgroundSize: '60px 60px' }} />
                                   <div className="absolute inset-0 bg-black/10" />
+                                </div>
+                              )}
+                              {/* Reading Time Badge */}
+                              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-md z-10" style={{ background: 'rgba(0,0,0,0.55)', color: '#fff' }}>
+                                <span className="flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {blog.read_time || '3 min'}
+                                </span>
+                              </div>
+                              {/* Category Icon Chip */}
+                              {blog.category && (
+                                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-bold backdrop-blur-md z-10 flex items-center gap-1" style={{ background: 'rgba(0,0,0,0.55)', color: '#fff' }}>
+                                  {categoryMeta[blog.category]?.icon || <Folder size={11} />}
+                                  {blog.category}
                                 </div>
                               )}
                             </Link>
@@ -675,11 +767,12 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 <div className="flex items-center justify-between text-[11px] mb-3" style={{ color: 'var(--text-muted)' }}>
                                   <span className="flex items-center gap-1">
                                     <Calendar size={11} />
-                                    {formatDate(blog.created_at)}
+                                    {relativeDate(blog.created_at)}
                                   </span>
                                   <span className="flex items-center gap-1.5">
                                     {blog.category && (
                                       <span className="flex items-center gap-1" style={{ color: 'var(--accent)' }}>
+                                        {categoryMeta[blog.category]?.icon}
                                         {blog.category}
                                       </span>
                                     )}
@@ -703,8 +796,12 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                               <div className="relative z-10 flex-1 flex flex-col justify-end">
                                 {tagsArray.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mb-4 select-none">
-                                    {tagsArray.slice(0, 3).map(t => (
-                                      <span key={t} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                                    {tagsArray.slice(0, 3).map((t, tagIdx) => (
+                                      <span key={t} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium border" style={{
+                                        borderColor: tagIdx === 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)',
+                                        background: tagIdx === 0 ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-secondary)',
+                                        color: tagIdx === 0 ? 'var(--accent)' : 'var(--text-secondary)'
+                                      }}>
                                         {t}
                                       </span>
                                     ))}
