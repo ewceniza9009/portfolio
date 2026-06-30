@@ -8,6 +8,7 @@ import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
+import { useProfilePic } from '../utils/profilePic'
 
 interface Blog {
   id: string
@@ -196,6 +197,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const { url: profilePicUrl } = useProfilePic()
 
   useEffect(() => {
     async function fetchBlogs() {
@@ -296,6 +298,21 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
           
           {/* Header — Compact */}
           <div className="text-center mb-10 relative">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="mb-5 inline-block"
+            >
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 mx-auto shadow-lg" style={{ borderColor: 'var(--accent)', boxShadow: '0 0 24px color-mix(in srgb, var(--accent) 35%, transparent)' }}>
+                <img
+                  src={profilePicUrl}
+                  alt="Erwin Wilson Ceniza"
+                  className="w-full h-full object-cover"
+                  key={profilePicUrl}
+                />
+              </div>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -681,10 +698,15 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                            <Heart size={12} />
-                            {featuredBlog.likes} likes
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+                              <img src={profilePicUrl} alt="Author" className="w-full h-full object-cover" key={profilePicUrl} />
+                            </div>
+                            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                              <Heart size={12} />
+                              {featuredBlog.likes}
+                            </span>
+                          </div>
                           <Link 
                             to={`/blogs/${featuredBlog.slug}`} 
                             className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all group-hover:gap-2.5 px-4 py-2 rounded-xl border border-transparent hover:border-[var(--accent)]/30"
@@ -809,7 +831,10 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 )}
 
                                 <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                                  <div className="flex items-center gap-3 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                  <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                    <div className="w-6 h-6 rounded-full overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+                                      <img src={profilePicUrl} alt="Author" className="w-full h-full object-cover" loading="lazy" key={profilePicUrl} />
+                                    </div>
                                     <span className="flex items-center gap-1"><Heart size={12} /> {blog.likes}</span>
                                     <span className="flex items-center gap-1"><Clock size={12} /> {blog.read_time || '3 min'}</span>
                                   </div>

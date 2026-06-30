@@ -6,13 +6,14 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2, Workflow, BookOpen, Activity, Download
+  Maximize2, Minimize2, Workflow, BookOpen, Activity, Download, Image as ImageIcon, Upload, RotateCcw
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
 import Logo from './Logo'
 import { Link } from 'react-router-dom'
 import MarkdownEditor, { useMarkdownInsert } from './MarkdownEditor'
+import { uploadProfilePic, resetProfilePic, useProfilePic } from '../utils/profilePic'
 
 interface Message {
   id: string
@@ -354,6 +355,54 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [devtoSaved, setDevtoSaved] = useState(false)
   const [devtoStatus, setDevtoStatus] = useState<any[]>([])
   const [devtoStatusLoading, setDevtoStatusLoading] = useState(false)
+
+  // ── Profile Pic Settings ──
+  const { url: profilePicUrl, refresh: refreshProfilePic } = useProfilePic()
+  const [profilePicUploading, setProfilePicUploading] = useState(false)
+  const [profilePicResetting, setProfilePicResetting] = useState(false)
+  const [profilePicMsg, setProfilePicMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const profilePicFileRef = useRef<HTMLInputElement>(null)
+
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProfilePicMsg(null)
+    if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) {
+      setProfilePicMsg({ type: 'err', text: 'Only PNG, JPG, WEBP, or GIF allowed' })
+      return
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setProfilePicMsg({ type: 'err', text: 'Image exceeds 4MB' })
+      return
+    }
+    try {
+      setProfilePicUploading(true)
+      await uploadProfilePic(file)
+      await refreshProfilePic()
+      setProfilePicMsg({ type: 'ok', text: 'Profile picture updated everywhere' })
+      setTimeout(() => setProfilePicMsg(null), 2500)
+    } catch (err) {
+      setProfilePicMsg({ type: 'err', text: (err as Error).message || 'Upload failed' })
+    } finally {
+      setProfilePicUploading(false)
+      if (profilePicFileRef.current) profilePicFileRef.current.value = ''
+    }
+  }
+
+  const handleProfilePicReset = async () => {
+    try {
+      setProfilePicResetting(true)
+      setProfilePicMsg(null)
+      await resetProfilePic()
+      await refreshProfilePic()
+      setProfilePicMsg({ type: 'ok', text: 'Profile picture reset to default' })
+      setTimeout(() => setProfilePicMsg(null), 2500)
+    } catch (err) {
+      setProfilePicMsg({ type: 'err', text: (err as Error).message || 'Reset failed' })
+    } finally {
+      setProfilePicResetting(false)
+    }
+  }
 
   const loadN8nSettings = useCallback(async () => {
     try {
@@ -2250,6 +2299,68 @@ const res = await api(`/api/visitors?${params.toString()}`)
                     />
                     <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>hours</span>
                   </div>
+                </div>
+
+                {/* Section 3a: Profile Picture */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 rounded-2xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                  <div className="md:col-span-7 space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wide flex items-center gap-2">
+                      <ImageIcon size={12} style={{ color: 'var(--accent)' }} />
+                      Profile Picture
+                    </h4>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Upload once — propagates to the Hero, every Blog post, and the Blogs index page.
+                      Supported formats: PNG, JPG, WEBP, GIF. Max 4MB.
+                    </p>
+                  </div>
+                  <div className="md:col-span-5 flex items-center gap-3 justify-end">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: 'var(--accent)' }}>
+                      <img
+                        src={profilePicUrl}
+                        alt="Current profile"
+                        className="w-full h-full object-cover"
+                        key={profilePicUrl}
+                      />
+                    </div>
+                    <input
+                      ref={profilePicFileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      onChange={handleProfilePicUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <button
+                      onClick={() => profilePicFileRef.current?.click()}
+                      disabled={profilePicUploading}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                      style={{
+                        background: profilePicUploading ? 'var(--bg-secondary)' : 'var(--accent)',
+                        borderColor: profilePicUploading ? 'var(--border)' : 'var(--accent)',
+                        color: profilePicUploading ? 'var(--text-secondary)' : 'var(--bg-primary)'
+                      }}
+                    >
+                      <Upload size={12} /> {profilePicUploading ? 'Uploading...' : 'Upload'}
+                    </button>
+                    <button
+                      onClick={handleProfilePicReset}
+                      disabled={profilePicResetting}
+                      className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                      style={{
+                        background: 'transparent',
+                        borderColor: 'var(--border)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    >
+                      <RotateCcw size={12} /> {profilePicResetting ? '...' : 'Reset'}
+                    </button>
+                  </div>
+                  {profilePicMsg && (
+                    <div className="md:col-span-12 -mt-2">
+                      <p className="text-[10px] font-mono" style={{ color: profilePicMsg.type === 'ok' ? '#10b981' : '#ef4444' }}>
+                        {profilePicMsg.text}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Section 4: PayPal Donate URL */}

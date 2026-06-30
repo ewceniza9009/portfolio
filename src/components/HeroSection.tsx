@@ -8,6 +8,7 @@ import {
   Download,
 } from "lucide-react";
 import VantaBackground from "./VantaBackground";
+import { useProfilePic } from "../utils/profilePic";
 
 interface HeroSectionProps {
   onScrollTo: (id: string) => void;
@@ -64,6 +65,7 @@ export default React.memo(function HeroSection({
 }: HeroSectionProps) {
   const typedRole = useTypewriter(ROLES);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const { url: profilePicUrl } = useProfilePic();
 
   return (
     <section
@@ -100,13 +102,14 @@ export default React.memo(function HeroSection({
               <div className="absolute inset-0 bg-[var(--bg-secondary)] animate-pulse" />
             )}
             <img
-              src="/img/profile-pic.png"
+              src={profilePicUrl}
               alt="Erwin Wilson Ceniza"
               className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
+              key={profilePicUrl}
             />
           </motion.div>
 
