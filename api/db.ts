@@ -123,7 +123,6 @@ export async function initDb() {
     ('default_ai_model', 'gemini-2.5-flash'),
     ('devto_api_key', ''),
     ('devto_username', ''),
-    ('n8n_portfolio_api_key', ''),
     ('n8n_devto_api_key', ''),
     ('n8n_webhook_url', '')
   `)

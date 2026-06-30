@@ -334,7 +334,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   }
 
   // ── n8n Integration Settings ──
-  const [n8nPortfolioKey, setN8nPortfolioKey] = useState('')
   const [n8nDevtoKey, setN8nDevtoKey] = useState('')
   const [n8nWebhookUrl, setN8nWebhookUrl] = useState('')
   const [n8nSaved, setN8nSaved] = useState(false)
@@ -351,7 +350,6 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       const res = await api('/api/settings')
       if (res.ok) {
         const data = await res.json()
-        setN8nPortfolioKey(data?.n8n_portfolio_api_key || '')
         setN8nDevtoKey(data?.n8n_devto_api_key || '')
         setN8nWebhookUrl(data?.n8n_webhook_url || '')
         setDevtoApiKey(data?.devto_api_key || '')
@@ -385,12 +383,38 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
   const handleN8nSave = async () => {
     await saveSettings({
-      n8n_portfolio_api_key: n8nPortfolioKey.trim(),
       n8n_devto_api_key: n8nDevtoKey.trim(),
       n8n_webhook_url: n8nWebhookUrl.trim(),
     })
     setN8nSaved(true)
     setTimeout(() => setN8nSaved(false), 1500)
+  }
+
+  // ── Token generation ──
+  const [generatingToken, setGeneratingToken] = useState(false)
+
+  const handleGenerateToken = async () => {
+    try {
+      setGeneratingToken(true)
+      const res = await api('/api/admin/generate-token', { method: 'POST' })
+      if (res.ok) {
+        await loadTokenStatus()
+      }
+    } catch (err) {
+      console.error('Generate token error:', err)
+    } finally {
+      setGeneratingToken(false)
+    }
+  }
+
+  const handleRevokeToken = async () => {
+    if (!confirm('Revoke current API token? n8n will lose access.')) return
+    try {
+      await api('/api/admin/revoke-token', { method: 'POST' })
+      await loadTokenStatus()
+    } catch (err) {
+      console.error('Revoke token error:', err)
+    }
   }
 
   // ── n8n Workflow Download ──
@@ -2313,14 +2337,51 @@ const res = await api(`/api/visitors?${params.toString()}`)
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Portfolio Admin API Token</label>
-                      <input
-                        type="password"
-                        placeholder="Bearer token for /api/admin/* endpoints"
-                        value={n8nPortfolioKey}
-                        onChange={(e) => setN8nPortfolioKey(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-3 py-2 rounded-xl text-xs font-mono border flex items-center"
+                          style={{ background: 'var(--bg-secondary)', borderColor: tokenExists ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)' }}>
+                          {tokenExists ? (
+                            <>
+                              <CheckCircle2 size={12} style={{ color: '#10b981' }} className="mr-2 shrink-0" />
+                              <span className="truncate" style={{ color: '#10b981' }}>Token generated and active</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock size={12} style={{ color: 'var(--text-muted)' }} className="mr-2 shrink-0" />
+                              <span style={{ color: 'var(--text-muted)' }}>No token generated yet</span>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          onClick={handleGenerateToken}
+                          disabled={generatingToken}
+                          className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 shrink-0"
+                          style={{
+                            background: tokenExists ? 'transparent' : 'var(--accent)',
+                            borderColor: tokenExists ? 'var(--border)' : 'var(--accent)',
+                            color: tokenExists ? 'var(--text-secondary)' : 'var(--bg-primary)',
+                          }}
+                        >
+                          {generatingToken ? 'Generating...' : tokenExists ? 'Regenerate' : 'Generate'}
+                        </button>
+                        {tokenExists && (
+                          <button
+                            onClick={handleRevokeToken}
+                            className="px-3 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95 shrink-0"
+                            style={{
+                              background: 'transparent',
+                              borderColor: 'rgba(239, 68, 68, 0.3)',
+                              color: '#ef4444',
+                            }}
+                            title="Revoke current token"
+                          >
+                            Revoke
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                        Required for n8n to call portfolio API. Token is server-stored only — not shown to you again.
+                      </p>
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Dev.to API Key (for n8n)</label>
