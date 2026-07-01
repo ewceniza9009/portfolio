@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
-import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Loader, Sparkles } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User } from 'lucide-react'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
+import { parseMarkdown } from '../utils/markdown'
 import { useLocation } from 'react-router-dom'
 
 // ── Terminal Types ──
@@ -37,16 +38,16 @@ DevOps: Docker, CI/CD, Vercel, Railway, Linux
 Other: AI integration, POS systems, real-time sync, n8n workflows
 
 EXPERIENCE:
-- Principal Full-Stack Developer at EWC Software Solutions (Current) — builds web apps, AI features, and distributed POS systems
-- Senior Web Developer at Go-Global Travel & Tours — built online booking platforms, payment integrations, admin dashboards
-- Full-Stack Developer at Various Clients — e-commerce, inventory, CRM, and custom enterprise solutions
+- Principal Full-Stack Developer at EWC Software Solutions (Current) - builds web apps, AI features, and distributed POS systems
+- Senior Web Developer at Go-Global Travel & Tours - built online booking platforms, payment integrations, admin dashboards
+- Full-Stack Developer at Various Clients - e-commerce, inventory, CRM, and custom enterprise solutions
 
 PROJECTS:
-- EWC-OS (Personal Portfolio) — Interactive portfolio with AI chat, terminal emulator, visitor analytics, and blog with Dev.to cross-posting
-- SynchroPOS — Cloud-based POS system with multi-branch management, real-time sync, 50+ concurrent terminals
-- AI Blog Summarizer — AI-powered blog summarization with Puter.js and Gemini, cached summaries, refine capability
-- n8n Workflow Automations — Automated Dev.to cross-posting workflow with webhooks and scheduled triggers
-- Visitor Analytics Engine — Real-time visitor tracking with bot detection, country grouping, and expandable analytics tables
+- EWC-OS (Personal Portfolio) - Interactive portfolio with AI chat, terminal emulator, visitor analytics, and blog with Dev.to cross-posting
+- SynchroPOS - Cloud-based POS system with multi-branch management, real-time sync, 50+ concurrent terminals
+- AI Blog Summarizer - AI-powered blog summarization with Puter.js and Gemini, cached summaries, refine capability
+- n8n Workflow Automations - Automated Dev.to cross-posting workflow with webhooks and scheduled triggers
+- Visitor Analytics Engine - Real-time visitor tracking with bot detection, country grouping, and expandable analytics tables
 
 BLOG TOPICS:
 He writes about React, TypeScript, full-stack development, AI integrations, and building real-world web applications.
@@ -143,7 +144,7 @@ function MatrixOverlay({ onClose }: { onClose: () => void }) {
   return (
     <div className="absolute inset-0 z-50 bg-[#0d1117] flex flex-col">
       <div className="px-4 py-2 border-b flex items-center justify-between text-xs select-none" style={{ borderColor: '#30363d', background: '#161b22', color: '#8b949e' }}>
-        <span>Matrix Mode Active — Press ESC or click exit to close</span>
+        <span>Matrix Mode Active - Press ESC or click exit to close</span>
         <button onClick={onClose} className="hover:text-red-400 font-bold transition-colors">exit</button>
       </div>
       <canvas ref={canvasRef} className="flex-grow w-full" />
@@ -210,7 +211,7 @@ function SnakeOverlay({ onClose }: { onClose: () => void }) {
   return (
     <div className="absolute inset-0 z-50 bg-[#0d1117] flex flex-col">
       <div className="px-4 py-2 border-b flex items-center justify-between text-xs select-none" style={{ borderColor: '#30363d', background: '#161b22', color: '#8b949e' }}>
-        <span>Snake Game — Score: <strong className="text-white">{score}</strong> (Controls: WASD / Arrows)</span>
+        <span>Snake Game - Score: <strong className="text-white">{score}</strong> (Controls: WASD / Arrows)</span>
         <button onClick={onClose} className="hover:text-red-400 font-bold transition-colors">exit</button>
       </div>
       <div className="flex-grow flex items-center justify-center relative p-4">
@@ -335,8 +336,8 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed left-1/2 -translate-x-1/2 z-[90] w-full max-w-4xl shadow-2xl overflow-hidden font-mono text-sm border ${
-        isMaximized ? 'bottom-0 h-[80vh] rounded-t-xl' : 'bottom-4 h-[400px] rounded-xl w-[calc(100%-2rem)]'
+      className={`fixed z-[90] w-full shadow-2xl overflow-hidden font-mono text-sm border ${
+        isMaximized ? 'inset-4 rounded-xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-4xl h-[400px] max-h-[70vh] rounded-xl w-[calc(100%-2rem)]'
       }`}
       style={{ background: '#0d1117', borderColor: 'var(--border)' }}
     >
@@ -357,7 +358,7 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-      <div className="p-4 overflow-y-auto h-[calc(100%-40px)] relative" onClick={() => inputRef.current?.focus()}>
+      <div className="p-4 overflow-y-auto h-[calc(100%-40px)] relative" onClick={() => inputRef.current?.focus()} style={{ overscrollBehavior: 'contain' }}>
         {activeMode === 'matrix' && <MatrixOverlay onClose={() => setActiveMode(null)} />}
         {activeMode === 'snake' && <SnakeOverlay onClose={() => setActiveMode(null)} />}
         {history.map((line, i) => (
@@ -391,7 +392,7 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
 // ── Chat Window ──
 function ChatWindow({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: '👋 Hey! Ask me anything about Erwin — his skills, projects, experience, or blog.' }
+    { role: 'assistant', content: 'Hey! Ask me anything about Erwin - his skills, projects, experience, or blog posts.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -400,6 +401,10 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const dragControls = useDragControls()
   const [isMaximized, setIsMaximized] = useState(false)
+
+  const parsedContent = useMemo(() => {
+    return messages.map(msg => msg.role === 'assistant' ? parseMarkdown(msg.content) : null)
+  }, [messages])
 
   useEffect(() => {
     fetch('/api/blogs')
@@ -438,69 +443,114 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 50, scale: 0.95 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
       drag={!isMaximized}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed left-1/2 -translate-x-1/2 z-[90] w-full max-w-xl shadow-2xl overflow-hidden text-sm border ${
-        isMaximized ? 'bottom-0 h-[80vh] rounded-t-xl' : 'bottom-4 h-[480px] rounded-xl w-[calc(100%-2rem)]'
+      className={`fixed z-[90] w-full shadow-2xl overflow-hidden text-sm border ${
+        isMaximized ? 'inset-4 rounded-xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-lg h-[520px] max-h-[70vh] rounded-xl w-[calc(100%-2rem)]'
       }`}
       style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
     >
+      {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2.5 border-b select-none cursor-move active:cursor-grabbing"
+        className="flex items-center justify-between px-4 py-3 border-b select-none cursor-move active:cursor-grabbing"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', touchAction: 'none' }}
         onPointerDown={(e) => { if (!isMaximized) dragControls.start(e) }}
       >
-        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-          <MessageCircle size={14} /> AI Chat — Ask about Erwin
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+            <Bot size={14} className="text-[var(--bg-primary)]" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Online - Ask about Erwin</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsMaximized(!isMaximized)} className="hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsMaximized(!isMaximized)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
             {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
-          <button onClick={onClose} className="hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
             <X size={16} />
           </button>
         </div>
       </div>
 
-      <div className="p-4 overflow-y-auto h-[calc(100%-92px)] space-y-3" style={{ background: 'var(--bg-primary)' }}>
+      {/* Messages */}
+      <div className="overflow-y-auto h-[calc(100%-108px)] px-4 py-4 space-y-4" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            {msg.role === 'assistant' && (
+              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
+                <Bot size={12} className="text-[var(--bg-primary)]" />
+              </div>
+            )}
             <div
-              className={`max-w-[85%] px-3.5 py-2 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed ${
                 msg.role === 'user'
-                  ? 'rounded-br-md'
-                  : 'rounded-bl-md'
+                  ? 'rounded-2xl rounded-br-md'
+                  : 'rounded-2xl rounded-bl-md'
               }`}
               style={{
                 background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-secondary)',
                 color: msg.role === 'user' ? 'var(--bg-primary)' : 'var(--text-primary)',
               }}
             >
-              {msg.content}
+              {msg.role === 'assistant' ? (
+                <div className="prose prose-xs max-w-none [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_p]:mb-1 [&_strong]:font-semibold [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[10px]" style={{ '--tw-prose-body': 'var(--text-primary)', '--tw-prose-bold': 'var(--text-primary)', '--tw-prose-code': 'var(--text-primary)' } as any}>
+                  {parsedContent[i]}
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+              )}
             </div>
-          </div>
+            {msg.role === 'user' && (
+              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--text-muted)' }}>
+                <User size={12} className="text-[var(--bg-primary)]" />
+              </div>
+            )}
+          </motion.div>
         ))}
         {loading && (
-          <div className="flex justify-start">
-            <div className="px-3.5 py-2 rounded-2xl rounded-bl-md text-xs" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
-              <Loader size={12} className="animate-spin inline mr-1.5" />
-              Thinking...
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-end gap-2"
+          >
+            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
+              <Bot size={12} className="text-[var(--bg-primary)]" />
             </div>
-          </div>
+            <div className="px-3.5 py-3 rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ color: 'var(--text-muted)' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0.1s]" style={{ color: 'var(--text-muted)' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0.2s]" style={{ color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+          </motion.div>
         )}
         <div ref={bottomRef} />
       </div>
 
+      {/* Input */}
       <form
         onSubmit={(e) => { e.preventDefault(); handleSend() }}
-        className="flex items-center gap-2 px-3 py-2.5 border-t"
+        className="flex items-center gap-2 px-3 py-3 border-t"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
       >
         <input
@@ -508,15 +558,15 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about Erwin's skills, projects, or blog..."
-          className="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none border"
+          placeholder="Ask about Erwin..."
+          className="flex-1 px-4 py-2 rounded-xl text-xs outline-none border"
           style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="p-1.5 rounded-lg transition-all active:scale-90 disabled:opacity-40"
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40"
           style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
         >
           <SendHorizonal size={14} />
@@ -531,6 +581,11 @@ export default function FloatingControl() {
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
   const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | null>(null)
+
+  useEffect(() => {
+    document.body.dataset.fabActive = mode ? 'true' : 'false'
+    return () => { document.body.dataset.fabActive = 'false' }
+  }, [mode])
 
   if (!isHomePage) return null
 
