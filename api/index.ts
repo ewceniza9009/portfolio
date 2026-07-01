@@ -1133,9 +1133,6 @@ app.post('/api/settings', authMiddleware, async (req, res) => {
 // ── Admin: Upload Profile Picture (multipart/form-data) ──
 app.post('/api/admin/upload-profile-pic', authMiddleware, async (req, res) => {
   try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const publicDir = path.join(__dirname, '..', 'public')
-
     const ctype = (req.headers['content-type'] || '').toLowerCase()
     if (!ctype.startsWith('multipart/form-data')) {
       return res.status(400).json({ error: 'Content-Type must be multipart/form-data' })
@@ -1174,6 +1171,7 @@ app.post('/api/admin/upload-profile-pic', authMiddleware, async (req, res) => {
 
     const segments = splitBuffer(raw, delim)
     let fileBuffer: Buffer | null = null
+    let mimeType = 'image/png'
     let ext = 'png'
 
     for (const part of segments) {
@@ -1188,6 +1186,11 @@ app.post('/api/admin/upload-profile-pic', authMiddleware, async (req, res) => {
       const body = part.slice(headerEnd + crlf.length, part.length - 2)
       const filenameMatch = /filename="([^"]+)"/i.exec(headers)
       if (!filenameMatch) continue
+      const ctypeMatch = /content-type:\s*([^\r\n]+)/i.exec(headers)
+      if (ctypeMatch) {
+        mimeType = ctypeMatch[1].trim().toLowerCase()
+        if (!/^image\/(png|jpe?g|webp|gif)$/.test(mimeType)) continue
+      }
       if (headers.toLowerCase().includes('content-type: image/')) {
         fileBuffer = body
         const fn = filenameMatch[1].toLowerCase()
@@ -1206,20 +1209,21 @@ app.post('/api/admin/upload-profile-pic', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Image exceeds 4MB limit' })
     }
 
-    const stamp = Date.now()
-    const targetName = `profile-pic.${ext}`
-    const targetPath = path.join(publicDir, 'img', targetName)
-    fs.writeFileSync(targetPath, fileBuffer)
+    // Vercel serverless filesystem is read-only — store as base64 data URL instead
+    const base64 = fileBuffer.toString('base64')
+    const dataUrl = `data:${mimeType};base64,${base64}`
+    const size = fileBuffer.length
 
     await turso.execute({
       sql: 'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      args: ['profile_pic_url', `/img/${targetName}?v=${stamp}`]
+      args: ['profile_pic_url', dataUrl]
     })
 
     res.json({
       success: true,
-      url: `/img/${targetName}?v=${stamp}`,
-      size: fileBuffer.length
+      url: dataUrl,
+      size,
+      ext
     })
   } catch (err) {
     console.error('Upload profile pic error:', err)
