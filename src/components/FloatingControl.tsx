@@ -511,7 +511,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 py-4 border-b select-none cursor-move active:cursor-grabbing"
+        className="flex items-center justify-between px-6 py-5 border-b select-none cursor-move active:cursor-grabbing"
         style={{
           background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--bg-secondary)) 0%, var(--bg-card) 100%)',
           borderColor: 'var(--border)',
@@ -519,15 +519,15 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
         }}
         onPointerDown={(e) => { if (!isMaximized) dragControls.start(e) }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ 
             background: 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)',
             boxShadow: '0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)'
           }}>
             <Bot size={18} className="text-[var(--bg-primary)]" />
           </div>
-          <div className="space-y-0.5">
-            <div className="text-sm font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
+          <div className="space-y-1">
+            <div className="text-sm font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>Ready to help</span>
@@ -545,7 +545,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto h-[calc(100%-130px)] px-4 py-5 space-y-5" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
+      <div className="overflow-y-auto h-[calc(100%-150px)] px-4 py-5 space-y-5" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
         {messages.map((msg, i) => (
           <motion.div
             key={i}
