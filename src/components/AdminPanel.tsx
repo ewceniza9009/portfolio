@@ -2547,7 +2547,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             </div>
 
                             <p
-                              className="text-[10px] truncate opacity-70 mb-2"
+                              className="text-xs truncate opacity-85"
                               style={{ color: "var(--text-muted)" }}
                             >
                               {blog.summary || (
