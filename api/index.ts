@@ -723,10 +723,12 @@ app.post('/api/admin/blogs/:id/devto-mark', flexibleAuth, async (req, res) => {
 
 // AI: Summarize blog for Dev.to cross-post
 // Generate and cache Dev.to summary
-async function generateDevtoSummary(blog: any, modelOverride?: string): Promise<string> {
-  const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
-  const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
-  if (currentProvider !== 'gemini') throw new Error('Only Gemini AI provider is supported')
+async function generateDevtoSummary(blog: any, modelOverride?: string, providerOverride?: string): Promise<{ body_markdown: string; clientSide?: boolean }> {
+  const provider = providerOverride || (await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })).rows[0]?.value || 'gemini'
+
+  if (provider === 'puter') {
+    return { body_markdown: blog.content?.slice(0, 3000) || blog.summary || '', clientSide: true }
+  }
 
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('Gemini API key not configured')
@@ -765,13 +767,15 @@ Article content (first 3000 chars):
 ${blog.content?.slice(0, 3000) || blog.summary || ''}`
 
   const aiResult = await genModel.generateContent(prompt)
-  return aiResult.response.text()
+  return { body_markdown: aiResult.response.text() }
 }
 
-async function generateSocialSummary(blog: any, modelOverride?: string): Promise<string> {
-  const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
-  const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
-  if (currentProvider !== 'gemini') throw new Error('Only Gemini AI provider is supported')
+async function generateSocialSummary(blog: any, modelOverride?: string, providerOverride?: string): Promise<{ body_markdown: string; clientSide?: boolean }> {
+  const provider = providerOverride || (await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })).rows[0]?.value || 'gemini'
+
+  if (provider === 'puter') {
+    return { body_markdown: blog.content?.slice(0, 3000) || blog.summary || '', clientSide: true }
+  }
 
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('Gemini API key not configured')
@@ -806,7 +810,7 @@ Article content (first 3000 chars):
 ${blog.content?.slice(0, 3000) || blog.summary || ''}`
 
   const aiResult = await genModel.generateContent(prompt)
-  return aiResult.response.text()
+  return { body_markdown: aiResult.response.text() }
 }
 
 app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) => {
@@ -820,10 +824,11 @@ app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) =>
     const blog = result.rows[0] as any
     const force = req.query.force === '1'
     const modelOverride = (req.query.model as string) || undefined
+    const providerOverride = (req.query.provider as string) || undefined
     const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
 
     // Return cached summary if available and not forcing regenerate
-    if (!force && !modelOverride && blog.devto_summary) {
+    if (!force && !modelOverride && !providerOverride && blog.devto_summary) {
       let tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
       if (!tags.length) tags = ['webdev']
       return res.json({
@@ -838,12 +843,22 @@ app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) =>
       })
     }
 
-    const body_markdown = await generateDevtoSummary(blog, modelOverride)
+    const result_ = await generateDevtoSummary(blog, modelOverride, providerOverride)
+
+    if (result_.clientSide) {
+      return res.json({
+        original_id: blog.id,
+        title: blog.title,
+        body_markdown: result_.body_markdown,
+        client_side: true,
+        provider: 'puter',
+      })
+    }
 
     // Save to DB
     await turso.execute({
       sql: 'UPDATE blogs SET devto_summary = ? WHERE id = ?',
-      args: [body_markdown, req.params.id as string],
+      args: [result_.body_markdown, req.params.id as string],
     })
 
     let tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
@@ -852,7 +867,7 @@ app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) =>
     res.json({
       original_id: blog.id,
       title: blog.title,
-      body_markdown,
+      body_markdown: result_.body_markdown,
       tags,
       canonical_url: fullUrl,
       description: blog.summary?.trim() || `Technical deep-dive: ${blog.title}`,
@@ -876,9 +891,10 @@ app.post('/api/admin/blogs/:id/social-summary', flexibleAuth, async (req, res) =
     const blog = result.rows[0] as any
     const force = req.query.force === '1'
     const modelOverride = (req.query.model as string) || undefined
+    const providerOverride = (req.query.provider as string) || undefined
 
     // Return cached summary if available and not forcing regenerate
-    if (!force && !modelOverride && blog.social_summary) {
+    if (!force && !modelOverride && !providerOverride && blog.social_summary) {
       return res.json({
         original_id: blog.id,
         title: blog.title,
@@ -887,18 +903,28 @@ app.post('/api/admin/blogs/:id/social-summary', flexibleAuth, async (req, res) =
       })
     }
 
-    const body_markdown = await generateSocialSummary(blog, modelOverride)
+    const result_ = await generateSocialSummary(blog, modelOverride, providerOverride)
+
+    if (result_.clientSide) {
+      return res.json({
+        original_id: blog.id,
+        title: blog.title,
+        body_markdown: result_.body_markdown,
+        client_side: true,
+        provider: 'puter',
+      })
+    }
 
     // Save to DB
     await turso.execute({
       sql: 'UPDATE blogs SET social_summary = ? WHERE id = ?',
-      args: [body_markdown, req.params.id as string],
+      args: [result_.body_markdown, req.params.id as string],
     })
 
     res.json({
       original_id: blog.id,
       title: blog.title,
-      body_markdown,
+      body_markdown: result_.body_markdown,
       cached: false,
     })
   } catch (err) {
@@ -966,6 +992,30 @@ ${currentSummary}`
   } catch (err) {
     console.error('Refine summary error:', err)
     res.status(500).json({ error: 'Failed to refine summary' })
+  }
+})
+
+// Save a pre-generated summary (for client-side AI like Puter)
+app.post('/api/admin/blogs/:id/save-summary', flexibleAuth, async (req, res) => {
+  try {
+    const { type, body_markdown } = req.body
+    if (!type || !['devto', 'social'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be "devto" or "social"' })
+    }
+    if (!body_markdown || typeof body_markdown !== 'string') {
+      return res.status(400).json({ error: 'body_markdown is required' })
+    }
+
+    const column = type === 'devto' ? 'devto_summary' : 'social_summary'
+    await turso.execute({
+      sql: `UPDATE blogs SET ${column} = ? WHERE id = ?`,
+      args: [body_markdown, req.params.id as string],
+    })
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Save summary error:', err)
+    res.status(500).json({ error: 'Failed to save summary' })
   }
 })
 

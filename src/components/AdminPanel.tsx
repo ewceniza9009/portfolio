@@ -322,6 +322,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogSocialLoading, setBlogSocialLoading] = useState(false);
   const [blogSummaryCached, setBlogSummaryCached] = useState(false);
   const [blogSocialCached, setBlogSocialCached] = useState(false);
+  const [summarizerProvider, setSummarizerProvider] = useState("");
   const [summarizerModel, setSummarizerModel] = useState("");
   const [blogComments, setBlogComments] = useState<Comment[]>([]);
 
@@ -2611,13 +2612,13 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                   <div className="flex-1 flex flex-col overflow-hidden h-full">
                     {/* Header bar */}
                     <div
-                      className="px-5 py-3 border-b flex items-center justify-between shrink-0"
+                      className="px-5 py-2 border-b shrink-0"
                       style={{ borderColor: "var(--border)" }}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 mb-1.5">
                         <button
                           onClick={() => setSelectedBlog(null)}
-                          className="md:hidden w-8 h-8 rounded-full flex items-center justify-center border"
+                          className="md:hidden w-8 h-8 rounded-full flex items-center justify-center border shrink-0"
                           style={{
                             borderColor: "var(--border)",
                             color: "var(--text-secondary)",
@@ -2625,17 +2626,15 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                         >
                           <ArrowLeft size={14} />
                         </button>
-                        <div>
-                          <h3 className="text-sm font-bold truncate max-w-[200px] sm:max-w-md">
-                            {isNewBlog
-                              ? "New Post Creator"
-                              : `Editing: ${blogTitle}`}
-                          </h3>
-                        </div>
+                        <h3 className="text-sm font-bold truncate min-w-0">
+                          {isNewBlog
+                            ? "New Post Creator"
+                            : `Editing: ${blogTitle}`}
+                        </h3>
                       </div>
 
-                      {/* Edit / Preview Tabs */}
-                      <div className="flex items-center gap-2">
+                      {/* Edit / Preview / Summarizer Tabs + Save */}
+                      <div className="flex flex-wrap items-center gap-2">
                         <div
                           className="flex p-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider"
                           style={{
@@ -2645,7 +2644,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                         >
                           <button
                             onClick={() => setBlogEditorTab("edit")}
-                            className="px-3 py-1 rounded flex items-center gap-1"
+                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
                             style={{
                               background:
                                 blogEditorTab === "edit"
@@ -2661,7 +2660,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           </button>
                           <button
                             onClick={() => setBlogEditorTab("preview")}
-                            className="px-3 py-1 rounded flex items-center gap-1"
+                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
                             style={{
                               background:
                                 blogEditorTab === "preview"
@@ -2677,7 +2676,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           </button>
                           <button
                             onClick={() => setBlogEditorTab("summarizer")}
-                            className="px-3 py-1 rounded flex items-center gap-1"
+                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
                             style={{
                               background:
                                 blogEditorTab === "summarizer"
@@ -2701,7 +2700,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             !blogSlug ||
                             !blogContent
                           }
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:brightness-110 active:scale-[0.98]"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all hover:brightness-110 active:scale-[0.98]"
                           style={{
                             background: "var(--accent)",
                             color: "var(--bg-primary)",
@@ -3023,21 +3022,36 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                             Generate summaries you can copy-paste to social platforms. Once generated, they are cached — regenerating costs tokens again.
                           </p>
-                          <div className="flex items-center gap-2">
-                            <label className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>Model:</label>
-                            <select
-                              value={summarizerModel}
-                              onChange={(e) => setSummarizerModel(e.target.value)}
-                              className="px-2 py-1 rounded-lg border text-[10px] outline-none"
-                              style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
-                            >
-                              <option value="">Default (from settings)</option>
-                              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                            </select>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5">
+                              <label className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>Provider:</label>
+                              <select
+                                value={summarizerProvider}
+                                onChange={(e) => setSummarizerProvider(e.target.value)}
+                                className="px-2 py-1 rounded-lg border text-[10px] outline-none"
+                                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                              >
+                                <option value="">Default (from settings)</option>
+                                <option value="gemini">Gemini</option>
+                                <option value="puter">Puter</option>
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <label className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>Model:</label>
+                              <select
+                                value={summarizerModel}
+                                onChange={(e) => setSummarizerModel(e.target.value)}
+                                className="px-2 py-1 rounded-lg border text-[10px] outline-none"
+                                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                              >
+                                <option value="">Default (from settings)</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                              </select>
+                            </div>
                           </div>
 
                           {/* Dev.to Summary */}
@@ -3066,10 +3080,30 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                     if (!selectedBlog) return
                                     setBlogSummaryLoading(true)
                                     try {
-                                      const modelParam = summarizerModel ? `&model=${encodeURIComponent(summarizerModel)}` : ''
-                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/devto-summary?force=1${modelParam}`, { method: 'POST' })
-                                      if (res.ok) {
-                                        const data = await res.json()
+                                      const provider = summarizerProvider || undefined
+                                      const model = summarizerModel || undefined
+                                      const params = new URLSearchParams()
+                                      if (provider) params.set('provider', provider)
+                                      if (model) params.set('model', model)
+                                      params.set('force', '1')
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/devto-summary?${params.toString()}`, { method: 'POST' })
+                                      if (!res.ok) return
+                                      const data = await res.json()
+
+                                      if (data.client_side && (window as any).puter?.ai?.chat) {
+                                        const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:\n\n1. Start with a hook — casual, first person\n2. Say what the article covers in plain language\n3. Include 5-8 bullet points of key technical highlights\n4. End with a one-liner about real-world issues\n5. Finish with CTA: "Read the full article here:" followed by the link on its own line\n\nRules:\n- Max 250 words\n- No title, no front matter, no hashtags in body\n- Use markdown bullet points (- item)\n\nFull article URL: ${window.location.origin}/blogs/${selectedBlog.slug}\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        if (summary) {
+                                          await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ type: 'devto', body_markdown: summary }),
+                                          })
+                                          setBlogDevtoSummary(summary)
+                                          setBlogSummaryCached(false)
+                                        }
+                                      } else {
                                         setBlogDevtoSummary(data.body_markdown)
                                         setBlogSummaryCached(false)
                                       }
@@ -3108,16 +3142,33 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                     if (!instruction) return
                                     input.disabled = true
                                     try {
-                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ type: 'devto', instruction, model: summarizerModel || undefined }),
-                                      })
-                                      if (res.ok) {
-                                        const data = await res.json()
-                                        setBlogDevtoSummary(data.body_markdown)
-                                        setBlogSummaryCached(false)
-                                        input.value = ''
+                                      const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
+                                      if (usePuter) {
+                                        const prompt = `Here is a Dev.to summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogDevtoSummary}`
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        if (refined) {
+                                          await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ type: 'devto', body_markdown: refined }),
+                                          })
+                                          setBlogDevtoSummary(refined)
+                                          setBlogSummaryCached(false)
+                                          input.value = ''
+                                        }
+                                      } else {
+                                        const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ type: 'devto', instruction, model: summarizerModel || undefined }),
+                                        })
+                                        if (res.ok) {
+                                          const data = await res.json()
+                                          setBlogDevtoSummary(data.body_markdown)
+                                          setBlogSummaryCached(false)
+                                          input.value = ''
+                                        }
                                       }
                                     } catch {} finally {
                                       input.disabled = false
@@ -3155,10 +3206,30 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                     if (!selectedBlog) return
                                     setBlogSocialLoading(true)
                                     try {
-                                      const modelParam = summarizerModel ? `&model=${encodeURIComponent(summarizerModel)}` : ''
-                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/social-summary?force=1${modelParam}`, { method: 'POST' })
-                                      if (res.ok) {
-                                        const data = await res.json()
+                                      const provider = summarizerProvider || undefined
+                                      const model = summarizerModel || undefined
+                                      const params = new URLSearchParams()
+                                      if (provider) params.set('provider', provider)
+                                      if (model) params.set('model', model)
+                                      params.set('force', '1')
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/social-summary?${params.toString()}`, { method: 'POST' })
+                                      if (!res.ok) return
+                                      const data = await res.json()
+
+                                      if (data.client_side && (window as any).puter?.ai?.chat) {
+                                        const prompt = `Write a social media summary of this technical article suitable for LinkedIn and Facebook.\n\n1. Start with a hook — professional, engaging, first person\n2. 2-3 sentences explaining what it covers\n3. 3-4 bullet points of key takeaways\n4. End with: "Read the full article here: ${window.location.origin}/blogs/${selectedBlog.slug}"\n\nRules:\n- Max 200 words\n- No hashtags, no markdown\n- Use "—" dashes for bullet points\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        if (summary) {
+                                          await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ type: 'social', body_markdown: summary }),
+                                          })
+                                          setBlogSocialSummary(summary)
+                                          setBlogSocialCached(false)
+                                        }
+                                      } else {
                                         setBlogSocialSummary(data.body_markdown)
                                         setBlogSocialCached(false)
                                       }
@@ -3197,16 +3268,33 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                     if (!instruction) return
                                     input.disabled = true
                                     try {
-                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ type: 'social', instruction, model: summarizerModel || undefined }),
-                                      })
-                                      if (res.ok) {
-                                        const data = await res.json()
-                                        setBlogSocialSummary(data.body_markdown)
-                                        setBlogSocialCached(false)
-                                        input.value = ''
+                                      const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
+                                      if (usePuter) {
+                                        const prompt = `Here is a social media summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogSocialSummary}`
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        if (refined) {
+                                          await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ type: 'social', body_markdown: refined }),
+                                          })
+                                          setBlogSocialSummary(refined)
+                                          setBlogSocialCached(false)
+                                          input.value = ''
+                                        }
+                                      } else {
+                                        const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ type: 'social', instruction, model: summarizerModel || undefined }),
+                                        })
+                                        if (res.ok) {
+                                          const data = await res.json()
+                                          setBlogSocialSummary(data.body_markdown)
+                                          setBlogSocialCached(false)
+                                          input.value = ''
+                                        }
                                       }
                                     } catch {} finally {
                                       input.disabled = false
