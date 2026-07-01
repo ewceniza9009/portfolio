@@ -289,37 +289,17 @@
     },
     {
       "parameters": {
-        "conditions": {
-            "number": false,
-            "string": true,
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "strict"
-            },
-            "conditions": [
-              {
-                "id": "already-on-devto-cond",
-                "leftValue": "={{ String($json.devto_posted) }}",
-                "rightValue": "=1",
-                "operator": {
-                  "type": "string",
-                  "operation": "equal",
-                  "singleValue": true
-                }
-              }
-            ],
-            "combinator": "AND"
-        }
+        "functionCode": "const posted = $json.devto_posted == 1 || $json.devto_posted === '1';\nif (posted) {\n  return [[{json: $json}], []];\n} else {\n  return [[], [{json: $json}]];\n}"
       },
       "id": "already-on-devto",
       "name": "Already on Dev.to?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
       "position": [
         880,
         -100
-      ]
+      ],
+      "outputs": 2
     },
     {
       "parameters": {
