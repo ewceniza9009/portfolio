@@ -655,6 +655,20 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   }, []);
 
+  const loadHashnodeStatus = useCallback(async () => {
+    try {
+      setDevtoStatusLoading(true);
+      const res = await api("/api/admin/blogs/hashnode-status");
+      if (res.ok) {
+        const data = await res.json();
+        setDevtoStatus(data);
+      }
+    } catch {
+    } finally {
+      setDevtoStatusLoading(false);
+    }
+  }, []);
+
   const handleN8nSave = async () => {
     await saveSettings({
       n8n_portfolio_api_key: n8nPortfolioKey.trim(),
@@ -929,6 +943,13 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       fetchVisitors();
     }
   }, [activeTab]); // only re-fetch on tab change, grid changes have their own effect
+
+  useEffect(() => {
+    if (activeTab === "settings") {
+      loadDevtoStatus();
+      loadHashnodeStatus();
+    }
+  }, [activeTab, loadDevtoStatus, loadHashnodeStatus]);
 
   // Single debounced fetch for all grid param changes
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

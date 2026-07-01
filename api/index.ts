@@ -694,6 +694,19 @@ app.get('/api/admin/blogs/devto-status', flexibleAuth, async (_req, res) => {
   }
 })
 
+// Get all blogs with Hashnode sync status (for debug console)
+app.get('/api/admin/blogs/hashnode-status', flexibleAuth, async (_req, res) => {
+  try {
+    const result = await turso.execute(
+      "SELECT id, slug, title, hashnode_posted, hashnode_id, hashnode_url, created_at FROM blogs WHERE published = 1 ORDER BY created_at DESC"
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Fetch hashnode status error:', err)
+    res.status(500).json({ error: 'Failed to fetch Hashnode status' })
+  }
+})
+
 // Get blogs not yet posted to Dev.to (for n8n polling)
 app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
   try {
