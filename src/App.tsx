@@ -273,6 +273,7 @@ export default function App() {
 
   // Checker to dynamically rotate the theme and/or accent color if enabled and no manual override is set
   useEffect(() => {
+    let lastHourBucket: number | null = null
     const rotateBranding = () => {
       const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false'
       const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true'
@@ -281,38 +282,46 @@ export default function App() {
       const savedTheme = getSafeItem('theme')
       const savedAccent = getSafeItem('accent')
       const hour = new Date().getHours()
+      const hourBucket = Math.floor(hour / Math.max(intervalHours, 1))
+
+      // Skip all work when nothing actually changed in the relevant window
+      if (hourBucket === lastHourBucket && (!isThemeRotEnabled || savedTheme) && (!isAccentRotEnabled || savedAccent)) {
+        return
+      }
+      lastHourBucket = hourBucket
 
       // Rotate Theme
       if (isThemeRotEnabled && !savedTheme) {
-        const targetTheme = Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light'
-        setTheme(targetTheme)
+        const targetTheme = hourBucket % 2 === 0 ? 'dark' : 'light'
+        // No-op guard: skip setState when target already matches current state
+        if (targetTheme !== theme) setTheme(targetTheme)
       }
 
       // Rotate Accent Color
       if (isAccentRotEnabled && !savedAccent) {
         const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
-        const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length
-        const targetAccent = accentKeys[accentIndex]
-        setAccent(targetAccent)
+        const targetAccent = accentKeys[hourBucket % accentKeys.length]
+        // No-op guard: skip setState when target already matches current state
+        if (targetAccent !== accent) setAccent(targetAccent)
       }
     }
 
     rotateBranding()
     const interval = setInterval(rotateBranding, 60000) // check every minute
     return () => clearInterval(interval)
-  }, [])
+  }, [theme, accent])
 
   const cursorCursors = useMemo(() => {
     try {
       const fillColor = theme === 'dark' ? '#000000' : '#ffffff';
       const strokeColor = theme === 'dark' ? '#ffffff' : '#0d1117';
-      
+
       const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/></svg>`;
       const pointerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="${strokeColor}" stroke-width="2"/><circle cx="10" cy="10" r="2.5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1"/></svg>`;
-      
+
       const base64Arrow = btoa(arrowSvg);
       const base64Pointer = btoa(pointerSvg);
-      
+
       return {
         cursor: `url('data:image/svg+xml;base64,${base64Arrow}') 8 8, auto`,
         pointer: `url('data:image/svg+xml;base64,${base64Pointer}') 10 10, pointer`,
@@ -321,7 +330,7 @@ export default function App() {
       console.warn("Custom hardware cursor generation failed:", e);
       return null
     }
-  }, [accent, theme])
+  }, [theme])
 
   useEffect(() => {
     const root = document.documentElement
