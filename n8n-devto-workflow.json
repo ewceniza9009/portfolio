@@ -109,7 +109,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
+        1100,
         -100
       ]
     },
@@ -136,7 +136,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
+        1320,
         -100
       ],
       "continueOnFail": true
@@ -179,14 +179,14 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1100,
+        1540,
         0
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $('AI Summarize for Dev.to').item.json.original_id + '/devto-mark' }}",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/devto-mark' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -212,7 +212,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
+        1760,
         0
       ]
     },
@@ -242,7 +242,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $('AI Summarize for Dev.to').item.json.original_id + '/hashnode-mark' }}",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/hashnode-mark' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -272,7 +272,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
+        1760,
         100
       ]
     },
@@ -285,6 +285,141 @@
       "position": [
         660,
         100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": true,
+          "string": false,
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "already-on-devto-cond",
+              "leftValue": "={{ $json.devto_posted || 0 }}",
+              "rightValue": "=1",
+              "operator": {
+                "type": "number",
+                "operation": "equal",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "AND"
+        }
+      },
+      "id": "already-on-devto",
+      "name": "Already on Dev.to?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const blog = items[0].json;\nlet parsedTags = ['webdev'];\ntry {\n  if (typeof blog.tags === 'string') {\n    parsedTags = JSON.parse(blog.tags.replace(/'/g, '\"') || '[\"webdev\"]');\n  } else if (Array.isArray(blog.tags)) {\n    parsedTags = blog.tags;\n  }\n} catch (e) {\n  parsedTags = ['webdev'];\n}\nif (!parsedTags.length) parsedTags = ['webdev'];\nreturn [{\n  json: {\n    title: blog.title,\n    body_markdown: blog.content || blog.summary || blog.title,\n    tags: parsedTags,\n    description: blog.summary || (blog.content ? blog.content.substring(0, 500) : ''),\n    canonical_url: 'https://erwinwilsonceniza.qzz.io/blogs/' + blog.slug,\n    original_id: blog.id\n  }\n}];"
+      },
+      "id": "prepare-raw-blog",
+      "name": "Prepare Raw Blog Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hashnode.com/api/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "{{HASHNODE_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: `mutation { createPost(input: { title: \"${$json.title}\", content: { markdown: \"${$json.body_markdown}\" }, tags: ${JSON.stringify($json.tags)}, publish: true, originalUrl: \"${$json.canonical_url}\", description: \"${$json.description}\" }) { id, url, title } }` }) }}",
+        "options": {}
+      },
+      "id": "post-to-hashnode-raw",
+      "name": "Post to Hashnode (raw)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "parameters": [
+          {
+            "name": "hashnode_id",
+            "value": "={{ $json.data.createPost.id }}"
+          },
+          {
+            "name": "hashnode_url",
+            "value": "={{ $json.data.createPost.url }}"
+          }
+        ],
+        "options": {}
+      },
+      "id": "store-hashnode-id-raw",
+      "name": "Store Hashnode Post ID (raw)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/hashnode-mark' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hashnode_id",
+              "value": "={{ $json.hashnode_id }}"
+            },
+            {
+              "name": "hashnode_url",
+              "value": "={{ $json.hashnode_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mark-hashnode-posted-raw",
+      "name": "Mark Hashnode as Posted (raw)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        -200
       ]
     }
   ],
@@ -333,7 +468,58 @@
       "main": [
         [
           {
+            "node": "Already on Dev.to?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already on Dev.to?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Raw Blog Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "AI Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Raw Blog Data": {
+      "main": [
+        [
+          {
+            "node": "Post to Hashnode (raw)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Hashnode (raw)": {
+      "main": [
+        [
+          {
+            "node": "Store Hashnode Post ID (raw)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Hashnode Post ID (raw)": {
+      "main": [
+        [
+          {
+            "node": "Mark Hashnode as Posted (raw)",
             "type": "main",
             "index": 0
           }
@@ -416,6 +602,6 @@
   "updatedAt": "2026-06-30T00:00:00.000Z",
   "versionId": "1",
   "_meta": {
-    "instructions": "1. Import 2. Activate 3. 1 blog per run, 30s wait, auto-retry on 429"
+    "instructions": "IF devto_posted=1: Skip AI Summarize, post raw content to Hashnode only. IF devto_posted=0: AI Summarize, post to both. Both post nodes have continueOnFail."
   }
 }
