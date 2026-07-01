@@ -664,8 +664,9 @@ export default function FloatingControl() {
   const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | null>(null)
 
   useEffect(() => {
-    document.body.dataset.fabActive = mode ? 'true' : 'false'
-    return () => { document.body.dataset.fabActive = 'false' }
+    document.body.dataset.fabActive = mode === 'menu' ? 'true' : 'false'
+    document.body.dataset.windowActive = mode === 'chat' || mode === 'terminal' ? 'true' : 'false'
+    return () => { document.body.dataset.fabActive = 'false'; document.body.dataset.windowActive = 'false' }
   }, [mode])
 
   if (!isHomePage) return null
