@@ -500,71 +500,83 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed z-[90] w-full shadow-2xl overflow-hidden text-sm border ${
+      className={`fixed z-[100] w-full shadow-2xl overflow-hidden text-sm border ${
         isMaximized ? 'inset-4 rounded-2xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-lg h-[520px] max-h-[70vh] rounded-2xl w-[calc(100%-2rem)]'
       }`}
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+      style={{ 
+        background: 'var(--bg-card)', 
+        borderColor: 'var(--accent)',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 40px color-mix(in srgb, var(--accent) 20%, transparent)'
+      }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 py-3.5 border-b select-none cursor-move active:cursor-grabbing"
+        className="flex items-center justify-between px-5 py-4 border-b select-none cursor-move active:cursor-grabbing"
         style={{
-          background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--bg-secondary)) 0%, var(--bg-card) 100%)',
           borderColor: 'var(--border)',
           touchAction: 'none'
         }}
         onPointerDown={(e) => { if (!isMaximized) dragControls.start(e) }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-            <Bot size={16} className="text-[var(--bg-primary)]" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ 
+            background: 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)',
+            boxShadow: '0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)'
+          }}>
+            <Bot size={18} className="text-[var(--bg-primary)]" />
           </div>
-          <div>
-            <div className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Ready to help</span>
+          <div className="space-y-0.5">
+            <div className="text-sm font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>Ready to help</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setIsMaximized(!isMaximized)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
-            {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          <button onClick={() => setIsMaximized(!isMaximized)} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-90" style={{ color: 'var(--text-secondary)' }}>
+            {isMaximized ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
-            <X size={16} />
+          <button onClick={onClose} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all active:scale-90" style={{ color: 'var(--text-secondary)' }}>
+            <X size={17} />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto h-[calc(100%-116px)] px-4 py-5 space-y-4" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
+      <div className="overflow-y-auto h-[calc(100%-130px)] px-4 py-5 space-y-5" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
         {messages.map((msg, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15 }}
-            className={`flex items-end gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
-                <Bot size={13} className="text-[var(--bg-primary)]" />
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-md" style={{ 
+                background: 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)'
+              }}>
+                <Bot size={14} className="text-[var(--bg-primary)]" />
               </div>
             )}
             <div
-              className={`max-w-[80%] px-4 py-2.5 text-[13px] leading-relaxed ${
+              className={`max-w-[80%] px-5 py-3.5 text-[13px] leading-relaxed shadow-sm ${
                 msg.role === 'user'
                   ? 'rounded-2xl rounded-br-md'
                   : 'rounded-2xl rounded-bl-md'
               }`}
               style={{
-                background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-secondary)',
+                background: msg.role === 'user' 
+                  ? 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, var(--accent-secondary)) 100%)' 
+                  : 'var(--bg-secondary)',
                 color: msg.role === 'user' ? 'var(--bg-primary)' : 'var(--text-primary)',
+                boxShadow: msg.role === 'user' ? '0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent)' : '0 2px 8px rgba(0,0,0,0.1)'
               }}
             >
               {msg.role === 'assistant' ? (
-                <div className="prose prose-xs max-w-none [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_p]:mb-1 [&_strong]:font-semibold [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[11px]" style={{ '--tw-prose-body': 'var(--text-primary)', '--tw-prose-bold': 'var(--text-primary)', '--tw-prose-code': 'var(--text-primary)' } as any}>
+                <div className="prose prose-xs max-w-none [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_p]:mb-1 [&_strong]:font-semibold [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-lg [&_code]:text-[11px] [&_code]:bg-black/10 dark:[&_code]:bg-white/10" style={{ '--tw-prose-body': 'var(--text-primary)', '--tw-prose-bold': 'var(--text-primary)', '--tw-prose-code': 'var(--text-primary)' } as any}>
                   {parsedContent[i]}
                 </div>
               ) : (
@@ -572,8 +584,8 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
               )}
             </div>
             {msg.role === 'user' && (
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--text-muted)' }}>
-                <User size={13} className="text-[var(--bg-primary)]" />
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-md" style={{ background: 'linear-gradient(135deg, var(--text-muted) 0%, color-mix(in srgb, var(--text-muted) 70%, var(--text-secondary)) 100%)' }}>
+                <User size={14} className="text-[var(--bg-primary)]" />
               </div>
             )}
           </motion.div>
@@ -581,18 +593,19 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
 
         {/* Suggestions */}
         {showSuggestions && messages.length === 1 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="pt-2 pb-1">
-            <p className="text-[11px] font-medium mb-2.5" style={{ color: 'var(--text-muted)' }}>Try asking:</p>
-            <div className="flex flex-wrap gap-1.5">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="pt-3 pb-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Try asking:</p>
+            <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => handleSend(s)}
-                  className="px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-colors active:scale-95"
+                  className="px-4 py-2.5 rounded-xl text-[11px] font-semibold border transition-all active:scale-95 hover:brightness-110"
                   style={{
-                    background: 'var(--bg-secondary)',
-                    borderColor: 'var(--border)',
+                    background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%)',
+                    borderColor: 'color-mix(in srgb, var(--accent) 30%, var(--border))',
                     color: 'var(--text-secondary)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                   }}
                 >
                   {s}
@@ -607,16 +620,18 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-end gap-2.5"
+            className="flex items-end gap-3"
           >
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
-              <Bot size={13} className="text-[var(--bg-primary)]" />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-md" style={{ 
+              background: 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)'
+            }}>
+              <Bot size={14} className="text-[var(--bg-primary)]" />
             </div>
-            <div className="px-4 py-3 rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-secondary)' }}>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ color: 'var(--text-muted)' }} />
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:0.12s]" style={{ color: 'var(--text-muted)' }} />
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:0.24s]" style={{ color: 'var(--text-muted)' }} />
+            <div className="px-5 py-3.5 rounded-2xl rounded-bl-md shadow-sm" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-current animate-bounce" style={{ color: 'var(--accent)', boxShadow: '0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)' }} />
+                <span className="w-2.5 h-2.5 rounded-full bg-current animate-bounce [animation-delay:0.12s]" style={{ color: 'var(--accent)', boxShadow: '0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)' }} />
+                <span className="w-2.5 h-2.5 rounded-full bg-current animate-bounce [animation-delay:0.24s]" style={{ color: 'var(--accent)', boxShadow: '0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)' }} />
               </div>
             </div>
           </motion.div>
@@ -627,8 +642,11 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       {/* Input */}
       <form
         onSubmit={(e) => { e.preventDefault(); handleSend() }}
-        className="flex items-center gap-2 px-4 py-3 border-t"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+        className="flex items-center gap-2.5 px-4 py-4 border-t"
+        style={{ 
+          background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)', 
+          borderColor: 'var(--border)' 
+        }}
       >
         <input
           ref={inputRef}
@@ -636,21 +654,26 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask me anything..."
-          className="flex-1 px-3.5 py-2 rounded-xl text-xs outline-none border"
+          className="flex-1 px-4 py-3 rounded-xl text-sm outline-none border transition-all focus:ring-2 focus:ring-offset-0"
           style={{
-            background: 'var(--bg-card)',
+            background: 'var(--bg-primary)',
             color: 'var(--text-primary)',
-            borderColor: 'var(--border)',
+            borderColor: 'color-mix(in srgb, var(--accent) 30%, var(--border))',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 shadow-sm"
-          style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 shadow-lg"
+          style={{ 
+            background: 'linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)', 
+            color: 'var(--bg-primary)',
+            boxShadow: '0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)'
+          }}
         >
-          <SendHorizonal size={15} />
+          <SendHorizonal size={17} />
         </button>
       </form>
     </motion.div>
@@ -682,7 +705,7 @@ export default function FloatingControl() {
     <>
       {/* FAB Button */}
       {(!mode || mode === 'menu') && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-[100]">
           <motion.button
             onClick={handleFabClick}
             whileHover={{ scale: 1.05 }}
@@ -707,7 +730,7 @@ export default function FloatingControl() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 flex flex-col gap-2"
+            className="fixed bottom-24 right-6 z-[100] flex flex-col gap-2"
           >
             <button
               onClick={() => setMode('chat')}
