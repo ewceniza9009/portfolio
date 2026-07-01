@@ -372,22 +372,17 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
           {/* Article Header */}
           <header className="mb-8 relative">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-accent mb-4" style={{ color: 'var(--accent)' }}>
-              <Sparkles size={12} className="animate-pulse" />
-              <span>TECHNICAL LOG</span>
-            </div>
-
-            {/* Author byline */}
-            <div className="flex items-center gap-3 mb-6">
+            {/* Author byline with badge */}
+            <div className="flex items-center gap-4 mb-6">
               <img 
                 src={profilePicUrl} 
                 alt="Erwin Wilson Ceniza" 
-                className="w-10 h-10 rounded-full border-2"
+                className="w-12 h-12 rounded-full border-2"
                 style={{ borderColor: 'var(--border)' }}
               />
-              <div className="text-sm">
-                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Erwin Wilson Ceniza</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Full Stack Developer</p>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)', borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+                <Sparkles size={12} className="animate-pulse" />
+                <span>THE DEVELOPER LOGS</span>
               </div>
             </div>
             
