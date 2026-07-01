@@ -532,6 +532,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [hashnodeSaved, setHashnodeSaved] = useState(false);
   const [hashnodeStatus, setHashnodeStatus] = useState<any[]>([]);
   const [hashnodeStatusLoading, setHashnodeStatusLoading] = useState(false);
+  const [syncTab, setSyncTab] = useState<"devto" | "hashnode">("devto");
 
   // ── Profile Pic Settings ──
   const { url: profilePicUrl, refresh: refreshProfilePic } = useProfilePic();
@@ -4249,15 +4250,33 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     style={{ borderColor: "var(--border)" }}
                   >
                     <div className="flex items-center justify-between">
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        Dev.to Sync Status
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSyncTab("devto")}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
+                          style={{
+                            background: syncTab === "devto" ? "var(--accent)" : "var(--bg-secondary)",
+                            borderColor: syncTab === "devto" ? "var(--accent)" : "var(--border)",
+                            color: syncTab === "devto" ? "var(--bg-primary)" : "var(--text-secondary)",
+                          }}
+                        >
+                          Dev.to
+                        </button>
+                        <button
+                          onClick={() => setSyncTab("hashnode")}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
+                          style={{
+                            background: syncTab === "hashnode" ? "var(--accent)" : "var(--bg-secondary)",
+                            borderColor: syncTab === "hashnode" ? "var(--accent)" : "var(--border)",
+                            color: syncTab === "hashnode" ? "var(--bg-primary)" : "var(--text-secondary)",
+                          }}
+                        >
+                          Hashnode
+                        </button>
+                      </div>
                       <button
-                        onClick={loadDevtoStatus}
-                        disabled={devtoStatusLoading}
+                        onClick={syncTab === "devto" ? loadDevtoStatus : loadHashnodeStatus}
+                        disabled={syncTab === "devto" ? devtoStatusLoading : hashnodeStatusLoading}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-[0.98]"
                         style={{
                           background: "var(--bg-secondary)",
@@ -4267,222 +4286,161 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       >
                         <RefreshCw
                           size={12}
-                          className={devtoStatusLoading ? "animate-spin" : ""}
+                          className={(syncTab === "devto" ? devtoStatusLoading : hashnodeStatusLoading) ? "animate-spin" : ""}
                         />
                         Refresh
                       </button>
                     </div>
 
-                    {devtoStatusLoading && devtoStatus.length === 0 ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader
-                          size={20}
-                          className="animate-spin"
-                          style={{ color: "var(--accent)" }}
-                        />
-                      </div>
-                    ) : devtoStatus.length === 0 ? (
-                      <p
-                        className="text-xs text-center py-6"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        No published blogs found.
-                      </p>
-                    ) : (
-                      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-                        {devtoStatus.map((blog: any) => (
-                          <div
-                            key={blog.id}
-                            className="flex items-center justify-between p-3 rounded-lg border"
-                            style={{
-                              background: "var(--bg-card)",
-                              borderColor: "var(--border)",
-                            }}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-sm font-medium truncate"
-                                style={{ color: "var(--text-primary)" }}
-                              >
-                                {blog.title}
-                              </p>
-                              <p
-                                className="text-xs truncate"
-                                style={{ color: "var(--text-muted)" }}
-                              >
-                                {blog.slug} ·{" "}
-                                {new Date(blog.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-3">
-                              {blog.devto_posted ? (
-                                <a
-                                  href={`https://dev.to/${devtoUsername || "dev"}/${blog.slug}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all hover:brightness-110"
-                                  style={{
-                                    background: "rgba(16, 185, 129, 0.1)",
-                                    borderColor: "rgba(16, 185, 129, 0.3)",
-                                    color: "#10b981",
-                                  }}
-                                >
-                                  <CheckCircle2 size={12} />
-                                  Posted
-                                </a>
-                              ) : (
-                                <span
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border"
-                                  style={{
-                                    background: "rgba(245, 158, 11, 0.1)",
-                                    borderColor: "rgba(245, 158, 11, 0.3)",
-                                    color: "#f59e0b",
-                                  }}
-                                >
-                                  Pending
-                                </span>
-                              )}
-                            </div>
+                    {syncTab === "devto" ? (
+                      <>
+                        {devtoStatusLoading && devtoStatus.length === 0 ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader size={20} className="animate-spin" style={{ color: "var(--accent)" }} />
                           </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div
-                      className="flex items-center gap-2 text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      <span className="font-semibold">
-                        {devtoStatus.filter((b: any) => b.devto_posted).length}
-                      </span>{" "}
-                      posted
-                      <span className="opacity-30">·</span>
-                      <span className="font-semibold">
-                        {devtoStatus.filter((b: any) => !b.devto_posted).length}
-                      </span>{" "}
-                      pending
-                    </div>
-                  </div>
-
-                  {/* Hashnode Sync Status */}
-                  <div
-                    className="p-4 rounded-xl border bg-white/[0.01] space-y-4"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        Hashnode Sync Status
-                      </p>
-                      <button
-                        onClick={loadHashnodeStatus}
-                        disabled={hashnodeStatusLoading}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-[0.98]"
-                        style={{
-                          background: "var(--bg-secondary)",
-                          borderColor: "var(--border)",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        <RefreshCw
-                          size={12}
-                          className={hashnodeStatusLoading ? "animate-spin" : ""}
-                        />
-                        Refresh
-                      </button>
-                    </div>
-
-                    {hashnodeStatusLoading && hashnodeStatus.length === 0 ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader
-                          size={20}
-                          className="animate-spin"
-                          style={{ color: "var(--accent)" }}
-                        />
-                      </div>
-                    ) : hashnodeStatus.length === 0 ? (
-                      <p
-                        className="text-xs text-center py-6"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        No published blogs found.
-                      </p>
-                    ) : (
-                      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-                        {hashnodeStatus.map((blog: any) => (
-                          <div
-                            key={blog.id}
-                            className="flex items-center justify-between p-3 rounded-lg border"
-                            style={{
-                              background: "var(--bg-card)",
-                              borderColor: "var(--border)",
-                            }}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className="text-sm font-medium truncate"
-                                style={{ color: "var(--text-primary)" }}
-                              >
-                                {blog.title}
-                              </p>
-                              <p
-                                className="text-xs truncate"
-                                style={{ color: "var(--text-muted)" }}
-                              >
-                                {blog.slug} ·{" "}
-                                {new Date(blog.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-3">
-                              {blog.hashnode_posted ? (
-                                <a
-                                  href={blog.hashnode_url || `https://hashnode.com/${blog.slug}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all hover:brightness-110"
-                                  style={{
-                                    background: "rgba(16, 185, 129, 0.1)",
-                                    borderColor: "rgba(16, 185, 129, 0.3)",
-                                    color: "#10b981",
-                                  }}
-                                >
-                                  <CheckCircle2 size={12} />
-                                  Posted
-                                </a>
-                              ) : (
-                                <span
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border"
-                                  style={{
-                                    background: "rgba(245, 158, 11, 0.1)",
-                                    borderColor: "rgba(245, 158, 11, 0.3)",
-                                    color: "#f59e0b",
-                                  }}
-                                >
-                                  Pending
-                                </span>
-                              )}
-                            </div>
+                        ) : devtoStatus.length === 0 ? (
+                          <p className="text-xs text-center py-6" style={{ color: "var(--text-muted)" }}>
+                            No published blogs found.
+                          </p>
+                        ) : (
+                          <div className="overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                                  <th className="text-left p-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Title</th>
+                                  <th className="text-left p-2.5 font-medium hidden md:table-cell" style={{ color: "var(--text-muted)" }}>Slug</th>
+                                  <th className="text-left p-2.5 font-medium hidden sm:table-cell" style={{ color: "var(--text-muted)" }}>Date</th>
+                                  <th className="text-right p-2.5 font-medium">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {devtoStatus.map((blog: any) => (
+                                  <tr key={blog.id} className="border-b" style={{ borderColor: "var(--border)" }}>
+                                    <td className="p-2.5 truncate max-w-[200px]" style={{ color: "var(--text-primary)" }}>
+                                      {blog.title}
+                                    </td>
+                                    <td className="p-2.5 truncate max-w-[120px] hidden md:table-cell" style={{ color: "var(--text-muted)" }}>
+                                      {blog.slug}
+                                    </td>
+                                    <td className="p-2.5 whitespace-nowrap hidden sm:table-cell" style={{ color: "var(--text-muted)" }}>
+                                      {new Date(blog.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="p-2.5 text-right">
+                                      {blog.devto_posted ? (
+                                        <a
+                                          href={`https://dev.to/${devtoUsername || "dev"}/${blog.slug}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all hover:brightness-110"
+                                          style={{
+                                            background: "rgba(16, 185, 129, 0.1)",
+                                            borderColor: "rgba(16, 185, 129, 0.3)",
+                                            color: "#10b981",
+                                          }}
+                                        >
+                                          <CheckCircle2 size={12} />
+                                          Posted
+                                        </a>
+                                      ) : (
+                                        <span
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border"
+                                          style={{
+                                            background: "rgba(245, 158, 11, 0.1)",
+                                            borderColor: "rgba(245, 158, 11, 0.3)",
+                                            color: "#f59e0b",
+                                          }}
+                                        >
+                                          Pending
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                          <span className="font-semibold">{devtoStatus.filter((b: any) => b.devto_posted).length}</span> posted
+                          <span className="opacity-30">·</span>
+                          <span className="font-semibold">{devtoStatus.filter((b: any) => !b.devto_posted).length}</span> pending
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {hashnodeStatusLoading && hashnodeStatus.length === 0 ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader size={20} className="animate-spin" style={{ color: "var(--accent)" }} />
+                          </div>
+                        ) : hashnodeStatus.length === 0 ? (
+                          <p className="text-xs text-center py-6" style={{ color: "var(--text-muted)" }}>
+                            No published blogs found.
+                          </p>
+                        ) : (
+                          <div className="overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                                  <th className="text-left p-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Title</th>
+                                  <th className="text-left p-2.5 font-medium hidden md:table-cell" style={{ color: "var(--text-muted)" }}>Slug</th>
+                                  <th className="text-left p-2.5 font-medium hidden sm:table-cell" style={{ color: "var(--text-muted)" }}>Date</th>
+                                  <th className="text-right p-2.5 font-medium">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {hashnodeStatus.map((blog: any) => (
+                                  <tr key={blog.id} className="border-b" style={{ borderColor: "var(--border)" }}>
+                                    <td className="p-2.5 truncate max-w-[200px]" style={{ color: "var(--text-primary)" }}>
+                                      {blog.title}
+                                    </td>
+                                    <td className="p-2.5 truncate max-w-[120px] hidden md:table-cell" style={{ color: "var(--text-muted)" }}>
+                                      {blog.slug}
+                                    </td>
+                                    <td className="p-2.5 whitespace-nowrap hidden sm:table-cell" style={{ color: "var(--text-muted)" }}>
+                                      {new Date(blog.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="p-2.5 text-right">
+                                      {blog.hashnode_posted ? (
+                                        <a
+                                          href={blog.hashnode_url || `https://hashnode.com/${blog.slug}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all hover:brightness-110"
+                                          style={{
+                                            background: "rgba(16, 185, 129, 0.1)",
+                                            borderColor: "rgba(16, 185, 129, 0.3)",
+                                            color: "#10b981",
+                                          }}
+                                        >
+                                          <CheckCircle2 size={12} />
+                                          Posted
+                                        </a>
+                                      ) : (
+                                        <span
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border"
+                                          style={{
+                                            background: "rgba(245, 158, 11, 0.1)",
+                                            borderColor: "rgba(245, 158, 11, 0.3)",
+                                            color: "#f59e0b",
+                                          }}
+                                        >
+                                          Pending
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                          <span className="font-semibold">{hashnodeStatus.filter((b: any) => b.hashnode_posted).length}</span> posted
+                          <span className="opacity-30">·</span>
+                          <span className="font-semibold">{hashnodeStatus.filter((b: any) => !b.hashnode_posted).length}</span> pending
+                        </div>
+                      </>
                     )}
-
-                    <div
-                      className="flex items-center gap-2 text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      <span className="font-semibold">
-                        {hashnodeStatus.filter((b: any) => b.hashnode_posted).length}
-                      </span>{" "}
-                      posted
-                      <span className="opacity-30">·</span>
-                      <span className="font-semibold">
-                        {hashnodeStatus.filter((b: any) => !b.hashnode_posted).length}
-                      </span>{" "}
-                      pending
-                    </div>
                   </div>
                 </div>
               </div>
