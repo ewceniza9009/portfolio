@@ -359,11 +359,11 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           onChangeAccent={setAccent}
         />
 
-        <main className="flex-grow max-w-4xl w-full mx-auto px-6 pt-32 pb-24 relative z-10 select-text">
+        <main className="flex-grow max-w-4xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 select-text">
           {/* Back button */}
           <Link 
             to="/blogs" 
-            className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-8 transition-colors hover:text-[var(--accent)] group select-none"
+            className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-10 transition-colors hover:text-[var(--accent)] group select-none"
             style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1" />
@@ -371,7 +371,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </Link>
 
           {/* Article Header */}
-          <header className="mb-10 relative">
+          <header className="mb-8 relative">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-accent mb-4" style={{ color: 'var(--accent)' }}>
               <Sparkles size={12} className="animate-pulse" />
               <span>TECHNICAL LOG</span>
@@ -413,7 +413,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </header>
 
           {/* Banner cover image */}
-          <div className="rounded-3xl overflow-hidden mb-12 h-64 sm:h-80 md:h-[420px] w-full border relative" style={{ borderColor: 'var(--border)' }}>
+          <div className="rounded-3xl overflow-hidden mb-10 h-56 sm:h-72 md:h-80 w-full border relative" style={{ borderColor: 'var(--border)' }}>
             {blog.cover_image ? (
               <img 
                 src={blog.cover_image} 
@@ -431,7 +431,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
           {/* Tags */}
           {tagsArray.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-10 select-none">
+            <div className="flex flex-wrap gap-2 mb-8 select-none">
               {tagsArray.map(t => (
                 <span 
                   key={t} 
@@ -446,14 +446,16 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           )}
 
           {/* Article Render Content */}
-          <article className="prose max-w-none mb-16 leading-relaxed select-text text-sm sm:text-base article-content">
+          <article className="prose max-w-none mb-12 leading-relaxed select-text text-sm sm:text-base article-content">
             {parsedContent}
           </article>
 
-          <PayPalDonate url={paypalUrl} variant="inline" />
+          <div className="mb-8">
+            <PayPalDonate url={paypalUrl} variant="inline" />
+          </div>
 
           {/* Written By Author Card */}
-          <section className="p-6 rounded-3xl border glass mb-16 flex flex-col sm:flex-row items-center gap-5 select-none" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
+          <section className="p-6 rounded-3xl border glass mb-12 flex flex-col sm:flex-row items-start sm:items-center gap-6 select-none" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
               <img src={profilePicUrl} alt="Erwin Wilson Ceniza" className="w-full h-full object-cover rounded-2xl" key={profilePicUrl} />
             </div>
@@ -469,8 +471,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </section>
 
           {/* Reader Actions (Likes + Sharing) */}
-          <div className="flex items-center justify-between border-t border-b py-6 mb-16 select-none flex-wrap gap-3" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center justify-between border-t border-b py-5 mb-12 select-none gap-4" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-3">
               <motion.button
                 onClick={handleLike}
                 disabled={hasLiked}
@@ -556,14 +558,14 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </div>
 
           {/* Comments Section */}
-          <section className="space-y-8 select-text">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+          <section className="space-y-6 select-text">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
               <MessageSquare size={20} style={{ color: 'var(--accent)' }} />
               Comments ({comments.length})
             </h2>
 
             {/* Comment Form */}
-            <form onSubmit={handleCommentSubmit} className="p-6 rounded-3xl border glass space-y-4" style={{ borderColor: 'var(--border)' }}>
+            <form onSubmit={handleCommentSubmit} className="p-6 rounded-3xl border glass space-y-4 shadow-sm" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
               <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
                 <Sparkles size={12} className="text-accent" style={{ color: 'var(--accent)' }} />
                 Leave a comment
@@ -625,15 +627,16 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
             </form>
 
             {/* Comments List */}
-            <div className="space-y-6 pt-4">
+            <div className="space-y-4 pt-2">
               {comments.length === 0 ? (
-                <div className="text-center py-8 border border-dashed rounded-3xl" style={{ borderColor: 'var(--border)' }}>
+                <div className="text-center py-12 border border-dashed rounded-3xl" style={{ borderColor: 'var(--border)' }}>
+                  <MessageSquare size={32} className="mx-auto mb-3 opacity-30" style={{ color: 'var(--text-muted)' }} />
                   <p className="text-xs text-muted" style={{ color: 'var(--text-muted)' }}>No comments yet. Be the first to share your thoughts!</p>
                 </div>
               ) : (
-                <div className="divide-y space-y-6" style={{ borderColor: 'var(--border)' }}>
+                <div className="space-y-5">
                   {comments.map((comment, index) => (
-                    <div key={comment.id} className={`flex gap-4 pt-6 ${index === 0 ? 'pt-0 border-t-0' : 'border-t'}`} style={{ borderColor: 'var(--border)' }}>
+                    <div key={comment.id} className={`flex gap-4 ${index !== 0 ? 'pt-5 border-t' : ''}`} style={{ borderColor: 'var(--border)' }}>
                       {/* Avatar */}
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border shrink-0 ${getAvatarColor(comment.author_name)}`}>
                         {comment.author_name.charAt(0).toUpperCase()}
