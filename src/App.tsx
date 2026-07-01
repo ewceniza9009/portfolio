@@ -50,7 +50,17 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   useEffect(() => {
-    if (!isLoading) window.scrollTo({ top: 0, behavior: 'instant' })
+    if (!isLoading) {
+      const hash = window.location.hash
+      if (hash) {
+        const id = hash.replace('#', '')
+        const timer = setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        }, 300)
+        return () => clearTimeout(timer)
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
   }, [isLoading])
 
   const { scrollYProgress } = useScroll()
@@ -81,20 +91,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     })
 
     return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash) {
-      const id = hash.replace('#', '')
-      const timer = setTimeout(() => {
-        const element = document.getElementById(id)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' })
-        }
-      }, 800)
-      return () => clearTimeout(timer)
-    }
   }, [])
 
   const scrollTo = useCallback((id: string) => {
