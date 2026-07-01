@@ -132,8 +132,8 @@ export default React.memo(function HeroSection({
 
           {/* Value proposition */}
           <div className="max-w-2xl mx-auto mt-6 mb-6 text-center space-y-2">
-            <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-              Ten years building enterprise software.
+            <p className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+              Ten+ years building enterprise software.
             </p>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Full stack - .NET, React, Angular, Node, Express. Whatever the
