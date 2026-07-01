@@ -813,17 +813,20 @@ Article content (first 3000 chars):
 ${blog.content?.slice(0, 3000) || blog.summary || ''}`
 
       const aiResult = await genModel.generateContent(prompt)
-      const summary = aiResult.response.text()
+      let summary = aiResult.response.text()
 
-      const tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
+      let tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
+      if (!tags.length) tags = ['webdev']
+      const body_markdown = summary?.trim() || blog.summary || (blog.content?.slice(0, 500) + '...') || `Read the full article: ${fullUrl}`
+      const description = blog.summary?.trim() || `Technical deep-dive: ${blog.title}`
 
       res.json({
         original_id: blog.id,
         title: blog.title,
-        body_markdown: summary,
+        body_markdown,
         tags,
         canonical_url: fullUrl,
-        description: blog.summary || `Technical deep-dive: ${blog.title}`,
+        description,
         devto_posted: blog.devto_posted,
       })
     } else if (currentProvider === 'puter') {
