@@ -722,32 +722,26 @@ app.post('/api/admin/blogs/:id/devto-mark', flexibleAuth, async (req, res) => {
 })
 
 // AI: Summarize blog for Dev.to cross-post
-app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) => {
-  try {
-    const result = await turso.execute({
-      sql: 'SELECT id, slug, title, content, summary, tags, category, devto_posted FROM blogs WHERE id = ?',
-      args: [req.params.id as string],
-    })
-    if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
+// Generate and cache Dev.to summary
+async function generateDevtoSummary(blog: any, modelOverride?: string): Promise<string> {
+  const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+  const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
+  if (currentProvider !== 'gemini') throw new Error('Only Gemini AI provider is supported')
 
-    const blog = result.rows[0] as any
-    const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
-    const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('Gemini API key not configured')
 
-    if (currentProvider === 'gemini') {
-      const apiKey = process.env.GEMINI_API_KEY
-      if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
+  let selectedModel = modelOverride
+  if (!selectedModel) {
+    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+    selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+  }
 
-      // Read model from settings
-      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-      const selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const genModel = genAI.getGenerativeModel({ model: selectedModel })
+  const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
 
-      const genAI = new GoogleGenerativeAI(apiKey)
-      const genModel = genAI.getGenerativeModel({ model: selectedModel })
-
-      const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
-
-      const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:
+  const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:
 
 1. Start with a hook — casual, first person, like talking to a fellow dev
 2. Say what the article covers in plain language ("It covers..." / "It walks through...")
@@ -770,31 +764,208 @@ Article title: ${blog.title}
 Article content (first 3000 chars):
 ${blog.content?.slice(0, 3000) || blog.summary || ''}`
 
-      const aiResult = await genModel.generateContent(prompt)
-      let summary = aiResult.response.text()
+  const aiResult = await genModel.generateContent(prompt)
+  return aiResult.response.text()
+}
 
+async function generateSocialSummary(blog: any, modelOverride?: string): Promise<string> {
+  const aiProvider = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'ai_provider'", args: [] })
+  const currentProvider = (aiProvider.rows[0] as any)?.value || 'gemini'
+  if (currentProvider !== 'gemini') throw new Error('Only Gemini AI provider is supported')
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('Gemini API key not configured')
+
+  let selectedModel = modelOverride
+  if (!selectedModel) {
+    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+    selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const genModel = genAI.getGenerativeModel({ model: selectedModel })
+  const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
+
+  const prompt = `Write a social media summary of this technical article suitable for LinkedIn and Facebook. Match this style:
+
+1. Start with a hook — professional, engaging, first person
+2. 2-3 sentences explaining what the article covers and why it matters
+3. 3-4 bullet points of key takeaways
+4. End with: "Read the full article here: ${fullUrl}"
+
+Rules:
+- Tone: professional but approachable, suitable for LinkedIn
+- Max 200 words
+- No hashtags
+- No markdown formatting (plain text only)
+- Use "—" dashes for bullet points
+
+Article title: ${blog.title}
+
+Article content (first 3000 chars):
+${blog.content?.slice(0, 3000) || blog.summary || ''}`
+
+  const aiResult = await genModel.generateContent(prompt)
+  return aiResult.response.text()
+}
+
+app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) => {
+  try {
+    const result = await turso.execute({
+      sql: 'SELECT id, slug, title, content, summary, tags, category, devto_posted, devto_summary FROM blogs WHERE id = ?',
+      args: [req.params.id as string],
+    })
+    if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
+
+    const blog = result.rows[0] as any
+    const force = req.query.force === '1'
+    const modelOverride = (req.query.model as string) || undefined
+    const fullUrl = `${SITE_URL}/blogs/${blog.slug}`
+
+    // Return cached summary if available and not forcing regenerate
+    if (!force && !modelOverride && blog.devto_summary) {
       let tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
       if (!tags.length) tags = ['webdev']
-      const body_markdown = summary?.trim() || blog.summary || (blog.content?.slice(0, 500) + '...') || `Read the full article: ${fullUrl}`
-      const description = blog.summary?.trim() || `Technical deep-dive: ${blog.title}`
-
-      res.json({
+      return res.json({
         original_id: blog.id,
         title: blog.title,
-        body_markdown,
+        body_markdown: blog.devto_summary,
         tags,
         canonical_url: fullUrl,
-        description,
+        description: blog.summary?.trim() || `Technical deep-dive: ${blog.title}`,
         devto_posted: blog.devto_posted,
+        cached: true,
       })
-    } else if (currentProvider === 'puter') {
-      return res.status(400).json({ error: 'Puter AI provider requires client-side AI. Switch to Gemini or configure client-side Puter integration.' })
-    } else {
-      return res.status(400).json({ error: 'Invalid AI provider' })
     }
+
+    const body_markdown = await generateDevtoSummary(blog, modelOverride)
+
+    // Save to DB
+    await turso.execute({
+      sql: 'UPDATE blogs SET devto_summary = ? WHERE id = ?',
+      args: [body_markdown, req.params.id as string],
+    })
+
+    let tags = (blog.tags || 'webdev,engineering').split(',').map((t: string) => t.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean).slice(0, 4)
+    if (!tags.length) tags = ['webdev']
+
+    res.json({
+      original_id: blog.id,
+      title: blog.title,
+      body_markdown,
+      tags,
+      canonical_url: fullUrl,
+      description: blog.summary?.trim() || `Technical deep-dive: ${blog.title}`,
+      devto_posted: blog.devto_posted,
+      cached: false,
+    })
   } catch (err) {
     console.error('Dev.to summary error:', err)
     res.status(500).json({ error: 'Failed to generate summary' })
+  }
+})
+
+app.post('/api/admin/blogs/:id/social-summary', flexibleAuth, async (req, res) => {
+  try {
+    const result = await turso.execute({
+      sql: 'SELECT id, slug, title, content, summary, tags, category, social_summary FROM blogs WHERE id = ?',
+      args: [req.params.id as string],
+    })
+    if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
+
+    const blog = result.rows[0] as any
+    const force = req.query.force === '1'
+    const modelOverride = (req.query.model as string) || undefined
+
+    // Return cached summary if available and not forcing regenerate
+    if (!force && !modelOverride && blog.social_summary) {
+      return res.json({
+        original_id: blog.id,
+        title: blog.title,
+        body_markdown: blog.social_summary,
+        cached: true,
+      })
+    }
+
+    const body_markdown = await generateSocialSummary(blog, modelOverride)
+
+    // Save to DB
+    await turso.execute({
+      sql: 'UPDATE blogs SET social_summary = ? WHERE id = ?',
+      args: [body_markdown, req.params.id as string],
+    })
+
+    res.json({
+      original_id: blog.id,
+      title: blog.title,
+      body_markdown,
+      cached: false,
+    })
+  } catch (err) {
+    console.error('Social summary error:', err)
+    res.status(500).json({ error: 'Failed to generate summary' })
+  }
+})
+
+app.post('/api/admin/blogs/:id/refine-summary', flexibleAuth, async (req, res) => {
+  try {
+    const { type, instruction, model: modelOverride } = req.body
+    if (!type || !['devto', 'social'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be "devto" or "social"' })
+    }
+    if (!instruction || typeof instruction !== 'string' || !instruction.trim()) {
+      return res.status(400).json({ error: 'Instruction is required' })
+    }
+
+    const result = await turso.execute({
+      sql: 'SELECT id, slug, title, content, summary, devto_summary, social_summary FROM blogs WHERE id = ?',
+      args: [req.params.id as string],
+    })
+    if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
+
+    const blog = result.rows[0] as any
+    const currentSummary = type === 'devto' ? blog.devto_summary : blog.social_summary
+    if (!currentSummary) {
+      return res.status(400).json({ error: `No ${type} summary exists yet. Generate one first.` })
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
+
+    let selectedModel = modelOverride
+    if (!selectedModel) {
+      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+      selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const genModel = genAI.getGenerativeModel({ model: selectedModel })
+
+    const prompt = `Here is a summary of a technical article. Based on this instruction, rewrite the summary accordingly.
+Return ONLY the rewritten summary, nothing else.
+
+Instruction: ${instruction.trim()}
+
+Current summary:
+${currentSummary}`
+
+    const aiResult = await genModel.generateContent(prompt)
+    const refined = aiResult.response.text().trim() || currentSummary
+
+    const column = type === 'devto' ? 'devto_summary' : 'social_summary'
+    await turso.execute({
+      sql: `UPDATE blogs SET ${column} = ? WHERE id = ?`,
+      args: [refined, req.params.id as string],
+    })
+
+    res.json({
+      original_id: blog.id,
+      title: blog.title,
+      body_markdown: refined,
+    })
+  } catch (err) {
+    console.error('Refine summary error:', err)
+    res.status(500).json({ error: 'Failed to refine summary' })
   }
 })
 

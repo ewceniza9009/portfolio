@@ -85,6 +85,8 @@ interface Blog {
   cover_image: string | null;
   created_at: string;
   updated_at: string;
+  devto_summary?: string | null;
+  social_summary?: string | null;
 }
 
 interface Comment {
@@ -314,9 +316,16 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [blogPublished, setBlogPublished] = useState(false);
   const [blogReadTime, setBlogReadTime] = useState("");
   const [blogCoverImage, setBlogCoverImage] = useState("");
+  const [blogDevtoSummary, setBlogDevtoSummary] = useState("");
+  const [blogSocialSummary, setBlogSocialSummary] = useState("");
+  const [blogSummaryLoading, setBlogSummaryLoading] = useState(false);
+  const [blogSocialLoading, setBlogSocialLoading] = useState(false);
+  const [blogSummaryCached, setBlogSummaryCached] = useState(false);
+  const [blogSocialCached, setBlogSocialCached] = useState(false);
+  const [summarizerModel, setSummarizerModel] = useState("");
   const [blogComments, setBlogComments] = useState<Comment[]>([]);
 
-  const [blogEditorTab, setBlogEditorTab] = useState<"edit" | "preview">(
+  const [blogEditorTab, setBlogEditorTab] = useState<"edit" | "preview" | "summarizer">(
     "edit",
   );
   const [isNewBlog, setIsNewBlog] = useState(false);
@@ -1297,6 +1306,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setBlogPublished(blog.published === 1);
     setBlogReadTime(blog.read_time || "");
     setBlogCoverImage(blog.cover_image || "");
+    setBlogDevtoSummary(blog.devto_summary || "");
+    setBlogSocialSummary(blog.social_summary || "");
+    setBlogSummaryCached(!!blog.devto_summary);
+    setBlogSocialCached(!!blog.social_summary);
     setBlogEditorTab("edit");
     setBlogAiPrompt("");
 
@@ -1340,6 +1353,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setBlogPublished(false);
     setBlogReadTime("5 min read");
     setBlogCoverImage("");
+    setBlogDevtoSummary("");
+    setBlogSocialSummary("");
+    setBlogSummaryCached(false);
+    setBlogSocialCached(false);
     setBlogComments([]);
     setBlogEditorTab("edit");
     setBlogAiPrompt("");
@@ -2658,6 +2675,22 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           >
                             <Eye size={10} /> Live Preview
                           </button>
+                          <button
+                            onClick={() => setBlogEditorTab("summarizer")}
+                            className="px-3 py-1 rounded flex items-center gap-1"
+                            style={{
+                              background:
+                                blogEditorTab === "summarizer"
+                                  ? "var(--accent)"
+                                  : "transparent",
+                              color:
+                                blogEditorTab === "summarizer"
+                                  ? "var(--bg-primary)"
+                                  : "var(--text-secondary)",
+                            }}
+                          >
+                            <Sparkles size={10} /> Summarizer
+                          </button>
                         </div>
                         <button
                           type="button"
@@ -2977,6 +3010,212 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 Publish Post (visible on public `/blogs` page)
                               </span>
                             </label>
+                          </div>
+                        </div>
+                      ) : blogEditorTab === "summarizer" ? (
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles size={14} style={{ color: "var(--accent)" }} />
+                            <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                              AI Summarizer
+                            </h4>
+                          </div>
+                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            Generate summaries you can copy-paste to social platforms. Once generated, they are cached — regenerating costs tokens again.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <label className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>Model:</label>
+                            <select
+                              value={summarizerModel}
+                              onChange={(e) => setSummarizerModel(e.target.value)}
+                              className="px-2 py-1 rounded-lg border text-[10px] outline-none"
+                              style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                            >
+                              <option value="">Default (from settings)</option>
+                              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                            </select>
+                          </div>
+
+                          {/* Dev.to Summary */}
+                          <div className="p-4 rounded-xl border space-y-3" style={{ borderColor: "var(--border)" }}>
+                            <div className="flex items-center justify-between">
+                              <h5 className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                                Dev.to Summary
+                              </h5>
+                              <div className="flex items-center gap-2">
+                                {blogDevtoSummary && (
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(blogDevtoSummary)}
+                                    className="px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all active:scale-95"
+                                    style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                                  >
+                                    Copy
+                                  </button>
+                                )}
+                                {blogSummaryCached && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                                    Cached
+                                  </span>
+                                )}
+                                <button
+                                  onClick={async () => {
+                                    if (!selectedBlog) return
+                                    setBlogSummaryLoading(true)
+                                    try {
+                                      const modelParam = summarizerModel ? `&model=${encodeURIComponent(summarizerModel)}` : ''
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/devto-summary?force=1${modelParam}`, { method: 'POST' })
+                                      if (res.ok) {
+                                        const data = await res.json()
+                                        setBlogDevtoSummary(data.body_markdown)
+                                        setBlogSummaryCached(false)
+                                      }
+                                    } catch {} finally {
+                                      setBlogSummaryLoading(false)
+                                    }
+                                  }}
+                                  disabled={blogSummaryLoading || !selectedBlog}
+                                  className="px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all active:scale-95"
+                                  style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                                >
+                                  {blogSummaryLoading ? "..." : "Generate"}
+                                </button>
+                              </div>
+                            </div>
+                            {blogDevtoSummary ? (
+                              <div className="p-3 rounded-lg text-[11px] whitespace-pre-wrap max-h-60 overflow-y-auto select-text" style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                                {blogDevtoSummary}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] italic" style={{ color: "var(--text-muted)" }}>
+                                No Dev.to summary yet. Click Generate to create one.
+                              </p>
+                            )}
+                            {blogDevtoSummary && (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Refine: make it shorter / more casual / add emojis..."
+                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-[10px] border outline-none"
+                                  style={{ background: "var(--bg-card)", color: "var(--text-primary)", borderColor: "var(--border)" }}
+                                  onKeyDown={async (e) => {
+                                    if (e.key !== 'Enter' || !selectedBlog) return
+                                    const input = e.currentTarget
+                                    const instruction = input.value.trim()
+                                    if (!instruction) return
+                                    input.disabled = true
+                                    try {
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ type: 'devto', instruction, model: summarizerModel || undefined }),
+                                      })
+                                      if (res.ok) {
+                                        const data = await res.json()
+                                        setBlogDevtoSummary(data.body_markdown)
+                                        setBlogSummaryCached(false)
+                                        input.value = ''
+                                      }
+                                    } catch {} finally {
+                                      input.disabled = false
+                                      input.focus()
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Social Summary (LinkedIn / Facebook) */}
+                          <div className="p-4 rounded-xl border space-y-3" style={{ borderColor: "var(--border)" }}>
+                            <div className="flex items-center justify-between">
+                              <h5 className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                                LinkedIn / Facebook Summary
+                              </h5>
+                              <div className="flex items-center gap-2">
+                                {blogSocialSummary && (
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(blogSocialSummary)}
+                                    className="px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all active:scale-95"
+                                    style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                                  >
+                                    Copy
+                                  </button>
+                                )}
+                                {blogSocialCached && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                                    Cached
+                                  </span>
+                                )}
+                                <button
+                                  onClick={async () => {
+                                    if (!selectedBlog) return
+                                    setBlogSocialLoading(true)
+                                    try {
+                                      const modelParam = summarizerModel ? `&model=${encodeURIComponent(summarizerModel)}` : ''
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/social-summary?force=1${modelParam}`, { method: 'POST' })
+                                      if (res.ok) {
+                                        const data = await res.json()
+                                        setBlogSocialSummary(data.body_markdown)
+                                        setBlogSocialCached(false)
+                                      }
+                                    } catch {} finally {
+                                      setBlogSocialLoading(false)
+                                    }
+                                  }}
+                                  disabled={blogSocialLoading || !selectedBlog}
+                                  className="px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all active:scale-95"
+                                  style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                                >
+                                  {blogSocialLoading ? "..." : "Generate"}
+                                </button>
+                              </div>
+                            </div>
+                            {blogSocialSummary ? (
+                              <div className="p-3 rounded-lg text-[11px] whitespace-pre-wrap max-h-60 overflow-y-auto select-text" style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                                {blogSocialSummary}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] italic" style={{ color: "var(--text-muted)" }}>
+                                No social summary yet. Click Generate to create one.
+                              </p>
+                            )}
+                            {blogSocialSummary && (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Refine: make it shorter / more casual / add emojis..."
+                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-[10px] border outline-none"
+                                  style={{ background: "var(--bg-card)", color: "var(--text-primary)", borderColor: "var(--border)" }}
+                                  onKeyDown={async (e) => {
+                                    if (e.key !== 'Enter' || !selectedBlog) return
+                                    const input = e.currentTarget
+                                    const instruction = input.value.trim()
+                                    if (!instruction) return
+                                    input.disabled = true
+                                    try {
+                                      const res = await api(`/api/admin/blogs/${selectedBlog.id}/refine-summary`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ type: 'social', instruction, model: summarizerModel || undefined }),
+                                      })
+                                      if (res.ok) {
+                                        const data = await res.json()
+                                        setBlogSocialSummary(data.body_markdown)
+                                        setBlogSocialCached(false)
+                                        input.value = ''
+                                      }
+                                    } catch {} finally {
+                                      input.disabled = false
+                                      input.focus()
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       ) : (

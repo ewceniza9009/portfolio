@@ -113,6 +113,8 @@ export async function initDb() {
   try { await turso.execute("UPDATE blogs SET category = 'General' WHERE category IS NULL") } catch {}
   try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_posted INTEGER DEFAULT 0') } catch {}
   try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_id TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_summary TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE blogs ADD COLUMN social_summary TEXT') } catch {}
 
 
   // Seed default settings if they don't exist
