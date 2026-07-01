@@ -3045,11 +3045,23 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
                               >
                                 <option value="">Default (from settings)</option>
-                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                {summarizerProvider === 'puter' ? (
+                                  <>
+                                    <option value="openai/gpt-5.5">GPT-5.5</option>
+                                    <option value="openai/gpt-5.4-nano">GPT-5.4 Nano</option>
+                                    <option value="anthropic/claude-sonnet-4">Claude Sonnet 4</option>
+                                    <option value="deepseek/deepseek-v4-pro">DeepSeek V4 Pro</option>
+                                    <option value="qwen/qwen3.7-max">Qwen 3.7 Max</option>
+                                  </>
+                                ) : (
+                                  <>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                  </>
+                                )}
                               </select>
                             </div>
                           </div>

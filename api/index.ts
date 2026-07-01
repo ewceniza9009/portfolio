@@ -733,11 +733,9 @@ async function generateDevtoSummary(blog: any, modelOverride?: string, providerO
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('Gemini API key not configured')
 
-  let selectedModel = modelOverride
-  if (!selectedModel) {
-    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-    selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
-  }
+  let selectedModel: string = modelOverride ?? 'gemini-1.5-flash'
+  const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+  selectedModel = (modelSetting.rows[0] as any)?.value || selectedModel
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const genModel = genAI.getGenerativeModel({ model: selectedModel })
@@ -780,11 +778,9 @@ async function generateSocialSummary(blog: any, modelOverride?: string, provider
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('Gemini API key not configured')
 
-  let selectedModel = modelOverride
-  if (!selectedModel) {
-    const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-    selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
-  }
+  let selectedModel: string = modelOverride ?? 'gemini-1.5-flash'
+  const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+  selectedModel = (modelSetting.rows[0] as any)?.value || selectedModel
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const genModel = genAI.getGenerativeModel({ model: selectedModel })
@@ -958,11 +954,9 @@ app.post('/api/admin/blogs/:id/refine-summary', flexibleAuth, async (req, res) =
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
 
-    let selectedModel = modelOverride
-    if (!selectedModel) {
-      const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
-      selectedModel = (modelSetting.rows[0] as any)?.value || 'gemini-1.5-flash'
-    }
+  let selectedModel = modelOverride ?? 'gemini-1.5-flash'
+  const modelSetting = await turso.execute({ sql: "SELECT value FROM settings WHERE key = 'default_ai_model'", args: [] })
+  selectedModel = (modelSetting.rows[0] as any)?.value || selectedModel
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const genModel = genAI.getGenerativeModel({ model: selectedModel })
