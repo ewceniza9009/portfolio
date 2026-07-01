@@ -197,6 +197,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [featuredSlug, setFeaturedSlug] = useState<string>('')
   const { url: profilePicUrl } = useProfilePic()
 
   useEffect(() => {
@@ -214,6 +215,19 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
       }
     }
     fetchBlogs()
+  }, [])
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      try {
+        const res = await fetch(getApiUrl('/api/settings'), { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setFeaturedSlug(data?.featured_blog_slug || '')
+        }
+      } catch {}
+    }
+    fetchFeatured()
   }, [])
 
   const allTags = useMemo(() => Array.from(
@@ -247,10 +261,20 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
     return matchesSearch && matchesTag && matchesCategory
   }), [blogs, searchQuery, selectedTag, selectedCategory])
 
-  // Separate the latest article as Featured (if no filters are active)
+  // Resolve featured blog: explicit setting wins; otherwise fall back to most recent published
+  const featuredBlog = useMemo(() => {
+    if (filteredBlogs.length === 0) return null
+    if (featuredSlug) {
+      const explicit = filteredBlogs.find(b => b.slug === featuredSlug)
+      if (explicit) return explicit
+    }
+    return filteredBlogs[0]
+  }, [filteredBlogs, featuredSlug])
   const isFiltering = searchQuery !== '' || selectedTag !== null || selectedCategory !== null
-  const featuredBlog = !isFiltering && filteredBlogs.length > 0 ? filteredBlogs[0] : null
-  const gridBlogs = featuredBlog ? filteredBlogs.slice(1) : filteredBlogs
+  const showFeatured = !isFiltering && !!featuredBlog
+  const gridBlogs = showFeatured
+    ? filteredBlogs.filter(b => b.slug !== featuredBlog!.slug)
+    : filteredBlogs
 
   return (
     <>
@@ -616,7 +640,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
             <div className="space-y-12">
               
               {/* FEATURED POST (Splits layout, 12-column Grid) */}
-              {featuredBlog && (
+              {showFeatured && featuredBlog && (
                 <motion.article
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -712,7 +736,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                           <Link 
                             to={`/blogs/${featuredBlog.slug}`} 
                             className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all group-hover:gap-2.5 px-4 py-2 rounded-xl border border-transparent hover:border-[var(--accent)]/30"
-                            style={{ color: '#ffffff', background: 'var(--accent)' }}
+                            style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
                           >
                             Read Article
                             <ArrowRight size={14} />
@@ -727,7 +751,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
               {/* RECENT POSTS GRID */}
               {(gridBlogs.length > 0 || featuredBlog) && (
                 <div className="space-y-6">
-                  {featuredBlog && (
+                  {showFeatured && featuredBlog && (
                     <div className="flex items-center gap-4 mb-8">
                       <h2 className="text-lg font-bold tracking-tight">Recent Posts</h2>
                       <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
@@ -843,7 +867,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                   <Link 
                                     to={`/blogs/${blog.slug}`} 
                                     className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-1 transition-all group-hover:gap-2.5 px-3 py-1.5 rounded-lg border border-transparent hover:border-[var(--accent)]/30"
-                                    style={{ color: '#ffffff', background: 'var(--accent)' }}
+                                    style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
                                   >
                                     Read
                                     <ArrowRight size={13} />

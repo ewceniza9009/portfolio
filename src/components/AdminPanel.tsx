@@ -364,6 +364,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [profilePicMsg, setProfilePicMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const profilePicFileRef = useRef<HTMLInputElement>(null)
 
+  // ── Featured Blog Settings ──
+  const [featuredSlug, setFeaturedSlugLocal] = useState<string>('')
+  const [featuredSaved, setFeaturedSaved] = useState(false)
+
   const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -415,9 +419,16 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         setN8nWebhookUrl(data?.n8n_webhook_url || '')
         setDevtoApiKey(data?.devto_api_key || '')
         setDevtoUsername(data?.devto_username || '')
+        setFeaturedSlugLocal(data?.featured_blog_slug || '')
       }
     } catch {}
   }, [])
+
+  const handleFeaturedSave = async () => {
+    await saveSettings({ featured_blog_slug: featuredSlug.trim() })
+    setFeaturedSaved(true)
+    setTimeout(() => setFeaturedSaved(false), 1500)
+  }
 
   const loadTokenStatus = useCallback(async () => {
     try {
@@ -2367,6 +2378,53 @@ const res = await api(`/api/visitors?${params.toString()}`)
                           </p>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Group: Blog Feed */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-dim)' }}>
+                      <BookOpen size={14} style={{ color: 'var(--accent)' }} />
+                    </div>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Blog Feed</h4>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 rounded-xl border bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
+                      <div className="md:col-span-7 space-y-1">
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Featured Blog Post</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          Pin a published article to the hero slot on <code className="text-[10px]">/blogs</code>. Leave on "Latest post" to default to the most recent Article.
+                        </p>
+                      </div>
+                      <div className="md:col-span-5 flex items-center gap-2 justify-end">
+                        <select
+                          value={featuredSlug}
+                          onChange={(e) => setFeaturedSlugLocal(e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                          style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+                        >
+                          <option value="">Latest Post (Default)</option>
+                          {blogs
+                            .filter(b => b.published === 1)
+                            .map(b => (
+                              <option key={b.id} value={b.slug}>{b.title}</option>
+                            ))}
+                        </select>
+                        <button
+                          onClick={handleFeaturedSave}
+                          className="px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] shrink-0"
+                          style={{
+                            background: featuredSaved ? 'var(--accent)' : 'var(--bg-secondary)',
+                            borderColor: featuredSaved ? 'var(--accent)' : 'var(--border)',
+                            color: featuredSaved ? 'var(--bg-primary)' : 'var(--text-secondary)'
+                          }}
+                        >
+                          {featuredSaved ? '✓ Saved' : 'Save'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

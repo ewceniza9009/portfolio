@@ -123,6 +123,7 @@ export async function initDb() {
     ('default_ai_model', 'gemini-2.5-flash'),
     ('ai_provider', 'gemini'),
     ('profile_pic_url', '/img/profile-pic.png?v=1'),
+    ('featured_blog_slug', ''),
     ('devto_api_key', ''),
     ('devto_username', ''),
     ('n8n_portfolio_api_key', ''),
