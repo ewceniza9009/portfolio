@@ -320,25 +320,64 @@ app.post('/api/ai/compose', authMiddleware, async (req, res) => {
 })
 
 // ── Public: AI Chat (no auth required - portfolio visitor assistant) ──
+const CHAT_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
+const MAX_RETRIES_PER_MODEL = 2
+
+async function tryGenerate(genAI: any, modelName: string, prompt: string): Promise<string> {
+  for (let attempt = 0; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName })
+      const result = await model.generateContent(prompt)
+      return result.response.text()
+    } catch (err: any) {
+      const is503 = err?.status === 503 || err?.message?.includes('503') || err?.message?.includes('Service Unavailable')
+      if (is503 && attempt < MAX_RETRIES_PER_MODEL) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 1000))
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error(`All retries exhausted for ${modelName}`)
+}
+
 app.post('/api/ai/chat', async (req, res) => {
   try {
-    const { question, context } = req.body
-    if (!question) return res.status(400).json({ error: 'Question is required' })
+    const { messages, context } = req.body
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required' })
+    }
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return res.status(500).json({ error: 'AI not configured' })
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-    const fullPrompt = context
-      ? `You are a helpful portfolio assistant. Answer questions about the portfolio owner based on the following context. Be concise, friendly, and accurate.\n\n${context}\n\nQuestion: ${question}`
-      : `You are a helpful portfolio assistant. Answer questions about the portfolio owner. Be concise and friendly.\n\nQuestion: ${question}`
+    // Build conversation: system instruction + context + last 10 messages
+    const history = messages.slice(-10)
+    const parts: string[] = []
+    parts.push('You are a helpful portfolio assistant. Answer questions about the portfolio owner. Be concise, friendly, and accurate.')
+    if (context) parts.push(`\n\nPORTFOLIO CONTEXT:\n${context}`)
+    for (const msg of history) {
+      const role = msg.role === 'user' ? 'User' : 'Assistant'
+      parts.push(`\n\n${role}: ${msg.content}`)
+    }
+    parts.push('\n\nAssistant:')
+    const fullPrompt = parts.join('')
 
-    const result = await model.generateContent(fullPrompt)
-    const text = result.response.text()
+    let lastError: any = null
+    for (const modelName of CHAT_MODELS) {
+      try {
+        const text = await tryGenerate(genAI, modelName, fullPrompt)
+        return res.json({ reply: text.trim() })
+      } catch (err) {
+        lastError = err
+        console.warn(`AI chat model ${modelName} failed, trying next:`, (err as any)?.message)
+      }
+    }
 
-    res.json({ reply: text.trim() })
+    console.error('AI chat all models failed:', lastError)
+    res.status(503).json({ error: 'All AI models are currently unavailable. Please try again later.' })
   } catch (err) {
     console.error('AI chat error:', err)
     res.status(500).json({ error: 'Failed to generate response' })

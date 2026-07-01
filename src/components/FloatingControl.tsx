@@ -474,14 +474,15 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
     if (!msg || loading) return
     setInput('')
     setShowSuggestions(false)
-    setMessages(prev => [...prev, { role: 'user', content: msg }])
+    const updatedMessages: ChatMessage[] = [...messages, { role: 'user', content: msg }]
+    setMessages(updatedMessages)
     setLoading(true)
     try {
       const fullContext = PORTFOLIO_CONTEXT + blogContext
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: msg, context: fullContext }),
+        body: JSON.stringify({ messages: updatedMessages, context: fullContext }),
       })
       const data = await res.json()
       const reply = data.reply || 'Sorry, I could not generate a response.'
