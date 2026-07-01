@@ -145,45 +145,54 @@ export default React.memo(function HeroSection({
           </div>
 
           {/* Quick stats */}
-          <div className="flex items-center justify-center gap-6 mb-6">
+          <div className="flex items-center justify-center gap-8 mb-6 p-4 rounded-xl" style={{ background: 'rgba(var(--accent-rgb, 243, 202, 101), 0.08)', border: '1px solid rgba(var(--accent-rgb, 243, 202, 101), 0.15)' }}>
             <div className="text-center">
               <p
-                className="text-xl font-bold"
+                className="text-2xl font-bold"
                 style={{ color: "var(--accent)" }}
               >
                 10+
               </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Years
+              <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                Years Experience
               </p>
             </div>
-            <div className="w-px h-8" style={{ background: "var(--border)" }} />
+            <div className="w-px h-10" style={{ background: "var(--border)" }} />
             <div className="text-center">
               <p
-                className="text-xl font-bold"
+                className="text-2xl font-bold"
                 style={{ color: "var(--accent)" }}
               >
                 20+
               </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Projects
+              <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                Projects Shipped
               </p>
             </div>
-            <div className="w-px h-8" style={{ background: "var(--border)" }} />
+            <div className="w-px h-10" style={{ background: "var(--border)" }} />
             <div className="text-center">
               <p
-                className="text-xl font-bold"
+                className="text-2xl font-bold"
                 style={{ color: "var(--accent)" }}
               >
                 .NET
               </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                + More
+              <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                Full Stack
               </p>
             </div>
           </div>
 
           {/* About quick intro */}
+          <div className="max-w-xl mx-auto mb-6 text-center flex items-center justify-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            </span>
+            <p className="text-xs font-medium" style={{ color: "var(--accent)" }}>
+              Available for new opportunities
+            </p>
+          </div>
           <div className="max-w-xl mx-auto mb-8 text-center">
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               Based in Cebu. Developer by day, musician by night.

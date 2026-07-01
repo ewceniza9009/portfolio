@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { GALLERY_DESCRIPTIONS } from "../data/gallery-descriptions";
 
@@ -146,7 +146,10 @@ const GalleryTile = memo(function GalleryTile({
 });
 
 export default function GallerySection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const allImages = useMemo(() => buildGalleryImages(), []);
+  const [activeFilter, setActiveFilter] = useState("all");
   const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -212,6 +215,7 @@ export default function GallerySection() {
   return (
     <>
       <section
+        ref={sectionRef}
         id="gallery"
         className="py-24 px-6"
         style={{ background: "var(--bg-section)" }}
@@ -473,7 +477,7 @@ export default function GallerySection() {
             </svg>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 auto-rows-[100px] md:auto-rows-[130px] grid-flow-dense relative z-10">
-              {paginatedImages.map((image, index) => (
+              {isInView ? paginatedImages.map((image, index) => (
                 <GalleryTile 
                   key={image.id}
                   image={image}
@@ -481,7 +485,7 @@ export default function GallerySection() {
                   currentPage={currentPage}
                   setLightboxIndex={setLightboxIndex}
                 />
-              ))}
+              )) : <div className="col-span-full h-48 flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} /></div>}
             </div>
           </div>
 
