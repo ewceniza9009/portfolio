@@ -376,6 +376,20 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
               <Sparkles size={12} className="animate-pulse" />
               <span>TECHNICAL LOG</span>
             </div>
+
+            {/* Author byline */}
+            <div className="flex items-center gap-3 mb-6">
+              <img 
+                src={profilePicUrl} 
+                alt="Erwin Wilson Ceniza" 
+                className="w-10 h-10 rounded-full border-2"
+                style={{ borderColor: 'var(--border)' }}
+              />
+              <div className="text-sm">
+                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Erwin Wilson Ceniza</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Full Stack Developer</p>
+              </div>
+            </div>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
               {blog.title}
