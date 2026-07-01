@@ -16,7 +16,10 @@
       "name": "Every 5 Minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
@@ -37,7 +40,10 @@
       "name": "Fetch Unposted Hashnode",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
     },
     {
       "parameters": {
@@ -65,7 +71,10 @@
       "name": "Has Unposted Blogs?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [440, 0]
+      "position": [
+        440,
+        0
+      ]
     },
     {
       "parameters": {
@@ -75,35 +84,10 @@
       "name": "Take First Blog",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [660, -100]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "already-on-devto",
-              "leftValue": "={{ $json.devto_posted || 0 }}",
-              "rightValue": 1,
-              "operator": {
-                "type": "number",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "already-on-devto",
-      "name": "Already on Dev.to?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [860, -200]
+      "position": [
+        660,
+        -100
+      ]
     },
     {
       "parameters": {
@@ -124,28 +108,10 @@
       "name": "AI Summarize",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, -100]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.id + '/devto-summary' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "ai-summarize-hn",
-      "name": "AI Summarize (Hashnode)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1060, -100]
+      "position": [
+        880,
+        -100
+      ]
     },
     {
       "parameters": {
@@ -169,10 +135,11 @@
       "name": "Post to Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, -100],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 30000
+      "position": [
+        880,
+        -100
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -196,11 +163,11 @@
       "name": "Post to Hashnode",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, 100],
-      "retryOnFail": true,
-      "continueOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 30000
+      "position": [
+        880,
+        100
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -211,7 +178,10 @@
       "name": "Wait 30s (rate limit)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1100, 0]
+      "position": [
+        1100,
+        0
+      ]
     },
     {
       "parameters": {
@@ -241,7 +211,10 @@
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1320, 0]
+      "position": [
+        1320,
+        0
+      ]
     },
     {
       "parameters": {
@@ -261,7 +234,10 @@
       "name": "Store Hashnode Post ID",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [1100, 100]
+      "position": [
+        1100,
+        100
+      ]
     },
     {
       "parameters": {
@@ -295,7 +271,10 @@
       "name": "Mark Hashnode as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1320, 100]
+      "position": [
+        1320,
+        100
+      ]
     },
     {
       "parameters": {},
@@ -303,7 +282,10 @@
       "name": "No Action Needed",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [660, 100]
+      "position": [
+        660,
+        100
+      ]
     }
   ],
   "connections": {
@@ -351,24 +333,6 @@
       "main": [
         [
           {
-            "node": "Already on Dev.to?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Already on Dev.to?": {
-      "main": [
-        [
-          {
-            "node": "AI Summarize (Hashnode)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "AI Summarize",
             "type": "main",
             "index": 0
@@ -384,17 +348,6 @@
             "type": "main",
             "index": 0
           },
-          {
-            "node": "Post to Hashnode",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Summarize (Hashnode)": {
-      "main": [
-        [
           {
             "node": "Post to Hashnode",
             "type": "main",
