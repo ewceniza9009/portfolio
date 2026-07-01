@@ -21,7 +21,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "{{BASE_URL}}/api/admin/blogs/unposted-hashnode",
+        "url": "{{BASE_URL}}/api/admin/blogs/unposted",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -79,6 +79,34 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "already-on-devto",
+              "leftValue": "={{ $json.devto_posted || 0 }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "already-on-devto",
+      "name": "Already on Dev.to?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, -200]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.id + '/devto-summary' }}",
         "sendHeaders": true,
@@ -93,10 +121,31 @@
         "options": {}
       },
       "id": "ai-summarize",
-      "name": "AI Summarize for Dev.to",
+      "name": "AI Summarize",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.id + '/devto-summary' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-summarize-hn",
+      "name": "AI Summarize (Hashnode)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, -100]
     },
     {
       "parameters": {
@@ -149,35 +198,9 @@
       "typeVersion": 4.2,
       "position": [880, 100],
       "retryOnFail": true,
+      "continueOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 30000
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "already-on-devto",
-              "leftValue": "={{ $json.devto_posted || 0 }}",
-              "rightValue": 1,
-              "operator": {
-                "type": "number",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "already-on-devto",
-      "name": "Already on Dev.to?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1060, -200]
     },
     {
       "parameters": {
@@ -281,14 +304,6 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [660, 100]
-    },
-    {
-      "parameters": {},
-      "id": "skip-devto",
-      "name": "Skip Dev.to Post",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [1240, -240]
     }
   ],
   "connections": {
@@ -336,18 +351,36 @@
       "main": [
         [
           {
-            "node": "AI Summarize for Dev.to",
+            "node": "Already on Dev.to?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AI Summarize for Dev.to": {
+    "Already on Dev.to?": {
       "main": [
         [
           {
-            "node": "Already on Dev.to?",
+            "node": "AI Summarize (Hashnode)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarize": {
+      "main": [
+        [
+          {
+            "node": "Post to Dev.to",
             "type": "main",
             "index": 0
           },
@@ -359,29 +392,11 @@
         ]
       ]
     },
-    "Already on Dev.to?": {
+    "AI Summarize (Hashnode)": {
       "main": [
         [
           {
-            "node": "Skip Dev.to Post",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Post to Dev.to",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Skip Dev.to Post": {
-      "main": [
-        [
-          {
-            "node": "Wait 30s (rate limit)",
+            "node": "Post to Hashnode",
             "type": "main",
             "index": 0
           }
