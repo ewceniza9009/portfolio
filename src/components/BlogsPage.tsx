@@ -298,31 +298,33 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
           
           {/* Header — Compact */}
           <div className="text-center mb-10 relative">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="mb-5 inline-block"
-            >
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 mx-auto shadow-lg" style={{ borderColor: 'var(--accent)', boxShadow: '0 0 24px color-mix(in srgb, var(--accent) 35%, transparent)' }}>
-                <img
-                  src={profilePicUrl}
-                  alt="Erwin Wilson Ceniza"
-                  className="w-full h-full object-cover"
-                  key={profilePicUrl}
-                />
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: -15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider mb-4 backdrop-blur-md"
-              style={{ borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 5%, transparent)', color: 'var(--accent)' }}
-            >
-              <Sparkles size={14} className="animate-pulse" />
-              <span>THE DEVELOPER LOGS</span>
-            </motion.div>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="inline-block"
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg" style={{ borderColor: 'var(--accent)', boxShadow: '0 0 24px color-mix(in srgb, var(--accent) 35%, transparent)' }}>
+                  <img
+                    src={profilePicUrl}
+                    alt="Erwin Wilson Ceniza"
+                    className="w-full h-full object-cover"
+                    key={profilePicUrl}
+                  />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: -15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider backdrop-blur-md"
+                style={{ borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 5%, transparent)', color: 'var(--accent)' }}
+              >
+                <Sparkles size={14} className="animate-pulse" />
+                <span>THE DEVELOPER LOGS</span>
+              </motion.div>
+            </div>
             <motion.h1
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
