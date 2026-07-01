@@ -911,11 +911,7 @@ app.post('/api/visit', async (req, res) => {
     const userAgent = req.headers['user-agent'] || ''
     const referrer = (req.headers['referer'] as string) || ''
     const ref = req.body?.ref || ''
-
-    // ── Skip bot traffic ──
-    if (isBot(userAgent)) {
-      return res.status(200).json({ skipped: true, reason: 'bot' })
-    }
+    const detectedBot = isBot(userAgent) ? 1 : 0
 
     // Rate limit check
     const now = Date.now()
@@ -948,27 +944,31 @@ app.post('/api/visit', async (req, res) => {
     } else {
       const geo = await geoLookup(ip)
       await turso.execute({
-        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc, referrer, ref) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?, ?, ?)',
-        args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc, referrer, ref],
+        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc, referrer, ref, is_bot) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc, referrer, ref, detectedBot],
       })
 
       // Telegram alert for new visitor (only for humans)
-      const locStr = [geo.city, geo.region, geo.country].filter(Boolean).join(', ') || 'Unknown location'
-      const refStr = ref ? ` (ref: ${ref})` : referrer ? ` (via ${new URL(referrer).hostname})` : ''
-      sendTelegramAlert(`👤 <b>New human visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
+      if (!detectedBot) {
+        const locStr = [geo.city, geo.region, geo.country].filter(Boolean).join(', ') || 'Unknown location'
+        const refStr = ref ? ` (ref: ${ref})` : referrer ? ` (via ${new URL(referrer).hostname})` : ''
+        sendTelegramAlert(`👤 <b>New human visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
+      }
     }
 
-    // Daily visit counter
+    // Daily & hourly counters (humans only)
+    if (!detectedBot) {
     await turso.execute({
       sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
       args: [],
     })
 
-    // Hourly visit counter
+    // Hourly visit counter (inside human-only block)
     await turso.execute({
       sql: 'INSERT INTO hourly_visits (hour, count) VALUES (strftime(\'%Y-%m-%d %H:00\', \'now\'), 1) ON CONFLICT(hour) DO UPDATE SET count = count + 1',
       args: [],
     })
+    }
 
     res.json({ success: true })
   } catch (err) {
@@ -1004,12 +1004,7 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
 
     // Bot detection filter
     if (humansOnly) {
-      conditions.push(`(user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ?)`)
-      args.push(
-        '%googlebot%', '%bingbot%', '%slurp%', '%duckduckbot%', '%baiduspider%', '%yandexbot%',
-        '%crawler%', '%spider%', '%scraper%', '%bot%', '%curl%', '%wget%', '%python-requests%', '%go-http-client%',
-        '%facebookexternalhit%', '%twitterbot%'
-      )
+      conditions.push('is_bot = 0')
     }
 
     if (search) {

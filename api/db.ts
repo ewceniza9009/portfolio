@@ -106,6 +106,7 @@ export async function initDb() {
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN loc TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN referrer TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN ref TEXT') } catch {}
+  try { await turso.execute('ALTER TABLE visitors ADD COLUMN is_bot INTEGER DEFAULT 0') } catch {}
   try { await turso.execute('ALTER TABLE blogs ADD COLUMN category TEXT DEFAULT \'General\'') } catch {}
   try { await turso.execute("UPDATE blogs SET category = 'Engineering' WHERE slug LIKE '%engineering%' AND category IS NULL") } catch {}
   try { await turso.execute("UPDATE blogs SET category = 'Engineering' WHERE slug LIKE '%face-recognition%' AND category IS NULL") } catch {}

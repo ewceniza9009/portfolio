@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import {
   BarChart,
   Bar,
@@ -23,6 +23,7 @@ import {
   RefreshCw,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Cpu,
   Trash2,
   Edit,
@@ -378,6 +379,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [gridSearch, setGridSearch] = useState("");
   const [gridCountry, setGridCountry] = useState("");
   const [gridShowHumansOnly, setGridShowHumansOnly] = useState(false);
+  const [gridGroupByCountry, setGridGroupByCountry] = useState(false);
+  const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
   const [gridPagination, setGridPagination] = useState<{
     page: number;
     limit: number;
@@ -807,6 +810,29 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     setRotationIntervalHours(val);
     setSafeItem("rotation_interval_hours", String(val));
     await saveSettings({ rotation_interval_hours: String(val) });
+  };
+
+  const groupedVisitors = useMemo(() => {
+    if (!gridGroupByCountry) return null;
+    const groups: Record<string, any[]> = {};
+    visitors.forEach((v: any) => {
+      const key = v.country || "Unknown";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(v);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [visitors, gridGroupByCountry]);
+
+  useEffect(() => {
+    if (gridGroupByCountry && groupedVisitors) {
+      setExpandedCountries(
+        Object.fromEntries(groupedVisitors.map(([c]) => [c, true]))
+      );
+    }
+  }, [gridGroupByCountry]);
+
+  const toggleCountry = (country: string) => {
+    setExpandedCountries(prev => ({ ...prev, [country]: !prev[country] }));
   };
 
   const fetchVisitors = useCallback(async () => {
@@ -4317,6 +4343,25 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       </>
                     )}
                   </button>
+                  <button
+                    onClick={() => setGridGroupByCountry(!gridGroupByCountry)}
+                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                      gridGroupByCountry ? "border-[var(--accent)] text-[var(--accent)]" : ""
+                    }`}
+                    title="Group visitors by country"
+                  >
+                    {gridGroupByCountry ? (
+                      <>
+                        <ChevronDown size={10} />
+                        <span className="hidden sm:inline">Grouped</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronRight size={10} />
+                        <span className="hidden sm:inline">Group</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -4855,89 +4900,64 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                     : "No visitors yet"}
                                 </td>
                               </tr>
+                            ) : groupedVisitors ? (
+                              groupedVisitors.map(([country, rows]: [string, any[]]) => (
+                                <Fragment key={country}>
+                                  <tr
+                                    onClick={() => toggleCountry(country)}
+                                    className="cursor-pointer transition-colors hover:bg-white/[0.04]"
+                                    style={{ borderBottom: "1px solid var(--border)" }}
+                                  >
+                                    <td colSpan={7} className="p-3">
+                                      <span className="inline-flex items-center gap-1.5 font-semibold text-xs" style={{ color: "var(--accent)" }}>
+                                        {expandedCountries[country] !== false ? (
+                                          <ChevronDown size={12} />
+                                        ) : (
+                                          <ChevronRight size={12} />
+                                        )}
+                                        {country}
+                                        <span className="opacity-50 font-normal" style={{ color: "var(--text-muted)" }}>
+                                          ({rows.length})
+                                        </span>
+                                      </span>
+                                    </td>
+                                  </tr>
+                                  {expandedCountries[country] !== false && rows.map((v: any, i: number) => {
+                                    const loc = [v.city, v.region].filter(Boolean).join(", ") || v.country || "—";
+                                    let refDisplay = v.referrer || "";
+                                    try { refDisplay = refDisplay ? new URL(refDisplay).hostname : ""; } catch {}
+                                    return (
+                                      <tr key={v.ip} className="transition-colors duration-150 hover:bg-white/[0.04]"
+                                        style={{ borderBottom: "1px solid var(--border)", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}
+                                      >
+                                        <td className="p-3 pl-8"><span className="font-semibold">{loc}</span>{v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}</td>
+                                        <td className="p-3 font-mono opacity-70">{v.ip}</td>
+                                        <td className="p-3 text-right font-bold" style={{ color: "var(--accent)" }}>{v.visit_count}</td>
+                                        <td className="p-3 max-w-[80px] truncate" style={{ color: "var(--text-secondary)" }} title={v.referrer || ""}>{refDisplay || "—"}</td>
+                                        <td className="p-3">{v.ref ? <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{v.ref}</span> : "—"}</td>
+                                        <td className="p-3" style={{ color: "var(--text-secondary)" }}>{v.first_visit?.replace("T", " ")?.slice(0, 16)}</td>
+                                        <td className="p-3" style={{ color: "var(--text-secondary)" }}>{v.last_visit?.replace("T", " ")?.slice(0, 16)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </Fragment>
+                              ))
                             ) : (
                               visitors.map((v: any, i: number) => {
-                                const loc =
-                                  [v.city, v.region]
-                                    .filter(Boolean)
-                                    .join(", ") ||
-                                  v.country ||
-                                  "—";
+                                const loc = [v.city, v.region].filter(Boolean).join(", ") || v.country || "—";
                                 let refDisplay = v.referrer || "";
-                                try {
-                                  refDisplay = refDisplay
-                                    ? new URL(refDisplay).hostname
-                                    : "";
-                                } catch {}
+                                try { refDisplay = refDisplay ? new URL(refDisplay).hostname : ""; } catch {}
                                 return (
-                                  <tr
-                                    key={v.ip}
-                                    className="transition-colors duration-150 hover:bg-white/[0.04]"
-                                    style={{
-                                      borderBottom: "1px solid var(--border)",
-                                      background:
-                                        i % 2 === 0
-                                          ? "rgba(255,255,255,0.02)"
-                                          : "transparent",
-                                    }}
+                                  <tr key={v.ip} className="transition-colors duration-150 hover:bg-white/[0.04]"
+                                    style={{ borderBottom: "1px solid var(--border)", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}
                                   >
-                                    <td className="p-3">
-                                      <span className="font-semibold">
-                                        {loc}
-                                      </span>
-                                      {v.country && (
-                                        <span className="ml-1.5 opacity-60">
-                                          {v.country}
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className="p-3 font-mono opacity-70">
-                                      {v.ip}
-                                    </td>
-                                    <td
-                                      className="p-3 text-right font-bold"
-                                      style={{ color: "var(--accent)" }}
-                                    >
-                                      {v.visit_count}
-                                    </td>
-                                    <td
-                                      className="p-3 max-w-[80px] truncate"
-                                      style={{ color: "var(--text-secondary)" }}
-                                      title={v.referrer || ""}
-                                    >
-                                      {refDisplay || "—"}
-                                    </td>
-                                    <td className="p-3">
-                                      {v.ref ? (
-                                        <span
-                                          className="px-1.5 py-0.5 rounded text-[9px] font-bold"
-                                          style={{
-                                            background: "var(--accent-dim)",
-                                            color: "var(--accent)",
-                                          }}
-                                        >
-                                          {v.ref}
-                                        </span>
-                                      ) : (
-                                        "—"
-                                      )}
-                                    </td>
-                                    <td
-                                      className="p-3"
-                                      style={{ color: "var(--text-secondary)" }}
-                                    >
-                                      {v.first_visit
-                                        ?.replace("T", " ")
-                                        ?.slice(0, 16)}
-                                    </td>
-                                    <td
-                                      className="p-3"
-                                      style={{ color: "var(--text-secondary)" }}
-                                    >
-                                      {v.last_visit
-                                        ?.replace("T", " ")
-                                        ?.slice(0, 16)}
-                                    </td>
+                                    <td className="p-3"><span className="font-semibold">{loc}</span>{v.country && <span className="ml-1.5 opacity-60">{v.country}</span>}</td>
+                                    <td className="p-3 font-mono opacity-70">{v.ip}</td>
+                                    <td className="p-3 text-right font-bold" style={{ color: "var(--accent)" }}>{v.visit_count}</td>
+                                    <td className="p-3 max-w-[80px] truncate" style={{ color: "var(--text-secondary)" }} title={v.referrer || ""}>{refDisplay || "—"}</td>
+                                    <td className="p-3">{v.ref ? <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{v.ref}</span> : "—"}</td>
+                                    <td className="p-3" style={{ color: "var(--text-secondary)" }}>{v.first_visit?.replace("T", " ")?.slice(0, 16)}</td>
+                                    <td className="p-3" style={{ color: "var(--text-secondary)" }}>{v.last_visit?.replace("T", " ")?.slice(0, 16)}</td>
                                   </tr>
                                 );
                               })
