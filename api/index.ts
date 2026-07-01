@@ -1155,17 +1155,37 @@ app.post('/api/admin/upload-profile-pic', authMiddleware, async (req, res) => {
     }
     const delim = Buffer.from(`--${boundary}`)
     const crlf = Buffer.from('\r\n\r\n')
-    const tail = Buffer.from(`--${boundary}--`)
 
-    const parts = raw.split(delim).filter(p => p.length && !p.equals(Buffer.from('--\r\n')) && !p.equals(Buffer.from('--')))
+    // Manual split on multipart delimiter for Buffer (Buffer has no .split method)
+    const splitBuffer = (source: Buffer, marker: Buffer): Buffer[] => {
+      const segments: Buffer[] = []
+      let start = 0
+      while (start < source.length) {
+        const idx = source.indexOf(marker, start)
+        if (idx === -1) {
+          segments.push(source.slice(start))
+          break
+        }
+        segments.push(source.slice(start, idx))
+        start = idx + marker.length
+      }
+      return segments
+    }
+
+    const segments = splitBuffer(raw, delim)
     let fileBuffer: Buffer | null = null
     let ext = 'png'
 
-    for (const part of parts) {
+    for (const part of segments) {
+      if (part.length === 0) continue
+      const minorCrlf = Buffer.from('--\r\n')
+      const minorOnly = Buffer.from('--')
+      if (part.equals(minorCrlf) || part.equals(minorOnly)) continue
+
       const headerEnd = part.indexOf(crlf)
       if (headerEnd === -1) continue
       const headers = part.slice(0, headerEnd).toString('utf8')
-      const body = part.slice(headerEnd + 4, part.length - 2)
+      const body = part.slice(headerEnd + crlf.length, part.length - 2)
       const filenameMatch = /filename="([^"]+)"/i.exec(headers)
       if (!filenameMatch) continue
       if (headers.toLowerCase().includes('content-type: image/')) {
