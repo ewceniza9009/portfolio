@@ -25,34 +25,72 @@ type ChatMessage = {
 }
 
 // ── Portfolio Context for AI ──
-const PORTFOLIO_CONTEXT = `You are an AI assistant for Erwin Wilson Ceniza's portfolio website. Answer questions about Erwin based ONLY on the context below. Be concise, friendly, and professional.
+const PORTFOLIO_CONTEXT = `You are an AI assistant for Erwin Wilson Ceniza's portfolio. Answer questions about Erwin using the context below. Be concise, specific, and cite project names when relevant.
 
-ABOUT ERWIN:
-Erwin Wilson Ceniza is a Principal Full-Stack Developer from the Philippines with 10+ years of experience building commercial web applications, distributed systems, and AI integrations. He specializes in React, TypeScript, C#, ASP.NET Core, Node.js, SQL Server, and PostgreSQL.
+ABOUT: Erwin Wilson Ceniza, Senior Full-Stack Developer from Cebu, Philippines. 15+ years building commercial web apps, ERP/financial systems, distributed POS, AI integrations, and enterprise platforms. Deep expertise in C#/.NET, React/TypeScript, SQL Server/PostgreSQL.
 
 SKILLS:
-Frontend: React, TypeScript, Tailwind CSS, Framer Motion, Three.js
-Backend: C#, ASP.NET Core, Node.js, PHP, REST APIs
-Database: SQL Server, PostgreSQL, MySQL, Turso
-DevOps: Docker, CI/CD, Vercel, Railway, Linux
-Other: AI integration, POS systems, real-time sync, n8n workflows
+Backend: C#, ASP.NET Core 8/9/10, Node.js, Blazor, WPF, GraphQL (HotChocolate), SignalR, REST APIs, Entity Framework, Dapper, LINQ
+Frontend: React, Angular, TypeScript, Tailwind CSS, Blazor, Flutter, Ionic, WPF/XAML
+Database: MS SQL Server, PostgreSQL, MySQL, SQLite, MongoDB, Redis, Elasticsearch
+DevOps: Docker, Azure DevOps, GitHub Actions, CI/CD, Azure, Vercel
+Practices: Clean Architecture, CQRS, Domain-Driven Design, Microservices, MVVM, SOLID, OOP
+Other: AI integration (Gemini, Puter.js), OpenCV/FaceNet, POS systems, real-time sync, n8n, SSRS reporting, Telerik/DevExpress/Syncfusion
 
 EXPERIENCE:
-- Principal Full-Stack Developer at EWC Software Solutions (Current) - builds web apps, AI features, and distributed POS systems
-- Senior Web Developer at Go-Global Travel & Tours - built online booking platforms, payment integrations, admin dashboards
-- Full-Stack Developer at Various Clients - e-commerce, inventory, CRM, and custom enterprise solutions
+- Nov 2025-Present: Software Developer at Eclaro Business Solution (Remote, US client) - Blazor, Azure Graph API, Azure Blob Storage, OData, EF Core, PostgreSQL
+- Sep 2018-May 2025: Software Developer at AccountMate Corporation (Remote, San Francisco) - Built flagship ERP platform (WPF/XAML/MVVM). Built Advance Billing module for revenue optimization. Integrated Aatrix for 1099 tax compliance. SSRS reporting. WIP manufacturing module with Telerik UI. Azure DevOps CI/CD.
+- Nov 2016-Sep 2018: Lead System Developer at TechnoLogic Solutions - Led full-lifecycle development of Cloud FMIS (Financial), Cloud HRIS (Payroll), Loan Management, POS, and Warehouse Management suites.
+- Apr 2011-Mar 2015: Software Developer / RND at Innosoft Solutions - Transitioned legacy desktop to cloud services (POS, financial, HR systems).
 
-PROJECTS:
-- EWC-OS (Personal Portfolio) - Interactive portfolio with AI chat, terminal emulator, visitor analytics, and blog with Dev.to cross-posting
-- SynchroPOS - Cloud-based POS system with multi-branch management, real-time sync, 50+ concurrent terminals
-- AI Blog Summarizer - AI-powered blog summarization with Puter.js and Gemini, cached summaries, refine capability
-- n8n Workflow Automations - Automated Dev.to cross-posting workflow with webhooks and scheduled triggers
-- Visitor Analytics Engine - Real-time visitor tracking with bot detection, country grouping, and expandable analytics tables
+PROJECTS (with full details):
 
-BLOG TOPICS:
-He writes about React, TypeScript, full-stack development, AI integrations, and building real-world web applications.
+1. Cloud FMIS (2019, Commercialized) - ASP.NET MVC, SQL Server, Telerik Reports
+   FINANCIAL/ACCOUNTING system for trading/manufacturing. Full-cycle accounting: 5,000+ monthly journal entries across GL, AP (aging), AR (aging), with audit trail and adjustments. On-demand financial statements: Balance Sheet, Income Statement, Cash Flow, Trial Balance via custom .NET rendering. Multi-dimensional reporting by company/branch/consignment area/consolidated. Bank reconciliation with GL and float tracking. Inventory costing: 10,000+ SKUs integrated into financial ledgers (Ph1.5M-Ph3M monthly). 500+ purchase orders, invoices, disbursements, collections monthly (order-to-cash, procure-to-pay). Production/recipe management with BOMs for food manufacturing.
+   Testimonial: Finance Manager at Maville Recycling praises real-time financial dashboards.
 
-If asked something not covered here, say you don't have that information.`
+2. Cloud HRIS (2020, Commercialized) - ASP.NET Core, MAUI.NET, SQL Server, OpenCV/FaceNet
+   Full-featured HR/payroll platform. Smart Payroll Engine: 10,000+ attendance records semi-monthly, auto-computes work hours, tardiness, overtime, night differentials, statutory contributions, custom deductions. Biometric facial recognition replacing hardware timekeeping. Self-service mobile app for payslips, leave, overtime. Intelligent leave integration auto-reflected in payroll.
+   Testimonial: Accounting Head at Cebu Cube Ice Inc. praises payroll accuracy and tax deductions.
+
+3. Cloud Loan (2022, Commercialized) - Blazor.NET, SQL Server, Syncfusion, DevExpress
+   Complete loan lifecycle platform. Digital origination with e-forms and automated credit scoring. Portfolio oversight dashboard for active loans, maturities, payment schedules, delinquency. Automated loan servicing: recurring billing, payment allocation, penalty computation, amortization. Risk analytics: portfolio composition, exposure, collection effectiveness, aging analysis.
+
+4. GenMatrix (2026, Emerging) - React, TypeScript, Node.js, Express, MongoDB
+   Binary MLM platform. Binary genealogy tree with D3 visualization (zoom/pan, 3 views). Configurable commission engine: referral bonuses, binary pairing (1:1,1:2,2:3), multi-generation matching bonuses, rank advancement, daily cap carry-forward. Wallet system with full transaction ledger, P2P transfers, withdrawal with KYC. TOTP 2FA. Integrated product shop.
+
+5. SynchroPOS (2023, Commercialized) - Flutter, ASP.NET Core, SQLite, SignalR
+   Multi-platform POS for retail/food-service. 50+ concurrent terminals, 1,000+ daily transactions real-time sync. 2,000+ SKUs with low-stock alerts and auto purchase orders across 15+ locations. Offline-first: local SQLite guarantees 100% transaction continuity during outages, auto-sync $50K+ daily sales.
+   Testimonial: Restaurant owner confirms reliability during internet outages.
+
+6. CloudPallet (2025, Deployed) - ASP.NET Core 9, Angular 20, SignalR, Docker
+   3PL cold storage WMS. Usage-based billing by storage duration, temperature tier, handling events, VAS. FEFO lot tracking, granular location hierarchy. Barcode-enforced ops (SSCC generation, verification). Multi-tier RBAC (Admin/Operator/Finance). QuestPDF invoices/receipts.
+
+7. NexPoint CRM (2025, Deployed) - ASP.NET Core 10, PostgreSQL, Angular 20, SignalR
+   Enterprise CRM. 360-degree customer profiles. Visual sales pipeline with lead scoring and revenue forecasting. Campaign + support ticketing. Real-time SignalR dashboards. Invoice preview and billing dashboard.
+
+8. drobble (2024, Microservices) - ASP.NET Core, React, MongoDB, PostgreSQL, Docker
+   E-commerce engine. Microservices: catalog, users, orders, payments, search, reviews. Ocelot API gateway + RabbitMQ. Polyglot persistence. OpenTelemetry observability. JWT auth, rate limiting.
+
+9. Smash Elite (2026, SaaS) - React, Node.js, Express, SQLite/Turso, Socket.IO
+   Badminton facility platform. Court booking with dynamic pricing. Tournament engine with live Socket.IO scoring. Jersey CMS + e-commerce with GCash/COD. Delivery dashboard with PIN verification.
+
+10. Halkyone Clinical OS (2026, Emerging) - .NET 9, HotChocolate GraphQL, Next.js 14, PostgreSQL
+    Multi-tenant EMR platform. Three-portal architecture (clinical, admin, mobile). Patient billing dashboard. Transactional outbox for data consistency. Geospatial clinician routing. Dynamic clinical assessments.
+
+11. EWC-OS Portfolio - This portfolio site with AI chat, terminal emulator, visitor analytics, blog with Dev.to cross-posting, AI blog summarizer.
+
+AWARDS:
+- Award of Excellence (Dec 2024, AccountMate) - key role in developing/stabilizing core platform
+- Service Award (Dec 2023, AccountMate) - 5 years of continuous dedication
+
+EDUCATION: Not specified in portfolio data.
+
+BLOG: He writes about React, TypeScript, C#, full-stack development, AI integrations, POS systems, and building real-world web applications.
+
+If asked about something not in this context, say: "I don't have that information in my context. Check Erwin's portfolio or contact him directly."
+
+IMPORTANT: If asked about accounting systems, mention ALL relevant projects: Cloud FMIS (full financial accounting), Cloud HRIS (payroll), GenMatrix (wallet/ledger), Cloud Loan (loan servicing), NexPoint (billing/invoicing), CloudPallet (usage billing), POS (transactional ledger). Erwin has deep experience building accounting-adjacent systems throughout his career.`
 
 // ── Terminal Adventure Story ──
 const ADVENTURE_STORY: Record<string, AdventureNode> = {
@@ -390,13 +428,22 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
 }
 
 // ── Chat Window ──
+const SUGGESTIONS = [
+  'What projects use accounting?',
+  'Tell me about Cloud FMIS',
+  'What are your top skills?',
+  'Show me your experience',
+  'What tech stack do you use?',
+]
+
 function ChatWindow({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: 'Hey! Ask me anything about Erwin - his skills, projects, experience, or blog posts.' }
+    { role: 'assistant', content: 'Hey! Ask me anything about Erwin — his skills, projects, experience, or blog posts. 👋' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [blogContext, setBlogContext] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const dragControls = useDragControls()
@@ -411,7 +458,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       .then(r => r.json())
       .then(blogs => {
         if (Array.isArray(blogs) && blogs.length) {
-          const lines = blogs.slice(0, 10).map((b: any) => `- ${b.title} (${b.tags || 'general'})`)
+          const lines = blogs.slice(0, 10).map((b: any) => `- "${b.title}" (${b.tags || 'general'}${b.summary ? ': ' + b.summary.slice(0, 120) : ''})`)
           setBlogContext('\n\nBLOG POSTS:\n' + lines.join('\n'))
         }
       })
@@ -422,14 +469,15 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
     if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async () => {
-    const text = input.trim()
-    if (!text || loading) return
+  const handleSend = async (text?: string) => {
+    const msg = (text || input).trim()
+    if (!msg || loading) return
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: text }])
+    setShowSuggestions(false)
+    setMessages(prev => [...prev, { role: 'user', content: msg }])
     setLoading(true)
     try {
-      const fullContext = PORTFOLIO_CONTEXT + blogContext + '\n\nUser question: ' + text
+      const fullContext = PORTFOLIO_CONTEXT + blogContext + '\n\nUser question: ' + msg
       const aiResult: any = await (window as any).puter.ai.chat(fullContext, { model: 'gemini-2.5-flash' })
       const reply = typeof aiResult === 'string' ? aiResult : String(aiResult)
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
@@ -453,55 +501,59 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
       className={`fixed z-[90] w-full shadow-2xl overflow-hidden text-sm border ${
-        isMaximized ? 'inset-4 rounded-xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-lg h-[520px] max-h-[70vh] rounded-xl w-[calc(100%-2rem)]'
+        isMaximized ? 'inset-4 rounded-2xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-lg h-[520px] max-h-[70vh] rounded-2xl w-[calc(100%-2rem)]'
       }`}
       style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3 border-b select-none cursor-move active:cursor-grabbing"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', touchAction: 'none' }}
+        className="flex items-center justify-between px-5 py-3.5 border-b select-none cursor-move active:cursor-grabbing"
+        style={{
+          background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%)',
+          borderColor: 'var(--border)',
+          touchAction: 'none'
+        }}
         onPointerDown={(e) => { if (!isMaximized) dragControls.start(e) }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-            <Bot size={14} className="text-[var(--bg-primary)]" />
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+            <Bot size={16} className="text-[var(--bg-primary)]" />
           </div>
           <div>
-            <div className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Online - Ask about Erwin</span>
+            <div className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>AI Assistant</div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Ready to help</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setIsMaximized(!isMaximized)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setIsMaximized(!isMaximized)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
             {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-secondary)' }}>
             <X size={16} />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="overflow-y-auto h-[calc(100%-108px)] px-4 py-4 space-y-4" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
+      <div className="overflow-y-auto h-[calc(100%-116px)] px-4 py-5 space-y-4" style={{ background: 'var(--bg-primary)', overscrollBehavior: 'contain' }}>
         {messages.map((msg, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            transition={{ duration: 0.15 }}
+            className={`flex items-end gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'assistant' && (
-              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
-                <Bot size={12} className="text-[var(--bg-primary)]" />
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
+                <Bot size={13} className="text-[var(--bg-primary)]" />
               </div>
             )}
             <div
-              className={`max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed ${
+              className={`max-w-[80%] px-4 py-2.5 text-[13px] leading-relaxed ${
                 msg.role === 'user'
                   ? 'rounded-2xl rounded-br-md'
                   : 'rounded-2xl rounded-bl-md'
@@ -512,7 +564,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
               }}
             >
               {msg.role === 'assistant' ? (
-                <div className="prose prose-xs max-w-none [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_p]:mb-1 [&_strong]:font-semibold [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[10px]" style={{ '--tw-prose-body': 'var(--text-primary)', '--tw-prose-bold': 'var(--text-primary)', '--tw-prose-code': 'var(--text-primary)' } as any}>
+                <div className="prose prose-xs max-w-none [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_p]:mb-1 [&_strong]:font-semibold [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[11px]" style={{ '--tw-prose-body': 'var(--text-primary)', '--tw-prose-bold': 'var(--text-primary)', '--tw-prose-code': 'var(--text-primary)' } as any}>
                   {parsedContent[i]}
                 </div>
               ) : (
@@ -520,26 +572,51 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
               )}
             </div>
             {msg.role === 'user' && (
-              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--text-muted)' }}>
-                <User size={12} className="text-[var(--bg-primary)]" />
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--text-muted)' }}>
+                <User size={13} className="text-[var(--bg-primary)]" />
               </div>
             )}
           </motion.div>
         ))}
+
+        {/* Suggestions */}
+        {showSuggestions && messages.length === 1 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="pt-2 pb-1">
+            <p className="text-[11px] font-medium mb-2.5" style={{ color: 'var(--text-muted)' }}>Try asking:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {SUGGESTIONS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(s)}
+                  className="px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-colors active:scale-95"
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    borderColor: 'var(--border)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Typing indicator */}
         {loading && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-end gap-2"
+            className="flex items-end gap-2.5"
           >
-            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
-              <Bot size={12} className="text-[var(--bg-primary)]" />
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent)' }}>
+              <Bot size={13} className="text-[var(--bg-primary)]" />
             </div>
-            <div className="px-3.5 py-3 rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-secondary)' }}>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ color: 'var(--text-muted)' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0.1s]" style={{ color: 'var(--text-muted)' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:0.2s]" style={{ color: 'var(--text-muted)' }} />
+            <div className="px-4 py-3 rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ color: 'var(--text-muted)' }} />
+                <span className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:0.12s]" style={{ color: 'var(--text-muted)' }} />
+                <span className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:0.24s]" style={{ color: 'var(--text-muted)' }} />
               </div>
             </div>
           </motion.div>
@@ -550,7 +627,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       {/* Input */}
       <form
         onSubmit={(e) => { e.preventDefault(); handleSend() }}
-        className="flex items-center gap-2 px-3 py-3 border-t"
+        className="flex items-center gap-2 px-4 py-3 border-t"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
       >
         <input
@@ -558,18 +635,22 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about Erwin..."
-          className="flex-1 px-4 py-2 rounded-xl text-xs outline-none border"
-          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+          placeholder="Ask me anything..."
+          className="flex-1 px-3.5 py-2 rounded-xl text-xs outline-none border"
+          style={{
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            borderColor: 'var(--border)',
+          }}
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40"
+          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 shadow-sm"
           style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
         >
-          <SendHorizonal size={14} />
+          <SendHorizonal size={15} />
         </button>
       </form>
     </motion.div>
