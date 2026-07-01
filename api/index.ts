@@ -720,6 +720,19 @@ app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
   }
 })
 
+// Get blogs not yet posted to Hashnode (for n8n polling)
+app.get('/api/admin/blogs/unposted-hashnode', flexibleAuth, async (_req, res) => {
+  try {
+    const result = await turso.execute(
+      "SELECT id, slug, title, content, summary, tags, category, cover_image, created_at, devto_posted FROM blogs WHERE published = 1 AND (hashnode_posted = 0 OR hashnode_posted IS NULL) ORDER BY created_at ASC"
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Fetch unposted hashnode blogs error:', err)
+    res.status(500).json({ error: 'Failed to fetch unposted hashnode blogs' })
+  }
+})
+
 // Mark a blog as posted to Dev.to
 app.post('/api/admin/blogs/:id/devto-mark', flexibleAuth, async (req, res) => {
   try {

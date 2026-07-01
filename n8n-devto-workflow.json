@@ -21,7 +21,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "{{BASE_URL}}/api/admin/blogs/unposted-devto",
+        "url": "{{BASE_URL}}/api/admin/blogs/unposted-hashnode",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -34,7 +34,7 @@
         "options": {}
       },
       "id": "fetch-unposted",
-      "name": "Fetch Unposted Blogs",
+      "name": "Fetch Unposted Hashnode",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [220, 0]
@@ -154,6 +154,33 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "already-on-devto",
+              "leftValue": "={{ $json.devto_posted }}",
+              "rightValue": 1,
+              "operator": {
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "already-on-devto",
+      "name": "Already on Dev.to?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1060, -200]
+    },
+    {
+      "parameters": {
         "amount": 30,
         "unit": "seconds"
       },
@@ -254,6 +281,14 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [660, 100]
+    },
+    {
+      "parameters": {},
+      "id": "skip-devto",
+      "name": "Skip Dev.to Post",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1240, -240]
     }
   ],
   "connections": {
@@ -261,14 +296,14 @@
       "main": [
         [
           {
-            "node": "Fetch Unposted Blogs",
+            "node": "Fetch Unposted Hashnode",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Unposted Blogs": {
+    "Fetch Unposted Hashnode": {
       "main": [
         [
           {
@@ -312,12 +347,41 @@
       "main": [
         [
           {
-            "node": "Post to Dev.to",
+            "node": "Already on Dev.to?",
             "type": "main",
             "index": 0
           },
           {
             "node": "Post to Hashnode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already on Dev.to?": {
+      "main": [
+        [
+          {
+            "node": "Skip Dev.to Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to Dev.to",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Dev.to Post": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s (rate limit)",
             "type": "main",
             "index": 0
           }
