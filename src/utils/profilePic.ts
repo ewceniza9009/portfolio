@@ -9,6 +9,7 @@ interface ProfilePicState {
 }
 
 const FALLBACK_URL = DEFAULT_PIC
+const ADMIN_TOKEN_KEY = 'admin_token'
 
 let cachedUrl: string | null = null
 let inflight: Promise<string> | null = null
@@ -21,6 +22,15 @@ function getApiUrl(path: string): string {
       ? 'http://localhost:3000'
       : ''
   return `${baseUrl}${path}`
+}
+
+function getAdminToken(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    return window.localStorage.getItem(ADMIN_TOKEN_KEY) || window.sessionStorage.getItem(ADMIN_TOKEN_KEY) || ''
+  } catch {
+    return ''
+  }
 }
 
 async function loadProfilePic(): Promise<string> {
@@ -51,7 +61,12 @@ export async function uploadProfilePic(file: File): Promise<string> {
   const url = getApiUrl('/api/admin/upload-profile-pic')
   const form = new FormData()
   form.append('file', file)
-  const res = await fetch(url, { method: 'POST', body: form })
+  const token = getAdminToken()
+  const res = await fetch(url, {
+    method: 'POST',
+    body: form,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.error || `Upload failed: ${res.status}`)
@@ -65,7 +80,11 @@ export async function uploadProfilePic(file: File): Promise<string> {
 
 export async function resetProfilePic(): Promise<string> {
   const url = getApiUrl('/api/admin/reset-profile-pic')
-  const res = await fetch(url, { method: 'POST' })
+  const token = getAdminToken()
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
   if (!res.ok) throw new Error(`Reset failed: ${res.status}`)
   const data = await res.json()
   const newUrl = data.url as string
