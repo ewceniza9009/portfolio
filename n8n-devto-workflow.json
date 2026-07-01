@@ -157,13 +157,12 @@
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
               "id": "already-on-devto",
-              "leftValue": "={{ $json.devto_posted }}",
+              "leftValue": "={{ ($node['Take First Blog'].json.devto_posted || 0) }}",
               "rightValue": 1,
               "operator": {
                 "operation": "equal"
