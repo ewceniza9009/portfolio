@@ -150,7 +150,6 @@ export default function GallerySection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const allImages = useMemo(() => buildGalleryImages(), []);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
