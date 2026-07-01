@@ -19,7 +19,7 @@ import BackToTop from './components/BackToTop'
 import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
 import awards from './data/awards'
-import TerminalFooter from './components/TerminalFooter'
+import FloatingControl from './components/FloatingControl'
 import AdminPanel from './components/AdminPanel'
 import { ACCENT_THEMES } from './data/accents'
 import type { AccentKey } from './data/accents'
@@ -149,7 +149,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           <GitHubSection theme={theme} accent={accent} />
           <ContactSection theme={theme} />
         </main>
-        <TerminalFooter />
+        <FloatingControl />
         <Footer onScrollTo={scrollTo} />
         <BackToTop />
         <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />
