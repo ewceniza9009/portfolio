@@ -767,7 +767,7 @@ app.post('/api/admin/blogs/:id/hashnode-mark', flexibleAuth, async (req, res) =>
 app.post('/api/admin/blogs/:id/devto-summary', flexibleAuth, async (req, res) => {
   try {
     const result = await turso.execute({
-      sql: 'SELECT id, slug, title, content, summary, tags, category FROM blogs WHERE id = ?',
+      sql: 'SELECT id, slug, title, content, summary, tags, category, devto_posted FROM blogs WHERE id = ?',
       args: [req.params.id as string],
     })
     if (!result.rows.length) return res.status(404).json({ error: 'Blog not found' })
@@ -824,6 +824,7 @@ ${blog.content?.slice(0, 3000) || blog.summary || ''}`
         tags,
         canonical_url: fullUrl,
         description: blog.summary || `Technical deep-dive: ${blog.title}`,
+        devto_posted: blog.devto_posted,
       })
     } else if (currentProvider === 'puter') {
       return res.status(400).json({ error: 'Puter AI provider requires client-side AI. Switch to Gemini or configure client-side Puter integration.' })
