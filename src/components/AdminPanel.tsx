@@ -2615,81 +2615,23 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       className="px-5 py-2 border-b shrink-0"
                       style={{ borderColor: "var(--border)" }}
                     >
-                      <div className="flex items-center gap-3 mb-1.5">
-                        <button
-                          onClick={() => setSelectedBlog(null)}
-                          className="md:hidden w-8 h-8 rounded-full flex items-center justify-center border shrink-0"
-                          style={{
-                            borderColor: "var(--border)",
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          <ArrowLeft size={14} />
-                        </button>
-                        <h3 className="text-sm font-bold truncate min-w-0">
-                          {isNewBlog
-                            ? "New Post Creator"
-                            : `Editing: ${blogTitle}`}
-                        </h3>
-                      </div>
-
-                      {/* Edit / Preview / Summarizer Tabs + Save */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div
-                          className="flex p-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider"
-                          style={{
-                            borderColor: "var(--border)",
-                            background: "var(--bg-secondary)",
-                          }}
-                        >
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <div className="flex items-center gap-3 min-w-0">
                           <button
-                            onClick={() => setBlogEditorTab("edit")}
-                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
+                            onClick={() => setSelectedBlog(null)}
+                            className="md:hidden w-8 h-8 rounded-full flex items-center justify-center border shrink-0"
                             style={{
-                              background:
-                                blogEditorTab === "edit"
-                                  ? "var(--accent)"
-                                  : "transparent",
-                              color:
-                                blogEditorTab === "edit"
-                                  ? "var(--bg-primary)"
-                                  : "var(--text-secondary)",
+                              borderColor: "var(--border)",
+                              color: "var(--text-secondary)",
                             }}
                           >
-                            <Edit size={10} /> Edit
+                            <ArrowLeft size={14} />
                           </button>
-                          <button
-                            onClick={() => setBlogEditorTab("preview")}
-                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
-                            style={{
-                              background:
-                                blogEditorTab === "preview"
-                                  ? "var(--accent)"
-                                  : "transparent",
-                              color:
-                                blogEditorTab === "preview"
-                                  ? "var(--bg-primary)"
-                                  : "var(--text-secondary)",
-                            }}
-                          >
-                            <Eye size={10} /> Live Preview
-                          </button>
-                          <button
-                            onClick={() => setBlogEditorTab("summarizer")}
-                            className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
-                            style={{
-                              background:
-                                blogEditorTab === "summarizer"
-                                  ? "var(--accent)"
-                                  : "transparent",
-                              color:
-                                blogEditorTab === "summarizer"
-                                  ? "var(--bg-primary)"
-                                  : "var(--text-secondary)",
-                            }}
-                          >
-                            <Sparkles size={10} /> Summarizer
-                          </button>
+                          <h3 className="text-sm font-bold truncate">
+                            {isNewBlog
+                              ? "New Post Creator"
+                              : `Editing: ${blogTitle}`}
+                          </h3>
                         </div>
                         <button
                           type="button"
@@ -2700,7 +2642,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             !blogSlug ||
                             !blogContent
                           }
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all hover:brightness-110 active:scale-[0.98]"
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap shrink-0 transition-all hover:brightness-110 active:scale-[0.98]"
                           style={{
                             background: "var(--accent)",
                             color: "var(--bg-primary)",
@@ -2717,6 +2659,63 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                             <Loader size={11} className="animate-spin" />
                           )}
                           Save Changes
+                        </button>
+                      </div>
+
+                      {/* Edit / Preview / Summarizer Tabs */}
+                      <div className="flex p-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider w-fit"
+                        style={{
+                          borderColor: "var(--border)",
+                          background: "var(--bg-secondary)",
+                        }}
+                      >
+                        <button
+                          onClick={() => setBlogEditorTab("edit")}
+                          className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
+                          style={{
+                            background:
+                              blogEditorTab === "edit"
+                                ? "var(--accent)"
+                                : "transparent",
+                            color:
+                              blogEditorTab === "edit"
+                                ? "var(--bg-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          <Edit size={10} /> Edit
+                        </button>
+                        <button
+                          onClick={() => setBlogEditorTab("preview")}
+                          className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
+                          style={{
+                            background:
+                              blogEditorTab === "preview"
+                                ? "var(--accent)"
+                                : "transparent",
+                            color:
+                              blogEditorTab === "preview"
+                                ? "var(--bg-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          <Eye size={10} /> Live Preview
+                        </button>
+                        <button
+                          onClick={() => setBlogEditorTab("summarizer")}
+                          className="px-3 py-1.5 rounded flex items-center gap-1 whitespace-nowrap"
+                          style={{
+                            background:
+                              blogEditorTab === "summarizer"
+                                ? "var(--accent)"
+                                : "transparent",
+                            color:
+                              blogEditorTab === "summarizer"
+                                ? "var(--bg-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          <Sparkles size={10} /> Summarizer
                         </button>
                       </div>
                     </div>
