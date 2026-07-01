@@ -477,9 +477,14 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
     setMessages(prev => [...prev, { role: 'user', content: msg }])
     setLoading(true)
     try {
-      const fullContext = PORTFOLIO_CONTEXT + blogContext + '\n\nUser question: ' + msg
-      const aiResult: any = await (window as any).puter.ai.chat(fullContext, { model: 'gemini-2.5-flash' })
-      const reply = typeof aiResult === 'string' ? aiResult : String(aiResult)
+      const fullContext = PORTFOLIO_CONTEXT + blogContext
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: msg, context: fullContext }),
+      })
+      const data = await res.json()
+      const reply = data.reply || 'Sorry, I could not generate a response.'
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I had trouble connecting. Try again?' }])

@@ -319,6 +319,32 @@ app.post('/api/ai/compose', authMiddleware, async (req, res) => {
   }
 })
 
+// ── Public: AI Chat (no auth required - portfolio visitor assistant) ──
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { question, context } = req.body
+    if (!question) return res.status(400).json({ error: 'Question is required' })
+
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'AI not configured' })
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+    const fullPrompt = context
+      ? `You are a helpful portfolio assistant. Answer questions about the portfolio owner based on the following context. Be concise, friendly, and accurate.\n\n${context}\n\nQuestion: ${question}`
+      : `You are a helpful portfolio assistant. Answer questions about the portfolio owner. Be concise and friendly.\n\nQuestion: ${question}`
+
+    const result = await model.generateContent(fullPrompt)
+    const text = result.response.text()
+
+    res.json({ reply: text.trim() })
+  } catch (err) {
+    console.error('AI chat error:', err)
+    res.status(500).json({ error: 'Failed to generate response' })
+  }
+})
+
 // ==========================================
 // ── Public Blog Endpoints ──
 // ==========================================
