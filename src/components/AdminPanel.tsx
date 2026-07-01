@@ -6,7 +6,8 @@ import {
   ArrowLeft, Search, Sparkles, Check, Copy, Inbox, 
   Lock, RefreshCw, CheckCircle2, ChevronDown, Cpu,
   Trash2, Edit, Plus, FileText, Eye, Heart, Settings, BarChart3,
-  Maximize2, Minimize2, Workflow, BookOpen, Activity, Download, Image as ImageIcon, Upload, RotateCcw
+  Maximize2, Minimize2, Workflow, BookOpen, Activity, Download, Image as ImageIcon, Upload, RotateCcw,
+  Calendar, Monitor, Smartphone, Tablet
 } from 'lucide-react'
 import { parseMarkdown } from '../utils/markdown'
 import { ACCENT_THEMES, type AccentKey } from '../data/accents'
@@ -2766,7 +2767,7 @@ const res = await api(`/api/visitors?${params.toString()}`)
                   </div>
                 ) : visitors.length === 0 ? (
                   <div className="text-center py-16">
-                    <div className="text-4xl mb-4">🌐</div>
+                    <Activity size={48} className="mx-auto mb-4 opacity-30" style={{ color: 'var(--accent)' }} />
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>No visitor data yet</p>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Visit your portfolio to start tracking analytics.</p>
                   </div>
@@ -2775,13 +2776,13 @@ const res = await api(`/api/visitors?${params.toString()}`)
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                       {[
-                        { label: 'Unique', value: unfilteredTotal, icon: '👤' },
-                        { label: 'Total Visits', value: unfilteredVisits, icon: '📊' },
-                        { label: "Today (UTC)", value: todayCount, icon: '📅' },
-                        { label: 'Yesterday (UTC)', value: yesterdayCount, icon: '📆' },
+                        { label: 'Unique', value: unfilteredTotal, Icon: Activity },
+                        { label: 'Total Visits', value: unfilteredVisits, Icon: BarChart3 },
+                        { label: "Today (UTC)", value: todayCount, Icon: Calendar },
+                        { label: 'Yesterday (UTC)', value: yesterdayCount, Icon: Calendar },
                       ].map((stat, i) => (
                         <div key={i} className="rounded-xl md:rounded-2xl border p-3 md:p-5 bg-white/[0.01]" style={{ borderColor: 'var(--border)' }}>
-                          <div className="text-lg md:text-2xl mb-1 md:mb-2">{stat.icon}</div>
+                          <stat.Icon size={24} className="mb-1 md:mb-2 opacity-70" style={{ color: 'var(--accent)' }} />
                           <div className="text-xl md:text-3xl font-bold" style={{ color: 'var(--accent)' }}>{stat.value}</div>
                           <div className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider mt-0.5 md:mt-1.5" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
                         </div>
@@ -2842,10 +2843,11 @@ const res = await api(`/api/visitors?${params.toString()}`)
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>By Device</h4>
                         <div className="space-y-2">
                           {sortedDevices.map(([name, count]: any) => {
-                            const icons: Record<string, string> = { Desktop: '🖥', Mobile: '📱', Tablet: '📟' }
+                            const icons: Record<string, any> = { Desktop: Monitor, Mobile: Smartphone, Tablet: Tablet }
+                            const IconComponent = icons[name] || Monitor
                             return (
                               <div key={name} className="flex items-center gap-3">
-                                <span className="text-sm">{icons[name] || '?'}</span>
+                                <IconComponent size={14} style={{ color: 'var(--accent)' }} />
                                 <span className="text-[10px] w-5 font-bold" style={{ color: 'var(--accent)' }}>{count}</span>
                                 <div className="flex-1 h-4 rounded-md" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
                                   <div className="h-full rounded-md transition-all duration-500 ease-out" style={{ width: `${(count / deviceTotal) * 100}%`, background: 'var(--accent)' }} />
