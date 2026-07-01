@@ -1218,13 +1218,13 @@ app.post('/api/visit', async (req, res) => {
 
     if (!isNew) {
       await turso.execute({
-        sql: "UPDATE visitors SET visit_count = visit_count + 1, last_visit = datetime('now'), user_agent = ? WHERE ip = ?",
+        sql: "UPDATE visitors SET visit_count = visit_count + 1, last_visit = datetime('now', '+8 hours'), user_agent = ? WHERE ip = ?",
         args: [userAgent, ip],
       })
     } else {
       const geo = await geoLookup(ip)
       await turso.execute({
-        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc, referrer, ref, is_bot) VALUES (?, 1, datetime(\'now\'), datetime(\'now\'), ?, ?, ?, ?, ?, ?, ?, ?)',
+        sql: 'INSERT INTO visitors (ip, visit_count, first_visit, last_visit, user_agent, country, region, city, loc, referrer, ref, is_bot) VALUES (?, 1, datetime(\'now\', \'+8 hours\'), datetime(\'now\', \'+8 hours\'), ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc, referrer, ref, detectedBot],
       })
 
@@ -1239,13 +1239,13 @@ app.post('/api/visit', async (req, res) => {
     // Daily & hourly counters (humans only)
     if (!detectedBot) {
     await turso.execute({
-      sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
+      sql: 'INSERT INTO daily_visits (date, count) VALUES (date(\'now\', \'+8 hours\'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1',
       args: [],
     })
 
     // Hourly visit counter (inside human-only block)
     await turso.execute({
-      sql: 'INSERT INTO hourly_visits (hour, count) VALUES (strftime(\'%Y-%m-%d %H:00\', \'now\'), 1) ON CONFLICT(hour) DO UPDATE SET count = count + 1',
+      sql: 'INSERT INTO hourly_visits (hour, count) VALUES (strftime(\'%Y-%m-%d %H:00\', \'now\', \'+8 hours\'), 1) ON CONFLICT(hour) DO UPDATE SET count = count + 1',
       args: [],
     })
     }

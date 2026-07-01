@@ -368,6 +368,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [cleanupFrom, setCleanupFrom] = useState("");
   const [cleanupTo, setCleanupTo] = useState("");
+
+  const manilaDateStr = (d: Date) => {
+    const ph = new Date(d.getTime() + 8 * 60 * 60 * 1000)
+    return ph.toISOString().slice(0, 10)
+  }
+
   const [cleanupTables, setCleanupTables] = useState<string[]>([
     "daily",
     "hourly",
@@ -417,11 +423,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   );
 
   // Analytics summary (avoid recomputation in JSX)
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => manilaDateStr(new Date()), []);
   const yesterdayDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
-    return d.toISOString().slice(0, 10);
+    return manilaDateStr(d);
   }, []);
   const todayCount = useMemo(
     () => dailyVisits.find((d: any) => d.date === todayStr)?.count || 0,
@@ -4784,12 +4790,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           Icon: BarChart3,
                         },
                         {
-                          label: "Today (UTC)",
+                          label: "Today (Manila)",
                           value: todayCount,
                           Icon: Calendar,
                         },
                         {
-                          label: "Yesterday (UTC)",
+                          label: "Yesterday",
                           value: yesterdayCount,
                           Icon: Calendar,
                         },
@@ -5511,7 +5517,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                   from: () => {
                                     const d = new Date();
                                     d.setDate(d.getDate() - 7);
-                                    return d.toISOString().slice(0, 10);
+                                    return manilaDateStr(d);
                                   },
                                 },
                                 {
@@ -5519,7 +5525,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                   from: () => {
                                     const d = new Date();
                                     d.setDate(d.getDate() - 30);
-                                    return d.toISOString().slice(0, 10);
+                                    return manilaDateStr(d);
                                   },
                                 },
                                 {
@@ -5527,7 +5533,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                   from: () => {
                                     const d = new Date();
                                     d.setDate(d.getDate() - 90);
-                                    return d.toISOString().slice(0, 10);
+                                    return manilaDateStr(d);
                                   },
                                 },
                                 { label: "All", from: () => "2020-01-01" },
@@ -5537,7 +5543,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                   onClick={() => {
                                     setCleanupFrom(p.from());
                                     setCleanupTo(
-                                      new Date().toISOString().slice(0, 10),
+                                      manilaDateStr(new Date()),
                                     );
                                     setCleanupPreview(null);
                                     setCleanupResult(null);
