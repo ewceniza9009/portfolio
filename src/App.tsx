@@ -44,6 +44,15 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isResumeOpen, setIsResumeOpen] = useState(false)
 
+  useEffect(() => {
+    history.scrollRestoration = 'manual'
+    return () => { history.scrollRestoration = 'auto' }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading) window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [isLoading])
+
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,

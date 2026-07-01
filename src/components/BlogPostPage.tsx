@@ -159,6 +159,10 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   })
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
     async function fetchBlogAndComments() {
       try {
         const blogRes = await fetch(getApiUrl(`/api/blogs/${slug}`))

@@ -201,6 +201,10 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const { url: profilePicUrl } = useProfilePic()
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
     async function fetchBlogs() {
       try {
         const res = await fetch(getApiUrl('/api/blogs'))
