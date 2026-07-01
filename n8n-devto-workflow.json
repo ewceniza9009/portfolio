@@ -144,7 +144,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://hashnode.com/api/v2",
+        "url": "https://gql.hashnode.com/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -290,26 +290,26 @@
     {
       "parameters": {
         "conditions": {
-          "number": true,
-          "string": false,
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "already-on-devto-cond",
-              "leftValue": "={{ $json.devto_posted || 0 }}",
-              "rightValue": "=1",
-              "operator": {
-                "type": "number",
-                "operation": "equal",
-                "singleValue": true
+            "number": false,
+            "string": true,
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "already-on-devto-cond",
+                "leftValue": "={{ String($json.devto_posted) }}",
+                "rightValue": "=1",
+                "operator": {
+                  "type": "string",
+                  "operation": "equal",
+                  "singleValue": true
+                }
               }
-            }
-          ],
-          "combinator": "AND"
+            ],
+            "combinator": "AND"
         }
       },
       "id": "already-on-devto",
@@ -337,7 +337,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://hashnode.com/api/v2",
+        "url": "https://gql.hashnode.com/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
