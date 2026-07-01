@@ -1118,10 +1118,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
   const fetchModels = async () => {
     try {
-      const res = await api("/api/ai/models");
+      const res = await api("/api/ai/providers");
       if (res.ok) {
         const data = await res.json();
-        setAiModels(data.models);
+        const provider = data.currentProvider || "gemini";
+        setAiModels(data.providers?.[provider]?.freeModels || []);
       }
     } catch {}
   };
@@ -3107,7 +3108,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:\n\n1. Start with a hook — casual, first person\n2. Say what the article covers in plain language\n3. Include 5-8 bullet points of key technical highlights\n4. End with a one-liner about real-world issues\n5. Finish with CTA: "Read the full article here:" followed by the link on its own line\n\nRules:\n- Max 250 words\n- No title, no front matter, no hashtags in body\n- Use markdown bullet points (- item)\n\nFull article URL: ${window.location.origin}/blogs/${selectedBlog.slug}\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
-                                        const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        const summary = typeof aiResult === "string" ? aiResult : String(aiResult)
                                         if (summary) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
                                             method: 'POST',
@@ -3160,7 +3161,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       if (usePuter) {
                                         const prompt = `Here is a Dev.to summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogDevtoSummary}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
-                                        const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        const refined = typeof aiResult === "string" ? aiResult : String(aiResult)
                                         if (refined) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
                                             method: 'POST',
@@ -3233,7 +3234,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a social media summary of this technical article suitable for LinkedIn and Facebook.\n\n1. Start with a hook — professional, engaging, first person\n2. 2-3 sentences explaining what it covers\n3. 3-4 bullet points of key takeaways\n4. End with: "Read the full article here: ${window.location.origin}/blogs/${selectedBlog.slug}"\n\nRules:\n- Max 200 words\n- No hashtags, no markdown\n- Use "—" dashes for bullet points\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
-                                        const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        const summary = typeof aiResult === "string" ? aiResult : String(aiResult)
                                         if (summary) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
                                             method: 'POST',
@@ -3286,7 +3287,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       if (usePuter) {
                                         const prompt = `Here is a social media summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogSocialSummary}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
-                                        const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
+                                        const refined = typeof aiResult === "string" ? aiResult : String(aiResult)
                                         if (refined) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
                                             method: 'POST',
