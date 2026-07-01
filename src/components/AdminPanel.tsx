@@ -3046,11 +3046,14 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 <option value="">Default (from settings)</option>
                                 {summarizerProvider === 'puter' ? (
                                   <>
-                                    <option value="openai/gpt-5.5">GPT-5.5</option>
-                                    <option value="openai/gpt-5.4-nano">GPT-5.4 Nano</option>
-                                    <option value="anthropic/claude-sonnet-4">Claude Sonnet 4</option>
-                                    <option value="deepseek/deepseek-v4-pro">DeepSeek V4 Pro</option>
-                                    <option value="qwen/qwen3.7-max">Qwen 3.7 Max</option>
+                                    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                                    <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                                    <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                                    <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                                   </>
                                 ) : (
                                   <>
@@ -3103,7 +3106,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:\n\n1. Start with a hook — casual, first person\n2. Say what the article covers in plain language\n3. Include 5-8 bullet points of key technical highlights\n4. End with a one-liner about real-world issues\n5. Finish with CTA: "Read the full article here:" followed by the link on its own line\n\nRules:\n- Max 250 words\n- No title, no front matter, no hashtags in body\n- Use markdown bullet points (- item)\n\nFull article URL: ${window.location.origin}/blogs/${selectedBlog.slug}\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
-                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
                                         const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
                                         if (summary) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
@@ -3156,7 +3159,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
                                       if (usePuter) {
                                         const prompt = `Here is a Dev.to summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogDevtoSummary}`
-                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
                                         const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
                                         if (refined) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
@@ -3229,7 +3232,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a social media summary of this technical article suitable for LinkedIn and Facebook.\n\n1. Start with a hook — professional, engaging, first person\n2. 2-3 sentences explaining what it covers\n3. 3-4 bullet points of key takeaways\n4. End with: "Read the full article here: ${window.location.origin}/blogs/${selectedBlog.slug}"\n\nRules:\n- Max 200 words\n- No hashtags, no markdown\n- Use "—" dashes for bullet points\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
-                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
                                         const summary = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
                                         if (summary) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
@@ -3282,7 +3285,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                       const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
                                       if (usePuter) {
                                         const prompt = `Here is a social media summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogSocialSummary}`
-                                        const aiResult: any = await (window as any).puter.ai.chat(prompt)
+                                        const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
                                         const refined = aiResult?.message?.content?.[0]?.text || aiResult?.text || ''
                                         if (refined) {
                                           await api(`/api/admin/blogs/${selectedBlog.id}/save-summary`, {
