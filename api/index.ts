@@ -44,6 +44,36 @@ const visitRateLimit = new Map<string, { count: number; resetTime: number }>()
 const VISIT_RATE_LIMIT = 30
 const VISIT_RATE_WINDOW = 60 * 1000
 
+// ── Bot Detection Patterns ──
+// Comprehensive list of known bot/user-agents to exclude from analytics
+const BOT_PATTERNS = [
+  /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|teoma|ia_archiver/i,
+  /crawler|spider|scraper|bot|curl|wget|python-requests|go-http-client/i,
+  /MJ12bot|AhrefsBot|SemrushBot|DotBot|PetalBot|BLEXBot|Ezooms/i,
+  /screaming|octopus|inspector|neumarks|ahrefs|seochat/i,
+  /facebookexternalhit|twitterbot|linkedinbot|pinterest|whatsapp|telegrambot/i,
+  /embedly|quora|buffer|skypeuri|slackbot|discordbot/i,
+  /sogou|exabot|facebot|applebot|yandex|mail.ru/i,
+  /rogerbot|fenixbot|overflowbot|happyfoxbot|mindspider/i,
+  /facebookcatalog|pandalytics|bytespider|baiduboxapp|msnbot/i,
+  /chatgpt|gptbot|perplexitybot|anthropic-ai|claudebot/i,
+  /anthropic|gemini|bard|gemini-bot|bard-bot/i,
+  /paperlib|semanticscholar|core|openai-research/i,
+  /archive.org_bot|archive.org_bot|archive.org|waybackmachine/i,
+  /semrushbot|seotools|seoanalyzer|siteaudit|ahrefsbot/i,
+]
+
+/**
+ * Check if a user-agent string belongs to a known bot/crawler
+ */
+function isBot(userAgent: string): boolean {
+  if (!userAgent || userAgent.length < 5) return true
+  const uaLower = userAgent.toLowerCase()
+  // Exclude empty, very short, or obviously bot-like user agents
+  if (uaLower === 'unknown' || uaLower === '-' || uaLower === 'null') return true
+  return BOT_PATTERNS.some((pattern) => pattern.test(uaLower))
+}
+
 let dbInitialized: Promise<void> | null = null
 
 function ensureDb() {
@@ -874,6 +904,14 @@ async function sendTelegramAlert(message: string) {
 app.post('/api/visit', async (req, res) => {
   try {
     const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim()
+    const userAgent = req.headers['user-agent'] || ''
+    const referrer = (req.headers['referer'] as string) || ''
+    const ref = req.body?.ref || ''
+
+    // ── Skip bot traffic ──
+    if (isBot(userAgent)) {
+      return res.status(200).json({ skipped: true, reason: 'bot' })
+    }
 
     // Rate limit check
     const now = Date.now()
@@ -890,9 +928,6 @@ app.post('/api/visit', async (req, res) => {
     } else {
       visitRateLimit.set(ip, { count: 1, resetTime: now + VISIT_RATE_WINDOW })
     }
-    const userAgent = req.headers['user-agent'] || ''
-    const referrer = (req.headers['referer'] as string) || ''
-    const ref = req.body?.ref || ''
 
     const existing = await turso.execute({
       sql: 'SELECT visit_count, country FROM visitors WHERE ip = ?',
@@ -913,10 +948,10 @@ app.post('/api/visit', async (req, res) => {
         args: [ip, userAgent, geo.country, geo.region, geo.city, geo.loc, referrer, ref],
       })
 
-      // Telegram alert for new visitor
+      // Telegram alert for new visitor (only for humans)
       const locStr = [geo.city, geo.region, geo.country].filter(Boolean).join(', ') || 'Unknown location'
       const refStr = ref ? ` (ref: ${ref})` : referrer ? ` (via ${new URL(referrer).hostname})` : ''
-      sendTelegramAlert(`👤 <b>New visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
+      sendTelegramAlert(`👤 <b>New human visitor!</b>\n📍 ${locStr}\n🖥 ${userAgent.slice(0, 60)}\n${refStr ? `🔗${refStr}` : ''}`)
     }
 
     // Daily visit counter
@@ -949,6 +984,7 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
     const order = url.searchParams.get('order')?.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
     const search = url.searchParams.get('search') || ''
     const country = url.searchParams.get('country') || ''
+    const humansOnly = url.searchParams.get('humansOnly') === '1'
 
     const allowedSorts: Record<string, string> = {
       visit_count: 'visit_count',
@@ -961,6 +997,16 @@ app.get('/api/visitors', authMiddleware, async (req, res) => {
 
     const conditions: string[] = []
     const args: any[] = []
+
+    // Bot detection filter
+    if (humansOnly) {
+      conditions.push(`(user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ? AND user_agent NOT LIKE ?)`)
+      args.push(
+        '%googlebot%', '%bingbot%', '%slurp%', '%duckduckbot%', '%baiduspider%', '%yandexbot%',
+        '%crawler%', '%spider%', '%scraper%', '%bot%', '%curl%', '%wget%', '%python-requests%', '%go-http-client%',
+        '%facebookexternalhit%', '%twitterbot%'
+      )
+    }
 
     if (search) {
       conditions.push(`(ip LIKE ? OR country LIKE ? OR city LIKE ? OR region LIKE ? OR referrer LIKE ? OR ref LIKE ? OR user_agent LIKE ?)`)

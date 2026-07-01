@@ -377,6 +377,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [gridOrder, setGridOrder] = useState<"asc" | "desc">("desc");
   const [gridSearch, setGridSearch] = useState("");
   const [gridCountry, setGridCountry] = useState("");
+  const [gridShowHumansOnly, setGridShowHumansOnly] = useState(false);
   const [gridPagination, setGridPagination] = useState<{
     page: number;
     limit: number;
@@ -817,6 +818,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       params.set("order", gridOrder);
       if (gridSearch) params.set("search", gridSearch);
       if (gridCountry) params.set("country", gridCountry);
+      if (gridShowHumansOnly) params.set("humansOnly", "1");
 
       const res = await api(`/api/visitors?${params.toString()}`);
       if (res.ok) {
@@ -838,7 +840,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
       setVisitorLoading(false);
       setVisitorRefreshing(false);
     }
-  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry]);
+  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry, gridShowHumansOnly]);
 
   const exportCSV = useCallback(async () => {
     try {
@@ -4312,6 +4314,25 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                   >
                     CSV
                   </button>
+                  <button
+                    onClick={() => setGridShowHumansOnly(!gridShowHumansOnly)}
+                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                      gridShowHumansOnly ? "border-[var(--accent)] text-[var(--accent)]" : ""
+                    }`}
+                    title="Filter to show only human visitors (excludes bots/crawlers)"
+                  >
+                    {gridShowHumansOnly ? (
+                      <>
+                        <CheckCircle2 size={10} />
+                        <span className="hidden sm:inline">Humans Only</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye size={10} />
+                        <span className="hidden sm:inline">All Visitors</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -4379,7 +4400,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                 ) : (
                   <>
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
                       {[
                         {
                           label: "Unique",
@@ -4387,7 +4408,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           Icon: Activity,
                         },
                         {
-                          label: "Total Visits",
+                          label: "Visits",
                           value: unfilteredVisits,
                           Icon: BarChart3,
                         },
@@ -4400,6 +4421,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           label: "Yesterday (UTC)",
                           value: yesterdayCount,
                           Icon: Calendar,
+                        },
+                        {
+                          label: gridShowHumansOnly ? "Humans Only" : "All",
+                          value: visitors.length,
+                          Icon: gridShowHumansOnly ? CheckCircle2 : Eye,
                         },
                       ].map((stat, i) => (
                         <div
