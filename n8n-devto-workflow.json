@@ -162,9 +162,10 @@
           "conditions": [
             {
               "id": "already-on-devto",
-              "leftValue": "={{ ($node['Take First Blog'].json.devto_posted || 0) }}",
+              "leftValue": "={{ $json.devto_posted || 0 }}",
               "rightValue": 1,
               "operator": {
+                "type": "number",
                 "operation": "equal"
               }
             }
