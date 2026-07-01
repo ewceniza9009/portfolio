@@ -112,9 +112,7 @@ export async function initDb() {
   try { await turso.execute("UPDATE blogs SET category = 'General' WHERE category IS NULL") } catch {}
   try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_posted INTEGER DEFAULT 0') } catch {}
   try { await turso.execute('ALTER TABLE blogs ADD COLUMN devto_id TEXT') } catch {}
-  try { await turso.execute('ALTER TABLE blogs ADD COLUMN hashnode_posted INTEGER DEFAULT 0') } catch {}
-  try { await turso.execute('ALTER TABLE blogs ADD COLUMN hashnode_id TEXT') } catch {}
-  try { await turso.execute('ALTER TABLE blogs ADD COLUMN hashnode_url TEXT') } catch {}
+
 
   // Seed default settings if they don't exist
   await turso.execute(`
@@ -130,7 +128,6 @@ export async function initDb() {
     ('devto_api_key', ''),
     ('devto_username', ''),
     ('n8n_portfolio_api_key', ''),
-    ('hashnode_api_key', ''),
     ('n8n_devto_api_key', ''),
     ('n8n_webhook_url', '')
   `)

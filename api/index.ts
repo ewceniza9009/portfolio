@@ -626,7 +626,7 @@ import { fileURLToPath } from 'url'
 app.get('/api/admin/n8n-workflow-download', authMiddleware, async (_req, res) => {
   try {
     // Load all required settings
-    const settingKeys = ['api_token', 'devto_api_key', 'devto_username', 'hashnode_api_key', 'n8n_portfolio_api_key', 'n8n_devto_api_key', 'n8n_webhook_url']
+    const settingKeys = ['api_token', 'devto_api_key', 'devto_username', 'n8n_portfolio_api_key', 'n8n_devto_api_key', 'n8n_webhook_url']
     const placeholders: Record<string, string> = {}
     const missing: string[] = []
 
@@ -635,7 +635,7 @@ app.get('/api/admin/n8n-workflow-download', authMiddleware, async (_req, res) =>
       const val = (result.rows[0] as any)?.value || ''
       placeholders[key] = val
       // Required: api_token, devto_api_key, devto_username
-      if (['api_token', 'devto_api_key', 'devto_username', 'hashnode_api_key'].includes(key) && !val) {
+      if (['api_token', 'devto_api_key', 'devto_username'].includes(key) && !val) {
         missing.push(key)
       }
     }
@@ -659,7 +659,6 @@ app.get('/api/admin/n8n-workflow-download', authMiddleware, async (_req, res) =>
     template = template.replace(/\{\{API_TOKEN\}\}/g, placeholders.api_token)
     template = template.replace(/\{\{DEVTO_API_KEY\}\}/g, placeholders.devto_api_key)
     template = template.replace(/\{\{DEVTO_USERNAME\}\}/g, placeholders.devto_username)
-    template = template.replace(/\{\{HASHNODE_API_KEY\}\}/g, placeholders.hashnode_api_key || placeholders.api_token)
     template = template.replace(/\{\{N8N_PORTFOLIO_KEY\}\}/g, placeholders.n8n_portfolio_api_key || placeholders.api_token)
     template = template.replace(/\{\{N8N_DEVTO_KEY\}\}/g, placeholders.n8n_devto_api_key || placeholders.devto_api_key)
 
@@ -694,19 +693,6 @@ app.get('/api/admin/blogs/devto-status', flexibleAuth, async (_req, res) => {
   }
 })
 
-// Get all blogs with Hashnode sync status (for debug console)
-app.get('/api/admin/blogs/hashnode-status', flexibleAuth, async (_req, res) => {
-  try {
-    const result = await turso.execute(
-      "SELECT id, slug, title, hashnode_posted, hashnode_id, hashnode_url, created_at FROM blogs WHERE published = 1 ORDER BY created_at DESC"
-    )
-    res.json(result.rows)
-  } catch (err) {
-    console.error('Fetch hashnode status error:', err)
-    res.status(500).json({ error: 'Failed to fetch Hashnode status' })
-  }
-})
-
 // Get blogs not yet posted to Dev.to (for n8n polling)
 app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
   try {
@@ -716,32 +702,6 @@ app.get('/api/admin/blogs/unposted-devto', flexibleAuth, async (_req, res) => {
     res.json(result.rows)
   } catch (err) {
     console.error('Fetch unposted devto blogs error:', err)
-    res.status(500).json({ error: 'Failed to fetch unposted blogs' })
-  }
-})
-
-// Get blogs not yet posted to Hashnode (for n8n polling)
-app.get('/api/admin/blogs/unposted-hashnode', flexibleAuth, async (_req, res) => {
-  try {
-    const result = await turso.execute(
-      "SELECT id, slug, title, content, summary, tags, category, cover_image, created_at, devto_posted FROM blogs WHERE published = 1 AND (hashnode_posted = 0 OR hashnode_posted IS NULL) ORDER BY created_at ASC"
-    )
-    res.json(result.rows)
-  } catch (err) {
-    console.error('Fetch unposted hashnode blogs error:', err)
-    res.status(500).json({ error: 'Failed to fetch unposted hashnode blogs' })
-  }
-})
-
-// Get blogs not yet posted to either Dev.to or Hashnode (for n8n polling)
-app.get('/api/admin/blogs/unposted', flexibleAuth, async (_req, res) => {
-  try {
-    const result = await turso.execute(
-      "SELECT id, slug, title, content, summary, tags, category, cover_image, created_at, devto_posted FROM blogs WHERE published = 1 AND ((devto_posted = 0 OR devto_posted IS NULL) OR (hashnode_posted = 0 OR hashnode_posted IS NULL)) ORDER BY created_at ASC"
-    )
-    res.json(result.rows)
-  } catch (err) {
-    console.error('Fetch unposted blogs error:', err)
     res.status(500).json({ error: 'Failed to fetch unposted blogs' })
   }
 })
@@ -757,21 +717,6 @@ app.post('/api/admin/blogs/:id/devto-mark', flexibleAuth, async (req, res) => {
     res.json({ success: true })
   } catch (err) {
     console.error('Mark devto error:', err)
-    res.status(500).json({ error: 'Failed to mark blog as posted' })
-  }
-})
-
-// Mark a blog as posted to Hashnode
-app.post('/api/admin/blogs/:id/hashnode-mark', flexibleAuth, async (req, res) => {
-  try {
-    const { hashnode_id, hashnode_url } = req.body
-    await turso.execute({
-      sql: "UPDATE blogs SET hashnode_posted = 1, hashnode_id = ?, hashnode_url = ? WHERE id = ?",
-      args: [hashnode_id || null, hashnode_url || null, req.params.id as string],
-    })
-    res.json({ success: true })
-  } catch (err) {
-    console.error('Mark hashnode error:', err)
     res.status(500).json({ error: 'Failed to mark blog as posted' })
   }
 })

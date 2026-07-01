@@ -1,48 +1,46 @@
 {
-  "name": "Portfolio → Dev.to + Hashnode Auto-Post (AI Summary) — {{DEVTO_USERNAME}}",
+  "name": "Dev.to Auto-Post (AI Summary)",
   "nodes": [
     {
       "parameters": {
         "rule": {
           "interval": [
             {
-              "field": "minutes",
-              "minutesInterval": 5
+              "field": "minutes"
             }
           ]
         }
       },
-      "id": "schedule-trigger",
+      "id": "03d2bb48-3b32-42c2-b5b5-ffbd622e11ab",
       "name": "Every 5 Minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        0,
-        0
+        -1152,
+        96
       ]
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "{{BASE_URL}}/api/admin/blogs/unposted",
+        "url": "{{BASE_URL}}/api/admin/blogs/unposted-devto",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+              "value": "Bearer {{API_TOKEN}}"
             }
           ]
         },
         "options": {}
       },
-      "id": "fetch-unposted",
-      "name": "Fetch Unposted Hashnode",
+      "id": "f5a608a5-6de0-495d-b415-75acf7106464",
+      "name": "Fetch Unposted Blogs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
-        0
+        -928,
+        96
       ]
     },
     {
@@ -65,28 +63,29 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
-      "id": "has-blogs",
+      "id": "52ec62f1-f656-4308-ab3d-d326e1ba408b",
       "name": "Has Unposted Blogs?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        440,
-        0
+        -704,
+        96
       ]
     },
     {
       "parameters": {
         "functionCode": "return [{json: items[0].json}];"
       },
-      "id": "take-first",
+      "id": "06f519db-3c4a-4ca5-9b3c-10d525e0fb61",
       "name": "Take First Blog",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        660,
-        -100
+        -480,
+        -16
       ]
     },
     {
@@ -98,19 +97,19 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+              "value": "Bearer {{API_TOKEN}}"
             }
           ]
         },
         "options": {}
       },
-      "id": "ai-summarize",
-      "name": "AI Summarize",
+      "id": "dfbf22cd-0460-4a8f-bfe3-4764a39744c1",
+      "name": "AI Summarize for Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1100,
-        -100
+        -272,
+        -16
       ]
     },
     {
@@ -122,7 +121,7 @@
           "parameters": [
             {
               "name": "api-key",
-              "value": "{{DEVTO_API_KEY}}"
+              "value": "{{N8N_DEVTO_KEY}}"
             }
           ]
         },
@@ -131,68 +130,42 @@
         "jsonBody": "={{ JSON.stringify({ article: { title: $json.title, body_markdown: $json.body_markdown, tags: $json.tags, canonical_url: $json.canonical_url, description: $json.description, published: true } }) }}",
         "options": {}
       },
-      "id": "post-to-devto",
+      "id": "4c26cab6-6394-4c53-893e-e203737199cb",
       "name": "Post to Dev.to",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
-        -100
+        -272,
+        -16
       ],
-      "continueOnFail": true
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://gql.hashnode.com/",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "{{HASHNODE_API_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: `mutation { createPost(input: { title: \"${$json.title}\", content: { markdown: \"${$json.body_markdown}\" }, tags: ${JSON.stringify($json.tags)}, publish: true, originalUrl: \"${$json.canonical_url}\", description: \"${$json.description}\" }) { id, url, title } }` }) }}",
-        "options": {}
+        "amount": 30
       },
-      "id": "post-to-hashnode",
-      "name": "Post to Hashnode",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        880,
-        100
-      ],
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "amount": 30,
-        "unit": "seconds"
-      },
-      "id": "wait-after-post",
+      "id": "c7e66615-2bbf-4ed3-83eb-98826cf234f8",
       "name": "Wait 30s (rate limit)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1540,
-        0
-      ]
+        -48,
+        -16
+      ],
+      "webhookId": "5ad86b48-3047-46d7-9a7c-1b89abf0e558"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/devto-mark' }}",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $('AI Summarize for Dev.to').item.json.original_id + '/devto-mark' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+              "value": "Bearer {{API_TOKEN}}"
             }
           ]
         },
@@ -207,215 +180,41 @@
         },
         "options": {}
       },
-      "id": "mark-posted",
+      "id": "0eb56eb8-cad2-4d41-b4cb-6fdc37d4916a",
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1760,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "parameters": [
-          {
-            "name": "hashnode_id",
-            "value": "={{ $json.data.createPost.id }}"
-          },
-          {
-            "name": "hashnode_url",
-            "value": "={{ $json.data.createPost.url }}"
-          }
-        ],
-        "options": {}
-      },
-      "id": "store-hashnode-id",
-      "name": "Store Hashnode Post ID",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [
-        1100,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/hashnode-mark' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "hashnode_id",
-              "value": "={{ $json.hashnode_id }}"
-            },
-            {
-              "name": "hashnode_url",
-              "value": "={{ $json.hashnode_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "mark-hashnode-posted",
-      "name": "Mark Hashnode as Posted",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1760,
-        100
+        176,
+        -16
       ]
     },
     {
       "parameters": {},
-      "id": "no-blogs",
+      "id": "45f7008a-d9f0-4325-add7-68ccd7344145",
       "name": "No Action Needed",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        660,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "functionCode": "const posted = $json.devto_posted == 1 || $json.devto_posted === '1';\nif (posted) {\n  return [[{json: $json}], []];\n} else {\n  return [[], [{json: $json}]];\n}"
-      },
-      "id": "already-on-devto",
-      "name": "Already on Dev.to?",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [
-        880,
-        -100
-      ],
-      "outputs": 2
-    },
-    {
-      "parameters": {
-        "functionCode": "const blog = items[0].json;\nlet parsedTags = ['webdev'];\ntry {\n  if (typeof blog.tags === 'string') {\n    parsedTags = JSON.parse(blog.tags.replace(/'/g, '\"') || '[\"webdev\"]');\n  } else if (Array.isArray(blog.tags)) {\n    parsedTags = blog.tags;\n  }\n} catch (e) {\n  parsedTags = ['webdev'];\n}\nif (!parsedTags.length) parsedTags = ['webdev'];\nreturn [{\n  json: {\n    title: blog.title,\n    body_markdown: blog.content || blog.summary || blog.title,\n    tags: parsedTags,\n    description: blog.summary || (blog.content ? blog.content.substring(0, 500) : ''),\n    canonical_url: 'https://erwinwilsonceniza.qzz.io/blogs/' + blog.slug,\n    original_id: blog.id\n  }\n}];"
-      },
-      "id": "prepare-raw-blog",
-      "name": "Prepare Raw Blog Data",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [
-        1100,
-        -200
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://gql.hashnode.com/",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "{{HASHNODE_API_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: `mutation { createPost(input: { title: \"${$json.title}\", content: { markdown: \"${$json.body_markdown}\" }, tags: ${JSON.stringify($json.tags)}, publish: true, originalUrl: \"${$json.canonical_url}\", description: \"${$json.description}\" }) { id, url, title } }` }) }}",
-        "options": {}
-      },
-      "id": "post-to-hashnode-raw",
-      "name": "Post to Hashnode (raw)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1320,
-        -200
-      ],
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "parameters": [
-          {
-            "name": "hashnode_id",
-            "value": "={{ $json.data.createPost.id }}"
-          },
-          {
-            "name": "hashnode_url",
-            "value": "={{ $json.data.createPost.url }}"
-          }
-        ],
-        "options": {}
-      },
-      "id": "store-hashnode-id-raw",
-      "name": "Store Hashnode Post ID (raw)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [
-        1540,
-        -200
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $json.original_id + '/hashnode-mark' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "hashnode_id",
-              "value": "={{ $json.hashnode_id }}"
-            },
-            {
-              "name": "hashnode_url",
-              "value": "={{ $json.hashnode_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "mark-hashnode-posted-raw",
-      "name": "Mark Hashnode as Posted (raw)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1760,
-        -200
+        -480,
+        192
       ]
     }
   ],
+  "pinData": {},
   "connections": {
     "Every 5 Minutes": {
       "main": [
         [
           {
-            "node": "Fetch Unposted Hashnode",
+            "node": "Fetch Unposted Blogs",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Unposted Hashnode": {
+    "Fetch Unposted Blogs": {
       "main": [
         [
           {
@@ -448,74 +247,18 @@
       "main": [
         [
           {
-            "node": "Already on Dev.to?",
+            "node": "AI Summarize for Dev.to",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Already on Dev.to?": {
-      "main": [
-        [
-          {
-            "node": "Prepare Raw Blog Data",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "AI Summarize",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Raw Blog Data": {
-      "main": [
-        [
-          {
-            "node": "Post to Hashnode (raw)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Post to Hashnode (raw)": {
-      "main": [
-        [
-          {
-            "node": "Store Hashnode Post ID (raw)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Store Hashnode Post ID (raw)": {
-      "main": [
-        [
-          {
-            "node": "Mark Hashnode as Posted (raw)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Summarize": {
+    "AI Summarize for Dev.to": {
       "main": [
         [
           {
             "node": "Post to Dev.to",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Post to Hashnode",
             "type": "main",
             "index": 0
           }
@@ -533,28 +276,6 @@
         ]
       ]
     },
-    "Post to Hashnode": {
-      "main": [
-        [
-          {
-            "node": "Store Hashnode Post ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Store Hashnode Post ID": {
-      "main": [
-        [
-          {
-            "node": "Wait 30s (rate limit)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Wait 30s (rate limit)": {
       "main": [
         [
@@ -562,26 +283,19 @@
             "node": "Mark as Posted",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Mark Hashnode as Posted",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
     }
   },
-  "pinData": {},
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": [],
-  "triggerCount": 1,
-  "updatedAt": "2026-06-30T00:00:00.000Z",
-  "versionId": "1",
-  "_meta": {
-    "instructions": "IF devto_posted=1: Skip AI Summarize, post raw content to Hashnode only. IF devto_posted=0: AI Summarize, post to both. Both post nodes have continueOnFail."
-  }
+  "versionId": "d828e607-3ccd-4cec-a488-2cd680e61d7d",
+  "meta": {
+    "instanceId": "d26f2ccd8429b254ba4c1a1e9d272bba3c27d39e36f158d0b8f17e36b05fd38d"
+  },
+  "id": "r40yen0OU3zk4NS5",
+  "tags": []
 }
