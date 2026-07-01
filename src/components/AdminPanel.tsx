@@ -527,6 +527,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [devtoStatus, setDevtoStatus] = useState<any[]>([]);
   const [devtoStatusLoading, setDevtoStatusLoading] = useState(false);
 
+  // ── Hashnode Settings ──
+  const [hashnodeApiKey, setHashnodeApiKey] = useState("");
+  const [hashnodeSaved, setHashnodeSaved] = useState(false);
+
   // ── Profile Pic Settings ──
   const { url: profilePicUrl, refresh: refreshProfilePic } = useProfilePic();
   const [profilePicUploading, setProfilePicUploading] = useState(false);
@@ -609,6 +613,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         setN8nWebhookUrl(data?.n8n_webhook_url || "");
         setDevtoApiKey(data?.devto_api_key || "");
         setDevtoUsername(data?.devto_username || "");
+        setHashnodeApiKey(data?.hashnode_api_key || "");
         setFeaturedSlugLocal(data?.featured_blog_slug || "");
       }
     } catch {}
@@ -618,6 +623,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     await saveSettings({ featured_blog_slug: featuredSlug.trim() });
     setFeaturedSaved(true);
     setTimeout(() => setFeaturedSaved(false), 1500);
+  };
+
+  const handleHashnodeSettingsSave = async () => {
+    await saveSettings({ hashnode_api_key: hashnodeApiKey.trim() });
+    setHashnodeSaved(true);
+    setTimeout(() => setHashnodeSaved(false), 1500);
   };
 
   const loadTokenStatus = useCallback(async () => {
@@ -3877,6 +3888,79 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           }}
                         >
                           {devtoSaved ? "✓ Saved" : "Save"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Hashnode */}
+                    <div
+                      className="p-4 rounded-xl border bg-white/[0.01] space-y-4"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <BookOpen
+                          size={16}
+                          style={{ color: "var(--accent)" }}
+                        />
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          Hashnode Cross-Post
+                        </p>
+                      </div>
+                      <p
+                        className="text-xs"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        Configure API access to auto-post blog summaries to
+                        Hashnode.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2 space-y-1.5">
+                          <label
+                            className="text-xs font-medium"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
+                            API Token
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="gho_..."
+                            value={hashnodeApiKey}
+                            onChange={(e) => setHashnodeApiKey(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                            style={{
+                              background: "var(--bg-secondary)",
+                              color: "var(--text-primary)",
+                              borderColor: "var(--border)",
+                            }}
+                          />
+                          <p
+                            className="text-[10px]"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            Get your API token from Hashnode → Profile → Settings → Developer
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          onClick={handleHashnodeSettingsSave}
+                          className="px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98]"
+                          style={{
+                            background: hashnodeSaved
+                              ? "var(--accent)"
+                              : "var(--bg-secondary)",
+                            borderColor: hashnodeSaved
+                              ? "var(--accent)"
+                              : "var(--border)",
+                            color: hashnodeSaved
+                              ? "var(--bg-primary)"
+                              : "var(--text-secondary)",
+                          }}
+                        >
+                          {hashnodeSaved ? "✓ Saved" : "Save"}
                         </button>
                       </div>
                     </div>

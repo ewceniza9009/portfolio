@@ -1,5 +1,5 @@
 {
-  "name": "Portfolio → Dev.to Auto-Post (AI Summary) — {{DEVTO_USERNAME}}",
+  "name": "Portfolio → Dev.to + Hashnode Auto-Post (AI Summary) — {{DEVTO_USERNAME}}",
   "nodes": [
     {
       "parameters": {
@@ -127,6 +127,33 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://hashnode.com/api/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "{{HASHNODE_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: `mutation { createPost(input: { title: \"${$json.title}\", content: { markdown: \"${$json.body_markdown}\" }, tags: ${JSON.stringify($json.tags)}, publish: true, originalUrl: \"${$json.canonical_url}\", description: \"${$json.description}\" }) { id, url, title } }` }) }}",
+        "options": {}
+      },
+      "id": "post-to-hashnode",
+      "name": "Post to Hashnode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 30000
+    },
+    {
+      "parameters": {
         "amount": 30,
         "unit": "seconds"
       },
@@ -134,7 +161,7 @@
       "name": "Wait 30s (rate limit)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1100, -100]
+      "position": [1100, 0]
     },
     {
       "parameters": {
@@ -164,7 +191,61 @@
       "name": "Mark as Posted",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1320, -100]
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "parameters": [
+          {
+            "name": "hashnode_id",
+            "value": "={{ $json.data.createPost.id }}"
+          },
+          {
+            "name": "hashnode_url",
+            "value": "={{ $json.data.createPost.url }}"
+          }
+        ],
+        "options": {}
+      },
+      "id": "store-hashnode-id",
+      "name": "Store Hashnode Post ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ '{{BASE_URL}}/api/admin/blogs/' + $('AI Summarize for Dev.to').item.json.original_id + '/hashnode-mark' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{N8N_PORTFOLIO_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hashnode_id",
+              "value": "={{ $json.hashnode_id }}"
+            },
+            {
+              "name": "hashnode_url",
+              "value": "={{ $json.hashnode_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mark-hashnode-posted",
+      "name": "Mark Hashnode as Posted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 100]
     },
     {
       "parameters": {},
@@ -234,6 +315,11 @@
             "node": "Post to Dev.to",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Post to Hashnode",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -249,11 +335,38 @@
         ]
       ]
     },
+    "Post to Hashnode": {
+      "main": [
+        [
+          {
+            "node": "Store Hashnode Post ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Hashnode Post ID": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s (rate limit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Wait 30s (rate limit)": {
       "main": [
         [
           {
             "node": "Mark as Posted",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mark Hashnode as Posted",
             "type": "main",
             "index": 0
           }
