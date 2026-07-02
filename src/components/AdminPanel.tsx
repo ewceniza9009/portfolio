@@ -781,6 +781,18 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [rotationIntervalHours, setRotationIntervalHours] = useState(() => {
     return Number(getSafeItem("rotation_interval_hours") || "2");
   });
+  const [cursorEnabled, setCursorEnabled] = useState(() => {
+    return getSafeItem("cursor_enabled") !== "false";
+  });
+
+  const toggleCursor = async () => {
+    const nextVal = !cursorEnabled;
+    setCursorEnabled(nextVal);
+    setSafeItem("cursor_enabled", String(nextVal));
+    document.documentElement.dataset.cursorEnabled = nextVal ? "true" : "false";
+    window.dispatchEvent(new CustomEvent("cursor-state-changed", { detail: { enabled: nextVal } }));
+    await saveSettings({ cursor_enabled: String(nextVal) });
+  };
 
   const saveSettings = async (updates: Record<string, string>) => {
     try {
@@ -1177,6 +1189,9 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
         }
         if (data.rotation_interval_hours !== undefined) {
           setRotationIntervalHours(Number(data.rotation_interval_hours));
+        }
+        if (data.cursor_enabled !== undefined) {
+          setCursorEnabled(data.cursor_enabled === "true");
         }
       }
     } catch (err) {
@@ -3779,6 +3794,46 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           hours
                         </span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Cursor Style */}
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 rounded-xl border bg-white/[0.01]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <div className="md:col-span-8 space-y-1">
+                      <p
+                        className="text-sm font-medium"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        Ring Cursor
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        Animated ring that follows the mouse pointer.
+                      </p>
+                    </div>
+                    <div className="md:col-span-4 flex justify-end">
+                      <button
+                        onClick={toggleCursor}
+                        className="px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] flex items-center gap-2"
+                        style={{
+                          background: cursorEnabled
+                            ? "var(--accent)"
+                            : "transparent",
+                          borderColor: cursorEnabled
+                            ? "var(--accent)"
+                            : "var(--border)",
+                          color: cursorEnabled
+                            ? "var(--bg-primary)"
+                            : "var(--text-secondary)",
+                        }}
+                      >
+                        {cursorEnabled ? "Enabled" : "Disabled"}
+                      </button>
                     </div>
                   </div>
                 </div>

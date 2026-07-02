@@ -240,6 +240,9 @@ export default function App() {
           if (data.rotation_interval_hours !== undefined) {
             setSafeItem('rotation_interval_hours', data.rotation_interval_hours)
           }
+          if (data.cursor_enabled !== undefined) {
+            setSafeItem('cursor_enabled', data.cursor_enabled)
+          }
 
           const isThemeRot = data.rotation_theme_enabled !== 'false'
           const isAccentRot = data.rotation_accent_enabled === 'true'
@@ -270,6 +273,11 @@ export default function App() {
     }
     
     loadGlobalSettings()
+  }, [])
+
+  // Sync cursor_enabled from localStorage to <html> data attr on mount
+  useEffect(() => {
+    document.documentElement.dataset.cursorEnabled = getSafeItem('cursor_enabled') ?? 'true'
   }, [])
 
   useEffect(() => {

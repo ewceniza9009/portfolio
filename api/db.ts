@@ -126,6 +126,7 @@ export async function initDb() {
     ('paypal_donate_url', 'https://paypal.me/ewceniza'),
     ('default_ai_model', 'gemini-2.5-flash'),
     ('ai_provider', 'gemini'),
+    ('cursor_enabled', 'true'),
     ('profile_pic_url', '/img/profile-pic.png?v=1'),
     ('featured_blog_slug', ''),
     ('devto_api_key', ''),

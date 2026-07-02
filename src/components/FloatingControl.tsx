@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2 } from 'lucide-react'
+import { getSafeItem, setSafeItem } from '../utils/storage'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { parseMarkdown } from '../utils/markdown'
 import { useLocation } from 'react-router-dom'
@@ -691,12 +692,23 @@ export default function FloatingControl() {
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
   const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | null>(null)
+  const [cursorOn, setCursorOn] = useState(() => (getSafeItem('cursor_enabled') ?? 'true') === 'true')
 
   useEffect(() => {
     document.body.dataset.fabActive = mode === 'menu' ? 'true' : 'false'
     document.body.dataset.windowActive = mode === 'chat' || mode === 'terminal' ? 'true' : 'false'
     return () => { document.body.dataset.fabActive = 'false'; document.body.dataset.windowActive = 'false' }
   }, [mode])
+
+  const toggleCursor = useCallback(() => {
+    setCursorOn(prev => {
+      const next = !prev
+      setSafeItem('cursor_enabled', next ? 'true' : 'false')
+      document.documentElement.dataset.cursorEnabled = next ? 'true' : 'false'
+      window.dispatchEvent(new CustomEvent('cursor-state-changed', { detail: { enabled: next } }))
+      return next
+    })
+  }, [])
 
   if (!isHomePage) return null
 
@@ -759,6 +771,17 @@ export default function FloatingControl() {
               }}
             >
               <Terminal size={14} /> Terminal
+            </button>
+            <button
+              onClick={toggleCursor}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              style={{
+                background: 'var(--bg-card)',
+                borderColor: cursorOn ? 'var(--accent)' : 'var(--border)',
+                color: cursorOn ? 'var(--accent)' : 'var(--text-muted)',
+              }}
+            >
+              <MousePointer2 size={14} /> {cursorOn ? 'Cursor On' : 'Cursor Off'}
             </button>
           </motion.div>
         )}
