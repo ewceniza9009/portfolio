@@ -2,20 +2,14 @@ import { useEffect } from 'react'
 
 export default function CursorFollower() {
   useEffect(() => {
-    const isEnabled = () => document.documentElement.dataset.cursorEnabled !== 'false'
-
-    if (!isEnabled()) return
-
     const mqPointer = window.matchMedia('(pointer: fine)')
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     if (!mqPointer.matches || mqMotion.matches) return
 
     const cursorRing = document.createElement('div')
     cursorRing.className = 'cursor-ring'
-    document.body.appendChild(cursorRing)
-    document.body.classList.add('custom-cursor-active')
 
-    let active = true
+    let active = false
     let mouseX = -100
     let mouseY = -100
     let ringX = -100
@@ -86,42 +80,45 @@ export default function CursorFollower() {
       createRipple(x, y, true)
     }
 
-    const handleStateChange = (e: Event) => {
-      const enabled = (e as CustomEvent).detail.enabled
-      if (enabled) {
+    const startRing = () => {
+      if (!cursorRing.parentElement) {
         document.body.appendChild(cursorRing)
-        document.body.classList.add('custom-cursor-active')
-        active = true
-        animId = requestAnimationFrame(animateRing)
-        window.addEventListener('mousemove', onMouseMove)
-        window.addEventListener('mouseover', onMouseOver)
-        window.addEventListener('click', onClick)
-      } else {
-        active = false
-        cancelAnimationFrame(animId)
-        cursorRing.remove()
-        document.body.classList.remove('custom-cursor-active')
-        window.removeEventListener('mousemove', onMouseMove)
-        window.removeEventListener('mouseover', onMouseOver)
-        window.removeEventListener('click', onClick)
       }
+      active = true
+      animId = requestAnimationFrame(animateRing)
+      window.addEventListener('mousemove', onMouseMove)
+      window.addEventListener('mouseover', onMouseOver)
+      window.addEventListener('click', onClick)
     }
 
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseover', onMouseOver)
-    window.addEventListener('click', onClick)
-    window.addEventListener('cursor-state-changed', handleStateChange)
-    animId = requestAnimationFrame(animateRing)
-
-    return () => {
+    const stopRing = () => {
       active = false
+      cancelAnimationFrame(animId)
+      cursorRing.remove()
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseover', onMouseOver)
       window.removeEventListener('click', onClick)
+    }
+
+    const handleStateChange = (e: Event) => {
+      const enabled = (e as CustomEvent).detail.enabled
+      if (enabled) {
+        startRing()
+      } else {
+        stopRing()
+      }
+    }
+
+    const isEnabled = () => document.documentElement.dataset.cursorEnabled !== 'false'
+    if (isEnabled()) {
+      startRing()
+    }
+
+    window.addEventListener('cursor-state-changed', handleStateChange)
+
+    return () => {
+      stopRing()
       window.removeEventListener('cursor-state-changed', handleStateChange)
-      cancelAnimationFrame(animId)
-      cursorRing.remove()
-      document.body.classList.remove('custom-cursor-active')
     }
   }, [])
 

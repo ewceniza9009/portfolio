@@ -359,11 +359,18 @@ export default function App() {
     root.setAttribute('data-accent', accent)
     setSafeItem('accent', accent)
 
-    // Dynamic Hardware Cursors matching active accent theme
-    if (cursorCursors) {
-      root.style.setProperty('--custom-cursor', cursorCursors.cursor);
-      root.style.setProperty('--custom-pointer', cursorCursors.pointer);
+    const applyCursors = () => {
+      if (cursorCursors && getSafeItem('cursor_enabled') !== 'false') {
+        root.style.setProperty('--custom-cursor', cursorCursors.cursor);
+        root.style.setProperty('--custom-pointer', cursorCursors.pointer);
+      } else {
+        root.style.setProperty('--custom-cursor', 'auto');
+        root.style.setProperty('--custom-pointer', 'pointer');
+      }
     }
+    applyCursors()
+    window.addEventListener('cursor-state-changed', applyCursors)
+    return () => window.removeEventListener('cursor-state-changed', applyCursors)
   }, [accent, theme, cursorCursors])
 
   const toggleTheme = useCallback((event?: React.MouseEvent) => {
