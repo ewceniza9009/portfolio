@@ -559,6 +559,11 @@ a {
               box-shadow 0.3s;
 }
 
+html[data-cursor-enabled="false"] .cursor-ring,
+html[data-cursor-enabled="false"] .click-ripple {
+  display: none !important;
+}
+
 .cursor-ring.cursor-hover {
   top: -36px;
   left: -36px;
