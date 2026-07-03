@@ -720,3 +720,6 @@ html[data-cursor-enabled="false"] .click-ripple {
 .spin-reverse { animation: spin-reverse 2s linear infinite; }
 .slide-in-line { animation: slideInLine 0.3s ease-out both; }
 .fade-in-line { animation: fadeInLine 0.3s ease-out both; }
+/* Force CQRS interactive block Next button to be visible in both themes */
+.gv-btn-prim { color: var(--bg-primary) !important; }
+[data-theme="light"] .gv-btn-prim { color: #ffffff !important; }
