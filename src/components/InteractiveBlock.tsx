@@ -45,11 +45,11 @@ function StepThrough({ steps, height }: { steps: string[]; height: string }) {
         ))}
       </div>
       <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
-        <button onClick={prev} disabled={current === 0} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all" style={{ color: 'var(--text-secondary)' }}>
+        <button onClick={prev} disabled={current === 0} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all hover:bg-[var(--border)] hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
           <ChevronLeft size={14} /> Prev
         </button>
         <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{current + 1} / {steps.length}</span>
-        <button onClick={next} disabled={current === steps.length - 1} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+        <button onClick={next} disabled={current === steps.length - 1} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
           Next <ChevronRight size={14} />
         </button>
       </div>
@@ -96,7 +96,7 @@ function Quiz({ questions, height }: { questions: { q: string; options: string[]
         <Trophy size={40} style={{ color: pct >= 70 ? 'var(--accent)' : 'var(--text-muted)' }} />
         <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{score} / {questions.length}</div>
         <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>{pct >= 70 ? 'Great job!' : 'Keep practicing!'}</div>
-        <button onClick={restart} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+        <button onClick={restart} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
           <RotateCcw size={14} /> Restart
         </button>
       </div>
@@ -120,7 +120,7 @@ function Quiz({ questions, height }: { questions: { q: string; options: string[]
             else if (isSelected) { bg = 'var(--accent-dim)'; border = 'var(--accent)' }
             return (
               <button key={i} onClick={() => !showResult && setSelected(i)} disabled={showResult}
-                className="w-full text-left p-3 rounded-xl text-xs font-medium transition-all flex items-center gap-2"
+                className="w-full text-left p-3 rounded-xl text-xs font-medium transition-all flex items-center gap-2 hover:brightness-110"
                 style={{ background: bg, border: `1px solid ${border}`, color: 'var(--text-primary)' }}>
                 <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
                   {showResult && isCorrect ? <Check size={10} /> : showResult && isSelected && !isCorrect ? <X size={10} /> : String.fromCharCode(65 + i)}
@@ -134,11 +134,11 @@ function Quiz({ questions, height }: { questions: { q: string; options: string[]
       <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
         <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>Score: {score}</span>
         {!showResult ? (
-          <button onClick={check} disabled={selected === null} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+          <button onClick={check} disabled={selected === null} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
             Check
           </button>
         ) : (
-          <button onClick={next} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+          <button onClick={next} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
             {current < questions.length - 1 ? 'Next' : 'Finish'} <ChevronRight size={14} />
           </button>
         )}
