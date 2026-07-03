@@ -4,8 +4,6 @@ import { ArrowUp } from 'lucide-react';
 
 export default function BackToTop() {
   const [isVisible, setIsVisible] = useState(false);
-  const [fabActive, setFabActive] = useState(false);
-  const [windowActive, setWindowActive] = useState(false);
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -15,24 +13,13 @@ export default function BackToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
 
-  useEffect(() => {
-    const check = () => {
-      setFabActive(document.body.dataset.fabActive === 'true');
-      setWindowActive(document.body.dataset.windowActive === 'true');
-    };
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-fab-active', 'data-window-active'] });
-    return () => observer.disconnect();
-  }, []);
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <AnimatePresence>
-      {isVisible && !windowActive && (
+      {isVisible && (
         <motion.button
           initial={{ opacity: 0, y: 20, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -44,10 +31,10 @@ export default function BackToTop() {
           style={{ 
             background: 'var(--accent)', 
             color: 'var(--bg-primary)',
-            bottom: fabActive ? '10rem' : '6rem',
+            bottom: '4.5rem',
           }}
         >
-          <ArrowUp size={24} />
+          <ArrowUp size={20} />
         </motion.button>
       )}
     </AnimatePresence>
