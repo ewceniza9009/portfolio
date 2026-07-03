@@ -195,7 +195,7 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
     container.innerHTML = ''
 
     const wrapper = document.createElement('div')
-    wrapper.style.cssText = 'width:100%;position:relative;'
+    wrapper.style.cssText = 'width:100%;height:100%;position:relative;'
     wrapper.innerHTML = html
     container.appendChild(wrapper)
 
@@ -260,8 +260,8 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
   if (preset) return null // already returned above
 
   return (
-    <div className="my-6 rounded-xl border overflow-hidden" style={{ minHeight: height, borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-      <div ref={containerRef} className="w-full" />
+    <div className="my-6 rounded-xl border overflow-hidden relative" style={{ minHeight: height, borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+      <div ref={containerRef} className="w-full h-full" />
     </div>
   )
 }

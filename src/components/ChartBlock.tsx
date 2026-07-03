@@ -120,7 +120,7 @@ const COLORS = [
 
 function getIsDark(): boolean {
   if (typeof document === 'undefined') return true
-  return document.documentElement.classList.contains('dark')
+  return document.documentElement.getAttribute('data-theme') !== 'light'
 }
 
 export default function ChartBlock({ code }: ChartBlockProps) {
@@ -130,9 +130,9 @@ export default function ChartBlock({ code }: ChartBlockProps) {
   useEffect(() => {
     setIsDark(getIsDark())
     const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'))
+      setIsDark(getIsDark())
     })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
 
