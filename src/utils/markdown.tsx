@@ -4,6 +4,7 @@ import { ACCENT_THEMES, AccentKey } from '../data/accents'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import Interactive3DBlock from '../components/Interactive3DBlock'
 import InteractiveBlock from '../components/InteractiveBlock'
+import ChartBlock from '../components/ChartBlock'
 
 const MERMAID_STYLES = `
   .mermaid-svg-container svg {
@@ -779,6 +780,8 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<Interactive3DBlock key={keyIndex++} html={codeText} />)
         } else if (codeLang.toLowerCase() === 'interactive') {
           result.push(<InteractiveBlock key={keyIndex++} html={codeText} />)
+        } else if (codeLang.toLowerCase() === 'chart') {
+          result.push(<ChartBlock key={keyIndex++} code={codeText} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(

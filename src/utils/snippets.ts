@@ -59,3 +59,18 @@ export const MERMAID_SNIPPET = buildSnippet([
   '    A["Start"] --> B["End"]',
   '```',
 ])
+
+export const CHART_SNIPPET = buildSnippet([
+  '```chart',
+  'type: bar',
+  'title: My Chart',
+  'labels: [A, B, C, D]',
+  'datasets:',
+  '  - label: Series 1',
+  '    data: [10, 20, 30, 40]',
+  '    color: #3b82f6',
+  '  - label: Series 2',
+  '    data: [15, 25, 35, 45]',
+  '    color: #10b981',
+  '```',
+])
