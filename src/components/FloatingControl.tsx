@@ -375,8 +375,8 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed z-[90] w-full shadow-2xl overflow-hidden font-mono text-sm border ${
-        isMaximized ? 'inset-4 rounded-xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-4xl h-[400px] max-h-[70vh] rounded-xl w-[calc(100%-2rem)]'
+      className={`fixed z-[90] shadow-2xl overflow-hidden font-mono text-sm border ${
+        isMaximized ? 'inset-4 rounded-xl' : 'sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:max-w-4xl sm:h-[400px] sm:max-h-[70vh] sm:w-[calc(100%-2rem)] sm:top-auto inset-4 rounded-xl'
       }`}
       style={{ background: '#0d1117', borderColor: 'var(--border)' }}
     >
@@ -507,8 +507,8 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed z-[100] w-full shadow-2xl overflow-hidden text-sm border ${
-        isMaximized ? 'inset-4 rounded-2xl' : 'left-1/2 -translate-x-1/2 bottom-4 max-w-lg h-[520px] max-h-[70vh] rounded-2xl w-[calc(100%-2rem)]'
+      className={`fixed z-[100] shadow-2xl overflow-hidden text-sm border ${
+        isMaximized ? 'inset-4 rounded-2xl' : 'sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:max-w-lg sm:h-[520px] sm:max-h-[70vh] sm:w-[calc(100%-2rem)] sm:top-auto inset-4 rounded-2xl'
       }`}
       style={{ 
         background: 'var(--bg-card)', 
@@ -723,21 +723,28 @@ export default function FloatingControl() {
     <>
       {/* FAB Button */}
       {(!mode || mode === 'menu') && (
-        <div className="fixed bottom-6 right-6 z-[100]">
+        <div className="fixed bottom-6 right-6 z-[100] group">
           <motion.button
             onClick={handleFabClick}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 px-4 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-xl transition-all hover:brightness-110 select-none"
+            className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
             style={{
               background: 'var(--bg-card)',
               borderColor: 'var(--accent)',
               color: 'var(--accent)',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px var(--accent-dim)'
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)'
             }}
           >
-            <Sparkles size={14} /> Launch
+            <Sparkles size={13} /> Launch
           </motion.button>
+          <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden sm:block">
+            <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+            >
+              AI Chat &middot; Terminal &middot; Contact &middot; Cursor
+            </div>
+          </div>
         </div>
       )}
 
@@ -748,13 +755,13 @@ export default function FloatingControl() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-[100] flex flex-col gap-2"
+            className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
           >
             <button
               onClick={() => setMode('chat')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
-                background: 'var(--bg-card)',
+                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
                 borderColor: 'var(--accent)',
                 color: 'var(--accent)',
               }}
@@ -763,10 +770,10 @@ export default function FloatingControl() {
             </button>
             <button
               onClick={() => setMode('terminal')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
-                background: 'var(--bg-card)',
-                borderColor: 'var(--border)',
+                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--border) 150%, transparent)',
                 color: 'var(--text-secondary)',
               }}
             >
@@ -774,10 +781,10 @@ export default function FloatingControl() {
             </button>
             <button
               onClick={() => setMode('contact')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
-                background: 'var(--bg-card)',
-                borderColor: 'var(--border)',
+                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--border) 150%, transparent)',
                 color: 'var(--text-secondary)',
               }}
             >
@@ -785,15 +792,18 @@ export default function FloatingControl() {
             </button>
             <button
               onClick={toggleCursor}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
-                background: 'var(--bg-card)',
-                borderColor: cursorOn ? 'var(--accent)' : 'var(--border)',
+                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+                borderColor: cursorOn ? 'var(--accent)' : 'color-mix(in srgb, var(--border) 150%, transparent)',
                 color: cursorOn ? 'var(--accent)' : 'var(--text-muted)',
               }}
             >
-              <MousePointer2 size={14} /> {cursorOn ? 'Cursor On' : 'Cursor Off'}
+              <MousePointer2 size={14} /> Cursor
             </button>
+            <div className="absolute -top-1 right-0 w-6 h-0.5 rounded-full"
+              style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -820,12 +830,14 @@ export default function FloatingControl() {
 function CopyToast({ message }: { message: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap z-20"
+      initial={{ opacity: 0, y: 4, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -4, scale: 0.9 }}
+      transition={{ duration: 0.15 }}
+      className="absolute -top-6 right-0 px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap z-30 shadow-lg"
       style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
     >
+      <Check size={9} className="inline mr-0.5 -mt-0.5" />
       {message}
     </motion.div>
   )
@@ -834,6 +846,7 @@ function CopyToast({ message }: { message: string }) {
 function ContactPanel({ onClose }: { onClose: () => void }) {
   const [copiedEmail, setCopiedEmail] = useState(false)
   const [copiedPhone, setCopiedPhone] = useState(false)
+  const dragControls = useDragControls()
 
   const handleCopy = useCallback(async (value: string, setter: (v: boolean) => void) => {
     try {
@@ -844,90 +857,86 @@ function ContactPanel({ onClose }: { onClose: () => void }) {
   }, [])
 
   const contactItems = [
-    { icon: <Mail size={20} />, label: 'Email', value: 'erwinwilsonceniza@gmail.com', copyValue: 'erwinwilsonceniza@gmail.com', href: 'mailto:erwinwilsonceniza@gmail.com', copied: copiedEmail, setCopied: setCopiedEmail },
-    { icon: <Phone size={20} />, label: 'Phone', value: '+63 935-122-8470', copyValue: '+639351228470', href: 'tel:+639351228470', copied: copiedPhone, setCopied: setCopiedPhone },
+    { icon: <Mail size={16} />, label: 'Email', value: 'erwinwilsonceniza@gmail.com', copyValue: 'erwinwilsonceniza@gmail.com', href: 'mailto:erwinwilsonceniza@gmail.com', copied: copiedEmail, setCopied: setCopiedEmail },
+    { icon: <Phone size={16} />, label: 'Phone', value: '+63 935-122-8470', copyValue: '+639351228470', href: 'tel:+639351228470', copied: copiedPhone, setCopied: setCopiedPhone },
   ]
 
   const socialItems = [
-    { icon: <Linkedin size={20} />, label: 'LinkedIn', value: 'erwin-wilson-ceniza', href: 'https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32' },
-    { icon: <Github size={20} />, label: 'GitHub', value: 'ewceniza9009', href: 'https://github.com/ewceniza9009' },
+    { icon: <Linkedin size={16} />, label: 'LinkedIn', value: 'erwin-wilson-ceniza', href: 'https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32' },
+    { icon: <Github size={16} />, label: 'GitHub', value: 'ewceniza9009', href: 'https://github.com/ewceniza9009' },
   ]
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -30, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -30, scale: 0.95 }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed bottom-24 left-6 z-[100] w-[380px] max-w-[calc(100vw-3rem)]"
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 50, scale: 0.95 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      drag
+      dragControls={dragControls}
+      dragListener={false}
+      dragMomentum={false}
+      dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
+      className="fixed z-[100] shadow-2xl border sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:max-w-sm sm:w-[calc(100%-2rem)] sm:rounded-xl sm:top-auto inset-4 rounded-xl overflow-y-auto"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
     >
-      <div className="rounded-2xl p-6 glass shadow-2xl relative overflow-hidden border"
-        style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+      {/* Header - drag handle */}
+      <div
+        className="flex items-center justify-between px-4 py-3 select-none cursor-move active:cursor-grabbing"
+        style={{ borderBottom: '1px solid var(--border)', touchAction: 'none' }}
+        onPointerDown={(e) => dragControls.start(e)}
       >
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)',
-          opacity: 0.08
-        }} />
-
-        {/* Close button */}
+        <span className="text-sm font-semibold">Contact</span>
         <button onClick={onClose}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-colors hover:opacity-80"
+          className="p-1 rounded-lg transition-colors hover:opacity-70"
           style={{ color: 'var(--text-muted)' }}
         >
-          <X size={16} />
+          <X size={14} />
         </button>
+      </div>
 
-        <div className="relative z-10 space-y-3">
-          {contactItems.map((item) => (
+      {/* Body */}
+      <div className="p-4 space-y-2">
+        {contactItems.map((item) => (
+          <div key={item.label} className="relative">
+            <AnimatePresence>
+              {item.copied && <CopyToast message="Copied" />}
+            </AnimatePresence>
             <a
-              key={item.label}
               href={item.href}
               onClick={(e) => { e.preventDefault(); handleCopy(item.copyValue, item.setCopied) }}
-              className="flex items-center gap-3 p-3.5 rounded-xl border transition-all hover:scale-[1.02] relative group"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group"
+              style={{ color: 'var(--text-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <AnimatePresence>
-                {item.copied && <CopyToast message="Copied to clipboard!" />}
-              </AnimatePresence>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
-              >
+              <div style={{ color: 'var(--accent)', width: 20 }} className="flex-shrink-0">
                 {item.icon}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
-                <p className="text-sm font-medium truncate">{item.value}</p>
-              </div>
-              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                {item.copied ? <Check size={15} style={{ color: 'var(--accent)' }} /> : <Copy size={15} />}
+              <span className="text-sm truncate flex-1">{item.value}</span>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                {item.copied ? <Check size={13} style={{ color: 'var(--accent)' }} /> : <Copy size={13} />}
               </div>
             </a>
-          ))}
+          </div>
+        ))}
+      </div>
 
-          <div className="border-t" style={{ borderColor: 'var(--border)' }} />
-
-          {socialItems.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3.5 rounded-xl border transition-all hover:scale-[1.02] group"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
-            >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
-              >
-                {item.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
-                <p className="text-sm font-medium">{item.value}</p>
-              </div>
-            </a>
-          ))}
-        </div>
+      {/* Social */}
+      <div className="px-4 pb-4 pt-0 flex gap-2">
+        {socialItems.map((item) => (
+          <a
+            key={item.label}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+          >
+            {item.icon}
+            {item.label}
+          </a>
+        ))}
       </div>
     </motion.div>
   )
