@@ -118,12 +118,17 @@ const COLORS = [
   '#6366f1', '#84cc16', '#06b6d4', '#d946ef',
 ]
 
+function getIsDark(): boolean {
+  if (typeof document === 'undefined') return true
+  return document.documentElement.classList.contains('dark')
+}
+
 export default function ChartBlock({ code }: ChartBlockProps) {
   const parsed = parseChartCode(code)
-  const [isDark, setIsDark] = useState(true)
+  const [isDark, setIsDark] = useState(getIsDark)
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'))
+    setIsDark(getIsDark())
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'))
     })
@@ -139,16 +144,14 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     )
   }
 
+  const themeKey = isDark ? 'dark' : 'light'
+
   const chartType = CHART_TYPE_MAP[parsed.type] || 'bar'
 
-  const textColor = isDark ? '#e5e5e5' : '#1a1a1a'
-  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const textColor = isDark ? '#f1f5f9' : '#0f172a'
+  const gridColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'
+  const bgColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
 
-  const colors = parsed.datasets.length > 0
-    ? parsed.datasets.map(d => d.color)
-    : COLORS.slice(0, parsed.labels.length)
-
-  // Assign colors to datasets if not already set
   const datasets = parsed.datasets.length > 0
     ? parsed.datasets.map((ds, i) => ({
         ...ds,
@@ -168,13 +171,14 @@ export default function ChartBlock({ code }: ChartBlockProps) {
 
   if (isPolarType) {
     const ChartComponent = chartType === 'doughnut' ? Doughnut : chartType === 'polarArea' ? PolarArea : Pie
+    const labelColors = parsed.labels.map((_, i) => COLORS[i % COLORS.length])
     const polarData = {
       labels: parsed.labels,
       datasets: datasets.map(ds => ({
         label: ds.label,
         data: ds.data,
-        backgroundColor: colors.map((c) => hexToRgba(c, 0.8)),
-        borderColor: colors.map(c => c),
+        backgroundColor: labelColors.map(c => hexToRgba(c, 0.75)),
+        borderColor: labelColors,
         borderWidth: 2,
       })),
     }
@@ -196,7 +200,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     return (
       <div className="my-6 flex justify-center">
         <div className="w-full max-w-md">
-          <ChartComponent data={polarData as any} options={polarOptions as any} />
+          <ChartComponent key={themeKey} data={polarData as any} options={polarOptions as any} />
         </div>
       </div>
     )
@@ -222,6 +226,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
   const baseOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: true,
+    backgroundColor: bgColor,
     plugins: {
       legend: {
         labels: { color: textColor, font: { size: 11, family: 'Outfit, Inter, sans-serif' } },
@@ -246,11 +251,13 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     } : undefined,
   }
 
+  const commonProps = { key: themeKey, data: chartData as any, options: baseOptions as any }
+
   if (chartType === 'radar') {
     return (
       <div className="my-6 flex justify-center">
         <div className="w-full max-w-md">
-          <Radar data={chartData as ChartData<'radar'>} options={baseOptions as ChartOptions<'radar'>} />
+          <Radar {...commonProps} />
         </div>
       </div>
     )
@@ -259,14 +266,14 @@ export default function ChartBlock({ code }: ChartBlockProps) {
   if (chartType === 'line') {
     return (
       <div className="my-6">
-        <Line data={chartData as ChartData<'line'>} options={baseOptions as ChartOptions<'line'>} />
+        <Line {...commonProps} />
       </div>
     )
   }
 
   return (
     <div className="my-6">
-      <Bar data={chartData as ChartData<'bar'>} options={baseOptions as ChartOptions<'bar'>} />
+      <Bar {...commonProps} />
     </div>
   )
 }

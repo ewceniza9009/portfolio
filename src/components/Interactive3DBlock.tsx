@@ -28,14 +28,31 @@ export default function Interactive3DBlock({ html, height = '420px' }: Interacti
     let activePromise: Promise<unknown> | null = null
 
     const resolveUrl = (spec: string): string | null => {
-      if (spec === 'three') return 'https://esm.sh/three@0.169.0'
+      const BASE = 'https://esm.sh/three@0.169.0'
+      if (spec === 'three') return BASE
+      if (spec.startsWith('three/') && !spec.startsWith('http')) {
+        const rest = spec.slice(6)
+        const lower = rest.toLowerCase()
+        if (lower.startsWith('addons/')) {
+          const addon = rest.slice(7).replace(/\.js$/, '')
+          const addonsMap: Record<string, string> = {
+            'controls/orbitcontrols': '/examples/jsm/controls/OrbitControls',
+            'renderers/css2drenderer': '/examples/jsm/renderers/CSS2DRenderer',
+            'renderers/css2dobject': '/examples/jsm/renderers/CSS2DObject',
+          }
+          const mapped = addonsMap[lower.replace(/\.js$/, '')]
+          if (mapped) return BASE + mapped
+          return BASE + '/examples/jsm/' + addon
+        }
+        return BASE + '/' + rest
+      }
       if (spec.startsWith('http')) {
         const s = spec.toLowerCase()
         if (s.includes('unpkg.com/three') || /@0\./.test(s) || /three@[\d.]/.test(s)) {
-          if (s.includes('orbitcontrols')) return 'https://esm.sh/three@0.169.0/examples/jsm/controls/OrbitControls'
-          if (s.includes('css2dobject')) return 'https://esm.sh/three@0.169.0/examples/jsm/renderers/CSS2DObject'
-          if (s.includes('css2d')) return 'https://esm.sh/three@0.169.0/examples/jsm/renderers/CSS2DRenderer'
-          return 'https://esm.sh/three@0.169.0'
+          if (s.includes('orbitcontrols')) return BASE + '/examples/jsm/controls/OrbitControls'
+          if (s.includes('css2dobject')) return BASE + '/examples/jsm/renderers/CSS2DObject'
+          if (s.includes('css2d')) return BASE + '/examples/jsm/renderers/CSS2DRenderer'
+          return BASE
         }
       }
       return null
@@ -65,8 +82,8 @@ export default function Interactive3DBlock({ html, height = '420px' }: Interacti
             const match = trimmed.match(/^import\s+(.+?)\s+from\s+['"]([^'"]+)['"]/)
             if (match) {
               const url = resolveUrl(match[2])
+              const names = match[1].trim()
               if (url) {
-                const names = match[1].trim()
                 const id = `__m${header.length}`
                 header.push(`  const ${id} = await import('${url}');`)
                 if (names.startsWith('*')) {
@@ -85,6 +102,25 @@ export default function Interactive3DBlock({ html, height = '420px' }: Interacti
                 }
                 continue
               }
+              // Unresolved import - convert to dynamic import as fallback
+              const spec = match[2]
+              const id = `__m${header.length}`
+              header.push(`  const ${id} = await import('${spec}');`)
+              if (names.startsWith('*')) {
+                const vn = names.replace(/^\*\s+as\s+/, '').trim()
+                header.push(`  var ${vn} = ${id};`)
+              } else if (names.startsWith('{')) {
+                const nc = names.replace(/^\{|\}$/g, '').trim()
+                if (nc) {
+                  for (const n of nc.split(',')) {
+                    const nn = n.trim()
+                    if (nn) header.push(`  var ${nn} = ${id}.${nn};`)
+                  }
+                }
+              } else {
+                header.push(`  var ${names} = ${id};`)
+              }
+              continue
             }
             body.push(raw)
           }
