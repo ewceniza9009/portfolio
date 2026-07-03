@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2 } from 'lucide-react'
+import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2, Mail, Phone, Linkedin, Github, Copy, Check } from 'lucide-react'
 import { getSafeItem, setSafeItem } from '../utils/storage'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { parseMarkdown } from '../utils/markdown'
@@ -691,7 +691,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
 export default function FloatingControl() {
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
-  const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | null>(null)
+  const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | 'contact' | null>(null)
   const [cursorOn, setCursorOn] = useState(() => (getSafeItem('cursor_enabled') ?? 'true') === 'true')
 
   useEffect(() => {
@@ -773,6 +773,17 @@ export default function FloatingControl() {
               <Terminal size={14} /> Terminal
             </button>
             <button
+              onClick={() => setMode('contact')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
+              style={{
+                background: 'var(--bg-card)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Phone size={14} /> Contact
+            </button>
+            <button
               onClick={toggleCursor}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap"
               style={{
@@ -796,6 +807,128 @@ export default function FloatingControl() {
       <AnimatePresence>
         {mode === 'chat' && <ChatWindow onClose={handleClose} />}
       </AnimatePresence>
+
+      {/* Contact Panel */}
+      <AnimatePresence>
+        {mode === 'contact' && <ContactPanel onClose={handleClose} />}
+      </AnimatePresence>
     </>
+  )
+}
+
+// ── Contact Panel ──
+function CopyToast({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap z-20"
+      style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+    >
+      {message}
+    </motion.div>
+  )
+}
+
+function ContactPanel({ onClose }: { onClose: () => void }) {
+  const [copiedEmail, setCopiedEmail] = useState(false)
+  const [copiedPhone, setCopiedPhone] = useState(false)
+
+  const handleCopy = useCallback(async (value: string, setter: (v: boolean) => void) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setter(true)
+      setTimeout(() => setter(false), 2000)
+    } catch {}
+  }, [])
+
+  const contactItems = [
+    { icon: <Mail size={20} />, label: 'Email', value: 'erwinwilsonceniza@gmail.com', copyValue: 'erwinwilsonceniza@gmail.com', href: 'mailto:erwinwilsonceniza@gmail.com', copied: copiedEmail, setCopied: setCopiedEmail },
+    { icon: <Phone size={20} />, label: 'Phone', value: '+63 935-122-8470', copyValue: '+639351228470', href: 'tel:+639351228470', copied: copiedPhone, setCopied: setCopiedPhone },
+  ]
+
+  const socialItems = [
+    { icon: <Linkedin size={20} />, label: 'LinkedIn', value: 'erwin-wilson-ceniza', href: 'https://www.linkedin.com/in/erwin-wilson-ceniza-1b42ba32' },
+    { icon: <Github size={20} />, label: 'GitHub', value: 'ewceniza9009', href: 'https://github.com/ewceniza9009' },
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -30, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: -30, scale: 0.95 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed bottom-24 left-6 z-[100] w-[380px] max-w-[calc(100vw-3rem)]"
+    >
+      <div className="rounded-2xl p-6 glass shadow-2xl relative overflow-hidden border"
+        style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+      >
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)',
+          opacity: 0.08
+        }} />
+
+        {/* Close button */}
+        <button onClick={onClose}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-colors hover:opacity-80"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <X size={16} />
+        </button>
+
+        <div className="relative z-10 space-y-3">
+          {contactItems.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              onClick={(e) => { e.preventDefault(); handleCopy(item.copyValue, item.setCopied) }}
+              className="flex items-center gap-3 p-3.5 rounded-xl border transition-all hover:scale-[1.02] relative group"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+            >
+              <AnimatePresence>
+                {item.copied && <CopyToast message="Copied to clipboard!" />}
+              </AnimatePresence>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+              >
+                {item.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
+                <p className="text-sm font-medium truncate">{item.value}</p>
+              </div>
+              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                {item.copied ? <Check size={15} style={{ color: 'var(--accent)' }} /> : <Copy size={15} />}
+              </div>
+            </a>
+          ))}
+
+          <div className="border-t" style={{ borderColor: 'var(--border)' }} />
+
+          {socialItems.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3.5 rounded-xl border transition-all hover:scale-[1.02] group"
+              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+              >
+                {item.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
+                <p className="text-sm font-medium">{item.value}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   )
 }
