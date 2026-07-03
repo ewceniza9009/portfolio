@@ -20,6 +20,12 @@ export default defineConfig({
     port: 9191,
     headers: {
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      }
     }
   }
 })

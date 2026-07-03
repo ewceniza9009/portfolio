@@ -203,6 +203,9 @@ export default function InteractiveBlock({ html, height = '420px' }: Interactive
 
     const resolveUrl = (spec: string): string | null => {
       if (spec === 'three') return 'https://esm.sh/three@0.169.0'
+      if (spec.startsWith('three/addons/')) {
+        return `https://esm.sh/three@0.169.0/examples/jsm/${spec.replace('three/addons/', '')}`
+      }
       if (spec.startsWith('http')) return spec
       return null
     }
