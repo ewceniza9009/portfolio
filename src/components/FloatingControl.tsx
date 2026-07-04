@@ -723,9 +723,10 @@ export default function FloatingControl() {
     <>
       {/* FAB Button */}
       {(!mode || mode === 'menu') && (
-        <div className="fixed bottom-6 right-6 z-[100] group">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3">
+          {/* AI Chat Standalone Button */}
           <motion.button
-            onClick={handleFabClick}
+            onClick={() => setMode('chat')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
@@ -736,13 +737,31 @@ export default function FloatingControl() {
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)'
             }}
           >
-            <Sparkles size={13} /> Launch
+            <MessageCircle size={14} /> AI Chat
           </motion.button>
-          <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden sm:block">
-            <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
-              style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+
+          {/* Launch Menu Button */}
+          <div className="relative group">
+            <motion.button
+              onClick={handleFabClick}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
+              style={{
+                background: 'var(--bg-card)',
+                borderColor: 'var(--accent)',
+                color: 'var(--accent)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)'
+              }}
             >
-              AI Chat &middot; Terminal &middot; Contact &middot; Cursor
+              <Sparkles size={13} /> Launch
+            </motion.button>
+            <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden sm:block">
+              <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+              >
+                Terminal &middot; Contact &middot; Cursor
+              </div>
             </div>
           </div>
         </div>
@@ -757,17 +776,6 @@ export default function FloatingControl() {
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
           >
-            <button
-              onClick={() => setMode('chat')}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
-                borderColor: 'var(--accent)',
-                color: 'var(--accent)',
-              }}
-            >
-              <MessageCircle size={14} /> AI Chat
-            </button>
             <button
               onClick={() => setMode('terminal')}
               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
@@ -801,7 +809,7 @@ export default function FloatingControl() {
             >
               <MousePointer2 size={14} /> Cursor
             </button>
-            <div className="absolute -top-1 right-0 w-6 h-0.5 rounded-full"
+            <div className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
               style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }}
             />
           </motion.div>
