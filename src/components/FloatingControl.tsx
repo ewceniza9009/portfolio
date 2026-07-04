@@ -430,8 +430,8 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
 
 // ── Chat Window ──
 const SUGGESTIONS = [
-  'What projects use accounting?',
-  'Tell me about Cloud FMIS',
+  'What projects have you worked on?',
+  'Tell me about Halkyone Clinical OS',
   'What are your top skills?',
   'Show me your experience',
   'What tech stack do you use?',
