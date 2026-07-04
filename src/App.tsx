@@ -393,36 +393,32 @@ export default function App() {
       Math.max(y, window.innerHeight - y)
     );
 
-    // Delay the heavy View Transition by 50ms so the button's click animation
-    // has time to render, providing immediate visual feedback to the user.
-    setTimeout(() => {
-      const transition = (document as any).startViewTransition(() => {
-        flushSync(() => {
-          setTheme(prev => {
-            const next = prev === 'dark' ? 'light' : 'dark';
-            setSafeItem('theme', next);
-            return next;
-          });
+    const transition = (document as any).startViewTransition(() => {
+      flushSync(() => {
+        setTheme(prev => {
+          const next = prev === 'dark' ? 'light' : 'dark';
+          setSafeItem('theme', next);
+          return next;
         });
       });
+    });
 
-      transition.ready.then(() => {
-        const clipPath = [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${endRadius}px at ${x}px ${y}px)`,
-        ];
-        document.documentElement.animate(
-          {
-            clipPath: clipPath,
-          },
-          {
-            duration: 350,
-            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            pseudoElement: '::view-transition-new(root)',
-          }
-        );
-      });
-    }, 50);
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 400,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+    });
   }, [])
 
   return (
