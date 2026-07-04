@@ -6251,7 +6251,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed inset-0 z-[100] flex flex-col bg-black/90 backdrop-blur-xl"
+                className="fixed inset-0 z-[10000] flex flex-col bg-black/90 backdrop-blur-xl"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900/50 shrink-0">
