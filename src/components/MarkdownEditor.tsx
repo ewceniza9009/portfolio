@@ -207,7 +207,7 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
   const monacoRef = useRef<Parameters<OnMount>[1] | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [viewZones, setViewZones] = useState<{ id: string, zoneId: string, node: HTMLElement, type: string, code: string }[]>([])
+  const [previewWidgets, setPreviewWidgets] = useState<{ id: string, widget: editor.IContentWidget, node: HTMLElement, type: string, code: string }[]>([])
   
   const handlePreviewBlockRef = useRef<(args: any) => void>(() => {})
 
@@ -263,29 +263,35 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
     const code = model.getValueInRange(new mon.Range(startLine + 1, 1, endLine - 1, model.getLineMaxColumn(endLine - 1) || 1))
     const blockId = `block-${startLine}-${endLine}`
 
-    setViewZones(prev => {
+    setPreviewWidgets(prev => {
       const existing = prev.find(vz => vz.id === blockId)
       if (existing) {
-        ed.changeViewZones(accessor => accessor.removeZone(existing.zoneId))
+        ed.removeContentWidget(existing.widget)
         return prev.filter(vz => vz.id !== blockId)
       }
 
-      let newZoneId = ''
       const node = document.createElement('div')
-      node.style.zIndex = '10'
-      node.style.overflow = 'hidden'
-      node.style.padding = '10px 0'
+      node.style.width = '550px'
+      node.style.height = '400px'
+      node.style.maxWidth = '90vw'
+      node.style.zIndex = '100'
+      node.style.pointerEvents = 'auto'
       
-      ed.changeViewZones(accessor => {
-        newZoneId = accessor.addZone({
-          afterLineNumber: endLine,
-          heightInPx: 500,
-          domNode: node,
-          suppressMouseDown: true
+      const widget: editor.IContentWidget = {
+        getId: () => blockId,
+        getDomNode: () => node,
+        getPosition: () => ({
+          position: { lineNumber: startLine, column: 1 },
+          preference: [
+            mon.editor.ContentWidgetPositionPreference.BELOW,
+            mon.editor.ContentWidgetPositionPreference.EXACT
+          ]
         })
-      })
+      }
 
-      return [...prev, { id: blockId, zoneId: newZoneId, node, type, code }]
+      ed.addContentWidget(widget)
+
+      return [...prev, { id: blockId, widget, node, type, code }]
     })
   }, [])
 
@@ -455,18 +461,21 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
         />
       </div>
 
-      {viewZones.map(vz => (
+      {previewWidgets.map(vz => (
         createPortal(
-          <div className="w-full h-full border border-[var(--accent)] bg-[var(--bg-card)] rounded-xl overflow-hidden relative shadow-lg">
+          <div className="w-full h-full border border-[var(--accent)] bg-[var(--bg-card)] rounded-xl overflow-hidden relative shadow-2xl pointer-events-auto">
             <div className="absolute top-2 right-2 z-50 flex items-center gap-2">
               {onZoomBlock && (
                 <button 
-                  onClick={() => onZoomBlock({ 
-                    type: vz.type, 
-                    code: vz.code, 
-                    startLine: parseInt(vz.id.split('-')[1]), 
-                    endLine: parseInt(vz.id.split('-')[2]) 
-                  })}
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    onZoomBlock({ 
+                      type: vz.type, 
+                      code: vz.code, 
+                      startLine: parseInt(vz.id.split('-')[1]), 
+                      endLine: parseInt(vz.id.split('-')[2]) 
+                    })
+                  }}
                   className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
                   title="Zoom (Isolate Block)"
                 >
@@ -474,7 +483,10 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
                 </button>
               )}
               <button 
-                onClick={() => handlePreviewBlockRef.current({ type: vz.type, startLine: parseInt(vz.id.split('-')[1]), endLine: parseInt(vz.id.split('-')[2]) })}
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  handlePreviewBlockRef.current({ type: vz.type, startLine: parseInt(vz.id.split('-')[1]), endLine: parseInt(vz.id.split('-')[2]) })
+                }}
                 className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
                 title="Close Preview"
               >
@@ -484,8 +496,8 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
             <div className="absolute top-2 left-2 z-50 px-2 py-1 bg-[var(--accent-dim)] text-[var(--accent)] text-[10px] font-bold uppercase rounded-md border border-[var(--accent)] shadow">
               {vz.type} Preview
             </div>
-            <div className="w-full h-full pt-10 overflow-auto">
-              {renderInlinePreview ? renderInlinePreview(vz.type, vz.code, vz.id) : <div className="p-4 text-center text-sm text-[var(--text-secondary)]">Preview rendering not provided.</div>}
+            <div className="w-full h-full pt-10">
+              {renderInlinePreview ? renderInlinePreview(vz.type, vz.code, vz.id) : null}
             </div>
           </div>,
           vz.node
