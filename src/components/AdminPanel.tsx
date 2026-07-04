@@ -344,6 +344,65 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     [blogContent, theme, accent],
   );
 
+  // ── Console State ──
+  const [previewSubTab, setPreviewSubTab] = useState<"render" | "console">("render");
+  const [previewLogs, setPreviewLogs] = useState<{ id: string; type: string; msg: string; time: string }[]>([]);
+  const [fixingErrorId, setFixingErrorId] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, string>>({});
+
+  const handleAskAiFix = async (logId: string, errorMsg: string) => {
+    setFixingErrorId(logId);
+    try {
+      const usePuter = (window as any).puter?.ai?.chat;
+      if (usePuter) {
+        const prompt = `I got this error in my custom React/Markdown block editor:\n\nError: ${errorMsg}\n\nHere is my current markdown content:\n\n${blogContent}\n\nPlease tell me exactly what to change in the markdown to fix this error. Keep it brief.`;
+        const aiResult: any = await (window as any).puter.ai.chat(prompt);
+        const suggestion = typeof aiResult === "string" ? aiResult : String(aiResult);
+        setAiSuggestions(prev => ({ ...prev, [logId]: suggestion }));
+      } else {
+        setAiSuggestions(prev => ({ ...prev, [logId]: "Puter AI is not available. Please check the markdown syntax manually." }));
+      }
+    } catch (err) {
+      setAiSuggestions(prev => ({ ...prev, [logId]: "Failed to get AI suggestion. Try again later." }));
+    } finally {
+      setFixingErrorId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (blogEditorTab !== "preview") return;
+
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const originalLog = console.log;
+
+    const pushLog = (type: string, args: any[]) => {
+      const msg = args.map(a => (typeof a === "object" ? JSON.stringify(a, null, 2) : String(a))).join(" ");
+      const time = new Date().toLocaleTimeString();
+      const id = Math.random().toString(36).substring(7);
+      setPreviewLogs(prev => [...prev, { id, type, msg, time }]);
+    };
+
+    console.error = (...args) => {
+      pushLog("error", args);
+      originalError.apply(console, args);
+    };
+    console.warn = (...args) => {
+      pushLog("warn", args);
+      originalWarn.apply(console, args);
+    };
+    console.log = (...args) => {
+      pushLog("log", args);
+      originalLog.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+      console.log = originalLog;
+    };
+  }, [blogEditorTab]);
+
   useEffect(() => {
     if (focusContentMode) {
       document.body.style.overflow = "hidden";
@@ -3343,33 +3402,147 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           </div>
                         </div>
                       ) : (
-                        /* Live Preview */
+                        /* Live Preview with Console Tab */
                         <div
-                          className="prose max-w-none p-5 rounded-3xl border select-text"
+                          className="p-5 rounded-3xl border select-text flex flex-col"
                           style={{
                             background: "var(--bg-card)",
                             borderColor: "var(--border)",
+                            minHeight: "500px",
                           }}
                         >
-                          <h1 className="text-3xl font-bold mb-4">
-                            {blogTitle || "Untitled Article"}
-                          </h1>
-                          <div
-                            className="flex items-center gap-4 text-xs opacity-60 mb-6 pb-4 border-b"
-                            style={{ borderColor: "var(--border)" }}
-                          >
-                            <span>
-                              Read time: {blogReadTime || "5 min read"}
-                            </span>
-                            {blogTags && <span>Tags: {blogTags}</span>}
+                          {/* Sub-tabs for Preview */}
+                          <div className="flex items-center justify-between mb-4 border-b pb-3" style={{ borderColor: "var(--border)" }}>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setPreviewSubTab("render")}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                  previewSubTab === "render" ? "bg-[var(--accent)] text-[var(--bg-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
+                                }`}
+                              >
+                                <Eye size={12} className="inline mr-1" /> Rendered View
+                              </button>
+                              <button
+                                onClick={() => setPreviewSubTab("console")}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                                  previewSubTab === "console" ? "bg-[var(--accent)] text-[var(--bg-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
+                                }`}
+                              >
+                                <Monitor size={12} /> Console
+                                {previewLogs.length > 0 && (
+                                  <span className="ml-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[9px]">
+                                    {previewLogs.length}
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+                            {previewSubTab === "console" && previewLogs.length > 0 && (
+                              <button
+                                onClick={() => setPreviewLogs([])}
+                                className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                              >
+                                Clear Logs
+                              </button>
+                            )}
                           </div>
 
-                          {parsedBlogContent ? (
-                            parsedBlogContent
+                          {previewSubTab === "render" ? (
+                            <div className="prose max-w-none flex-1">
+                              <h1 className="text-3xl font-bold mb-4">
+                                {blogTitle || "Untitled Article"}
+                              </h1>
+                              <div
+                                className="flex items-center gap-4 text-xs opacity-60 mb-6 pb-4 border-b"
+                                style={{ borderColor: "var(--border)" }}
+                              >
+                                <span>Read time: {blogReadTime || "5 min read"}</span>
+                                {blogTags && <span>Tags: {blogTags}</span>}
+                              </div>
+
+                              {parsedBlogContent ? (
+                                parsedBlogContent
+                              ) : (
+                                <p className="italic text-center text-xs opacity-50 py-10">
+                                  No markdown content written yet.
+                                </p>
+                              )}
+                            </div>
                           ) : (
-                            <p className="italic text-center text-xs opacity-50 py-10">
-                              No markdown content written yet.
-                            </p>
+                            <div className="flex-1 flex flex-col gap-3">
+                              {/* Markdown Context Banner */}
+                              <div className="p-3 rounded-xl flex items-start gap-3" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                                <div className="p-1.5 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)]">
+                                  <Monitor size={14} />
+                                </div>
+                                <div>
+                                  <h4 className="text-[11px] font-bold text-[var(--text-primary)]">Markdown Interactive Blocks Console</h4>
+                                  <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                                    This console captures runtime errors specifically from your custom markdown editor blocks (Interactive, 3D, Chart, Mermaid). Check the code inside your markdown blocks to fix these issues.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex-1 bg-black rounded-xl p-4 overflow-y-auto font-mono text-[11px] leading-relaxed border border-gray-800">
+                                {previewLogs.length === 0 ? (
+                                  <p className="text-gray-500 italic">No errors or logs captured. Switch back to "Rendered View" to run your interactive blocks.</p>
+                                ) : (
+                                  <div className="space-y-4">
+                                    {previewLogs.map((log) => (
+                                      <div key={log.id} className="pb-4 border-b border-gray-800/50">
+                                        <div className="flex gap-3">
+                                          <span className="text-gray-500 shrink-0 w-16">{log.time}</span>
+                                          <span className={`flex-1 whitespace-pre-wrap ${
+                                            log.type === "error" ? "text-red-400" :
+                                            log.type === "warn" ? "text-yellow-400" :
+                                            "text-blue-300"
+                                          }`}>
+                                            {log.msg}
+                                          </span>
+                                        </div>
+
+                                        {/* Hardcoded Tip for Common Error */}
+                                        {log.type === "error" && log.msg.includes("THREE.CSS2DObject is not a constructor") && (
+                                          <div className="mt-2 ml-19 p-2 rounded bg-gray-900 border border-gray-700 text-gray-300">
+                                            💡 <strong>Tip:</strong> Remove the <code>THREE.</code> namespace. Import and use <code>CSS2DObject</code> directly.
+                                          </div>
+                                        )}
+
+                                        {/* Ask AI Section */}
+                                        {log.type === "error" && (
+                                          <div className="mt-2 ml-19">
+                                            {!aiSuggestions[log.id] && fixingErrorId !== log.id && (
+                                              <button
+                                                onClick={() => handleAskAiFix(log.id, log.msg)}
+                                                className="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors border border-indigo-500/30 font-sans text-[10px] font-bold"
+                                              >
+                                                <Sparkles size={10} /> Ask AI to Fix
+                                              </button>
+                                            )}
+
+                                            {fixingErrorId === log.id && (
+                                              <div className="flex items-center gap-1.5 text-indigo-400 text-[10px] font-sans">
+                                                <Loader size={10} className="animate-spin" /> Analyzing markdown block...
+                                              </div>
+                                            )}
+
+                                            {aiSuggestions[log.id] && (
+                                              <div className="mt-2 p-3 rounded bg-indigo-950/50 border border-indigo-500/30 text-indigo-200 font-sans">
+                                                <div className="flex items-center gap-1.5 font-bold mb-1.5 text-indigo-300">
+                                                  <Sparkles size={10} /> AI Fix Suggestion:
+                                                </div>
+                                                <div className="whitespace-pre-wrap leading-relaxed opacity-90">
+                                                  {aiSuggestions[log.id]}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
