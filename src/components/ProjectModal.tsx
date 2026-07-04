@@ -190,7 +190,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     alt={project.title}
                     animate={{ 
                       scale: isZoomed ? 1.05 : 1, 
-                      objectFit: isZoomed ? "contain" : "cover" 
+                      objectFit: isZoomed ? "cover" : "contain" 
                     }}
                     whileHover={!isZoomed ? { scale: 1.05 } : {}}
                     transition={{ duration: 0.5, ease: "easeOut" }}

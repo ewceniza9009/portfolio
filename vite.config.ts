@@ -24,7 +24,16 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
-        changeOrigin: true
+        changeOrigin: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err: any, _req, _res) => {
+            // Mute the annoying ECONNREFUSED noise when the backend is offline
+            if (err.code === 'ECONNREFUSED') {
+              return;
+            }
+            console.log('proxy error', err);
+          });
+        }
       }
     }
   }

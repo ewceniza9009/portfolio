@@ -10,14 +10,14 @@ interface MagneticWrapperProps {
 export default function MagneticWrapper({ 
   children, 
   className = "", 
-  strength = 0.3 
+  strength = 0.8 // Increased strength for a much more obvious effect
 }: MagneticWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
   
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const springConfig = { damping: 15, stiffness: 150, mass: 0.1 };
+  const springConfig = { damping: 10, stiffness: 100, mass: 0.1 };
   const springX = useSpring(x, springConfig);
   const springY = useSpring(y, springConfig);
 
@@ -57,11 +57,16 @@ export default function MagneticWrapper({
         x: springX,
         y: springY,
         display: "inline-block",
+        position: "relative",
         zIndex: isHovered ? 10 : 1
       }}
       className={className}
     >
-      {children}
+      {/* Invisible expanded hit area to trigger the pull before the mouse touches the button itself */}
+      <div className="absolute -inset-6 z-0 rounded-full" />
+      <div className="relative z-10">
+        {children}
+      </div>
     </motion.div>
   );
 }
