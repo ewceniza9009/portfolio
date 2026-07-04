@@ -177,7 +177,7 @@ function registerCodeLensProvider(monaco: typeof import('monaco-editor')) {
         if (lineContent.startsWith('```')) {
           if (currentBlockStart === -1) {
             const type = lineContent.slice(3).trim().toLowerCase()
-            if (['interactive', '3d', 'chart', 'mermaid'].includes(type)) {
+            if (['interactive', 'interactive-3d', '3d', 'chart', 'mermaid'].includes(type)) {
               currentBlockType = type
               currentBlockStart = i
             }
