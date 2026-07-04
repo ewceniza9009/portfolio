@@ -23,6 +23,7 @@ import {
   Lock,
   RefreshCw,
   CheckCircle2,
+  ChevronUp,
   ChevronDown,
   ChevronRight,
   Cpu,
@@ -426,6 +427,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
   const [summarizerProvider, setSummarizerProvider] = useState("");
   const [summarizerModel, setSummarizerModel] = useState("");
   const [blogComments, setBlogComments] = useState<Comment[]>([]);
+
+  // Collapse State
+  const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
+  const [isAiCopilotExpanded, setIsAiCopilotExpanded] = useState(false);
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
 
   const [blogEditorTab, setBlogEditorTab] = useState<"edit" | "preview" | "summarizer">(
     "edit",
@@ -2981,7 +2987,31 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       {blogEditorTab === "edit" ? (
                         /* Edit Form */
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}>
+                            <button
+                              type="button"
+                              onClick={() => setIsMetadataExpanded(!isMetadataExpanded)}
+                              className="flex items-center justify-between w-full"
+                            >
+                              <div className="flex items-center gap-2">
+                                <FileText size={16} style={{ color: "var(--accent)" }} />
+                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-primary)" }}>
+                                  Post Metadata
+                                </span>
+                              </div>
+                              {isMetadataExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                            
+                            <AnimatePresence>
+                              {isMetadataExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="pt-4 space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">
                                 Article Title *
@@ -3132,6 +3162,11 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                               placeholder="Brief summary displayed in the search feed cards..."
                             />
                           </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
 
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
@@ -3181,20 +3216,36 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                               borderColor: "rgba(204, 160, 61, 0.15)",
                             }}
                           >
-                            <div className="flex items-center gap-2 mb-3">
-                              <Sparkles
-                                size={16}
-                                style={{ color: "var(--accent)" }}
-                              />
-                              <span
-                                className="text-xs font-bold uppercase tracking-wider"
-                                style={{ color: "var(--accent)" }}
-                              >
-                                AI Blog Copilot (Gemini)
-                              </span>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsAiCopilotExpanded(!isAiCopilotExpanded)}
+                              className="flex items-center justify-between w-full"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Sparkles
+                                  size={16}
+                                  style={{ color: "var(--accent)" }}
+                                />
+                                <span
+                                  className="text-xs font-bold uppercase tracking-wider"
+                                  style={{ color: "var(--accent)" }}
+                                >
+                                  AI Blog Copilot (Gemini)
+                                </span>
+                              </div>
+                              {isAiCopilotExpanded ? <ChevronUp size={16} style={{ color: "var(--accent)" }} /> : <ChevronDown size={16} style={{ color: "var(--accent)" }} />}
+                            </button>
 
-                            <div className="grid grid-cols-3 gap-2 mb-3 select-none">
+                            <AnimatePresence>
+                              {isAiCopilotExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="pt-4">
+                                    <div className="grid grid-cols-3 gap-2 mb-3 select-none">
                               <button
                                 type="button"
                                 onClick={() => handleBlogAiCompose("outline")}
@@ -3249,6 +3300,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 )}
                               </button>
                             </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
 
                           {/* Published Status Toggle */}
@@ -3730,20 +3785,37 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                           className="pt-8 border-t border-dashed space-y-4"
                           style={{ borderColor: "var(--border)" }}
                         >
-                          <div className="flex items-center gap-2">
-                            <MessageSquare
-                              size={16}
-                              style={{ color: "var(--accent)" }}
-                            />
-                            <span
-                              className="text-xs font-bold uppercase tracking-wider"
-                              style={{ color: "var(--text-secondary)" }}
-                            >
-                              Comment Moderation ({blogComments.length})
-                            </span>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsCommentsExpanded(!isCommentsExpanded)}
+                            className="flex items-center justify-between w-full p-3 rounded-xl border transition-colors hover:bg-white/5"
+                            style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <MessageSquare
+                                size={16}
+                                style={{ color: "var(--accent)" }}
+                              />
+                              <span
+                                className="text-xs font-bold uppercase tracking-wider"
+                                style={{ color: "var(--text-secondary)" }}
+                              >
+                                Comment Moderation ({blogComments.length})
+                              </span>
+                            </div>
+                            {isCommentsExpanded ? <ChevronUp size={16} style={{ color: "var(--text-secondary)" }} /> : <ChevronDown size={16} style={{ color: "var(--text-secondary)" }} />}
+                          </button>
 
-                          {blogComments.length === 0 ? (
+                          <AnimatePresence>
+                            {isCommentsExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-2">
+                                  {blogComments.length === 0 ? (
                             <p className="text-xs italic opacity-40">
                               No comments posted on this article.
                             </p>
@@ -3801,6 +3873,10 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                               ))}
                             </div>
                           )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )}
                     </div>
