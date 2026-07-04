@@ -1,33 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
-  RadialLinearScale,
-  Filler,
-  Tooltip,
-  Legend,
-  type ChartData,
-  type ChartOptions,
-} from 'chart.js'
-import { Bar, Line, Pie, Doughnut, Radar, PolarArea } from 'react-chartjs-2'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
-  RadialLinearScale,
-  Filler,
-  Tooltip,
-  Legend,
-)
+  ResponsiveContainer,
+  LineChart, Line,
+  BarChart, Bar,
+  PieChart, Pie, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend
+} from 'recharts'
 
 interface ChartBlockProps {
   code: string
@@ -78,7 +57,10 @@ function parseChartCode(code: string): ParsedChart | null {
     const colorMatch = block.match(/color:\s*(.+)/)
     return {
       label: labelMatch ? labelMatch[1].trim() : '',
-      data: dataMatch ? dataMatch[1].split(',').map(Number) : [],
+      data: dataMatch ? dataMatch[1].split(',').map(v => {
+        const num = Number(v.trim());
+        return isNaN(num) || v.trim().toLowerCase() === 'null' ? null : num;
+      }) as number[] : [],
       color: colorMatch ? colorMatch[1].trim() : '#3b82f6',
     }
   })
@@ -102,14 +84,6 @@ const CHART_TYPE_MAP: Record<string, string> = {
   polar: 'polarArea',
   polararea: 'polarArea',
   polarArea: 'polarArea',
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.substring(0, 2), 16)
-  const g = parseInt(h.substring(2, 4), 16)
-  const b = parseInt(h.substring(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 const COLORS = [
@@ -144,20 +118,17 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     )
   }
 
-  const themeKey = isDark ? 'dark' : 'light'
-
   const chartType = CHART_TYPE_MAP[parsed.type] || 'bar'
 
-  const textColor = isDark ? '#f1f5f9' : '#0f172a'
-  const gridColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'
-  const bgColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
+  const textColor = isDark ? '#94a3b8' : '#64748b'
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
 
   const datasets = parsed.datasets.length > 0
     ? parsed.datasets.map((ds, i) => ({
         ...ds,
         color: ds.color || COLORS[i % COLORS.length],
       }))
-    : [{ label: '', data: [] as number[], color: '' }]
+    : [{ label: '', data: [] as (number|null)[], color: '' }]
 
   if (datasets.length === 0 || datasets.every(d => d.data.length === 0)) {
     return (
@@ -167,113 +138,152 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     )
   }
 
+  // Common data transformation for Bar/Line/Radar
+  const rechartsData = parsed.labels.map((label, index) => {
+    const row: any = { name: label }
+    datasets.forEach(ds => {
+      row[ds.label] = ds.data[index]
+    })
+    return row
+  })
+
+  // Common Tooltip Props
+  const tooltipContentStyle = {
+    backgroundColor: 'var(--bg-card)',
+    borderColor: 'var(--border)',
+    borderRadius: '8px',
+    color: 'var(--text-primary)',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+  };
+  const tooltipItemStyle = { fontSize: '13px', fontWeight: 600 };
+
   const isPolarType = chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea'
 
   if (isPolarType) {
-    const ChartComponent = chartType === 'doughnut' ? Doughnut : chartType === 'polarArea' ? PolarArea : Pie
-    const labelColors = parsed.labels.map((_, i) => COLORS[i % COLORS.length])
-    const polarData = {
-      labels: parsed.labels,
-      datasets: datasets.map(ds => ({
-        label: ds.label,
-        data: ds.data,
-        backgroundColor: labelColors.map(c => hexToRgba(c, 0.75)),
-        borderColor: labelColors,
-        borderWidth: 2,
-      })),
-    }
-    const polarOptions = {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          labels: { color: textColor, font: { size: 11, family: 'Outfit, Inter, sans-serif' } },
-        },
-        title: parsed.title ? {
-          display: true,
-          text: parsed.title,
-          color: textColor,
-          font: { size: 14, weight: 'bold', family: 'Outfit, Inter, sans-serif' },
-        } : undefined,
-      },
-    }
+    const isDoughnut = chartType === 'doughnut';
+    const pieData = parsed.labels.map((label, i) => ({
+      name: label,
+      value: datasets[0]?.data[i] || 0
+    }))
+    
     return (
-      <div className="my-6 flex justify-center">
-        <div className="w-full max-w-md">
-          <ChartComponent key={themeKey} data={polarData as any} options={polarOptions as any} />
-        </div>
+      <div className="my-6 w-full flex flex-col items-center" style={{ height: 350 }}>
+        {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Tooltip 
+              contentStyle={tooltipContentStyle}
+              itemStyle={tooltipItemStyle}
+            />
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+            <Pie 
+              data={pieData} 
+              dataKey="value" 
+              nameKey="name" 
+              cx="50%" 
+              cy="50%" 
+              innerRadius={isDoughnut ? 60 : 0} 
+              outerRadius={100}
+              stroke={isDark ? '#0a0a0a' : '#ffffff'}
+              strokeWidth={2}
+              paddingAngle={isDoughnut ? 2 : 0}
+            >
+              {pieData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     )
   }
 
-  const chartData: ChartData<'bar'> = {
-    labels: parsed.labels,
-    datasets: datasets.map(ds => ({
-      label: ds.label,
-      data: ds.data,
-      backgroundColor: hexToRgba(ds.color, 0.7),
-      borderColor: ds.color,
-      borderWidth: 2,
-      borderRadius: chartType === 'bar' ? 4 : undefined,
-      tension: chartType === 'line' ? 0.3 : undefined,
-      pointBackgroundColor: ds.color,
-      pointBorderColor: isDark ? '#0a0a0a' : '#ffffff',
-      pointRadius: chartType === 'line' ? 3 : undefined,
-      fill: chartType === 'line' ? false : undefined,
-    })),
-  }
-
-  const baseOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: true,
-    backgroundColor: bgColor,
-    plugins: {
-      legend: {
-        labels: { color: textColor, font: { size: 11, family: 'Outfit, Inter, sans-serif' } },
-      },
-      title: parsed.title ? {
-        display: true,
-        text: parsed.title,
-        color: textColor,
-        font: { size: 14, weight: 'bold', family: 'Outfit, Inter, sans-serif' },
-      } : undefined,
-    },
-    scales: chartType !== 'radar' ? {
-      x: {
-        grid: { color: gridColor },
-        ticks: { color: textColor, font: { size: 10, family: 'Outfit, Inter, sans-serif' } },
-      },
-      y: {
-        beginAtZero: true,
-        grid: { color: gridColor },
-        ticks: { color: textColor, font: { size: 10, family: 'Outfit, Inter, sans-serif' } },
-      },
-    } : undefined,
-  }
-
-  const commonProps = { key: themeKey, data: chartData as any, options: baseOptions as any }
-
   if (chartType === 'radar') {
     return (
-      <div className="my-6 flex justify-center">
-        <div className="w-full max-w-md">
-          <Radar {...commonProps} />
-        </div>
+      <div className="my-6 w-full flex flex-col items-center" style={{ height: 350 }}>
+        {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={rechartsData}>
+            <PolarGrid stroke={gridColor} />
+            <PolarAngleAxis dataKey="name" tick={{ fill: textColor, fontSize: 12 }} />
+            <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: textColor, fontSize: 10 }} />
+            <Tooltip 
+              contentStyle={tooltipContentStyle}
+              itemStyle={tooltipItemStyle}
+            />
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+            {datasets.map((ds) => (
+              <Radar 
+                key={ds.label} 
+                name={ds.label} 
+                dataKey={ds.label} 
+                stroke={ds.color} 
+                fill={ds.color} 
+                fillOpacity={0.5} 
+              />
+            ))}
+          </RadarChart>
+        </ResponsiveContainer>
       </div>
     )
   }
 
   if (chartType === 'line') {
     return (
-      <div className="my-6">
-        <Line {...commonProps} />
+      <div className="my-6 w-full" style={{ height: 350 }}>
+        {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={rechartsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+            <XAxis dataKey="name" stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
+            <Tooltip 
+              contentStyle={tooltipContentStyle}
+              itemStyle={tooltipItemStyle}
+            />
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+            {datasets.map(ds => (
+              <Line 
+                type="monotone" 
+                key={ds.label} 
+                dataKey={ds.label} 
+                stroke={ds.color} 
+                strokeWidth={2} 
+                dot={{ r: 4, fill: ds.color }} 
+                activeDot={{ r: 6 }} 
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     )
   }
 
+  // Default Bar Chart
   return (
-    <div className="my-6">
-      <Bar {...commonProps} />
+    <div className="my-6 w-full" style={{ height: 350 }}>
+      {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={rechartsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+          <XAxis dataKey="name" stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
+          <Tooltip 
+            cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+            contentStyle={tooltipContentStyle}
+            itemStyle={tooltipItemStyle}
+          />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          {datasets.map(ds => (
+            <Bar 
+              key={ds.label} 
+              dataKey={ds.label} 
+              fill={ds.color} 
+              radius={[4, 4, 0, 0]} 
+            />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   )
 }
