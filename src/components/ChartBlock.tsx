@@ -169,7 +169,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     return (
       <div className="my-6 w-full flex flex-col items-center" style={{ height: 350 }}>
         {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <PieChart>
             <Tooltip 
               contentStyle={tooltipContentStyle}
@@ -202,7 +202,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     return (
       <div className="my-6 w-full flex flex-col items-center" style={{ height: 350 }}>
         {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={rechartsData}>
             <PolarGrid stroke={gridColor} />
             <PolarAngleAxis dataKey="name" tick={{ fill: textColor, fontSize: 12 }} />
@@ -232,7 +232,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
     return (
       <div className="my-6 w-full" style={{ height: 350 }}>
         {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <LineChart data={rechartsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis dataKey="name" stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
@@ -263,7 +263,7 @@ export default function ChartBlock({ code }: ChartBlockProps) {
   return (
     <div className="my-6 w-full" style={{ height: 350 }}>
       {parsed.title && <h4 className="text-center mb-4 font-bold text-sm" style={{ color: "var(--text-primary)" }}>{parsed.title}</h4>}
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <BarChart data={rechartsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
           <XAxis dataKey="name" stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
