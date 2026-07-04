@@ -453,6 +453,12 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     endLine: number;
   } | null>(null);
   const [zoomedCode, setZoomedCode] = useState("");
+  const [debouncedZoomedCode, setDebouncedZoomedCode] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedZoomedCode(zoomedCode), 800);
+    return () => clearTimeout(timer);
+  }, [zoomedCode]);
 
   useEffect(() => {
     if (zoomedBlock) {
@@ -6308,7 +6314,7 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                       Live Preview & Console
                     </div>
                     <div className="flex-1 min-h-0 relative overflow-hidden">
-                      {renderInlinePreview(zoomedBlock.type, zoomedCode, "zoom-preview")}
+                      {renderInlinePreview(zoomedBlock.type, debouncedZoomedCode, "zoom-preview")}
                     </div>
                   </div>
                 </div>
