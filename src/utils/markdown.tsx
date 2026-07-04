@@ -48,7 +48,7 @@ interface MermaidRendererProps {
 // Module-level counter ensures globally unique IDs across all MermaidRenderer instances
 let _mermaidIdCounter = 0
 
-function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
+export function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
   const [svgHtml, setSvgHtml] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)

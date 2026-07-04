@@ -1,7 +1,8 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Editor, { OnMount, BeforeMount } from '@monaco-editor/react'
 import type { editor, languages } from 'monaco-editor'
-import { Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, Link as LinkIcon, Quote, Image, Minus, Table, Box, Layers, HelpCircle, Puzzle, ChevronDown } from 'lucide-react'
+import { Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, Link as LinkIcon, Quote, Image, Minus, Table, Box, Layers, HelpCircle, Puzzle, ChevronDown, Maximize2 } from 'lucide-react'
 import { STEPS_SNIPPET, QUIZ_SNIPPET, getGenericSnippet, INTERACTIVE3D_SNIPPET, MERMAID_SNIPPET, CHART_SNIPPET } from '../utils/snippets'
 
 interface MarkdownEditorProps {
@@ -13,6 +14,8 @@ interface MarkdownEditorProps {
   onEditorMount?: (editor: editor.IStandaloneCodeEditor) => void
   extraWords?: string[]
   showToolbar?: boolean
+  renderInlinePreview?: (type: string, code: string, blockId: string) => React.ReactNode
+  onZoomBlock?: (block: { type: string; code: string; startLine: number; endLine: number }) => void
 }
 
 const defineThemes: BeforeMount = (monaco) => {
@@ -120,11 +123,79 @@ function registerCompletionProvider(monaco: typeof import('monaco-editor'), extr
   monaco.languages.registerCompletionItemProvider('markdown', provider)
 }
 
-export default function MarkdownEditor({ value, onChange, height = '100%', className = '', autoFocus = false, onEditorMount, extraWords = [], showToolbar = false }: MarkdownEditorProps) {
+function registerFoldingProvider(monaco: typeof import('monaco-editor')) {
+  monaco.languages.registerFoldingRangeProvider('markdown', {
+    provideFoldingRanges: (model) => {
+      const ranges: languages.FoldingRange[] = []
+      const lineCount = model.getLineCount()
+      let startLine = -1
+
+      for (let i = 1; i <= lineCount; i++) {
+        const lineContent = model.getLineContent(i)
+        if (lineContent.startsWith('```')) {
+          if (startLine === -1) {
+            startLine = i
+          } else {
+            ranges.push({
+              start: startLine,
+              end: i,
+              kind: monaco.languages.FoldingRangeKind.Region
+            })
+            startLine = -1
+          }
+        }
+      }
+      return ranges
+    }
+  })
+}
+
+function registerCodeLensProvider(monaco: typeof import('monaco-editor')) {
+  monaco.languages.registerCodeLensProvider('markdown', {
+    provideCodeLenses: (model) => {
+      const lenses: languages.CodeLens[] = []
+      const lineCount = model.getLineCount()
+      let currentBlockType = ''
+      let currentBlockStart = -1
+
+      for (let i = 1; i <= lineCount; i++) {
+        const lineContent = model.getLineContent(i)
+        if (lineContent.startsWith('```')) {
+          if (currentBlockStart === -1) {
+            const type = lineContent.slice(3).trim().toLowerCase()
+            if (['interactive', '3d', 'chart', 'mermaid'].includes(type)) {
+              currentBlockType = type
+              currentBlockStart = i
+            }
+          } else {
+            lenses.push({
+              range: new monaco.Range(currentBlockStart, 1, currentBlockStart, 1),
+              id: `preview-${currentBlockStart}`,
+              command: {
+                id: 'portfolio.previewBlock',
+                title: '👁️ Preview & Debug',
+                arguments: [{ type: currentBlockType, startLine: currentBlockStart, endLine: i }]
+              }
+            })
+            currentBlockStart = -1
+            currentBlockType = ''
+          }
+        }
+      }
+      return { lenses, dispose: () => {} }
+    },
+    resolveCodeLens: (_model, codeLens) => codeLens
+  })
+}
+
+export default function MarkdownEditor({ value, onChange, height = '100%', className = '', autoFocus = false, onEditorMount, extraWords = [], showToolbar = false, renderInlinePreview, onZoomBlock }: MarkdownEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Parameters<OnMount>[1] | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [viewZones, setViewZones] = useState<{ id: string, zoneId: string, node: HTMLElement, type: string, code: string }[]>([])
+  
+  const handlePreviewBlockRef = useRef<(args: any) => void>(() => {})
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -165,12 +236,61 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
     ed.focus()
   }, [])
 
+  const handlePreviewBlock = useCallback((args: any) => {
+    const ed = editorRef.current
+    const mon = monacoRef.current
+    if (!ed || !mon) return
+
+    const { type, startLine, endLine } = args
+    const model = ed.getModel()
+    if (!model) return
+
+    // Extract inner code
+    const code = model.getValueInRange(new mon.Range(startLine + 1, 1, endLine - 1, model.getLineMaxColumn(endLine - 1) || 1))
+    const blockId = `block-${startLine}-${endLine}`
+
+    setViewZones(prev => {
+      const existing = prev.find(vz => vz.id === blockId)
+      if (existing) {
+        ed.changeViewZones(accessor => accessor.removeZone(existing.zoneId))
+        return prev.filter(vz => vz.id !== blockId)
+      }
+
+      let newZoneId = ''
+      const node = document.createElement('div')
+      node.style.zIndex = '10'
+      node.style.overflow = 'hidden'
+      node.style.padding = '10px 0'
+      
+      ed.changeViewZones(accessor => {
+        newZoneId = accessor.addZone({
+          afterLineNumber: endLine,
+          heightInPx: 500,
+          domNode: node,
+          suppressMouseDown: true
+        })
+      })
+
+      return [...prev, { id: blockId, zoneId: newZoneId, node, type, code }]
+    })
+  }, [])
+
+  handlePreviewBlockRef.current = handlePreviewBlock
+
   const handleMount: OnMount = useCallback((editorInstance, monaco) => {
     editorRef.current = editorInstance
     monacoRef.current = monaco
 
     monaco.editor.setTheme(getTheme())
     registerCompletionProvider(monaco, extraWords)
+    registerFoldingProvider(monaco)
+    registerCodeLensProvider(monaco)
+
+    editorInstance.addAction({
+      id: 'portfolio.previewBlock',
+      label: 'Preview Block',
+      run: (_ed, args) => handlePreviewBlockRef.current(args)
+    })
 
     editorInstance.updateOptions({
       fontSize: 13,
@@ -299,6 +419,43 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
           }}
         />
       </div>
+
+      {viewZones.map(vz => (
+        createPortal(
+          <div className="w-full h-full border border-[var(--accent)] bg-[var(--bg-card)] rounded-xl overflow-hidden relative shadow-lg">
+            <div className="absolute top-2 right-2 z-50 flex items-center gap-2">
+              {onZoomBlock && (
+                <button 
+                  onClick={() => onZoomBlock({ 
+                    type: vz.type, 
+                    code: vz.code, 
+                    startLine: parseInt(vz.id.split('-')[1]), 
+                    endLine: parseInt(vz.id.split('-')[2]) 
+                  })}
+                  className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
+                  title="Zoom (Isolate Block)"
+                >
+                  <Maximize2 size={14} />
+                </button>
+              )}
+              <button 
+                onClick={() => handlePreviewBlockRef.current({ type: vz.type, startLine: parseInt(vz.id.split('-')[1]), endLine: parseInt(vz.id.split('-')[2]) })}
+                className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                title="Close Preview"
+              >
+                <Minus size={14} />
+              </button>
+            </div>
+            <div className="absolute top-2 left-2 z-50 px-2 py-1 bg-[var(--accent-dim)] text-[var(--accent)] text-[10px] font-bold uppercase rounded-md border border-[var(--accent)] shadow">
+              {vz.type} Preview
+            </div>
+            <div className="w-full h-full pt-10 overflow-auto">
+              {renderInlinePreview ? renderInlinePreview(vz.type, vz.code, vz.id) : <div className="p-4 text-center text-sm text-[var(--text-secondary)]">Preview rendering not provided.</div>}
+            </div>
+          </div>,
+          vz.node
+        )
+      ))}
     </div>
   )
 }

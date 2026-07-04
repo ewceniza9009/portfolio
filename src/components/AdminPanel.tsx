@@ -17,6 +17,7 @@ import {
   Search,
   Sparkles,
   Check,
+  X,
   Copy,
   Inbox,
   Lock,
@@ -47,7 +48,10 @@ import {
   Smartphone,
   Tablet,
 } from "lucide-react";
-import { parseMarkdown } from "../utils/markdown";
+import { parseMarkdown, MermaidRenderer } from "../utils/markdown";
+import Interactive3DBlock from "./Interactive3DBlock";
+import InteractiveBlock from "./InteractiveBlock";
+import ChartBlock from "./ChartBlock";
 import { ACCENT_THEMES, type AccentKey } from "../data/accents";
 import Logo from "./Logo";
 import { Link } from "react-router-dom";
@@ -344,6 +348,39 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     [blogContent, theme, accent],
   );
 
+  // ── Zoom Modal State ──
+  const [zoomedBlock, setZoomedBlock] = useState<{
+    type: string;
+    code: string;
+    startLine: number;
+    endLine: number;
+  } | null>(null);
+  const [zoomedCode, setZoomedCode] = useState("");
+
+  useEffect(() => {
+    if (zoomedBlock) {
+      setZoomedCode(zoomedBlock.code);
+      document.body.style.overflow = "hidden";
+    } else if (!focusContentMode) {
+      document.body.style.overflow = "";
+    }
+  }, [zoomedBlock, focusContentMode]);
+
+  const applyZoomedChanges = useCallback(() => {
+    if (!zoomedBlock) return;
+    
+    const lines = blogContent.split('\n');
+    const before = lines.slice(0, zoomedBlock.startLine);
+    const after = lines.slice(zoomedBlock.endLine - 1);
+    
+    const newContent = [...before, zoomedCode, ...after].join('\n');
+    setBlogContent(newContent);
+    setZoomedBlock(null);
+  }, [zoomedBlock, zoomedCode, blogContent]);
+
+  // Moving renderInlinePreview below state declarations
+
+
   // ── Console State ──
   const [previewSubTab, setPreviewSubTab] = useState<"render" | "console">("render");
   const [previewLogs, setPreviewLogs] = useState<{ id: string; type: string; msg: string; time: string }[]>([]);
@@ -369,8 +406,100 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
     }
   };
 
+  const renderInlinePreview = useCallback(
+    (type: string, code: string, _id: string) => {
+      let content;
+      switch (type) {
+        case "mermaid":
+          content = <MermaidRenderer code={code} theme={theme} accent={accent} />;
+          break;
+        case "interactive-3d":
+          content = <Interactive3DBlock html={code} />;
+          break;
+        case "interactive":
+          content = <InteractiveBlock html={code} />;
+          break;
+        case "chart":
+          content = <ChartBlock code={code} />;
+          break;
+        default:
+          content = (
+            <div className="p-4 text-center text-[var(--text-secondary)]">
+              Preview for '{type}' is not supported.
+            </div>
+          );
+      }
+
+      return (
+        <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-auto">{content}</div>
+          {previewLogs.length > 0 && (
+            <div className="shrink-0 h-[150px] bg-black border-t border-gray-800 p-3 overflow-y-auto font-mono text-[11px] leading-relaxed relative">
+              <div className="sticky top-0 left-0 bg-black/80 backdrop-blur pb-2 flex justify-between items-center border-b border-gray-800/50 mb-2 z-10">
+                <span className="text-gray-400 font-bold uppercase text-[9px] tracking-wider">Console Logs</span>
+                <button
+                  onClick={() => setPreviewLogs([])}
+                  className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                >
+                  Clear Logs
+                </button>
+              </div>
+              <div className="space-y-3 pt-1">
+                {previewLogs.map((log) => (
+                  <div key={log.id} className="pb-3 border-b border-gray-800/50">
+                    <div className="flex gap-2">
+                      <span className="text-gray-500 shrink-0">{log.time}</span>
+                      <span className={`flex-1 whitespace-pre-wrap ${
+                        log.type === "error" ? "text-red-400" :
+                        log.type === "warn" ? "text-yellow-400" :
+                        "text-blue-300"
+                      }`}>
+                        {log.msg}
+                      </span>
+                    </div>
+                    {log.type === "error" && log.msg.includes("THREE.CSS2DObject is not a constructor") && (
+                      <div className="mt-2 ml-14 p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 text-[10px]">
+                        💡 <strong>Tip:</strong> Remove the <code>THREE.</code> namespace. Import and use <code>CSS2DObject</code> directly.
+                      </div>
+                    )}
+                    {log.type === "error" && (
+                      <div className="mt-2 ml-14">
+                        {!aiSuggestions[log.id] && fixingErrorId !== log.id && (
+                          <button
+                            onClick={() => handleAskAiFix(log.id, log.msg)}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors border border-indigo-500/30 font-sans text-[9px] font-bold"
+                          >
+                            <Sparkles size={10} /> Ask AI to Fix
+                          </button>
+                        )}
+                        {fixingErrorId === log.id && (
+                          <div className="flex items-center gap-1.5 text-indigo-400 text-[9px] font-sans">
+                            <Loader size={10} className="animate-spin" /> Analyzing error...
+                          </div>
+                        )}
+                        {aiSuggestions[log.id] && (
+                          <div className="p-2.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 mt-1 font-sans shadow-inner">
+                            <div className="flex items-center gap-1.5 text-indigo-400 font-bold mb-1.5 uppercase tracking-wider text-[9px]">
+                              <Sparkles size={10} /> AI Suggestion
+                            </div>
+                            <div className="whitespace-pre-wrap leading-relaxed text-[10px]">{aiSuggestions[log.id]}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    },
+    [theme, accent, previewLogs, aiSuggestions, fixingErrorId]
+  );
+
   useEffect(() => {
-    if (blogEditorTab !== "preview") return;
+    if (blogEditorTab !== "preview" && blogEditorTab !== "edit") return;
 
     const originalError = console.error;
     const originalWarn = console.warn;
@@ -2992,6 +3121,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                                 onEditorMount={setMonacoEditor}
                                 extraWords={blogWords}
                                 showToolbar
+                                renderInlinePreview={renderInlinePreview}
+                                onZoomBlock={setZoomedBlock}
                               />
                             </div>
                           </div>
@@ -6038,6 +6169,8 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                     onEditorMount={setMonacoEditor}
                     extraWords={blogWords}
                     showToolbar
+                    renderInlinePreview={renderInlinePreview}
+                    onZoomBlock={setZoomedBlock}
                   />
                 </div>
 
@@ -6066,6 +6199,78 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
                   >
                     <Minimize2 size={12} /> Exit
                   </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Zoom Modal ── */}
+          <AnimatePresence>
+            {zoomedBlock && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-0 z-[100] flex flex-col bg-black/90 backdrop-blur-xl"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900/50 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[var(--accent)] text-black rounded-lg">
+                      <Maximize2 size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                        Zoomed View: {zoomedBlock.type}
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Isolating lines {zoomedBlock.startLine} to {zoomedBlock.endLine}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setZoomedBlock(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    >
+                      <X size={14} /> Cancel
+                    </button>
+                    <button
+                      onClick={applyZoomedChanges}
+                      className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:brightness-110 flex items-center gap-2"
+                      style={{ background: "var(--accent)", color: "var(--bg-primary)" }}
+                    >
+                      <Check size={14} /> Save & Close
+                    </button>
+                  </div>
+                </div>
+
+                {/* Split Pane */}
+                <div className="flex-1 flex min-h-0 overflow-hidden">
+                  {/* Left Pane: Code Editor */}
+                  <div className="w-1/2 flex flex-col border-r border-gray-800">
+                    <div className="px-4 py-2 text-[10px] font-bold text-gray-400 bg-gray-900/80 uppercase tracking-wider border-b border-gray-800">
+                      Edit Code
+                    </div>
+                    <div className="flex-1 min-h-0">
+                      <MarkdownEditor
+                        value={zoomedCode}
+                        onChange={setZoomedCode}
+                        height="100%"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Pane: Live Preview & Console */}
+                  <div className="w-1/2 flex flex-col bg-[var(--bg-card)]">
+                    <div className="px-4 py-2 text-[10px] font-bold text-gray-400 bg-gray-900/80 uppercase tracking-wider border-b border-gray-800">
+                      Live Preview & Console
+                    </div>
+                    <div className="flex-1 min-h-0 relative overflow-hidden">
+                      {renderInlinePreview(zoomedBlock.type, zoomedCode, "zoom-preview")}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
