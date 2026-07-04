@@ -723,3 +723,9 @@ html[data-cursor-enabled="false"] .click-ripple {
 /* Force CQRS interactive block Next button to be visible in both themes */
 .gv-btn-prim { color: var(--bg-primary) !important; }
 [data-theme="light"] .gv-btn-prim { color: #ffffff !important; }
+
+/* --- FIX FOR MARKDOWN INTERACTIVE BLOCKS --- */
+button.gv-btn { background-color: var(--bg-secondary) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; font-weight: 600 !important; }
+button.gv-btn-prim { background-color: var(--accent) !important; color: var(--bg-primary) !important; border: 1px solid var(--accent) !important; }
+button.gv-btn:hover { filter: brightness(1.2); }
+
