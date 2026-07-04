@@ -281,9 +281,33 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
         <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={() => {}} accent={accent} onChangeAccent={setAccent} />
-        <div className="flex-grow flex flex-col items-center justify-center space-y-4">
-          <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
-          <span className="text-sm text-secondary" style={{ color: 'var(--text-secondary)' }}>Loading article content...</span>
+        <div className="flex-grow flex flex-col max-w-3xl w-full mx-auto px-6 pt-32 pb-20 space-y-8 animate-pulse">
+          {/* Skeleton Title */}
+          <div className="space-y-4">
+            <div className="h-10 bg-[var(--bg-secondary)] rounded-lg w-3/4"></div>
+            <div className="h-10 bg-[var(--bg-secondary)] rounded-lg w-1/2"></div>
+          </div>
+          
+          {/* Skeleton Metadata */}
+          <div className="flex gap-4">
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-24"></div>
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-20"></div>
+          </div>
+
+          {/* Skeleton Image Placeholder */}
+          <div className="w-full aspect-video bg-[var(--bg-secondary)] rounded-2xl mt-8"></div>
+
+          {/* Skeleton Content Paragraphs */}
+          <div className="space-y-4 pt-8">
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-5/6"></div>
+          </div>
+          <div className="space-y-4 pt-4">
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-4/5"></div>
+            <div className="h-4 bg-[var(--bg-secondary)] rounded w-full"></div>
+          </div>
         </div>
         <Footer onScrollTo={() => {}} />
       </div>
