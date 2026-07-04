@@ -45,9 +45,14 @@ const defineThemes: BeforeMount = (monaco) => {
   })
 }
 
-function getTheme(): string {
-  return document.documentElement.classList.contains('dark') ? 'portfolio-dark' : 'portfolio-light'
+const getTheme = () => {
+  if (typeof document !== 'undefined') {
+    return document.documentElement.classList.contains('dark') ? 'portfolio-dark' : 'portfolio-light'
+  }
+  return 'portfolio-dark'
 }
+
+let providersRegistered = false
 
 function registerCompletionProvider(monaco: typeof import('monaco-editor'), extraWords: string[] = []) {
   const provider: languages.CompletionItemProvider = {
@@ -150,7 +155,16 @@ function registerFoldingProvider(monaco: typeof import('monaco-editor')) {
   })
 }
 
+let globalCommandRegistered = false
 function registerCodeLensProvider(monaco: typeof import('monaco-editor')) {
+  // Command registration only once
+  if (!globalCommandRegistered) {
+    monaco.editor.registerCommand('portfolio.previewBlock', (_accessor, args) => {
+      window.dispatchEvent(new CustomEvent('portfolio.previewBlock', { detail: args }))
+    })
+    globalCommandRegistered = true
+  }
+
   monaco.languages.registerCodeLensProvider('markdown', {
     provideCodeLenses: (model) => {
       const lenses: languages.CodeLens[] = []
@@ -174,7 +188,7 @@ function registerCodeLensProvider(monaco: typeof import('monaco-editor')) {
               command: {
                 id: 'portfolio.previewBlock',
                 title: '👁️ Preview & Debug',
-                arguments: [{ type: currentBlockType, startLine: currentBlockStart, endLine: i }]
+                arguments: [{ uri: model.uri.toString(), type: currentBlockType, startLine: currentBlockStart, endLine: i }]
               }
             })
             currentBlockStart = -1
@@ -282,15 +296,13 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
     monacoRef.current = monaco
 
     monaco.editor.setTheme(getTheme())
-    registerCompletionProvider(monaco, extraWords)
-    registerFoldingProvider(monaco)
-    registerCodeLensProvider(monaco)
-
-    editorInstance.addAction({
-      id: 'portfolio.previewBlock',
-      label: 'Preview Block',
-      run: (_ed, args) => handlePreviewBlockRef.current(args)
-    })
+    
+    if (!providersRegistered) {
+      registerCompletionProvider(monaco, extraWords)
+      registerFoldingProvider(monaco)
+      registerCodeLensProvider(monaco)
+      providersRegistered = true
+    }
 
     editorInstance.updateOptions({
       fontSize: 13,
@@ -330,13 +342,36 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
   }, [autoFocus, onEditorMount, extraWords])
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      if (monacoRef.current && editorRef.current) {
+    const handleThemeChange = () => {
+      if (monacoRef.current) {
         monacoRef.current.editor.setTheme(getTheme())
       }
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          handleThemeChange()
+        }
+      })
     })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-    return () => observer.disconnect()
+
+    observer.observe(document.documentElement, { attributes: true })
+
+    // Listen to global CodeLens command
+    const handleGlobalPreviewCommand = (e: any) => {
+      const args = e.detail
+      const model = editorRef.current?.getModel()
+      if (model && model.uri.toString() === args.uri) {
+        handlePreviewBlockRef.current(args)
+      }
+    }
+    window.addEventListener('portfolio.previewBlock', handleGlobalPreviewCommand)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('portfolio.previewBlock', handleGlobalPreviewCommand)
+    }
   }, [])
 
   return (
