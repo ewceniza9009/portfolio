@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide-react'
 import { getSafeItem, setSafeItem } from '../utils/storage'
+import MagneticWrapper from './MagneticWrapper'
 
 function CopyToast({ message }: { message: string }) {
   return (
@@ -252,19 +253,21 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={sending}
-            className="relative z-10 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.98] shadow-md hover:shadow-lg"
-            style={{
-              background: 'linear-gradient(to right, var(--accent), var(--accent-secondary))',
-              color: 'var(--bg-primary)',
-              opacity: sending ? 0.7 : 1,
-            }}
-          >
-            {sending ? <Loader size={16} className="animate-spin" /> : <Send size={16} />}
-            {sending ? 'Sending...' : 'Send Message'}
-          </button>
+          <MagneticWrapper>
+            <button
+              type="submit"
+              disabled={sending}
+              className="relative z-10 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.98] shadow-md hover:shadow-lg"
+              style={{
+                background: 'linear-gradient(to right, var(--accent), var(--accent-secondary))',
+                color: 'var(--bg-primary)',
+                opacity: sending ? 0.7 : 1,
+              }}
+            >
+              {sending ? <Loader size={16} className="animate-spin" /> : <Send size={16} />}
+              {sending ? 'Sending...' : 'Send Message'}
+            </button>
+          </MagneticWrapper>
 
           <AnimatePresence>
             {toast && (

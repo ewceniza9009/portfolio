@@ -204,7 +204,8 @@ const ProjectCard = React.memo(function ProjectCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image */}
-      <div
+      <motion.div
+        layoutId={`project-image-${project.id}`}
         className="relative h-48 overflow-hidden"
         style={{ background: "var(--bg-secondary)" }}
       >
@@ -262,7 +263,7 @@ const ProjectCard = React.memo(function ProjectCard({
             <Play size={10} fill="currentColor" /> Video
           </span>
         )}
-      </div>
+      </motion.div>
 
       {/* Content */}
       <div className="p-6">

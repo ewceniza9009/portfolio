@@ -84,7 +84,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media Panel (Left on Desktop, Top on Mobile) */}
-            <div 
+            <motion.div 
+              layoutId={`project-image-${project.id}`}
               className={`relative w-full lg:w-1/2 h-[40vh] lg:h-full flex-shrink-0 flex flex-col items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r ${
                 project.video ? "p-0 lg:p-12" : "p-0"
               }`}
@@ -230,7 +231,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 className="lg:hidden absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
                 style={{ background: 'linear-gradient(to top, var(--bg-secondary), transparent)' }}
               />
-            </div>
+            </motion.div>
 
             {/* Content Panel (Right on Desktop, Bottom on Mobile) */}
             <div className="w-full lg:w-1/2 flex-1 lg:flex-none lg:h-full flex flex-col relative min-h-0" style={{ background: "var(--bg-secondary)" }}>

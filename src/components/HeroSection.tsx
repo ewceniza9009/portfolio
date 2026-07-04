@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import VantaBackground from "./VantaBackground";
 import { useProfilePic } from "../utils/profilePic";
+import MagneticWrapper from "./MagneticWrapper";
 
 interface HeroSectionProps {
   onScrollTo: (id: string) => void;
@@ -201,23 +202,27 @@ export default React.memo(function HeroSection({
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
-            <button
-              onClick={() => onScrollTo("projects")}
-              className="px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2 hover:scale-105 shadow-[0_0_20px_var(--accent-dim)] hover:shadow-[0_0_30px_var(--accent-dim)]"
-              style={{
-                background: "var(--accent)",
-                color: "var(--bg-primary)",
-              }}
-            >
-              View Projects <ArrowRight size={18} />
-            </button>
-            <button
-              onClick={onViewResume}
-              className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
-              style={{ color: "var(--text-primary)" }}
-            >
-              <Download size={18} /> Resume
-            </button>
+            <MagneticWrapper>
+              <button
+                onClick={() => onScrollTo("projects")}
+                className="px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2 hover:scale-105 shadow-[0_0_20px_var(--accent-dim)] hover:shadow-[0_0_30px_var(--accent-dim)]"
+                style={{
+                  background: "var(--accent)",
+                  color: "var(--bg-primary)",
+                }}
+              >
+                View Projects <ArrowRight size={18} />
+              </button>
+            </MagneticWrapper>
+            <MagneticWrapper>
+              <button
+                onClick={onViewResume}
+                className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:scale-105 glass hover:bg-[var(--bg-card-hover)]"
+                style={{ color: "var(--text-primary)" }}
+              >
+                <Download size={18} /> Resume
+              </button>
+            </MagneticWrapper>
 
             <div className="flex items-center gap-3 border-l pl-4 ml-2" style={{ borderColor: 'var(--border)' }}>
               <a
