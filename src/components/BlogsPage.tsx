@@ -166,9 +166,9 @@ const BLOG_PAGE_STYLES = `
   .bg-shimmer {
     background: linear-gradient(
       90deg, 
-      var(--bg-secondary) 25%, 
-      var(--border) 37%, 
-      var(--bg-secondary) 63%
+      var(--skeleton-bg) 25%, 
+      color-mix(in srgb, var(--text-primary) 10%, var(--skeleton-bg)) 50%, 
+      var(--skeleton-bg) 75%
     );
     background-size: 400% 100%;
     animation: skeleton-shimmer 1.8s ease-in-out infinite;

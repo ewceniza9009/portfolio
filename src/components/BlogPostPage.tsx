@@ -283,47 +283,47 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
         <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={() => {}} accent={accent} onChangeAccent={setAccent} />
         <div className="flex-grow max-w-4xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 animate-pulse">
           {/* Back button skeleton */}
-          <div className="mb-10 w-24 h-4 rounded bg-[var(--bg-card-hover)]" />
+          <div className="mb-10 w-24 h-4 rounded bg-[var(--skeleton-bg)]" />
           
           <header className="mb-8 relative">
             {/* Author byline skeleton */}
             <div className="flex items-center gap-4 mb-6">
-               <div className="w-12 h-12 rounded-full bg-[var(--bg-card-hover)]" />
-               <div className="w-32 h-6 rounded-full bg-[var(--bg-card-hover)]" />
+               <div className="w-12 h-12 rounded-full bg-[var(--skeleton-bg)]" />
+               <div className="w-32 h-6 rounded-full bg-[var(--skeleton-bg)]" />
             </div>
 
             {/* Title skeleton */}
             <div className="mb-6 space-y-3">
-              <div className="h-10 sm:h-12 w-3/4 rounded-lg bg-[var(--bg-card-hover)]" />
-              <div className="h-10 sm:h-12 w-1/2 rounded-lg bg-[var(--bg-card-hover)]" />
+              <div className="h-10 sm:h-12 w-3/4 rounded-lg bg-[var(--skeleton-bg)]" />
+              <div className="h-10 sm:h-12 w-1/2 rounded-lg bg-[var(--skeleton-bg)]" />
             </div>
             
             {/* Metadata Bar skeleton */}
             <div className="flex flex-wrap gap-4 border-b pb-6" style={{ borderColor: 'var(--border)' }}>
-              <div className="w-20 h-4 rounded bg-[var(--bg-card-hover)]" />
-              <div className="w-16 h-4 rounded bg-[var(--bg-card-hover)]" />
-              <div className="w-16 h-4 rounded bg-[var(--bg-card-hover)]" />
-              <div className="w-20 h-4 rounded bg-[var(--bg-card-hover)]" />
+              <div className="w-20 h-4 rounded bg-[var(--skeleton-bg)]" />
+              <div className="w-16 h-4 rounded bg-[var(--skeleton-bg)]" />
+              <div className="w-16 h-4 rounded bg-[var(--skeleton-bg)]" />
+              <div className="w-20 h-4 rounded bg-[var(--skeleton-bg)]" />
             </div>
           </header>
 
           {/* Cover image skeleton */}
-          <div className="w-full aspect-video rounded-2xl bg-[var(--bg-card-hover)] mb-10" />
+          <div className="w-full aspect-video rounded-2xl bg-[var(--skeleton-bg)] mb-10" />
           
           {/* Content paragraphs skeleton */}
           <div className="space-y-4 mb-8">
-             <div className="h-4 w-full rounded bg-[var(--bg-card-hover)]" />
-             <div className="h-4 w-full rounded bg-[var(--bg-card-hover)]" />
-             <div className="h-4 w-5/6 rounded bg-[var(--bg-card-hover)]" />
+             <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
+             <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
+             <div className="h-4 w-5/6 rounded bg-[var(--skeleton-bg)]" />
           </div>
           <div className="space-y-4 mb-8">
-             <div className="h-4 w-full rounded bg-[var(--bg-card-hover)]" />
-             <div className="h-4 w-4/5 rounded bg-[var(--bg-card-hover)]" />
-             <div className="h-4 w-full rounded bg-[var(--bg-card-hover)]" />
+             <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
+             <div className="h-4 w-4/5 rounded bg-[var(--skeleton-bg)]" />
+             <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
           </div>
           <div className="space-y-4">
-             <div className="h-4 w-3/4 rounded bg-[var(--bg-card-hover)]" />
-             <div className="h-4 w-full rounded bg-[var(--bg-card-hover)]" />
+             <div className="h-4 w-3/4 rounded bg-[var(--skeleton-bg)]" />
+             <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
           </div>
         </div>
         <Footer onScrollTo={() => {}} />
