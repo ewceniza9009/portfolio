@@ -1,0 +1,417 @@
+{
+  "communities": {
+    "0": [
+      "app",
+      "app_app",
+      "app_portfolio",
+      "components_aboutsection",
+      "components_awardssection",
+      "components_awardssection_awardssectionprops",
+      "components_contactsection",
+      "components_contactsection_contactsection",
+      "components_contactsection_contactsectionprops",
+      "components_contactsection_copyablecontact",
+      "components_contactsection_copyablecontactprops",
+      "components_contactsection_copytoast",
+      "components_contactsection_sociallink",
+      "components_contactsection_sociallinkprops",
+      "components_experiencesection",
+      "components_experiencesection_experience",
+      "components_experiencesection_experiencesectionprops",
+      "components_resumemodal",
+      "components_resumemodal_resumemodal",
+      "components_resumemodal_resumemodalprops",
+      "components_techloader",
+      "components_techloader_techloader",
+      "components_techloader_texts",
+      "data_awards",
+      "data_awards_award",
+      "data_awards_awards",
+      "data_experience",
+      "data_experience_experience",
+      "data_projects",
+      "data_projects_projects",
+      "data_skills",
+      "data_skills_skillitem",
+      "data_skills_skills",
+      "main",
+      "utils_storage",
+      "utils_storage_getsafeitem",
+      "utils_storage_setsafeitem"
+    ],
+    "1": [
+      "components_backtotop",
+      "components_backtotop_backtotop",
+      "components_blogpostpage",
+      "components_blogpostpage_blog",
+      "components_blogpostpage_blogpostpage",
+      "components_blogpostpage_comment",
+      "components_blogpostpage_formatdate",
+      "components_blogpostpage_getapiurl",
+      "components_blogpostpage_getavatarcolor",
+      "components_blogpostpage_getgradient",
+      "components_blogspage",
+      "components_blogspage_blog",
+      "components_blogspage_blogspage",
+      "components_blogspage_categorymeta",
+      "components_blogspage_formatdate",
+      "components_blogspage_getapiurl",
+      "components_blogspage_getgradient",
+      "components_blogspage_relativedate",
+      "components_cursorfollower",
+      "components_cursorfollower_cursorfollower",
+      "components_footer",
+      "components_footer_current_year",
+      "components_footer_footer",
+      "components_footer_footerprops",
+      "components_headtags",
+      "components_headtags_headtags",
+      "components_headtags_headtagsprops",
+      "components_headtags_setlink",
+      "components_headtags_setmeta",
+      "components_headtags_settitle",
+      "components_paypaldonate",
+      "components_paypaldonate_getpaypaldonateurl",
+      "components_paypaldonate_paypaldonate",
+      "components_paypaldonate_paypaldonateprops",
+      "utils_profilepic_useprofilepic"
+    ],
+    "2": [
+      "app_portfolioprops",
+      "components_blogpostpage_blogpostpageprops",
+      "components_blogspage_blogspageprops",
+      "components_githubsection",
+      "components_githubsection_githubsectionprops",
+      "components_herosection",
+      "components_herosection_herosectionprops",
+      "components_herosection_roles",
+      "components_herosection_usetypewriter",
+      "components_logo",
+      "components_logo_logo",
+      "components_logo_logoprops",
+      "components_navbar",
+      "components_navbar_accent_dropdown_style",
+      "components_navbar_accentdropdown",
+      "components_navbar_blog_btn_desktop_style",
+      "components_navbar_mobile_menu_style",
+      "components_navbar_nav_items",
+      "components_navbar_nav_style",
+      "components_navbar_navbar",
+      "components_navbar_navbarprops",
+      "components_navbar_theme_toggle_style",
+      "components_vantabackground",
+      "components_vantabackground_vantabackground",
+      "data_accents",
+      "data_accents_accent_themes",
+      "data_accents_accentkey",
+      "data_accents_accentset",
+      "data_accents_accenttheme",
+      "utils_markdown_mermaidrendererprops"
+    ],
+    "3": [
+      "components_adminpanel",
+      "components_adminpanel_adminpanel",
+      "components_adminpanel_adminpanelprops",
+      "components_adminpanel_ai_presets",
+      "components_adminpanel_blog",
+      "components_adminpanel_comment",
+      "components_adminpanel_formatdate",
+      "components_adminpanel_getsafeitem",
+      "components_adminpanel_inlinepreviewtabs",
+      "components_adminpanel_message",
+      "components_adminpanel_parseua",
+      "components_adminpanel_processcountrystats",
+      "components_adminpanel_processuastats",
+      "components_adminpanel_removesafeitem",
+      "components_adminpanel_setsafeitem",
+      "components_adminpanel_slugify",
+      "components_adminpanel_visitor_table_columns",
+      "components_interactive3dblock",
+      "components_interactive3dblock_interactive3dblock",
+      "components_interactive3dblock_interactive3dblockprops",
+      "components_markdowneditor_usemarkdowninsert",
+      "utils_markdown",
+      "utils_markdown_codeblock",
+      "utils_markdown_codeblockprops",
+      "utils_markdown_highlightcode",
+      "utils_markdown_mermaidrenderer",
+      "utils_markdown_parseblock",
+      "utils_markdown_parseinline",
+      "utils_markdown_parsemarkdown"
+    ],
+    "4": [
+      "components_markdowneditor",
+      "components_markdowneditor_definethemes",
+      "components_markdowneditor_gettheme",
+      "components_markdowneditor_markdowneditor",
+      "components_markdowneditor_markdowneditorprops",
+      "components_markdowneditor_registercodelensprovider",
+      "components_markdowneditor_registercompletionprovider",
+      "components_markdowneditor_registerfoldingprovider",
+      "utils_snippets",
+      "utils_snippets_buildsnippet",
+      "utils_snippets_chart_snippet",
+      "utils_snippets_getgenericsnippet",
+      "utils_snippets_interactive3d_snippet",
+      "utils_snippets_mermaid_snippet",
+      "utils_snippets_quiz_snippet",
+      "utils_snippets_steps_snippet"
+    ],
+    "5": [
+      "components_floatingcontrol",
+      "components_floatingcontrol_adventure_story",
+      "components_floatingcontrol_adventurechoice",
+      "components_floatingcontrol_adventurenode",
+      "components_floatingcontrol_chatmessage",
+      "components_floatingcontrol_chatwindow",
+      "components_floatingcontrol_contactpanel",
+      "components_floatingcontrol_copytoast",
+      "components_floatingcontrol_floatingcontrol",
+      "components_floatingcontrol_historyline",
+      "components_floatingcontrol_matrixoverlay",
+      "components_floatingcontrol_snakeoverlay",
+      "components_floatingcontrol_suggestions",
+      "components_floatingcontrol_terminalwindow"
+    ],
+    "6": [
+      "components_projectmodal",
+      "components_projectmodal_project",
+      "components_projectmodal_projectmodal",
+      "components_projectmodal_projectmodalprops",
+      "components_projectssection",
+      "components_projectssection_filtertabs",
+      "components_projectssection_imagewithfallback",
+      "components_projectssection_project",
+      "components_projectssection_projectcard",
+      "components_projectssection_projectssection",
+      "components_projectssection_projectssectionprops",
+      "components_projectssection_techicon",
+      "components_projectssection_techicons",
+      "components_projectssection_usetilt"
+    ],
+    "7": [
+      "puter_d",
+      "puter_d_getuser",
+      "puter_d_issignedin",
+      "puter_d_puteraimodule",
+      "puter_d_puteraimodule_chat",
+      "puter_d_puteraimodule_txt2speech",
+      "puter_d_puterchatoptions",
+      "puter_d_puterchatresponse",
+      "puter_d_puterchatresponse_symbol_asynciterator",
+      "puter_d_puterchatresponse_tostring",
+      "puter_d_puterchattextpart",
+      "puter_d_signin",
+      "puter_d_signout",
+      "puter_d_window"
+    ],
+    "8": [
+      "components_skillssection",
+      "components_skillssection_background_decorations",
+      "components_skillssection_category_hover_colors",
+      "components_skillssection_category_icons",
+      "components_skillssection_category_labels",
+      "components_skillssection_getbentoclasses",
+      "components_skillssection_skillitem",
+      "components_skillssection_skillsdata",
+      "components_skillssection_skillssection",
+      "components_skillssection_skillssectionprops",
+      "components_skillssection_skilltag"
+    ],
+    "9": [
+      "components_chartblock",
+      "components_chartblock_chart_type_map",
+      "components_chartblock_chartblock",
+      "components_chartblock_chartblockprops",
+      "components_chartblock_colors",
+      "components_chartblock_getisdark",
+      "components_chartblock_parsearray",
+      "components_chartblock_parsechartcode",
+      "components_chartblock_parsedchart"
+    ],
+    "10": [
+      "components_gallerysection",
+      "components_gallerysection_buildgalleryimages",
+      "components_gallerysection_galleryimage",
+      "components_gallerysection_gallerysection",
+      "components_gallerysection_gallerytile",
+      "components_gallerysection_project_order",
+      "components_gallerysection_projects",
+      "data_gallery_descriptions",
+      "data_gallery_descriptions_gallery_descriptions"
+    ],
+    "11": [
+      "utils_profilepic",
+      "utils_profilepic_emitprofilepicchange",
+      "utils_profilepic_getadmintoken",
+      "utils_profilepic_getapiurl",
+      "utils_profilepic_loadprofilepic",
+      "utils_profilepic_profilepicstate",
+      "utils_profilepic_resetprofilepic",
+      "utils_profilepic_subscribers",
+      "utils_profilepic_uploadprofilepic"
+    ],
+    "12": [
+      "components_interactiveblock",
+      "components_interactiveblock_interactiveblock",
+      "components_interactiveblock_interactiveblockprops",
+      "components_interactiveblock_parsepreset",
+      "components_interactiveblock_quiz",
+      "components_interactiveblock_stepthrough"
+    ],
+    "13": [
+      "vanta_d",
+      "vanta_d_vantaeffect",
+      "vanta_d_vantaoptions"
+    ],
+    "14": [
+      "components_headtags_og_default_image"
+    ],
+    "15": [
+      "components_headtags_og_site_name"
+    ],
+    "16": [
+      "components_headtags_og_site_url"
+    ],
+    "17": [
+      "utils_profilepic_default_profile_pic"
+    ],
+    "18": [
+      "vite_env_d"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07207207207207207,
+    "1": 0.08907563025210084,
+    "2": 0.09195402298850575,
+    "3": 0.0960591133004926,
+    "4": 0.2,
+    "5": 0.14285714285714285,
+    "6": 0.15384615384615385,
+    "7": 0.14285714285714285,
+    "8": 0.18181818181818182,
+    "9": 0.3055555555555556,
+    "10": 0.25,
+    "11": 0.3611111111111111,
+    "12": 0.4,
+    "13": 0.6666666666666666,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "data_accents_accentkey",
+      "label": "AccentKey",
+      "degree": 15
+    },
+    {
+      "id": "utils_profilepic_useprofilepic",
+      "label": "useProfilePic()",
+      "degree": 8
+    },
+    {
+      "id": "data_accents_accent_themes",
+      "label": "ACCENT_THEMES",
+      "degree": 7
+    },
+    {
+      "id": "utils_markdown_parsemarkdown",
+      "label": "parseMarkdown()",
+      "degree": 6
+    },
+    {
+      "id": "components_adminpanel_adminpanel",
+      "label": "AdminPanel()",
+      "degree": 5
+    },
+    {
+      "id": "components_backtotop_backtotop",
+      "label": "BackToTop()",
+      "degree": 4
+    },
+    {
+      "id": "components_blogpostpage_blogpostpage",
+      "label": "BlogPostPage()",
+      "degree": 4
+    },
+    {
+      "id": "components_blogspage_blogspage",
+      "label": "BlogsPage()",
+      "degree": 4
+    },
+    {
+      "id": "components_cursorfollower_cursorfollower",
+      "label": "CursorFollower()",
+      "degree": 4
+    },
+    {
+      "id": "components_headtags_headtags",
+      "label": "HeadTags()",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "PortfolioProps",
+      "target": "AccentKey",
+      "source_files": [
+        "App.tsx",
+        "data/accents.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `PortfolioProps` unexpectedly reaches hub `AccentKey`"
+    },
+    {
+      "source": "AdminPanel()",
+      "target": "useProfilePic()",
+      "source_files": [
+        "components/AdminPanel.tsx",
+        "utils/profilePic.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "BlogPostPageProps",
+      "target": "AccentKey",
+      "source_files": [
+        "components/BlogPostPage.tsx",
+        "data/accents.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `BlogPostPageProps` unexpectedly reaches hub `AccentKey`"
+    },
+    {
+      "source": "BlogsPageProps",
+      "target": "AccentKey",
+      "source_files": [
+        "components/BlogsPage.tsx",
+        "data/accents.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `BlogsPageProps` unexpectedly reaches hub `AccentKey`"
+    },
+    {
+      "source": "GitHubSectionProps",
+      "target": "AccentKey",
+      "source_files": [
+        "components/GitHubSection.tsx",
+        "data/accents.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `GitHubSectionProps` unexpectedly reaches hub `AccentKey`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
