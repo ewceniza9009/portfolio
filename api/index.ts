@@ -1,17 +1,17 @@
 import express from 'express'
 import cors from 'cors'
-import turso, { initDb } from './db.js'
+import turso, { initDb } from '../server/db.js'
 
-import contactRoutes from './routes/contact.js'
-import blogsPublicRoutes from './routes/blogs-public.js'
-import blogsAdminRoutes from './routes/blogs-admin.js'
-import blogsDevtoRoutes from './routes/blogs-devto.js'
-import aiRoutes from './routes/ai.js'
-import visitorRoutes from './routes/visitors.js'
-import settingsRoutes from './routes/settings.js'
-import seoRoutes from './routes/seo.js'
-import adminTokenRoutes from './routes/admin-tokens.js'
-import adminProfileRoutes from './routes/admin-profile.js'
+import contactRoutes from '../server/routes/contact.js'
+import blogsPublicRoutes from '../server/routes/blogs-public.js'
+import blogsAdminRoutes from '../server/routes/blogs-admin.js'
+import blogsDevtoRoutes from '../server/routes/blogs-devto.js'
+import aiRoutes from '../server/routes/ai.js'
+import visitorRoutes from '../server/routes/visitors.js'
+import settingsRoutes from '../server/routes/settings.js'
+import seoRoutes from '../server/routes/seo.js'
+import adminTokenRoutes from '../server/routes/admin-tokens.js'
+import adminProfileRoutes from '../server/routes/admin-profile.js'
 
 const app = express()
 
