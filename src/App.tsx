@@ -27,6 +27,7 @@ import GallerySection from './components/GallerySection'
 import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
 import { apiFetch } from './utils/api'
+import { useProjects, useSkills, useAbout, useExperience, useAwards } from './hooks/usePortfolioData'
 import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './components/NotFound'
 import SearchPalette from './components/SearchPalette'
@@ -43,11 +44,12 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isResumeOpen, setIsResumeOpen] = useState(false)
-  const [projectsData, setProjectsData] = useState<any[]>([])
-  const [skillsData, setSkillsData] = useState<any[]>([])
-  const [aboutData, setAboutData] = useState<{ title: string; paragraphs: string[] }>({ title: 'About Me', paragraphs: [] })
-  const [experienceData, setExperienceData] = useState<any[]>([])
-  const [awardsData, setAwardsData] = useState<any[]>([])
+
+  const { data: projectsData = [] } = useProjects()
+  const { data: skillsData = [] } = useSkills()
+  const { data: aboutData = { title: 'About Me', paragraphs: [] } } = useAbout()
+  const { data: experienceData = [] } = useExperience()
+  const { data: awardsData = [] } = useAwards()
 
   useEffect(() => {
     history.scrollRestoration = 'manual'
@@ -55,7 +57,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   useEffect(() => {
-    
     const timer = setTimeout(() => {
       const hash = window.location.hash
       if (hash) {
@@ -64,55 +65,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       }
       setIsLoading(false)
     }, 1500)
-
-    // Fetch projects
-    apiFetch('/api/projects').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) {
-        const safeData = data.map(p => ({
-          ...p,
-          details: Array.isArray(p.details) ? p.details : (typeof p.details === 'string' ? [p.details] : []),
-          tech: Array.isArray(p.tech) ? p.tech : (typeof p.tech === 'string' ? p.tech.split(',').map((s: string) => s.trim()) : [])
-        }))
-        setProjectsData(safeData)
-      }
-    }).catch(err => console.error('Failed to load projects from API', err))
-
-    // Fetch skills
-    apiFetch('/api/skills').then(res => res.json()).then(data => {
-      if(data && data.categories && data.skills) {
-        const sortedSkillsData = data.categories.map((cat: any) => ({
-          id: cat.id,
-          label: cat.label,
-          image: cat.image,
-          items: data.skills[cat.id]?.items || []
-        }))
-        setSkillsData(sortedSkillsData)
-      }
-    }).catch(err => console.error('Failed to load skills from API', err))
-
-    // Fetch about
-    apiFetch('/api/about').then(res => res.json()).then(data => {
-      if(data && data.paragraphs && data.paragraphs.length > 0) {
-        setAboutData(data)
-      }
-    }).catch(err => console.error('Failed to load about from API', err))
-
-    // Fetch experience
-    apiFetch('/api/experience').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) {
-        const safeData = data.map(exp => ({
-          ...exp,
-          descriptions: Array.isArray(exp.descriptions) ? exp.descriptions : (typeof exp.descriptions === 'string' ? [exp.descriptions] : []),
-          technologies: Array.isArray(exp.technologies) ? exp.technologies : (typeof exp.technologies === 'string' ? exp.technologies.split(',').map((s: string) => s.trim()) : [])
-        }))
-        setExperienceData(safeData)
-      }
-    }).catch(err => console.error('Failed to load experience from API', err))
-
-    // Fetch awards
-    apiFetch('/api/awards').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) setAwardsData(data)
-    }).catch(err => console.error('Failed to load awards from API', err))
 
     return () => clearTimeout(timer)
   }, [])

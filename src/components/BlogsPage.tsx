@@ -9,7 +9,7 @@ import CursorFollower from './CursorFollower'
 import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
-import { getApiUrl } from '../utils/api'
+import { useBlogs, useSettings } from '../hooks/usePortfolioData'
 import { getGradient } from '../utils/gradients'
 import { formatDate } from '../utils/format'
 import type { Blog } from '../types/blog'
@@ -148,47 +148,18 @@ const BLOG_PAGE_STYLES = `
 `
 
 export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: BlogsPageProps) {
-  const [blogs, setBlogs] = useState<Blog[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: rawBlogs = [], isLoading: loading } = useBlogs()
+  const blogs = rawBlogs as Blog[]
+  const { data: settings } = useSettings()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [featuredSlug, setFeaturedSlug] = useState<string>('')
+  const featuredSlug = useMemo(() => settings?.featured_blog_slug || '', [settings])
   const { url: profilePicUrl } = useProfilePic()
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [])
-
-  useEffect(() => {
-    async function fetchBlogs() {
-      try {
-        const res = await fetch(getApiUrl('/api/blogs'))
-        if (res.ok) {
-          const data = await res.json()
-          setBlogs(data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch blogs:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchBlogs()
-  }, [])
-
-  useEffect(() => {
-    async function fetchFeatured() {
-      try {
-        const res = await fetch(getApiUrl('/api/settings'), { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          setFeaturedSlug(data?.featured_blog_slug || '')
-        }
-      } catch {}
-    }
-    fetchFeatured()
   }, [])
 
   const allTags = useMemo(() => Array.from(

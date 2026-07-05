@@ -11,10 +11,11 @@ import PayPalDonate from './PayPalDonate'
 import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
-import { getApiUrl } from '../utils/api'
+import { useBlog, useBlogComments, useSettings } from '../hooks/usePortfolioData'
 import { getGradient } from '../utils/gradients'
 import { formatDate } from '../utils/format'
-import type { Blog, Comment } from '../types/blog'
+import { getApiUrl } from '../utils/api'
+import type { Blog } from '../types/blog'
 
 function getAvatarColor(name: string): string {
   const colors = [
@@ -76,17 +77,17 @@ interface BlogPostPageProps {
 
 export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: BlogPostPageProps) {
   const { slug } = useParams<{ slug: string }>()
-  const [blog, setBlog] = useState<Blog | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: rawBlog, isLoading: blogLoading } = useBlog(slug || '')
+  const blog = rawBlog as Blog | undefined
+  const { data: comments = [], refetch: refetchComments } = useBlogComments(blog?.id || '')
+  const { data: settings } = useSettings()
   const { url: profilePicUrl } = useProfilePic()
+
+  const [loading, setLoading] = useState(true)
 
   // Likes state
   const [likes, setLikes] = useState(0)
   const [hasLiked, setHasLiked] = useState(false)
-
-  // PayPal donate URL fetched from /api/settings
-  const [paypalUrl, setPaypalUrl] = useState<string>('')
 
   // Share menu state
   const [shareOpen, setShareOpen] = useState(false)
@@ -110,60 +111,27 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
+  // Sync likes when blog loads
   useEffect(() => {
-    async function fetchBlogAndComments() {
+    if (blog) {
+      setLikes(blog.likes)
       try {
-        const blogRes = await fetch(getApiUrl(`/api/blogs/${slug}`))
-        if (!blogRes.ok) throw new Error('Blog not found')
-        const blogData = (await blogRes.json()) as Blog
-        setBlog(blogData)
-        setLikes(blogData.likes)
-
-        // Check if user has already liked this post from localStorage
-        try {
-          const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '[]') as string[]
-          if (likedPosts.includes(blogData.id)) {
-            setHasLiked(true)
-          }
-        } catch {}
-
-        // Fetch comments
-        const commentsRes = await fetch(getApiUrl(`/api/blogs/${blogData.id}/comments`))
-        if (commentsRes.ok) {
-          const commentsData = await commentsRes.json()
-          setComments(commentsData)
+        const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '[]') as string[]
+        if (likedPosts.includes(blog.id)) {
+          setHasLiked(true)
         }
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+      } catch {}
     }
-    
-    if (slug) {
-      fetchBlogAndComments()
-    }
-  }, [slug])
+  }, [blog])
 
-  // Fetch PayPal donate URL once at mount (cached, not per blog)
+  // Update loading state based on blog loading
   useEffect(() => {
-    let aborted = false
-    const cached = sessionStorage.getItem('paypal_donate_url')
-    if (cached !== null) {
-      setPaypalUrl(cached)
-      return
+    if (!blogLoading) {
+      setLoading(false)
     }
-    fetch(getApiUrl('/api/settings'))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (aborted) return
-        const url = data?.paypal_donate_url || ''
-        setPaypalUrl(url)
-        try { sessionStorage.setItem('paypal_donate_url', url) } catch {}
-      })
-      .catch(() => {})
-    return () => { aborted = true }
-  }, [])
+  }, [blogLoading])
+
+  const paypalUrl = useMemo(() => settings?.paypal_donate_url || '', [settings])
 
   const handleLike = async () => {
     if (!blog || hasLiked) return
@@ -210,8 +178,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
       })
 
       if (res.ok) {
-        const newComment = await res.json()
-        setComments(prev => [newComment, ...prev])
+        await res.json()
+        refetchComments()
         setAuthorName('')
         setAuthorEmail('')
         setCommentContent('')
