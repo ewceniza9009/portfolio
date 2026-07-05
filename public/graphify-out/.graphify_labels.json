@@ -26,5 +26,7 @@
   "24": "DEFAULT_PROFILE_PIC",
   "25": "vite-env.d.ts",
   "26": "tailwind.config.js",
-  "27": "vite.config.ts"
+  "27": "vite.config.ts",
+  "28": "seedAll",
+  "29": "copy-graphify.mjs"
 }

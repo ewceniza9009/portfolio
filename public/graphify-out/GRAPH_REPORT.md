@@ -1,16 +1,16 @@
 # Graph Report - portfolio  (2026-07-05)
 
 ## Corpus Check
-- 85 files · ~74,353 words
+- 99 files · ~86,166 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 412 nodes · 665 edges · 28 communities (22 shown, 6 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
+- 477 nodes · 810 edges · 30 communities (24 shown, 6 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63212344`
+- Built from commit: `4d21213b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -39,67 +39,68 @@
 - [[_COMMUNITY_OG_SITE_NAME|OG_SITE_NAME]]
 - [[_COMMUNITY_OG_SITE_URL|OG_SITE_URL]]
 - [[_COMMUNITY_DEFAULT_PROFILE_PIC|DEFAULT_PROFILE_PIC]]
+- [[_COMMUNITY_seedAll|seedAll]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `AccentKey` - 18 edges
-2. `compilerOptions` - 16 edges
-3. `turso` - 13 edges
-4. `getApiUrl()` - 12 edges
-5. `scripts` - 8 edges
-6. `authMiddleware()` - 8 edges
-7. `ACCENT_THEMES` - 8 edges
-8. `Blog` - 8 edges
-9. `formatDate()` - 8 edges
-10. `useProfilePic()` - 8 edges
+1. `turso` - 20 edges
+2. `AccentKey` - 20 edges
+3. `compilerOptions` - 16 edges
+4. `authMiddleware()` - 13 edges
+5. `getApiUrl()` - 12 edges
+6. `apiFetch()` - 11 edges
+7. `scripts` - 9 edges
+8. `seedAll()` - 9 edges
+9. `ACCENT_THEMES` - 9 edges
+10. `formatDate()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `ensureDb()` --calls--> `initDb()`  [EXTRACTED]
   api/index.ts → server/db.ts
+- `NotFoundProps` --references--> `AccentKey`  [EXTRACTED]
+  src/components/NotFound.tsx → src/data/accents.ts
+- `fetchJson()` --calls--> `getApiUrl()`  [EXTRACTED]
+  src/hooks/usePortfolioData.ts → src/utils/api.ts
+- `initDb()` --calls--> `seedAll()`  [EXTRACTED]
+  server/db.ts → server/seed.ts
 - `PortfolioProps` --references--> `AccentKey`  [EXTRACTED]
   src/App.tsx → src/data/accents.ts
-- `AdminPanelProps` --references--> `AccentKey`  [EXTRACTED]
-  src/components/AdminPanel.tsx → src/data/accents.ts
-- `AdminPanel()` --calls--> `useProfilePic()`  [EXTRACTED]
-  src/components/AdminPanel.tsx → src/utils/profilePic.ts
-- `BlogPostPageProps` --references--> `AccentKey`  [EXTRACTED]
-  src/components/BlogPostPage.tsx → src/data/accents.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (28 total, 6 thin omitted)
+## Communities (30 total, 6 thin omitted)
 
 ### Community 0 - "AdminPanel.tsx"
 Cohesion: 0.08
-Nodes (28): PortfolioProps, DashboardHeader(), DashboardHeaderProps, AdminPanelProps, BlogPostPageProps, BlogsPageProps, GitHubSectionProps, HeroSectionProps (+20 more)
+Nodes (27): PortfolioProps, DashboardHeaderProps, AdminPanelProps, BlogPostPageProps, BlogsPageProps, GitHubSectionProps, HeroSectionProps, ROLES (+19 more)
 
 ### Community 1 - "BlogPostPage.tsx"
-Cohesion: 0.09
-Nodes (26): BlogsTabProps, MessagesTab(), MessagesTabProps, SettingsTabProps, BackToTop(), BlogPostPage(), BlogsPage(), categoryMeta (+18 more)
+Cohesion: 0.06
+Nodes (32): Portfolio(), AboutSectionProps, Award, AwardsSectionProps, BackToTop(), BlogsPage(), categoryMeta, relativeDate() (+24 more)
 
 ### Community 2 - "devDependencies"
 Cohesion: 0.07
-Nodes (28): devDependencies, autoprefixer, postcss, sharp, tailwindcss, @types/cors, @types/express, @types/jsonwebtoken (+20 more)
+Nodes (29): devDependencies, autoprefixer, postcss, sharp, tailwindcss, @types/cors, @types/express, @types/jsonwebtoken (+21 more)
 
 ### Community 3 - "index.ts"
-Cohesion: 0.10
-Nodes (33): app, ensureDb(), authMiddleware(), AuthRequest, flexibleAuth(), loginAttempts, seedFirstBlog(), initDb() (+25 more)
+Cohesion: 0.08
+Nodes (39): app, ensureDb(), authMiddleware(), AuthRequest, flexibleAuth(), loginAttempts, initDb(), turso (+31 more)
 
 ### Community 4 - "Navbar.tsx"
-Cohesion: 0.08
-Nodes (23): AnalyticsTabProps, AI_PRESETS, processCountryStats(), processUAStats(), VISITOR_TABLE_COLUMNS, InlinePreviewTabsProps, LoginViewProps, AdminPanel() (+15 more)
+Cohesion: 0.06
+Nodes (35): AnalyticsTabProps, AuditLog, AuditLogsTab(), BlogsTabProps, AI_PRESETS, processCountryStats(), processUAStats(), VISITOR_TABLE_COLUMNS (+27 more)
 
 ### Community 5 - "App.tsx"
-Cohesion: 0.10
-Nodes (11): AwardsSectionProps, Experience, ExperienceSectionProps, ResumeModalProps, texts, Award, awards, experience (+3 more)
+Cohesion: 0.08
+Nodes (14): AdminPanel(), ContactSectionProps, CopyableContactProps, SocialLinkProps, ADVENTURE_STORY, AdventureChoice, AdventureNode, ChatMessage (+6 more)
 
 ### Community 6 - "FloatingControl.tsx"
-Cohesion: 0.08
-Nodes (14): ADVENTURE_STORY, AdventureChoice, AdventureNode, ChatMessage, HistoryLine, SUGGESTIONS, Interactive3DBlockProps, InteractiveBlockProps (+6 more)
+Cohesion: 0.10
+Nodes (12): CHART_TYPE_MAP, ChartBlockProps, COLORS, ParsedChart, Interactive3DBlockProps, InteractiveBlockProps, CodeBlockProps, highlightCode() (+4 more)
 
 ### Community 7 - "dependencies"
-Cohesion: 0.09
-Nodes (23): dependencies, chart.js, clsx, cors, express, framer-motion, @google/generative-ai, jsonwebtoken (+15 more)
+Cohesion: 0.07
+Nodes (30): dependencies, chart.js, clsx, cors, dotenv, express, framer-motion, @google/generative-ai (+22 more)
 
 ### Community 8 - "compilerOptions"
 Cohesion: 0.11
@@ -118,12 +119,12 @@ Cohesion: 0.14
 Nodes (5): PuterAIModule, PuterChatOptions, PuterChatResponse, PuterChatTextPart, Window
 
 ### Community 12 - "SkillsSection.tsx"
-Cohesion: 0.18
-Nodes (8): BACKGROUND_DECORATIONS, CATEGORY_HOVER_COLORS, CATEGORY_ICONS, CATEGORY_LABELS, SkillItem, SkillsData, SkillsSectionProps, SkillTag
+Cohesion: 0.17
+Nodes (9): BACKGROUND_DECORATIONS, CATEGORY_HOVER_COLORS, CATEGORY_ICONS, CATEGORY_LABELS, SkillItem, SkillsData, SkillsSectionProps, SkillTag (+1 more)
 
 ### Community 13 - "ChartBlock.tsx"
-Cohesion: 0.29
-Nodes (6): CHART_TYPE_MAP, ChartBlockProps, COLORS, parseArray(), parseChartCode(), ParsedChart
+Cohesion: 0.22
+Nodes (9): router, visitRateLimit, BOT_PATTERNS, isBot(), isPrivateIP(), isSuspiciousRequest(), PRIVATE_IP_PATTERNS, geoLookup() (+1 more)
 
 ### Community 14 - "GallerySection.tsx"
 Cohesion: 0.25
@@ -141,25 +142,29 @@ Nodes (3): buildSitemap(), main(), staticUrls
 Cohesion: 0.40
 Nodes (4): maxDuration, functions, api/index.ts, rewrites
 
+### Community 28 - "seedAll"
+Cohesion: 0.46
+Nodes (7): seedAbout(), seedAll(), seedAwards(), seedBlog(), seedExperience(), seedProjects(), seedSkills()
+
 ## Knowledge Gaps
-- **152 isolated node(s):** `app`, `__dirname`, `galleryDir`, `staticUrls`, `name` (+147 more)
+- **174 isolated node(s):** `app`, `__dirname`, `galleryDir`, `staticUrls`, `name` (+169 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AccentKey` connect `AdminPanel.tsx` to `BlogPostPage.tsx`, `Navbar.tsx`, `App.tsx`, `FloatingControl.tsx`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `getApiUrl()` connect `Navbar.tsx` to `BlogPostPage.tsx`, `App.tsx`, `FloatingControl.tsx`?**
+- **Why does `AccentKey` connect `AdminPanel.tsx` to `BlogPostPage.tsx`, `Navbar.tsx`, `FloatingControl.tsx`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `devDependencies`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **What connects `app`, `__dirname`, `galleryDir` to the rest of the system?**
-  _152 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _174 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `AdminPanel.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.08108108108108109 - nodes in this community are weakly interconnected._
 - **Should `BlogPostPage.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.08502415458937199 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.057912457912457915 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._
 - **Should `index.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.09506531204644413 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08408249603384453 - nodes in this community are weakly interconnected._

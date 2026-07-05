@@ -14,6 +14,7 @@
   "12": "SkillsSection.tsx",
   "13": "ChartBlock.tsx",
   "14": "GallerySection.tsx",
+  "15": "ErrorBoundary",
   "16": "generate-sitemap.mjs",
   "17": "vercel.json",
   "18": "convert-webp.mjs",
