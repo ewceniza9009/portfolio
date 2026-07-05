@@ -109,8 +109,8 @@ export default function ExperienceTab() {
               <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
                 <MarkdownEditor 
                   key={`exp-${editingId}`}
-                  value={formData.descriptions.join('\n')} 
-                  onChange={val => setFormData({ ...formData, descriptions: val.split('\n').filter(s => s.trim()) })} 
+                  value={formData.descriptions.map((d: string) => (d.startsWith('-') || d.startsWith('*')) ? d : `- ${d}`).join('\n')} 
+                  onChange={val => setFormData({ ...formData, descriptions: val.split('\n').map((s: string) => s.replace(/^[\-\*]\s*/, '').trim()).filter(Boolean) })} 
                   height="200px"
                   showToolbar={true}
                   hideLineNumbers={true}
