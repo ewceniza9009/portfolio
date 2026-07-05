@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 
 export default function ProjectsTab() {
@@ -73,6 +73,38 @@ export default function ProjectsTab() {
     }
   }
 
+  const handleMoveProject = async (index: number, direction: 'left' | 'right') => {
+    if (direction === 'left' && index === 0) return
+    if (direction === 'right' && index === projects.length - 1) return
+
+    const newProjects = [...projects]
+    const swapIndex = direction === 'left' ? index - 1 : index + 1
+    
+    // Swap items
+    const temp = newProjects[index]
+    newProjects[index] = newProjects[swapIndex]
+    newProjects[swapIndex] = temp
+
+    // Re-assign display_order based on array index
+    const updatedItems = newProjects.map((p, i) => ({
+      id: p.id,
+      display_order: i
+    }))
+
+    // Optimistic update
+    setProjects(newProjects.map((p, i) => ({ ...p, display_order: i })))
+
+    try {
+      await apiFetch('/api/projects/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ items: updatedItems })
+      })
+    } catch (err) {
+      console.error('Failed to reorder projects:', err)
+      fetchProjects() // Revert on failure
+    }
+  }
+
   if (loading) return <div className="p-4">Loading...</div>
 
   return (
@@ -90,9 +122,27 @@ export default function ProjectsTab() {
             <img src={p.image} alt={p.title} className="w-full h-32 object-cover rounded-lg mb-3 bg-black/20" />
             <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{p.title}</h4>
             <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{p.subtitle}</p>
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => handleEdit(p)} className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white"><Edit2 size={14} /></button>
-              <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded hover:bg-red-500/10 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex gap-2">
+                <button onClick={() => handleEdit(p)} className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white"><Edit2 size={14} /></button>
+                <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded hover:bg-red-500/10 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+              </div>
+              <div className="flex gap-1">
+                <button 
+                  onClick={() => handleMoveProject(projects.indexOf(p), 'left')} 
+                  disabled={projects.indexOf(p) === 0}
+                  className="p-1.5 rounded hover:bg-white/10 text-gray-400 disabled:opacity-30 hover:text-white"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button 
+                  onClick={() => handleMoveProject(projects.indexOf(p), 'right')} 
+                  disabled={projects.indexOf(p) === projects.length - 1}
+                  className="p-1.5 rounded hover:bg-white/10 text-gray-400 disabled:opacity-30 hover:text-white"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
         ))}

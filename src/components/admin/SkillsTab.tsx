@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 
 export default function SkillsTab() {
@@ -91,6 +91,60 @@ export default function SkillsTab() {
     fetchData()
   }
 
+  const handleMoveCategory = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return
+    if (direction === 'down' && index === categories.length - 1) return
+
+    const newCats = [...categories]
+    const swapIndex = direction === 'up' ? index - 1 : index + 1
+    const temp = newCats[index]
+    newCats[index] = newCats[swapIndex]
+    newCats[swapIndex] = temp
+
+    const updatedItems = newCats.map((c, i) => ({ id: c.id, display_order: i }))
+    setCategories(newCats.map((c, i) => ({ ...c, display_order: i })))
+
+    try {
+      await apiFetch('/api/skill-categories/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ items: updatedItems })
+      })
+    } catch {
+      fetchData()
+    }
+  }
+
+  const handleMoveSkill = async (categoryId: string, index: number, direction: 'left' | 'right') => {
+    const catSkills = skills[categoryId]?.items || []
+    if (direction === 'left' && index === 0) return
+    if (direction === 'right' && index === catSkills.length - 1) return
+
+    const newSkills = [...catSkills]
+    const swapIndex = direction === 'left' ? index - 1 : index + 1
+    const temp = newSkills[index]
+    newSkills[index] = newSkills[swapIndex]
+    newSkills[swapIndex] = temp
+
+    const updatedItems = newSkills.map((s, i) => ({ id: s.id, display_order: i }))
+    
+    setSkills({
+      ...skills,
+      [categoryId]: {
+        ...skills[categoryId],
+        items: newSkills.map((s, i) => ({ ...s, display_order: i }))
+      }
+    })
+
+    try {
+      await apiFetch('/api/skills/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ items: updatedItems })
+      })
+    } catch {
+      fetchData()
+    }
+  }
+
   if (loading) return <div className="p-4">Loading...</div>
 
   return (
@@ -114,6 +168,10 @@ export default function SkillsTab() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => handleCreateSkill(cat.id)} className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-white flex items-center gap-1"><Plus size={12}/> Skill</button>
+                <div className="flex bg-black/20 rounded mr-2">
+                  <button onClick={() => handleMoveCategory(categories.indexOf(cat), 'up')} disabled={categories.indexOf(cat) === 0} className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-30"><ChevronUp size={14}/></button>
+                  <button onClick={() => handleMoveCategory(categories.indexOf(cat), 'down')} disabled={categories.indexOf(cat) === categories.length - 1} className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-30"><ChevronDown size={14}/></button>
+                </div>
                 <button onClick={() => handleEditCategory(cat)} className="p-1.5 rounded hover:bg-white/10 text-gray-400"><Edit2 size={14} /></button>
                 <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 rounded hover:bg-red-500/10 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
               </div>
@@ -125,6 +183,8 @@ export default function SkillsTab() {
                   <span className="text-gray-300">{s.name}</span>
                   <span className="text-gray-500 text-[10px]">{s.level}</span>
                   <div className="flex gap-1 ml-2 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
+                    <button onClick={() => handleMoveSkill(cat.id, skills[cat.id]?.items.indexOf(s), 'left')} disabled={skills[cat.id]?.items.indexOf(s) === 0} className="text-gray-400 hover:text-white disabled:opacity-30"><ChevronLeft size={12} /></button>
+                    <button onClick={() => handleMoveSkill(cat.id, skills[cat.id]?.items.indexOf(s), 'right')} disabled={skills[cat.id]?.items.indexOf(s) === skills[cat.id]?.items.length - 1} className="text-gray-400 hover:text-white disabled:opacity-30 mr-1"><ChevronRight size={12} /></button>
                     <button onClick={() => handleEditSkill(s, cat.id)} className="text-gray-400 hover:text-white"><Edit2 size={12} /></button>
                     <button onClick={() => handleDeleteSkill(s.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
                   </div>

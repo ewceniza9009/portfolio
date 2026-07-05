@@ -80,6 +80,24 @@ router.delete('/api/projects/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete project' })
   }
 })
+router.put('/api/projects/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE projects SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    // Execute all updates in a transaction-like batch
+    const results = await turso.batch(queries)
+    
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder projects error:', err)
+    res.status(500).json({ error: 'Failed to reorder projects' })
+  }
+})
 
 // --- SKILLS ---
 
@@ -190,6 +208,40 @@ router.delete('/api/skills/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Delete skill error:', err)
     res.status(500).json({ error: 'Failed to delete skill' })
+  }
+})
+
+router.put('/api/skill-categories/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE skill_categories SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    await turso.batch(queries)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder skill categories error:', err)
+    res.status(500).json({ error: 'Failed to reorder skill categories' })
+  }
+})
+
+router.put('/api/skills/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE skills SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    await turso.batch(queries)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder skills error:', err)
+    res.status(500).json({ error: 'Failed to reorder skills' })
   }
 })
 
