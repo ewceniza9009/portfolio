@@ -284,6 +284,15 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
     { type: 'response', content: 'Welcome to EWC-OS v1.0.0' },
     { type: 'response', content: 'Type "help" to see available commands.' }
   ])
+  const [cmdHistory, setCmdHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const currentPath = '/home/guest'
+  const fileSystem: Record<string, string> = {
+    'about.txt': 'Erwin Wilson Ceniza | Principal Full-Stack Developer | Building commercial web applications and AI integrations.',
+    'skills.txt': 'Frontend: React, TypeScript, Tailwind | Backend: C#, ASP.NET Core, Node.js | Database: SQL Server, PostgreSQL',
+    'contact.txt': 'Email: erwinwilsonceniza@gmail.com | Phone: +63 935-122-8470',
+    'secret.md': 'CLASSIFIED: Building the next generation of web applications...'
+  }
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const dragControls = useDragControls()
@@ -297,6 +306,9 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     const cmd = input.trim().toLowerCase()
     if (!cmd) return
+    
+    setCmdHistory(prev => [cmd, ...prev])
+    setHistoryIndex(-1)
 
     if (activeMode === 'guess') {
       const newHistory = [...history, { type: 'command' as const, content: input }]
@@ -329,7 +341,7 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
 
     const newHistory = [...history, { type: 'command' as const, content: cmd }]
     switch (cmd) {
-      case 'help': newHistory.push({ type: 'response', content: 'Available commands: about, skills, contact, resume, clear, cls, date, whoami, su, sudo su, matrix, hack, snake, guess, adventure' }); break
+      case 'help': newHistory.push({ type: 'response', content: 'Available commands: about, skills, contact, resume, clear, cls, date, pwd, cat, whoami, su, sudo su, matrix, hack, snake, guess, adventure' }); break
       case 'about': newHistory.push({ type: 'response', content: 'Erwin Wilson Ceniza | Principal Full-Stack Developer | Building commercial web applications and AI integrations.' }); break
       case 'skills': newHistory.push({ type: 'response', content: 'Frontend: React, TypeScript, Tailwind | Backend: C#, ASP.NET Core, Node.js | Database: SQL Server, PostgreSQL' }); break
       case 'contact': newHistory.push({ type: 'response', content: 'Email: erwinwilsonceniza@gmail.com | Phone: +63 935-122-8470' }); break
@@ -358,12 +370,53 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
         if (isRoot) { setHistory([{ type: 'error', content: 'CRITICAL SYSTEM FAILURE: Root file system deleted.' }]); setTimeout(() => onClose(), 2000); return }
         else newHistory.push({ type: 'error', content: 'rm: cannot remove \'/\': Permission denied' }); break
       case 'clear': case 'cls': setHistory([]); setInput(''); return
-      case 'ls': case 'dir': newHistory.push({ type: 'response', content: 'projects/  skills/  experience/  contact/' }); break
+      case 'pwd': newHistory.push({ type: 'response', content: currentPath }); break
+      case 'ls': case 'dir': newHistory.push({ type: 'response', content: 'about.txt  skills.txt  contact.txt  secret.md  projects/  experience/' }); break
       default:
-        if (cmd.startsWith('echo ')) newHistory.push({ type: 'response', content: cmd.replace('echo ', '') })
+        if (cmd.startsWith('cat ')) {
+          const file = cmd.replace('cat ', '').trim()
+          if (fileSystem[file]) newHistory.push({ type: 'response', content: fileSystem[file] })
+          else newHistory.push({ type: 'error', content: `cat: ${file}: No such file or directory` })
+        }
+        else if (cmd.startsWith('echo ')) newHistory.push({ type: 'response', content: cmd.replace('echo ', '') })
         else newHistory.push({ type: 'error', content: `Command not found: ${cmd}` })
     }
     setHistory(newHistory); setInput('')
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (historyIndex < cmdHistory.length - 1) {
+        const nextIndex = historyIndex + 1
+        setHistoryIndex(nextIndex)
+        setInput(cmdHistory[nextIndex])
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (historyIndex > 0) {
+        const prevIndex = historyIndex - 1
+        setHistoryIndex(prevIndex)
+        setInput(cmdHistory[prevIndex])
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1)
+        setInput('')
+      }
+    } else if (e.key === 'Tab') {
+      e.preventDefault()
+      const availableCommands = ['help', 'about', 'skills', 'contact', 'resume', 'clear', 'cls', 'date', 'whoami', 'pwd', 'cat', 'su', 'sudo', 'matrix', 'hack', 'snake', 'guess', 'adventure'];
+      const fileNames = Object.keys(fileSystem);
+      const parts = input.trim().toLowerCase().split(' ');
+      
+      if (parts.length === 1) {
+        const matches = availableCommands.filter(c => c.startsWith(input.trim().toLowerCase()))
+        if (matches.length === 1) setInput(matches[0] + ' ')
+      } else if (parts[0] === 'cat' && parts.length === 2) {
+        const partialFile = parts[1]
+        const fileMatches = fileNames.filter(f => f.startsWith(partialFile))
+        if (fileMatches.length === 1) setInput(`cat ${fileMatches[0]}`)
+      }
+    }
   }
 
   return (
@@ -419,7 +472,7 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
           <span className={isRoot ? "text-red-400 font-bold" : "text-green-400"}>
             {isRoot ? 'root@ewc-os:~#' : 'guest@ewc-os:~$'}
           </span>
-          <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)}
+          <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
             className={`flex-1 bg-transparent border-none outline-none font-mono ${isRoot ? 'text-red-100' : 'text-white'}`}
             autoFocus autoComplete="off" spellCheck="false" />
         </form>

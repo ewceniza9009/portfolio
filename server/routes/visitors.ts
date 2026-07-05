@@ -19,6 +19,7 @@ router.post('/api/visit', async (req, res) => {
     const userAgent = req.headers['user-agent'] || ''
     const referrer = (req.headers['referer'] as string) || ''
     const ref = req.body?.ref || ''
+    const path = req.body?.path || ''
     const detectedBot = isBot(userAgent) ? 1 : 0
 
     const now = Date.now()
@@ -63,6 +64,14 @@ router.post('/api/visit', async (req, res) => {
     }
 
     if (!detectedBot) {
+      // Record the specific page visit
+      if (path) {
+        await turso.execute({
+          sql: "INSERT INTO page_visits (ip, path, referrer, ref, visited_at) VALUES (?, ?, ?, ?, datetime('now', '+8 hours'))",
+          args: [ip, path, referrer, ref]
+        })
+      }
+
       await turso.execute({
         sql: "INSERT INTO daily_visits (date, count) VALUES (date('now', '+8 hours'), 1) ON CONFLICT(date) DO UPDATE SET count = count + 1",
         args: [],
@@ -93,6 +102,8 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
     const search = url.searchParams.get('search') || ''
     const country = url.searchParams.get('country') || ''
     const humansOnly = url.searchParams.get('humansOnly') === '1'
+    const startDate = url.searchParams.get('startDate') || ''
+    const endDate = url.searchParams.get('endDate') || ''
 
     const allowedSorts: Record<string, string> = {
       visit_count: 'visit_count',
@@ -119,6 +130,14 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
       conditions.push('country = ?')
       args.push(country)
     }
+    if (startDate) {
+      conditions.push('last_visit >= ?')
+      args.push(`${startDate} 00:00:00`)
+    }
+    if (endDate) {
+      conditions.push('last_visit <= ?')
+      args.push(`${endDate} 23:59:59`)
+    }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 
@@ -134,8 +153,27 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
       args,
     })
 
-    const daily = await turso.execute('SELECT * FROM daily_visits ORDER BY date DESC LIMIT 60')
-    const hourly = await turso.execute('SELECT * FROM hourly_visits ORDER BY hour DESC LIMIT 48')
+    const dailyConditions = []
+    const dailyArgs = []
+    if (startDate) { dailyConditions.push('date >= ?'); dailyArgs.push(startDate) }
+    if (endDate) { dailyConditions.push('date <= ?'); dailyArgs.push(endDate) }
+    const dailyWhere = dailyConditions.length > 0 ? `WHERE ${dailyConditions.join(' AND ')}` : ''
+
+    const daily = await turso.execute({
+      sql: `SELECT * FROM daily_visits ${dailyWhere} ORDER BY date DESC LIMIT 60`,
+      args: dailyArgs
+    })
+
+    const hourlyConditions = []
+    const hourlyArgs = []
+    if (startDate) { hourlyConditions.push('hour >= ?'); hourlyArgs.push(`${startDate} 00:00`) }
+    if (endDate) { hourlyConditions.push('hour <= ?'); hourlyArgs.push(`${endDate} 23:59`) }
+    const hourlyWhere = hourlyConditions.length > 0 ? `WHERE ${hourlyConditions.join(' AND ')}` : ''
+
+    const hourly = await turso.execute({
+      sql: `SELECT * FROM hourly_visits ${hourlyWhere} ORDER BY hour DESC LIMIT 48`,
+      args: hourlyArgs
+    })
 
     const countries = await turso.execute("SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != '' ORDER BY country")
 
@@ -154,6 +192,31 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Fetch visitors error:', err)
     res.status(500).json({ error: 'Failed to fetch visitors' })
+  }
+})
+
+// GET top pages
+router.get('/api/visitors/pages', authMiddleware, async (req, res) => {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
+    const startDate = url.searchParams.get('startDate') || ''
+    const endDate = url.searchParams.get('endDate') || ''
+    
+    const conditions = []
+    const args = []
+    if (startDate) { conditions.push('visited_at >= ?'); args.push(`${startDate} 00:00:00`) }
+    if (endDate) { conditions.push('visited_at <= ?'); args.push(`${endDate} 23:59:59`) }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+    const result = await turso.execute({
+      sql: `SELECT path, COUNT(*) as views, COUNT(DISTINCT ip) as unique_visitors FROM page_visits ${where} GROUP BY path ORDER BY views DESC LIMIT 50`,
+      args
+    })
+
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Fetch top pages error:', err)
+    res.status(500).json({ error: 'Failed to fetch top pages' })
   }
 })
 

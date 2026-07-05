@@ -30,8 +30,10 @@ import BlogPostPage from './components/BlogPostPage'
 import GallerySection from './components/GallerySection'
 import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
-import { getApiUrl } from './utils/api'
+import { apiFetch } from './utils/api'
 import ErrorBoundary from './components/ErrorBoundary'
+import NotFound from './components/NotFound'
+import SearchPalette from './components/SearchPalette'
 
 interface PortfolioProps {
   theme: 'dark' | 'light'
@@ -45,6 +47,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isResumeOpen, setIsResumeOpen] = useState(false)
+  const [projectsData, setProjectsData] = useState<any[]>(projects)
+  const [skillsData, setSkillsData] = useState<any>(skills)
 
   useEffect(() => {
     history.scrollRestoration = 'manual'
@@ -52,15 +56,33 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   useEffect(() => {
-    if (!isLoading) {
+    
+    const timer = setTimeout(() => {
       const hash = window.location.hash
       if (hash) {
         const id = hash.replace('#', '')
-        const timer = setTimeout(() => {
-          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-        }, 300)
-        return () => clearTimeout(timer)
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
       }
+      setIsLoading(false)
+    }, 1500)
+
+    // Fetch projects
+    apiFetch('/api/projects').then(res => res.json()).then(data => {
+      if(Array.isArray(data) && data.length > 0) setProjectsData(data)
+    }).catch(err => console.error('Failed to load projects from API', err))
+
+    // Fetch skills
+    apiFetch('/api/skills').then(res => res.json()).then(data => {
+      if(data && data.skills && Object.keys(data.skills).length > 0) {
+        setSkillsData(data.skills)
+      }
+    }).catch(err => console.error('Failed to load skills from API', err))
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading) {
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [isLoading])
@@ -101,9 +123,9 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
   const selectedProjectData = useMemo(
     () => selectedProject
-      ? projects.find(p => p.id === selectedProject) || null
+      ? projectsData.find(p => p.id === selectedProject) || null
       : null,
-    [selectedProject]
+    [selectedProject, projectsData]
   )
 
   const handleViewResume = useCallback(() => setIsResumeOpen(true), [])
@@ -116,13 +138,13 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       <AboutSection />
       <ExperienceSection experience={experience} />
       <AwardsSection awards={awards} />
-      <ProjectsSection projects={projects} onSelectProject={setSelectedProject} />
+      <ProjectsSection projects={projectsData} onSelectProject={setSelectedProject} />
       <ProjectModal project={selectedProjectData} onClose={handleCloseProject} />
       <GallerySection />
-      <SkillsSection skills={skills} />
+      <SkillsSection skills={skillsData} />
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [selectedProjectData])
+  ), [selectedProjectData, projectsData, skillsData])
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
@@ -177,6 +199,26 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 }
 
 export default function App() {
+  const [isOffline, setIsOffline] = useState(false)
+
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true)
+    const handleOnline = () => setIsOffline(false)
+    const handleApiError = () => setIsOffline(true)
+
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('api-fetch-error', handleApiError)
+
+    if (!navigator.onLine) setIsOffline(true)
+
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('api-fetch-error', handleApiError)
+    }
+  }, [])
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = getSafeItem('theme') as 'dark' | 'light'
@@ -217,9 +259,8 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const ref = params.get('ref') || ''
-    fetch(getApiUrl('/api/visit'), {
+    apiFetch('/api/visit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: location.pathname, ref }),
     }).catch(() => {})
   }, [location.pathname])
@@ -228,7 +269,7 @@ export default function App() {
   useEffect(() => {
     async function loadGlobalSettings() {
       try {
-        const res = await fetch(getApiUrl('/api/settings'))
+        const res = await apiFetch('/api/settings')
         if (res.ok) {
           const data = await res.json()
           
@@ -429,11 +470,13 @@ export default function App() {
   }, [])
 
   return (
+    <>
+    <SearchPalette />
     <Routes>
       <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
       <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
       <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-      <Route path="*" element={
+      <Route path="/" element={
         <ErrorBoundary>
           <Portfolio 
             theme={theme}
@@ -443,6 +486,21 @@ export default function App() {
           />
         </ErrorBoundary>
       } />
+      <Route path="*" element={
+        <ErrorBoundary>
+          <NotFound 
+            theme={theme}
+            accent={accent}
+          />
+        </ErrorBoundary>
+      } />
     </Routes>
+    {isOffline && (
+      <div className="fixed bottom-4 right-4 z-[9999] bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
+        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+        <span className="font-medium text-sm">Offline or connection issues</span>
+      </div>
+    )}
+    </>
   )
 }

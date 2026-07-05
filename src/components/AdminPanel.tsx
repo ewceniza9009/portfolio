@@ -21,8 +21,11 @@ import { processUAStats, processCountryStats } from "./admin/helpers";
 import AnalyticsTab from "./admin/AnalyticsTab";
 import BlogsTab from "./admin/BlogsTab";
 import SettingsTab from "./admin/SettingsTab";
+import { AuditLogsTab } from "./admin/AuditLogsTab";
 import DashboardHeader from "./admin/DashboardHeader";
 import FocusModeOverlay from "./admin/FocusModeOverlay";
+import ProjectsTab from "./admin/ProjectsTab";
+import SkillsTab from "./admin/SkillsTab";
 
 interface AdminPanelProps {
   theme: "dark" | "light";
@@ -39,7 +42,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
   // Dashboard Tab selection (persisted across refresh)
   const [activeTab, setActiveTabState] = useState<
-    "messages" | "blogs" | "analytics" | "settings"
+    "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills"
   >(() => {
     try {
       const saved = localStorage.getItem("admin_active_tab");
@@ -47,7 +50,10 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
         saved === "messages" ||
         saved === "blogs" ||
         saved === "analytics" ||
-        saved === "settings"
+        saved === "audit" ||
+        saved === "settings" ||
+        saved === "projects" ||
+        saved === "skills"
       ) {
         return saved;
       }
@@ -56,7 +62,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   });
 
   const setActiveTab = (
-    tab: "messages" | "blogs" | "analytics" | "settings",
+    tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills",
   ) => {
     setActiveTabState(tab);
     try {
@@ -149,9 +155,34 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   const [blogAiLoading, setBlogAiLoading] = useState(false);
   const [blogSaving, setBlogSaving] = useState(false);
   const [blogDeleting, setBlogDeleting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [commentDeletingId, setCommentDeletingId] = useState<string | null>(
     null,
   );
+
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append('image', e.target.files[0]);
+    try {
+      const res = await api("/api/admin/upload", {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBlogCoverImage(data.url);
+      } else {
+        alert('Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const [focusContentMode, setFocusContentMode] = useState(false);
   const { setEditor: setMonacoEditor } = useMarkdownInsert();
   const parsedBlogContent = useMemo(
@@ -343,8 +374,12 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   const [gridSearch, setGridSearch] = useState("");
   const [gridCountry, setGridCountry] = useState("");
   const [gridShowHumansOnly, setGridShowHumansOnly] = useState(false);
+  const [gridStartDate, setGridStartDate] = useState("");
+  const [gridEndDate, setGridEndDate] = useState("");
   const [gridGroupByCountry, setGridGroupByCountry] = useState(false);
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
+  const [topPages, setTopPages] = useState<any[]>([]);
+  const [topPagesLoading, setTopPagesLoading] = useState(false);
   const [gridPagination, setGridPagination] = useState<{
     page: number;
     limit: number;
@@ -812,8 +847,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   };
 
   const fetchVisitors = useCallback(async () => {
-    if (!visitorsLoadedRef.current) setVisitorLoading(true);
-    else setVisitorRefreshing(true);
+    if (!visitorsLoadedRef.current) { setVisitorLoading(true); setTopPagesLoading(true); }
+    else { setVisitorRefreshing(true); setTopPagesLoading(true); }
     try {
       const params = new URLSearchParams();
       params.set("page", String(gridPage));
@@ -822,9 +857,14 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       params.set("order", gridOrder);
       if (gridSearch) params.set("search", gridSearch);
       if (gridCountry) params.set("country", gridCountry);
-      if (gridShowHumansOnly) params.set("humansOnly", "1");
+      if (gridStartDate) params.set("startDate", gridStartDate);
+      if (gridEndDate) params.set("endDate", gridEndDate);
 
-      const res = await api(`/api/visitors?${params.toString()}`);
+      const [res, pagesRes] = await Promise.all([
+        api(`/api/visitors?${params.toString()}`),
+        api(`/api/visitors/pages?startDate=${gridStartDate}&endDate=${gridEndDate}`)
+      ]);
+
       if (res.ok) {
         const data = await res.json();
         setVisitors(data.visitors || []);
@@ -838,13 +878,19 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
         setUnfilteredVisits(data.unfiltered_visits || 0);
         visitorsLoadedRef.current = true;
       }
+      
+      if (pagesRes.ok) {
+        const pagesData = await pagesRes.json();
+        setTopPages(pagesData || []);
+      }
     } catch (err) {
       console.error("Failed to fetch visitors:", err);
     } finally {
       setVisitorLoading(false);
       setVisitorRefreshing(false);
+      setTopPagesLoading(false);
     }
-  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry, gridShowHumansOnly]);
+  }, [gridPage, gridLimit, gridSort, gridOrder, gridSearch, gridCountry, gridShowHumansOnly, gridStartDate, gridEndDate]);
 
   const exportCSV = useCallback(async () => {
     try {
@@ -1251,6 +1297,23 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
+  const handleDeleteMessage = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    try {
+      const res = await api(`/api/messages/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete message");
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      if (selected?.id === id) {
+        setSelected(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete message');
+    }
+  };
+
   // ── Tab 2: Blogs Handlers ──
 
   const handleBlogTitleChange = (val: string) => {
@@ -1635,6 +1698,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
               handleSendReply={handleSendReply}
               handleAiCompose={handleAiCompose}
               handleCopyEmail={handleCopyEmail}
+              handleDeleteMessage={handleDeleteMessage}
             />
           )}
 
@@ -1666,6 +1730,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
               setBlogReadTime={setBlogReadTime}
               blogCoverImage={blogCoverImage}
               setBlogCoverImage={setBlogCoverImage}
+              uploadingImage={uploadingImage}
+              handleUploadImage={handleUploadImage}
               blogDevtoSummary={blogDevtoSummary}
               setBlogDevtoSummary={setBlogDevtoSummary}
               blogSocialSummary={blogSocialSummary}
@@ -1725,7 +1791,18 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
             />
           )}
 
-          {/* TAB 3: SYSTEM SETTINGS */}
+           {/* TAB 6: PROJECTS */}
+           {activeTab === "projects" && <ProjectsTab />}
+
+           {/* TAB 7: SKILLS */}
+           {activeTab === "skills" && <SkillsTab />}
+
+           {/* TAB 8: AUDIT LOGS */}
+           {activeTab === "audit" && (
+            <AuditLogsTab />
+          )}
+
+          {/* TAB 6: SETTINGS */}
           {activeTab === "settings" && (
             <SettingsTab
               blogs={blogs}
@@ -1854,6 +1931,12 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
                exportCSV={exportCSV}
                previewCleanup={previewCleanup}
                executeCleanup={executeCleanup}
+               gridStartDate={gridStartDate}
+               setGridStartDate={setGridStartDate}
+               gridEndDate={gridEndDate}
+               setGridEndDate={setGridEndDate}
+               topPages={topPages}
+               topPagesLoading={topPagesLoading}
              />
            )}
 

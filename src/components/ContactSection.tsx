@@ -114,7 +114,7 @@ interface ContactSectionProps {
 }
 
 export default function ContactSection({ theme = 'dark' }: ContactSectionProps) {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', _honeypot: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [savedEmails, setSavedEmails] = useState<string[]>(() => {
@@ -148,7 +148,7 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
       const updated = savedEmails.includes(form.email) ? savedEmails : [form.email, ...savedEmails].slice(0, 10)
       setSavedEmails(updated)
       setSafeItem('contact_emails', JSON.stringify(updated))
-      setForm({ name: '', email: '', subject: '', message: '' })
+      setForm({ name: '', email: '', subject: '', message: '', _honeypot: '' })
     } catch {
       setToast({ type: 'error', text: 'Failed to send. Please email me directly.' })
     } finally {
@@ -194,6 +194,12 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
           }} />
 
           <h3 className="text-xl font-semibold mb-6 text-center relative z-10">Send Me a Message</h3>
+
+          {/* Honeypot field - visually hidden but real to screen readers/bots */}
+          <div style={{ position: 'absolute', opacity: 0, top: -9999, left: -9999 }} aria-hidden="true">
+            <label htmlFor="_honeypot">Leave this field blank</label>
+            <input type="text" id="_honeypot" name="_honeypot" tabIndex={-1} autoComplete="off" value={form._honeypot} onChange={handleChange} />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10 mb-4">
             <div>

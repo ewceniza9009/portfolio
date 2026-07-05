@@ -10,6 +10,9 @@ import {
   Settings,
   Moon,
   Sun,
+  ShieldAlert,
+  Briefcase,
+  Code
 } from "lucide-react";
 import Logo from "../Logo";
 import { AccentDropdown } from "../Navbar";
@@ -23,8 +26,8 @@ interface DashboardHeaderProps {
   refreshing: boolean;
   refreshData: () => void;
   handleLogout: () => void;
-  activeTab: "messages" | "blogs" | "analytics" | "settings";
-  setActiveTab: (tab: "messages" | "blogs" | "analytics" | "settings") => void;
+  activeTab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills";
+  setActiveTab: (tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills") => void;
   setSelected: (val: null) => void;
   setSelectedBlog: (val: null) => void;
   inboxCount: number;
@@ -185,6 +188,36 @@ function DashboardHeader({
         </button>
         <button
           onClick={() => {
+            setActiveTab("projects");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "projects" ? "var(--accent)" : "transparent",
+            color: activeTab === "projects" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Briefcase size={11} />
+          <span className="hidden sm:inline">Projects</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("skills");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "skills" ? "var(--accent)" : "transparent",
+            color: activeTab === "skills" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Code size={11} />
+          <span className="hidden sm:inline">Skills</span>
+        </button>
+        <button
+          onClick={() => {
             setActiveTab("settings");
             setSelected(null);
             setSelectedBlog(null);
@@ -201,6 +234,25 @@ function DashboardHeader({
         >
           <Settings size={11} />
           <span className="hidden sm:inline">Settings</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("audit");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background:
+              activeTab === "audit" ? "var(--accent)" : "transparent",
+            color:
+              activeTab === "audit"
+                ? "var(--bg-primary)"
+                : "var(--text-secondary)",
+          }}
+        >
+          <ShieldAlert size={11} />
+          <span className="hidden sm:inline">Audit</span>
         </button>
       </div>
 

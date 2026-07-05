@@ -1,12 +1,45 @@
 import { Router } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import multer from 'multer'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
 import turso from '../db.js'
 import { authMiddleware } from '../auth.js'
 import { notifyIndexNow, SITE_URL } from '../utils/indexnow.js'
 import { getAiProvider, getAiModel } from '../utils/ai.js'
 
 const router = Router()
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const uploadsDir = path.resolve(__dirname, '../../public/uploads')
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir)
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + path.extname(file.originalname))
+  }
+})
+
+const upload = multer({ storage })
+
+// Upload image endpoint
+router.post('/api/admin/upload', authMiddleware, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image uploaded' })
+  }
+  // Return the path relative to the public directory
+  res.json({ url: `/uploads/${req.file.filename}` })
+})
 
 // Get all blogs (drafts + published)
 router.get('/api/admin/blogs', authMiddleware, async (_req, res) => {

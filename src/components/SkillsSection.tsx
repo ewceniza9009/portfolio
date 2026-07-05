@@ -1,6 +1,50 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Monitor, Server, Database, Wrench, Lightbulb } from 'lucide-react'
+import {
+  SiSharp, SiDotnet, SiBlazor, SiReact, SiAngular, SiFlutter,
+  SiPostgresql, SiMongodb, SiMysql, SiSqlite, SiRedis,
+  SiDocker, SiGit, SiTailwindcss, SiPython,
+  SiTensorflow, SiOpencv, SiElasticsearch,
+  SiNodedotjs, SiExpress, SiGraphql, SiTypescript,
+  SiHtml5, SiCss, SiJquery, SiBootstrap, SiGithubactions,
+  SiIonic
+} from "react-icons/si"
+
+const TECH_ICONS: Record<string, React.ComponentType<any>> = {
+  "C#": SiSharp,
+  "ASP.NET Core": SiDotnet,
+  "ASP.NET Core MVC": SiDotnet,
+  ".NET 8/9+": SiDotnet,
+  "Blazor": SiBlazor,
+  "Node.js": SiNodedotjs,
+  "Express.js": SiExpress,
+  "GraphQL": SiGraphql,
+  "Python": SiPython,
+  "React": SiReact,
+  "Angular": SiAngular,
+  "TypeScript": SiTypescript,
+  "JavaScript": SiHtml5,
+  "Tailwind CSS": SiTailwindcss,
+  "HTML5": SiHtml5,
+  "CSS3": SiCss,
+  "jQuery": SiJquery,
+  "Bootstrap": SiBootstrap,
+  "Ionic": SiIonic,
+  "Flutter": SiFlutter,
+  "React Native": SiReact,
+  "PostgreSQL": SiPostgresql,
+  "MongoDB": SiMongodb,
+  "MySQL": SiMysql,
+  "SQLite": SiSqlite,
+  "Redis": SiRedis,
+  "ElasticSearch": SiElasticsearch,
+  "Docker": SiDocker,
+  "Git": SiGit,
+  "GitHub Actions": SiGithubactions,
+  "TensorFlow": SiTensorflow,
+  "OpenCV": SiOpencv,
+}
 
 export type SkillItem = { 
   name: string; 
@@ -136,7 +180,9 @@ const SkillTag = React.memo(React.forwardRef<HTMLSpanElement, {
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ y: -2, scale: 1.05 }}
     >
-      {skill.icon && React.createElement(skill.icon, { size: 14 })}
+      {typeof skill.icon === 'string' && TECH_ICONS[skill.icon] 
+        ? React.createElement(TECH_ICONS[skill.icon], { size: 14 }) 
+        : (typeof skill.icon !== 'string' && skill.icon && React.createElement(skill.icon as any, { size: 14 }))}
       {skill.name}
     </motion.span>
   )

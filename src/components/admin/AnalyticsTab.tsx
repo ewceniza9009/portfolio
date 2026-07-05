@@ -94,6 +94,12 @@ export interface AnalyticsTabProps {
   exportCSV: () => void;
   previewCleanup: () => void;
   executeCleanup: () => void;
+  gridStartDate: string;
+  setGridStartDate: (v: string) => void;
+  gridEndDate: string;
+  setGridEndDate: (v: string) => void;
+  topPages: { path: string; views: number; unique_visitors: number }[];
+  topPagesLoading: boolean;
 }
 
 function AnalyticsTab({
@@ -154,6 +160,12 @@ function AnalyticsTab({
   exportCSV,
   previewCleanup,
   executeCleanup,
+  gridStartDate,
+  setGridStartDate,
+  gridEndDate,
+  setGridEndDate,
+  topPages,
+  topPagesLoading,
 }: AnalyticsTabProps) {
   return (
     <div
@@ -637,6 +649,53 @@ function AnalyticsTab({
               </div>
             </div>
 
+            {/* Top Pages Table */}
+            <div
+              className="rounded-2xl border overflow-hidden bg-white/[0.01] mb-6"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <div className="p-4 md:p-5 flex items-center justify-between border-b" style={{ borderColor: "var(--border)" }}>
+                <h4
+                  className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <Activity size={14} /> Top Pages
+                </h4>
+                {topPagesLoading && <Loader size={12} className="animate-spin text-gray-500" />}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11px]">
+                  <thead
+                    className="border-b"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: "var(--bg-secondary)",
+                    }}
+                  >
+                    <tr>
+                      <th className="py-2.5 px-4 text-left font-semibold text-gray-400">Path</th>
+                      <th className="py-2.5 px-4 text-left font-semibold text-gray-400">Total Views</th>
+                      <th className="py-2.5 px-4 text-left font-semibold text-gray-400">Unique Visitors</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {topPages.map((page, i) => (
+                      <tr key={i} className="hover:bg-white/5 transition-colors">
+                        <td className="py-2 px-4 font-mono truncate max-w-[200px]" style={{ color: "var(--accent)" }}>{page.path}</td>
+                        <td className="py-2 px-4 text-gray-300">{page.views}</td>
+                        <td className="py-2 px-4 text-gray-300">{page.unique_visitors}</td>
+                      </tr>
+                    ))}
+                    {topPages.length === 0 && !topPagesLoading && (
+                      <tr>
+                        <td colSpan={3} className="py-4 text-center text-gray-500">No page data available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Visitor Log Table */}
             <div
               className="rounded-2xl border overflow-hidden bg-white/[0.01]"
@@ -710,6 +769,41 @@ function AnalyticsTab({
                       </option>
                     ))}
                   </select>
+                  {/* Date Range filter */}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="date"
+                      value={gridStartDate}
+                      onChange={(e) => setGridStartDate(e.target.value)}
+                      className="px-2.5 py-1.5 rounded-lg border text-[11px] outline-none cursor-pointer"
+                      style={{
+                        background: "var(--bg-secondary)",
+                        borderColor: "var(--border)",
+                        color: "var(--text-secondary)",
+                      }}
+                    />
+                    <span className="text-[11px] text-[var(--text-muted)]">-</span>
+                    <input
+                      type="date"
+                      value={gridEndDate}
+                      onChange={(e) => setGridEndDate(e.target.value)}
+                      className="px-2.5 py-1.5 rounded-lg border text-[11px] outline-none cursor-pointer"
+                      style={{
+                        background: "var(--bg-secondary)",
+                        borderColor: "var(--border)",
+                        color: "var(--text-secondary)",
+                      }}
+                    />
+                    {(gridStartDate || gridEndDate) && (
+                      <button
+                        onClick={() => { setGridStartDate(""); setGridEndDate(""); }}
+                        className="p-1 hover:text-[var(--accent)] text-[var(--text-muted)] transition-colors"
+                        title="Clear Dates"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
                   {/* Page size */}
                   <select
                     value={gridLimit}

@@ -12,6 +12,10 @@ import settingsRoutes from '../server/routes/settings.js'
 import seoRoutes from '../server/routes/seo.js'
 import adminTokenRoutes from '../server/routes/admin-tokens.js'
 import adminProfileRoutes from '../server/routes/admin-profile.js'
+import adminLogsRoutes from '../server/routes/admin-logs.js'
+import cmsRoutes from '../server/routes/cms.js'
+import rssRoutes from '../server/routes/rss.js'
+import searchRoutes from '../server/routes/search.js'
 
 const app = express()
 
@@ -52,5 +56,9 @@ app.use(settingsRoutes)
 app.use(seoRoutes)
 app.use(adminTokenRoutes)
 app.use(adminProfileRoutes)
+app.use(adminLogsRoutes)
+app.use(cmsRoutes)
+app.use(rssRoutes)
+app.use(searchRoutes)
 
 export default app

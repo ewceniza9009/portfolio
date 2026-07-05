@@ -99,6 +99,63 @@ export async function initDb() {
     )
   `)
 
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      admin_email TEXT,
+      action TEXT NOT NULL,
+      entity TEXT NOT NULL,
+      entity_id TEXT,
+      details TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      subtitle TEXT NOT NULL,
+      description TEXT NOT NULL,
+      details TEXT,
+      tech TEXT,
+      year TEXT,
+      type TEXT,
+      color TEXT,
+      repo TEXT,
+      demo TEXT,
+      video TEXT,
+      image TEXT,
+      fallback TEXT,
+      testimonial_quote TEXT,
+      testimonial_author TEXT,
+      testimonial_role TEXT,
+      display_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS skill_categories (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      image TEXT NOT NULL,
+      display_order INTEGER DEFAULT 0
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS skills (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      icon TEXT,
+      level TEXT,
+      display_order INTEGER DEFAULT 0,
+      FOREIGN KEY (category_id) REFERENCES skill_categories(id) ON DELETE CASCADE
+    )
+  `)
+
   // Migration: add columns that may not exist yet
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN country TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN region TEXT') } catch {}

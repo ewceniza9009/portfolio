@@ -16,6 +16,7 @@ import {
   Heart,
   Maximize2,
   Monitor,
+  Upload,
 } from "lucide-react";
 import { formatDate, slugify } from "../../utils/format";
 import type { Blog, Comment } from "../../types/blog";
@@ -78,6 +79,8 @@ interface BlogsTabProps {
   blogAiLoading: boolean;
   blogSaving: boolean;
   blogDeleting: boolean;
+  uploadingImage: boolean;
+  handleUploadImage: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   commentDeletingId: string | null;
   setFocusContentMode: (val: boolean) => void;
   setMonacoEditor: (editor: any) => void;
@@ -162,6 +165,8 @@ function BlogsTab({
   blogAiLoading,
   blogSaving,
   blogDeleting,
+  uploadingImage,
+  handleUploadImage,
   commentDeletingId,
   setFocusContentMode,
   setMonacoEditor,
@@ -672,9 +677,16 @@ function BlogsTab({
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 opacity-60">
-                            Cover Image URL
-                          </label>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider opacity-60">
+                              Cover Image URL
+                            </label>
+                            <label className={`cursor-pointer px-2 py-1 rounded text-[10px] uppercase font-bold flex items-center gap-1 transition-all ${uploadingImage ? 'opacity-50' : 'hover:opacity-80'}`} style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+                              {uploadingImage ? <Loader size={10} className="animate-spin" /> : <Upload size={10} />}
+                              Upload
+                              <input type="file" accept="image/*" className="hidden" onChange={handleUploadImage} disabled={uploadingImage} />
+                            </label>
+                          </div>
                           <input
                             type="text"
                             value={blogCoverImage}
