@@ -9,7 +9,7 @@
     "sitemap": "node generate-sitemap.mjs",
     "prebuild": "node generate-sitemap.mjs",
     "predev": "node generate-sitemap.mjs",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview"
   },
   "dependencies": {
