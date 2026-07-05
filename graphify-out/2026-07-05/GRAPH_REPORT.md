@@ -1,12 +1,12 @@
 # Graph Report - portfolio  (2026-07-05)
 
 ## Corpus Check
-- 57 files · ~72,577 words
+- 57 files · ~72,513 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 354 nodes · 472 edges · 27 communities (21 shown, 6 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
+- 359 nodes · 486 edges · 27 communities (21 shown, 6 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -46,9 +46,9 @@
 4. `useProfilePic()` - 8 edges
 5. `ACCENT_THEMES` - 7 edges
 6. `parseMarkdown()` - 6 edges
-7. `seedFirstBlog()` - 4 edges
-8. `initDb()` - 4 edges
-9. `AdminPanel()` - 4 edges
+7. `AdminPanel()` - 5 edges
+8. `seedFirstBlog()` - 4 edges
+9. `initDb()` - 4 edges
 10. `BackToTop()` - 4 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -69,8 +69,8 @@
 ## Communities (27 total, 6 thin omitted)
 
 ### Community 0 - "AdminPanel.tsx"
-Cohesion: 0.05
-Nodes (38): PortfolioProps, AdminPanel(), AdminPanelProps, AI_PRESETS, Blog, Comment, formatDate(), getSafeItem() (+30 more)
+Cohesion: 0.07
+Nodes (28): AdminPanel(), AdminPanelProps, AI_PRESETS, Blog, Comment, formatDate(), getSafeItem(), Message (+20 more)
 
 ### Community 1 - "BlogPostPage.tsx"
 Cohesion: 0.09
@@ -85,8 +85,8 @@ Cohesion: 0.11
 Nodes (16): authMiddleware(), AuthRequest, flexibleAuth(), loginAttempts, loginHandler(), rateLimitMiddleware(), seedFirstBlog(), initDb() (+8 more)
 
 ### Community 4 - "Navbar.tsx"
-Cohesion: 0.36
-Nodes (7): getAdminToken(), getApiUrl(), loadProfilePic(), ProfilePicState, resetProfilePic(), subscribers, uploadProfilePic()
+Cohesion: 0.11
+Nodes (21): PortfolioProps, BlogPostPageProps, BlogsPageProps, GitHubSectionProps, Logo(), LogoProps, ACCENT_DROPDOWN_STYLE, AccentDropdown() (+13 more)
 
 ### Community 5 - "App.tsx"
 Cohesion: 0.10
@@ -105,8 +105,8 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, allowImportingTsExtensions, isolatedModules, jsx, lib, module, moduleDetection, moduleResolution (+10 more)
 
 ### Community 9 - "MarkdownEditor.tsx"
-Cohesion: 0.21
-Nodes (9): MarkdownEditorProps, registerCompletionProvider(), buildSnippet(), CHART_SNIPPET, getGenericSnippet(), INTERACTIVE3D_SNIPPET, MERMAID_SNIPPET, QUIZ_SNIPPET (+1 more)
+Cohesion: 0.20
+Nodes (11): getTheme(), MarkdownEditor(), MarkdownEditorProps, registerCompletionProvider(), buildSnippet(), CHART_SNIPPET, getGenericSnippet(), INTERACTIVE3D_SNIPPET (+3 more)
 
 ### Community 10 - "ProjectsSection.tsx"
 Cohesion: 0.15
@@ -121,8 +121,8 @@ Cohesion: 0.18
 Nodes (8): BACKGROUND_DECORATIONS, CATEGORY_HOVER_COLORS, CATEGORY_ICONS, CATEGORY_LABELS, SkillItem, SkillsData, SkillsSectionProps, SkillTag
 
 ### Community 13 - "ChartBlock.tsx"
-Cohesion: 0.29
-Nodes (6): CHART_TYPE_MAP, ChartBlockProps, COLORS, parseArray(), parseChartCode(), ParsedChart
+Cohesion: 0.31
+Nodes (8): CHART_TYPE_MAP, ChartBlock(), ChartBlockProps, COLORS, getIsDark(), parseArray(), parseChartCode(), ParsedChart
 
 ### Community 14 - "GallerySection.tsx"
 Cohesion: 0.25
@@ -144,14 +144,14 @@ Nodes (4): maxDuration, functions, api/index.ts, rewrites
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AccentKey` connect `AdminPanel.tsx` to `BlogPostPage.tsx`, `App.tsx`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `AccentKey` connect `Navbar.tsx` to `AdminPanel.tsx`, `BlogPostPage.tsx`, `App.tsx`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `devDependencies`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
 - **What connects `AuthRequest`, `loginAttempts`, `app` to the rest of the system?**
   _155 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `AdminPanel.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05202661826981246 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06659619450317125 - nodes in this community are weakly interconnected._
 - **Should `BlogPostPage.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.08907563025210084 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**

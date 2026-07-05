@@ -45,8 +45,8 @@
     "semantic_hash": "470cfd3ee10fbff840b377e769485f3e"
   },
   "src/App.tsx": {
-    "mtime": 1783216433.6011539,
-    "ast_hash": "b878a215d562b09b1bad0aada9048bbd",
+    "mtime": 1783216228.033309,
+    "ast_hash": "e87a869fe5353904e42c91d53e7541bc",
     "semantic_hash": ""
   },
   "src/components/AboutSection.tsx": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "src/components/ChartBlock.tsx": {
-    "mtime": 1783216452.9771101,
-    "ast_hash": "9ffbd62523f0ea7fa84b0b2b7b0e2770",
+    "mtime": 1783160085.0712554,
+    "ast_hash": "da4728e9794b39a22087857ec9da9428",
     "semantic_hash": ""
   },
   "src/components/ContactSection.tsx": {
@@ -130,14 +130,14 @@
     "semantic_hash": ""
   },
   "src/components/Interactive3DBlock.tsx": {
-    "mtime": 1783216489.5619195,
-    "ast_hash": "90ae1444e57817ff7d1d0f6b6921560b",
-    "semantic_hash": ""
+    "mtime": 1783117246.3590157,
+    "ast_hash": "21dbb8105e4022a1a3baf682781a3121",
+    "semantic_hash": "21dbb8105e4022a1a3baf682781a3121"
   },
   "src/components/InteractiveBlock.tsx": {
-    "mtime": 1783216478.3723116,
-    "ast_hash": "6ae0eb4a086d6c53d4b23665192275d9",
-    "semantic_hash": ""
+    "mtime": 1783121885.0542006,
+    "ast_hash": "d181fd5640cb20c8765f0f0c9bda1c74",
+    "semantic_hash": "d181fd5640cb20c8765f0f0c9bda1c74"
   },
   "src/components/Logo.tsx": {
     "mtime": 1782535405.0278516,
@@ -145,9 +145,9 @@
     "semantic_hash": "943278151803de74d4eb1ac51fd7eace"
   },
   "src/components/MarkdownEditor.tsx": {
-    "mtime": 1783216500.4325697,
-    "ast_hash": "4ae6786d492b45e72a9525a3ff0a624a",
-    "semantic_hash": ""
+    "mtime": 1783138473.9913561,
+    "ast_hash": "86fdec67297223080707e40aae6a5947",
+    "semantic_hash": "86fdec67297223080707e40aae6a5947"
   },
   "src/components/Navbar.tsx": {
     "mtime": 1783216236.4196491,

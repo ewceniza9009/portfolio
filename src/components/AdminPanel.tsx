@@ -48,6 +48,8 @@ import {
   Monitor,
   Smartphone,
   Tablet,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { parseMarkdown, MermaidRenderer } from "../utils/markdown";
 import Interactive3DBlock from "./Interactive3DBlock";
@@ -62,6 +64,7 @@ import {
   resetProfilePic,
   useProfilePic,
 } from "../utils/profilePic";
+import { AccentDropdown } from "./Navbar";
 
 const InlinePreviewTabs = ({ content, previewLogs, setPreviewLogs, handleAskAiFix, fixingErrorId, aiSuggestions }: any) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'console'>('preview');
@@ -320,10 +323,12 @@ const AI_PRESETS = [
 
 interface AdminPanelProps {
   theme: "dark" | "light";
+  toggleTheme: (event?: React.MouseEvent) => void;
   accent: AccentKey;
+  setAccent: (val: AccentKey) => void;
 }
 
-function AdminPanel({ theme, accent }: AdminPanelProps) {
+function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) {
   const [token, setToken] = useState<string | null>(getSafeItem("admin_token"));
   const [password, setPassword] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -1975,6 +1980,18 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
             </span>
           </div>
           <div className="flex items-center gap-2 ml-auto md:hidden">
+            <AccentDropdown accent={accent} onChangeAccent={setAccent} theme={theme} />
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 rounded-full flex items-center justify-center border transition-all"
+              style={{
+                borderColor: "var(--border)",
+                background: "var(--bg-secondary)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+            </button>
             <button
               onClick={refreshData}
               disabled={refreshing}
@@ -2094,6 +2111,18 @@ function AdminPanel({ theme, accent }: AdminPanelProps) {
 
         {/* Header Right Actions (desktop) */}
         <div className="hidden md:flex items-center gap-3">
+          <AccentDropdown accent={accent} onChangeAccent={setAccent} theme={theme} />
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95"
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--bg-secondary)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
           <button
             onClick={refreshData}
             disabled={refreshing}

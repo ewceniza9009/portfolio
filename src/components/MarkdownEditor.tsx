@@ -1,68 +1,108 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import Editor, { OnMount, BeforeMount } from '@monaco-editor/react'
-import type { editor, languages } from 'monaco-editor'
-import { Bold, Italic, Code, Heading1, Heading2, List, ListOrdered, Link as LinkIcon, Quote, Image, Minus, Table, Box, Layers, HelpCircle, Puzzle, ChevronDown, Maximize2 } from 'lucide-react'
-import { STEPS_SNIPPET, QUIZ_SNIPPET, getGenericSnippet, INTERACTIVE3D_SNIPPET, MERMAID_SNIPPET, CHART_SNIPPET } from '../utils/snippets'
+import { useRef, useCallback, useEffect, useState, memo } from "react";
+import { createPortal } from "react-dom";
+import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
+import type { editor, languages } from "monaco-editor";
+import {
+  Bold,
+  Italic,
+  Code,
+  Heading1,
+  Heading2,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  Quote,
+  Image,
+  Minus,
+  Table,
+  Box,
+  Layers,
+  HelpCircle,
+  Puzzle,
+  ChevronDown,
+  Maximize2,
+} from "lucide-react";
+import {
+  STEPS_SNIPPET,
+  QUIZ_SNIPPET,
+  getGenericSnippet,
+  INTERACTIVE3D_SNIPPET,
+  MERMAID_SNIPPET,
+  CHART_SNIPPET,
+} from "../utils/snippets";
 
 interface MarkdownEditorProps {
-  value: string
-  onChange: (value: string) => void
-  height?: string
-  className?: string
-  autoFocus?: boolean
-  onEditorMount?: (editor: editor.IStandaloneCodeEditor) => void
-  extraWords?: string[]
-  showToolbar?: boolean
-  renderInlinePreview?: (type: string, code: string, blockId: string) => React.ReactNode
-  onZoomBlock?: (block: { type: string; code: string; startLine: number; endLine: number }) => void
+  value: string;
+  onChange: (value: string) => void;
+  height?: string;
+  className?: string;
+  autoFocus?: boolean;
+  onEditorMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  extraWords?: string[];
+  showToolbar?: boolean;
+  renderInlinePreview?: (
+    type: string,
+    code: string,
+    blockId: string,
+  ) => React.ReactNode;
+  onZoomBlock?: (block: {
+    type: string;
+    code: string;
+    startLine: number;
+    endLine: number;
+  }) => void;
 }
 
 const defineThemes: BeforeMount = (monaco) => {
-  monaco.editor.defineTheme('portfolio-dark', {
-    base: 'vs-dark',
+  monaco.editor.defineTheme("portfolio-dark", {
+    base: "vs-dark",
     inherit: true,
     rules: [],
     colors: {
-      'editor.background': '#0a0a0a',
-      'editor.foreground': '#e5e5e5',
-      'editor.lineHighlightBackground': '#ffffff08',
-      'editor.selectionBackground': '#ffffff15',
-      'editorCursor.foreground': '#cca03d',
+      "editor.background": "#0a0a0a",
+      "editor.foreground": "#e5e5e5",
+      "editor.lineHighlightBackground": "#ffffff08",
+      "editor.selectionBackground": "#ffffff15",
+      "editorCursor.foreground": "#cca03d",
     },
-  })
-  monaco.editor.defineTheme('portfolio-light', {
-    base: 'vs',
+  });
+  monaco.editor.defineTheme("portfolio-light", {
+    base: "vs",
     inherit: true,
     rules: [],
     colors: {
-      'editor.background': '#ffffff',
-      'editor.foreground': '#1a1a1a',
-      'editor.lineHighlightBackground': '#00000005',
-      'editor.selectionBackground': '#00000012',
-      'editorCursor.foreground': '#b8860b',
+      "editor.background": "#ffffff",
+      "editor.foreground": "#1a1a1a",
+      "editor.lineHighlightBackground": "#00000005",
+      "editor.selectionBackground": "#00000012",
+      "editorCursor.foreground": "#b8860b",
     },
-  })
-}
+  });
+};
 
 const getTheme = () => {
-  if (typeof document !== 'undefined') {
-    return document.documentElement.classList.contains('dark') ? 'portfolio-dark' : 'portfolio-light'
+  if (typeof document !== "undefined") {
+    return document.documentElement.classList.contains("dark")
+      ? "portfolio-dark"
+      : "portfolio-light";
   }
-  return 'portfolio-dark'
-}
+  return "portfolio-dark";
+};
 
-let providersRegistered = false
+let providersRegistered = false;
 
-function registerCompletionProvider(monaco: typeof import('monaco-editor'), extraWords: string[] = []) {
+function registerCompletionProvider(
+  monaco: typeof import("monaco-editor"),
+  extraWords: string[] = [],
+) {
   const provider: languages.CompletionItemProvider = {
-    triggerCharacters: [' ', '#', '*', '-', '[', '`', '>', '|'],
+    triggerCharacters: [" ", "#", "*", "-", "[", "`", ">", "|"],
     provideCompletionItems: (model, position) => {
-      const wordBefore = model.getWordUntilPosition(position)
-      const suggestions: languages.CompletionItem[] = []
+      const wordBefore = model.getWordUntilPosition(position);
+      const suggestions: languages.CompletionItem[] = [];
 
       if (wordBefore.word.length >= 2) {
-        const lower = wordBefore.word.toLowerCase()
+        const lower = wordBefore.word.toLowerCase();
 
         for (const w of extraWords) {
           if (w.toLowerCase().startsWith(lower) && w.toLowerCase() !== lower) {
@@ -76,31 +116,32 @@ function registerCompletionProvider(monaco: typeof import('monaco-editor'), extr
                 startColumn: wordBefore.startColumn,
                 endColumn: wordBefore.endColumn,
               },
-              sortText: '0',
-            })
+              sortText: "0",
+            });
           }
         }
 
         const markdownSnippets: Record<string, string> = {
-          h1: '# ',
-          h2: '## ',
-          h3: '### ',
-          bold: '**${1:text}**',
-          italic: '*${1:text}*',
-          code: '`${1:code}`',
-          'code-block': '```\n${1:code}\n```',
-          link: '[${1:text}](${2:url})',
-          image: '![${1:alt}](${2:url})',
-          quote: '> ',
-          ul: '- ',
-          ol: '1. ',
-          hr: '\n---\n',
-          table: '\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n',
+          h1: "# ",
+          h2: "## ",
+          h3: "### ",
+          bold: "**${1:text}**",
+          italic: "*${1:text}*",
+          code: "`${1:code}`",
+          "code-block": "```\n${1:code}\n```",
+          link: "[${1:text}](${2:url})",
+          image: "![${1:alt}](${2:url})",
+          quote: "> ",
+          ul: "- ",
+          ol: "1. ",
+          hr: "\n---\n",
+          table:
+            "\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n",
           mermaid: MERMAID_SNIPPET,
           interactive: getGenericSnippet(),
-          'interactive-3d': INTERACTIVE3D_SNIPPET,
+          "interactive-3d": INTERACTIVE3D_SNIPPET,
           chart: CHART_SNIPPET,
-        }
+        };
 
         for (const [key, snippet] of Object.entries(markdownSnippets)) {
           if (key.startsWith(lower) && key !== lower) {
@@ -108,175 +149,238 @@ function registerCompletionProvider(monaco: typeof import('monaco-editor'), extr
               label: key,
               kind: monaco.languages.CompletionItemKind.Snippet,
               insertText: snippet,
-              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              insertTextRules:
+                monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               range: {
                 startLineNumber: position.lineNumber,
                 endLineNumber: position.lineNumber,
                 startColumn: wordBefore.startColumn,
                 endColumn: wordBefore.endColumn,
               },
-              sortText: '1',
-            })
+              sortText: "1",
+            });
           }
         }
       }
 
-      return { suggestions }
+      return { suggestions };
     },
-  }
+  };
 
-  monaco.languages.registerCompletionItemProvider('markdown', provider)
+  monaco.languages.registerCompletionItemProvider("markdown", provider);
 }
 
-function registerFoldingProvider(monaco: typeof import('monaco-editor')) {
-  monaco.languages.registerFoldingRangeProvider('markdown', {
+function registerFoldingProvider(monaco: typeof import("monaco-editor")) {
+  monaco.languages.registerFoldingRangeProvider("markdown", {
     provideFoldingRanges: (model) => {
-      const ranges: languages.FoldingRange[] = []
-      const lineCount = model.getLineCount()
-      let startLine = -1
+      const ranges: languages.FoldingRange[] = [];
+      const lineCount = model.getLineCount();
+      let startLine = -1;
 
       for (let i = 1; i <= lineCount; i++) {
-        const lineContent = model.getLineContent(i)
-        if (lineContent.startsWith('```')) {
+        const lineContent = model.getLineContent(i);
+        if (lineContent.startsWith("```")) {
           if (startLine === -1) {
-            startLine = i
+            startLine = i;
           } else {
             ranges.push({
               start: startLine,
               end: i,
-              kind: monaco.languages.FoldingRangeKind.Region
-            })
-            startLine = -1
+              kind: monaco.languages.FoldingRangeKind.Region,
+            });
+            startLine = -1;
           }
         }
       }
-      return ranges
-    }
-  })
+      return ranges;
+    },
+  });
 }
 
-let globalCommandRegistered = false
-function registerCodeLensProvider(monaco: typeof import('monaco-editor')) {
+let globalCommandRegistered = false;
+function registerCodeLensProvider(monaco: typeof import("monaco-editor")) {
   // Command registration only once
   if (!globalCommandRegistered) {
-    monaco.editor.registerCommand('portfolio.previewBlock', (_accessor, args) => {
-      window.dispatchEvent(new CustomEvent('portfolio.previewBlock', { detail: args }))
-    })
-    globalCommandRegistered = true
+    monaco.editor.registerCommand(
+      "portfolio.previewBlock",
+      (_accessor, args) => {
+        window.dispatchEvent(
+          new CustomEvent("portfolio.previewBlock", { detail: args }),
+        );
+      },
+    );
+    globalCommandRegistered = true;
   }
 
-  monaco.languages.registerCodeLensProvider('markdown', {
+  monaco.languages.registerCodeLensProvider("markdown", {
     provideCodeLenses: (model) => {
-      const lenses: languages.CodeLens[] = []
-      const lineCount = model.getLineCount()
-      let currentBlockType = ''
-      let currentBlockStart = -1
+      const lenses: languages.CodeLens[] = [];
+      const lineCount = model.getLineCount();
+      let currentBlockType = "";
+      let currentBlockStart = -1;
 
       for (let i = 1; i <= lineCount; i++) {
-        const lineContent = model.getLineContent(i)
-        if (lineContent.startsWith('```')) {
+        const lineContent = model.getLineContent(i);
+        if (lineContent.startsWith("```")) {
           if (currentBlockStart === -1) {
-            const type = lineContent.slice(3).trim().toLowerCase()
-            if (['interactive', 'interactive-3d', '3d', 'chart', 'mermaid'].includes(type)) {
-              currentBlockType = type
-              currentBlockStart = i
+            const type = lineContent.slice(3).trim().toLowerCase();
+            if (
+              [
+                "interactive",
+                "interactive-3d",
+                "3d",
+                "chart",
+                "mermaid",
+              ].includes(type)
+            ) {
+              currentBlockType = type;
+              currentBlockStart = i;
             }
           } else {
             lenses.push({
-              range: new monaco.Range(currentBlockStart, 1, currentBlockStart, 1),
+              range: new monaco.Range(
+                currentBlockStart,
+                1,
+                currentBlockStart,
+                1,
+              ),
               id: `preview-${currentBlockStart}`,
               command: {
-                id: 'portfolio.previewBlock',
-                title: '👁️ Preview & Debug',
-                arguments: [{ uri: model.uri.toString(), type: currentBlockType, startLine: currentBlockStart, endLine: i }]
-              }
-            })
-            currentBlockStart = -1
-            currentBlockType = ''
+                id: "portfolio.previewBlock",
+                title: "👁️ Preview & Debug",
+                arguments: [
+                  {
+                    uri: model.uri.toString(),
+                    type: currentBlockType,
+                    startLine: currentBlockStart,
+                    endLine: i,
+                  },
+                ],
+              },
+            });
+            currentBlockStart = -1;
+            currentBlockType = "";
           }
         }
       }
-      return { lenses, dispose: () => {} }
+      return { lenses, dispose: () => {} };
     },
-    resolveCodeLens: (_model, codeLens) => codeLens
-  })
+    resolveCodeLens: (_model, codeLens) => codeLens,
+  });
 }
 
-export default function MarkdownEditor({ value, onChange, height = '100%', className = '', autoFocus = false, onEditorMount, extraWords = [], showToolbar = false, renderInlinePreview, onZoomBlock }: MarkdownEditorProps) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
-  const monacoRef = useRef<Parameters<OnMount>[1] | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [previewWidgets, setPreviewWidgets] = useState<{ id: string, widget: editor.IContentWidget, node: HTMLElement, type: string, code: string }[]>([])
-  
-  const handlePreviewBlockRef = useRef<(args: any) => void>(() => {})
+export default memo(function MarkdownEditor({
+  value,
+  onChange,
+  height = "100%",
+  className = "",
+  autoFocus = false,
+  onEditorMount,
+  extraWords = [],
+  showToolbar = false,
+  renderInlinePreview,
+  onZoomBlock,
+}: MarkdownEditorProps) {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<Parameters<OnMount>[1] | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [previewWidgets, setPreviewWidgets] = useState<
+    {
+      id: string;
+      widget: editor.IContentWidget;
+      node: HTMLElement;
+      type: string;
+      code: string;
+    }[]
+  >([]);
+
+  const handlePreviewBlockRef = useRef<(args: any) => void>(() => {});
 
   useEffect(() => {
-    if (!dropdownOpen) return
+    if (!dropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [dropdownOpen])
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      )
+        setDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dropdownOpen]);
 
-  const insertAtCursor = useCallback((before: string, after = '', placeholder = '') => {
-    const ed = editorRef.current
-    if (!ed) return
-    const selection = ed.getSelection()
-    if (!selection) return
-    const model = ed.getModel()
-    if (!model) return
-    const selectedText = model.getValueInRange(selection)
-    const replacement = selectedText || placeholder
-    const text = before + replacement + after
-    ed.executeEdits('toolbar', [{ range: selection, text, forceMoveMarkers: true }])
-    const newPos = {
-      startLineNumber: selection.startLineNumber,
-      startColumn: selection.startColumn + before.length,
-      endLineNumber: selection.startLineNumber,
-      endColumn: selection.startColumn + before.length + replacement.length,
-    }
-    ed.setSelection(newPos)
-    ed.focus()
-  }, [])
+  const insertAtCursor = useCallback(
+    (before: string, after = "", placeholder = "") => {
+      const ed = editorRef.current;
+      if (!ed) return;
+      const selection = ed.getSelection();
+      if (!selection) return;
+      const model = ed.getModel();
+      if (!model) return;
+      const selectedText = model.getValueInRange(selection);
+      const replacement = selectedText || placeholder;
+      const text = before + replacement + after;
+      ed.executeEdits("toolbar", [
+        { range: selection, text, forceMoveMarkers: true },
+      ]);
+      const newPos = {
+        startLineNumber: selection.startLineNumber,
+        startColumn: selection.startColumn + before.length,
+        endLineNumber: selection.startLineNumber,
+        endColumn: selection.startColumn + before.length + replacement.length,
+      };
+      ed.setSelection(newPos);
+      ed.focus();
+    },
+    [],
+  );
 
   const insertSnippet = useCallback((snippet: string) => {
-    const ed = editorRef.current
-    if (!ed) return
-    const selection = ed.getSelection()
-    if (!selection) return
-    ed.executeEdits('toolbar', [{ range: selection, text: snippet, forceMoveMarkers: true }])
-    ed.focus()
-  }, [])
+    const ed = editorRef.current;
+    if (!ed) return;
+    const selection = ed.getSelection();
+    if (!selection) return;
+    ed.executeEdits("toolbar", [
+      { range: selection, text: snippet, forceMoveMarkers: true },
+    ]);
+    ed.focus();
+  }, []);
 
   const handlePreviewBlock = useCallback((args: any) => {
-    const ed = editorRef.current
-    const mon = monacoRef.current
-    if (!ed || !mon) return
+    const ed = editorRef.current;
+    const mon = monacoRef.current;
+    if (!ed || !mon) return;
 
-    const { type, startLine, endLine } = args
-    const model = ed.getModel()
-    if (!model) return
+    const { type, startLine, endLine } = args;
+    const model = ed.getModel();
+    if (!model) return;
 
     // Extract inner code
-    const code = model.getValueInRange(new mon.Range(startLine + 1, 1, endLine - 1, model.getLineMaxColumn(endLine - 1) || 1))
-    const blockId = `block-${startLine}-${endLine}`
+    const code = model.getValueInRange(
+      new mon.Range(
+        startLine + 1,
+        1,
+        endLine - 1,
+        model.getLineMaxColumn(endLine - 1) || 1,
+      ),
+    );
+    const blockId = `block-${startLine}-${endLine}`;
 
-    setPreviewWidgets(prev => {
-      const existing = prev.find(vz => vz.id === blockId)
+    setPreviewWidgets((prev) => {
+      const existing = prev.find((vz) => vz.id === blockId);
       if (existing) {
-        ed.removeContentWidget(existing.widget)
-        return prev.filter(vz => vz.id !== blockId)
+        ed.removeContentWidget(existing.widget);
+        return prev.filter((vz) => vz.id !== blockId);
       }
 
-      const node = document.createElement('div')
-      node.style.width = '550px'
-      node.style.height = '400px'
-      node.style.maxWidth = '90vw'
-      node.style.zIndex = '100'
-      node.style.pointerEvents = 'auto'
-      
+      const node = document.createElement("div");
+      node.style.width = "550px";
+      node.style.height = "400px";
+      node.style.maxWidth = "90vw";
+      node.style.zIndex = "100";
+      node.style.pointerEvents = "auto";
+
       const widget: editor.IContentWidget = {
         getId: () => blockId,
         getDomNode: () => node,
@@ -284,154 +388,355 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
           position: { lineNumber: startLine, column: 1 },
           preference: [
             mon.editor.ContentWidgetPositionPreference.BELOW,
-            mon.editor.ContentWidgetPositionPreference.EXACT
-          ]
-        })
+            mon.editor.ContentWidgetPositionPreference.EXACT,
+          ],
+        }),
+      };
+
+      ed.addContentWidget(widget);
+
+      return [...prev, { id: blockId, widget, node, type, code }];
+    });
+  }, []);
+
+  handlePreviewBlockRef.current = handlePreviewBlock;
+
+  const handleMount: OnMount = useCallback(
+    (editorInstance, monaco) => {
+      editorRef.current = editorInstance;
+      monacoRef.current = monaco;
+
+      monaco.editor.setTheme(getTheme());
+
+      if (!providersRegistered) {
+        registerCompletionProvider(monaco, extraWords);
+        registerFoldingProvider(monaco);
+        registerCodeLensProvider(monaco);
+        providersRegistered = true;
       }
 
-      ed.addContentWidget(widget)
+      editorInstance.updateOptions({
+        fontSize: 13,
+        fontFamily:
+          "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+        fontLigatures: true,
+        lineHeight: 22,
+        padding: { top: 12, bottom: 12 },
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+        wrappingStrategy: "advanced",
+        renderLineHighlight: "line",
+        cursorBlinking: "smooth",
+        cursorSmoothCaretAnimation: "on",
+        smoothScrolling: true,
+        quickSuggestions: false,
+        tabSize: 2,
+        automaticLayout: true,
+        folding: true,
+        showFoldingControls: "always",
+        foldingStrategy: "auto",
+        scrollbar: {
+          verticalScrollbarSize: 6,
+          horizontalScrollbarSize: 6,
+          useShadows: false,
+        },
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        overviewRulerBorder: false,
+      });
 
-      return [...prev, { id: blockId, widget, node, type, code }]
-    })
-  }, [])
+      if (autoFocus) {
+        editorInstance.focus();
+      }
 
-  handlePreviewBlockRef.current = handlePreviewBlock
-
-  const handleMount: OnMount = useCallback((editorInstance, monaco) => {
-    editorRef.current = editorInstance
-    monacoRef.current = monaco
-
-    monaco.editor.setTheme(getTheme())
-    
-    if (!providersRegistered) {
-      registerCompletionProvider(monaco, extraWords)
-      registerFoldingProvider(monaco)
-      registerCodeLensProvider(monaco)
-      providersRegistered = true
-    }
-
-    editorInstance.updateOptions({
-      fontSize: 13,
-      fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
-      fontLigatures: true,
-      lineHeight: 22,
-      padding: { top: 12, bottom: 12 },
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      wordWrap: 'on',
-      wrappingStrategy: 'advanced',
-      renderLineHighlight: 'line',
-      cursorBlinking: 'smooth',
-      cursorSmoothCaretAnimation: 'on',
-      smoothScrolling: true,
-      quickSuggestions: false,
-      tabSize: 2,
-      automaticLayout: true,
-      folding: true,
-      showFoldingControls: 'always',
-      foldingStrategy: 'auto',
-      scrollbar: {
-        verticalScrollbarSize: 6,
-        horizontalScrollbarSize: 6,
-        useShadows: false,
-      },
-      overviewRulerLanes: 0,
-      hideCursorInOverviewRuler: true,
-      overviewRulerBorder: false,
-    })
-
-    if (autoFocus) {
-      editorInstance.focus()
-    }
-
-    onEditorMount?.(editorInstance)
-  }, [autoFocus, onEditorMount, extraWords])
+      onEditorMount?.(editorInstance);
+    },
+    [autoFocus, onEditorMount, extraWords],
+  );
 
   useEffect(() => {
     const handleThemeChange = () => {
       if (monacoRef.current) {
-        monacoRef.current.editor.setTheme(getTheme())
+        monacoRef.current.editor.setTheme(getTheme());
       }
-    }
+    };
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          handleThemeChange()
+        if (mutation.attributeName === "class") {
+          handleThemeChange();
         }
-      })
-    })
+      });
+    });
 
-    observer.observe(document.documentElement, { attributes: true })
+    observer.observe(document.documentElement, { attributes: true });
 
     // Listen to global CodeLens command
     const handleGlobalPreviewCommand = (e: any) => {
-      const args = e.detail
-      const model = editorRef.current?.getModel()
+      const args = e.detail;
+      const model = editorRef.current?.getModel();
       if (model && model.uri.toString() === args.uri) {
-        handlePreviewBlockRef.current(args)
+        handlePreviewBlockRef.current(args);
       }
-    }
-    window.addEventListener('portfolio.previewBlock', handleGlobalPreviewCommand)
+    };
+    window.addEventListener(
+      "portfolio.previewBlock",
+      handleGlobalPreviewCommand,
+    );
 
     return () => {
-      observer.disconnect()
-      window.removeEventListener('portfolio.previewBlock', handleGlobalPreviewCommand)
-    }
-  }, [])
+      observer.disconnect();
+      window.removeEventListener(
+        "portfolio.previewBlock",
+        handleGlobalPreviewCommand,
+      );
+    };
+  }, []);
 
   return (
     <div className={`w-full flex flex-col ${className}`} style={{ height }}>
       {showToolbar && (
-        <div className="flex items-center gap-0.5 px-2 py-1.5 border-b shrink-0 flex-wrap" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-          <button onClick={() => insertAtCursor('**', '**', 'bold')} title="Bold" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Bold size={14} /></button>
-          <button onClick={() => insertAtCursor('*', '*', 'italic')} title="Italic" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Italic size={14} /></button>
-          <button onClick={() => insertAtCursor('`', '`', 'code')} title="Inline Code" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Code size={14} /></button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-          <button onClick={() => insertAtCursor('# ', '', 'Heading')} title="H1" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Heading1 size={14} /></button>
-          <button onClick={() => insertAtCursor('## ', '', 'Heading')} title="H2" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Heading2 size={14} /></button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-          <button onClick={() => insertAtCursor('- ', '', 'list item')} title="Bullet List" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><List size={14} /></button>
-          <button onClick={() => insertAtCursor('1. ', '', 'list item')} title="Numbered List" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><ListOrdered size={14} /></button>
-          <button onClick={() => insertAtCursor('> ', '', 'quote')} title="Quote" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Quote size={14} /></button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
-          <button onClick={() => insertAtCursor('[', '](url)', 'link text')} title="Link" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><LinkIcon size={14} /></button>
-          <button onClick={() => insertAtCursor('![alt](', ')', 'image url')} title="Image" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Image size={14} /></button>
-          <button onClick={() => insertAtCursor('\n---\n', '', '')} title="Horizontal Rule" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Minus size={14} /></button>
-          <button onClick={() => insertAtCursor('\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n', '', '')} title="Table" className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'var(--text-secondary)' }}><Table size={14} /></button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--border)' }} />
+        <div
+          className="flex items-center gap-0.5 px-2 py-1.5 border-b shrink-0 flex-wrap"
+          style={{
+            borderColor: "var(--border)",
+            background: "var(--bg-secondary)",
+          }}
+        >
+          <button
+            onClick={() => insertAtCursor("**", "**", "bold")}
+            title="Bold"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Bold size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("*", "*", "italic")}
+            title="Italic"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Italic size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("`", "`", "code")}
+            title="Inline Code"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Code size={14} />
+          </button>
+          <div
+            className="w-px h-4 mx-1"
+            style={{ background: "var(--border)" }}
+          />
+          <button
+            onClick={() => insertAtCursor("# ", "", "Heading")}
+            title="H1"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Heading1 size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("## ", "", "Heading")}
+            title="H2"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Heading2 size={14} />
+          </button>
+          <div
+            className="w-px h-4 mx-1"
+            style={{ background: "var(--border)" }}
+          />
+          <button
+            onClick={() => insertAtCursor("- ", "", "list item")}
+            title="Bullet List"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <List size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("1. ", "", "list item")}
+            title="Numbered List"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <ListOrdered size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("> ", "", "quote")}
+            title="Quote"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Quote size={14} />
+          </button>
+          <div
+            className="w-px h-4 mx-1"
+            style={{ background: "var(--border)" }}
+          />
+          <button
+            onClick={() => insertAtCursor("[", "](url)", "link text")}
+            title="Link"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <LinkIcon size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("![alt](", ")", "image url")}
+            title="Image"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Image size={14} />
+          </button>
+          <button
+            onClick={() => insertAtCursor("\n---\n", "", "")}
+            title="Horizontal Rule"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            onClick={() =>
+              insertAtCursor(
+                "\n| Column | Column |\n|--------|--------|\n| Cell   | Cell   |\n",
+                "",
+                "",
+              )
+            }
+            title="Table"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Table size={14} />
+          </button>
+          <div
+            className="w-px h-4 mx-1"
+            style={{ background: "var(--border)" }}
+          />
           <div className="relative" ref={dropdownRef}>
-            <button onClick={() => setDropdownOpen(!dropdownOpen)} title="Insert Block" className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              title="Insert Block"
+              className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
+              style={{ color: "var(--text-secondary)" }}
+            >
               <Puzzle size={14} />
               <span className="hidden sm:inline">Blocks</span>
               <ChevronDown size={10} />
             </button>
             {dropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-lg border shadow-lg py-1" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
-                <button onClick={() => { insertSnippet(MERMAID_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+              <div
+                className="absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-lg border shadow-lg py-1"
+                style={{
+                  background: "var(--bg-card)",
+                  borderColor: "var(--border)",
+                }}
+              >
+                <button
+                  onClick={() => {
+                    insertSnippet(MERMAID_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
                   Mermaid Diagram
                 </button>
-                <button onClick={() => { insertSnippet(INTERACTIVE3D_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--accent)' }}>
+                <button
+                  onClick={() => {
+                    insertSnippet(INTERACTIVE3D_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--accent)" }}
+                >
                   <Box size={12} />
                   3D Block
                 </button>
-                <div className="my-1 border-t" style={{ borderColor: 'var(--border)' }} />
-                <button onClick={() => { insertSnippet(STEPS_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                <div
+                  className="my-1 border-t"
+                  style={{ borderColor: "var(--border)" }}
+                />
+                <button
+                  onClick={() => {
+                    insertSnippet(STEPS_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   <Layers size={12} />
                   Step-Through Tutorial
                 </button>
-                <button onClick={() => { insertSnippet(QUIZ_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                <button
+                  onClick={() => {
+                    insertSnippet(QUIZ_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   <HelpCircle size={12} />
                   Interactive Quiz
                 </button>
-                <button onClick={() => { insertSnippet(getGenericSnippet()); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                <button
+                  onClick={() => {
+                    insertSnippet(getGenericSnippet());
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   <Puzzle size={12} />
                   Custom Interactive
                 </button>
-                <div className="my-1 border-t" style={{ borderColor: 'var(--border)' }} />
-                <button onClick={() => { insertSnippet(CHART_SNIPPET); setDropdownOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors" style={{ color: 'var(--accent)' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <div
+                  className="my-1 border-t"
+                  style={{ borderColor: "var(--border)" }}
+                />
+                <button
+                  onClick={() => {
+                    insertSnippet(CHART_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--accent)" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
                   Chart
                 </button>
               </div>
@@ -443,17 +748,20 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
         <Editor
           defaultLanguage="markdown"
           value={value}
-          onChange={(v) => onChange(v || '')}
+          onChange={(v) => onChange(v || "")}
           onMount={handleMount}
           beforeMount={defineThemes}
           theme={getTheme()}
           loading={
-            <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
+            <div
+              className="flex items-center justify-center h-full"
+              style={{ color: "var(--text-muted)" }}
+            >
               <span className="text-xs">Loading editor...</span>
             </div>
           }
           options={{
-            wordWrap: 'on',
+            wordWrap: "on",
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
@@ -461,20 +769,20 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
         />
       </div>
 
-      {previewWidgets.map(vz => (
+      {previewWidgets.map((vz) =>
         createPortal(
           <div className="w-full h-full border border-[var(--accent)] bg-[var(--bg-card)] rounded-xl overflow-hidden relative shadow-2xl pointer-events-auto">
             <div className="absolute top-2 right-2 z-50 flex items-center gap-2">
               {onZoomBlock && (
-                <button 
+                <button
                   onPointerDown={(e) => {
-                    e.stopPropagation()
-                    onZoomBlock({ 
-                      type: vz.type, 
-                      code: vz.code, 
-                      startLine: parseInt(vz.id.split('-')[1]), 
-                      endLine: parseInt(vz.id.split('-')[2]) 
-                    })
+                    e.stopPropagation();
+                    onZoomBlock({
+                      type: vz.type,
+                      code: vz.code,
+                      startLine: parseInt(vz.id.split("-")[1]),
+                      endLine: parseInt(vz.id.split("-")[2]),
+                    });
                   }}
                   className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
                   title="Zoom (Isolate Block)"
@@ -482,10 +790,14 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
                   <Maximize2 size={14} />
                 </button>
               )}
-              <button 
+              <button
                 onPointerDown={(e) => {
-                  e.stopPropagation()
-                  handlePreviewBlockRef.current({ type: vz.type, startLine: parseInt(vz.id.split('-')[1]), endLine: parseInt(vz.id.split('-')[2]) })
+                  e.stopPropagation();
+                  handlePreviewBlockRef.current({
+                    type: vz.type,
+                    startLine: parseInt(vz.id.split("-")[1]),
+                    endLine: parseInt(vz.id.split("-")[2]),
+                  });
                 }}
                 className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
                 title="Close Preview"
@@ -497,52 +809,59 @@ export default function MarkdownEditor({ value, onChange, height = '100%', class
               {vz.type} Preview
             </div>
             <div className="w-full h-full pt-10">
-              {renderInlinePreview ? renderInlinePreview(vz.type, vz.code, vz.id) : null}
+              {renderInlinePreview
+                ? renderInlinePreview(vz.type, vz.code, vz.id)
+                : null}
             </div>
           </div>,
-          vz.node
-        )
-      ))}
+          vz.node,
+        ),
+      )}
     </div>
-  )
-}
+  );
+});
 
 export function useMarkdownInsert() {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const setEditor = useCallback((e: editor.IStandaloneCodeEditor | null) => {
-    editorRef.current = e
-  }, [])
+    editorRef.current = e;
+  }, []);
 
-  const insertMarkdown = useCallback((before: string, after = '', placeholder = '') => {
-    const ed = editorRef.current
-    if (!ed) return
+  const insertMarkdown = useCallback(
+    (before: string, after = "", placeholder = "") => {
+      const ed = editorRef.current;
+      if (!ed) return;
 
-    const selection = ed.getSelection()
-    if (!selection) return
+      const selection = ed.getSelection();
+      if (!selection) return;
 
-    const model = ed.getModel()
-    if (!model) return
+      const model = ed.getModel();
+      if (!model) return;
 
-    const selectedText = model.getValueInRange(selection)
-    const replacement = selectedText || placeholder
-    const text = before + replacement + after
+      const selectedText = model.getValueInRange(selection);
+      const replacement = selectedText || placeholder;
+      const text = before + replacement + after;
 
-    ed.executeEdits('markdown-toolbar', [{
-      range: selection,
-      text,
-      forceMoveMarkers: true,
-    }])
+      ed.executeEdits("markdown-toolbar", [
+        {
+          range: selection,
+          text,
+          forceMoveMarkers: true,
+        },
+      ]);
 
-    const newPos = {
-      startLineNumber: selection.startLineNumber,
-      startColumn: selection.startColumn + before.length,
-      endLineNumber: selection.startLineNumber,
-      endColumn: selection.startColumn + before.length + replacement.length,
-    }
-    ed.setSelection(newPos)
-    ed.focus()
-  }, [])
+      const newPos = {
+        startLineNumber: selection.startLineNumber,
+        startColumn: selection.startColumn + before.length,
+        endLineNumber: selection.startLineNumber,
+        endColumn: selection.startColumn + before.length + replacement.length,
+      };
+      ed.setSelection(newPos);
+      ed.focus();
+    },
+    [],
+  );
 
-  return { editorRef, setEditor, insertMarkdown }
+  return { editorRef, setEditor, insertMarkdown };
 }

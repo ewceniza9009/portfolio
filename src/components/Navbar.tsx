@@ -32,7 +32,7 @@ interface NavbarProps {
   onChangeAccent: (key: AccentKey) => void
 }
 
-function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, onChangeAccent: (key: AccentKey) => void, theme: 'dark' | 'light' }) {
+export function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, onChangeAccent: (key: AccentKey) => void, theme: 'dark' | 'light' }) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 

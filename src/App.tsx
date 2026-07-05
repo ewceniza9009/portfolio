@@ -122,13 +122,24 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [selectedProjectData])
 
+  const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
+  const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
+  const memoizedFloatingControl = useMemo(() => <FloatingControl />, [])
+  const memoizedFooter = useMemo(() => <Footer onScrollTo={scrollTo} />, [scrollTo])
+  const memoizedBackToTop = useMemo(() => <BackToTop />, [])
+  const memoizedResumeModal = useMemo(() => <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />, [isResumeOpen, handleCloseResume])
+  const memoizedCursorFollower = useMemo(() => <CursorFollower />, [])
+  const memoizedHeadTags = useMemo(() => (
+    <HeadTags
+      description="Full Stack Software Developer with 10+ years building ERP, LOB & AI applications. Hire me for .NET, React, Angular, Node.js projects."
+      url="/"
+    />
+  ), [])
+
   return (
     <>
-      <HeadTags
-        description="Full Stack Software Developer with 10+ years building ERP, LOB & AI applications. Hire me for .NET, React, Angular, Node.js projects."
-        url="/"
-      />
-      <CursorFollower />
+      {memoizedHeadTags}
+      {memoizedCursorFollower}
       <AnimatePresence>
         {isLoading && (
           <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
@@ -151,13 +162,13 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
         />
         <main>
           {staticSections}
-          <GitHubSection theme={theme} accent={accent} />
-          <ContactSection theme={theme} />
+          {memoizedGitHubSection}
+          {memoizedContactSection}
         </main>
-        <FloatingControl />
-        <Footer onScrollTo={scrollTo} />
-        <BackToTop />
-        <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />
+        {memoizedFloatingControl}
+        {memoizedFooter}
+        {memoizedBackToTop}
+        {memoizedResumeModal}
       </div>
     </>
   )
@@ -423,7 +434,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/admin" element={<AdminPanel theme={theme} accent={accent} />} />
+      <Route path="/admin" element={<AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
       <Route path="/blogs" element={<BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
       <Route path="/blogs/:slug" element={<BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
       <Route path="*" element={
