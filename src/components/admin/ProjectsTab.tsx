@@ -127,7 +127,7 @@ export default function ProjectsTab() {
         <button
           onClick={handleCreate}
           className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
-          style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: '#fff' }}
         >
           <Plus size={14} /> Add Project
         </button>
@@ -145,7 +145,7 @@ export default function ProjectsTab() {
             className="rounded-xl border relative transition-all duration-200 group"
             style={{
               borderColor: dragOverIndex === idx && dragIndex !== idx
-                ? 'var(--accent-color, #3b82f6)'
+                ? 'var(--accent)'
                 : 'var(--border-color)',
               background: 'var(--glass-bg)',
               opacity: dragIndex === idx ? 0.4 : 1,
@@ -287,7 +287,7 @@ export default function ProjectsTab() {
               <button
                 onClick={handleSave}
                 className="px-4 py-2 rounded-lg text-white text-sm font-semibold flex items-center gap-2 transition-colors"
-                style={{ background: 'var(--accent-color, #3b82f6)' }}
+                style={{ background: 'var(--accent)' }}
               >
                 <Save size={14} /> Save
               </button>

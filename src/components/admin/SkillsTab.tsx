@@ -188,7 +188,7 @@ export default function SkillsTab() {
         <button
           onClick={handleCreateCategory}
           className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
-          style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: '#fff' }}
         >
           <Plus size={14} /> Add Category
         </button>
@@ -207,7 +207,7 @@ export default function SkillsTab() {
             className="rounded-xl border transition-all duration-200"
             style={{
               borderColor: dragOverCatIndex === catIdx && dragCatIndex !== catIdx
-                ? 'var(--accent-color, #3b82f6)'
+                ? 'var(--accent)'
                 : 'var(--border-color)',
               background: 'var(--glass-bg)',
               opacity: dragCatIndex === catIdx ? 0.5 : 1,
@@ -238,7 +238,7 @@ export default function SkillsTab() {
                 <button
                   onClick={() => handleCreateSkill(cat.id)}
                   className="px-2 py-1 text-xs rounded-md flex items-center gap-1 transition-colors"
-                  style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff', opacity: 0.85 }}
+                  style={{ background: 'var(--accent)', color: '#fff', opacity: 0.85 }}
                 >
                   <Plus size={12} /> Skill
                 </button>
@@ -273,7 +273,7 @@ export default function SkillsTab() {
                   className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-lg border text-xs cursor-grab active:cursor-grabbing select-none transition-all duration-150"
                   style={{
                     borderColor: dragOverSkill?.catId === cat.id && dragOverSkill?.index === sIdx && dragSkill?.index !== sIdx
-                      ? 'var(--accent-color, #3b82f6)'
+                      ? 'var(--accent)'
                       : 'var(--border-color)',
                     background: dragSkill?.catId === cat.id && dragSkill?.index === sIdx
                       ? 'transparent'
@@ -369,7 +369,7 @@ export default function SkillsTab() {
               <button
                 onClick={handleSaveCategory}
                 className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
-                style={{ background: 'var(--accent-color, #3b82f6)' }}
+                style={{ background: 'var(--accent)' }}
               >
                 Save
               </button>
@@ -431,7 +431,7 @@ export default function SkillsTab() {
               <button
                 onClick={handleSaveSkill}
                 className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
-                style={{ background: 'var(--accent-color, #3b82f6)' }}
+                style={{ background: 'var(--accent)' }}
               >
                 Save
               </button>
