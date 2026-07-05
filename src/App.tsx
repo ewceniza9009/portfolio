@@ -44,7 +44,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isResumeOpen, setIsResumeOpen] = useState(false)
   const [projectsData, setProjectsData] = useState<any[]>([])
-  const [skillsData, setSkillsData] = useState<any>({})
+  const [skillsData, setSkillsData] = useState<any[]>([])
   const [aboutData, setAboutData] = useState<{ title: string; paragraphs: string[] }>({ title: 'About Me', paragraphs: [] })
   const [experienceData, setExperienceData] = useState<any[]>([])
   const [awardsData, setAwardsData] = useState<any[]>([])
