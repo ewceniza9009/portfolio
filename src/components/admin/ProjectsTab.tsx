@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Save, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 
 export default function ProjectsTab() {
@@ -7,6 +7,10 @@ export default function ProjectsTab() {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [formData, setFormData] = useState<any>(null)
+
+  // Drag state
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -73,26 +77,31 @@ export default function ProjectsTab() {
     }
   }
 
-  const handleMoveProject = async (index: number, direction: 'left' | 'right') => {
-    if (direction === 'left' && index === 0) return
-    if (direction === 'right' && index === projects.length - 1) return
+  // --- Drag & Drop ---
+  const handleDragStart = (index: number) => {
+    setDragIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = async (index: number) => {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null)
+      setDragOverIndex(null)
+      return
+    }
 
     const newProjects = [...projects]
-    const swapIndex = direction === 'left' ? index - 1 : index + 1
-    
-    // Swap items
-    const temp = newProjects[index]
-    newProjects[index] = newProjects[swapIndex]
-    newProjects[swapIndex] = temp
+    const [moved] = newProjects.splice(dragIndex, 1)
+    newProjects.splice(index, 0, moved)
 
-    // Re-assign display_order based on array index
-    const updatedItems = newProjects.map((p, i) => ({
-      id: p.id,
-      display_order: i
-    }))
-
-    // Optimistic update
+    const updatedItems = newProjects.map((p, i) => ({ id: p.id, display_order: i }))
     setProjects(newProjects.map((p, i) => ({ ...p, display_order: i })))
+    setDragIndex(null)
+    setDragOverIndex(null)
 
     try {
       await apiFetch('/api/projects/reorder', {
@@ -101,113 +110,185 @@ export default function ProjectsTab() {
       })
     } catch (err) {
       console.error('Failed to reorder projects:', err)
-      fetchProjects() // Revert on failure
+      fetchProjects()
     }
   }
 
-  if (loading) return <div className="p-4">Loading...</div>
+  // Shared input style
+  const inputStyle = { background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }
+  const inputClass = "w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+
+  if (loading) return <div className="p-4" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
 
   return (
-    <div className="col-span-12 p-4 space-y-4 overflow-y-auto custom-scrollbar h-full">
+    <div className="col-span-12 p-4 md:p-6 space-y-4 overflow-y-auto custom-scrollbar h-full">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Projects</h3>
-        <button onClick={handleCreate} className="px-3 py-1.5 rounded bg-blue-500/20 text-blue-500 hover:bg-blue-500/30 flex items-center gap-1">
+        <button
+          onClick={handleCreate}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
+          style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff' }}
+        >
           <Plus size={14} /> Add Project
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {projects.map(p => (
-          <div key={p.id} className="p-4 rounded-xl border relative" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-            <img src={p.image} alt={p.title} className="w-full h-32 object-cover rounded-lg mb-3 bg-black/20" />
-            <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{p.title}</h4>
-            <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{p.subtitle}</p>
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex gap-2">
-                <button onClick={() => handleEdit(p)} className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white"><Edit2 size={14} /></button>
-                <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded hover:bg-red-500/10 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
-              </div>
-              <div className="flex gap-1">
-                <button 
-                  onClick={() => handleMoveProject(projects.indexOf(p), 'left')} 
-                  disabled={projects.indexOf(p) === 0}
-                  className="p-1.5 rounded hover:bg-white/10 text-gray-400 disabled:opacity-30 hover:text-white"
+        {projects.map((p, idx) => (
+          <div
+            key={p.id}
+            draggable
+            onDragStart={() => handleDragStart(idx)}
+            onDragOver={(e) => handleDragOver(e, idx)}
+            onDrop={() => handleDrop(idx)}
+            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
+            className="rounded-xl border relative transition-all duration-200 group"
+            style={{
+              borderColor: dragOverIndex === idx && dragIndex !== idx
+                ? 'var(--accent-color, #3b82f6)'
+                : 'var(--border-color)',
+              background: 'var(--glass-bg)',
+              opacity: dragIndex === idx ? 0.4 : 1,
+              transform: dragOverIndex === idx && dragIndex !== idx ? 'scale(1.02)' : 'scale(1)',
+            }}
+          >
+            {/* Drag handle */}
+            <div className="absolute top-2 right-2 z-10 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-60 transition-opacity p-1 rounded-lg" style={{ color: 'var(--text-muted)', background: 'var(--glass-bg)' }}>
+              <GripVertical size={14} />
+            </div>
+
+            <div className="p-4">
+              <img
+                src={p.image}
+                alt={p.title}
+                className="w-full h-32 object-cover rounded-lg mb-3"
+                style={{ background: 'var(--bg-secondary)' }}
+              />
+              <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{p.title}</h4>
+              <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>{p.subtitle}</p>
+              {p.tech && p.tech.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {p.tech.slice(0, 4).map((t: string) => (
+                    <span
+                      key={t}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                  {p.tech.length > 4 && (
+                    <span className="text-[10px] py-0.5" style={{ color: 'var(--text-muted)' }}>+{p.tech.length - 4}</span>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center gap-1 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                 >
-                  <ChevronLeft size={14} />
+                  <Edit2 size={14} />
                 </button>
-                <button 
-                  onClick={() => handleMoveProject(projects.indexOf(p), 'right')} 
-                  disabled={projects.indexOf(p) === projects.length - 1}
-                  className="p-1.5 rounded hover:bg-white/10 text-gray-400 disabled:opacity-30 hover:text-white"
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="p-1.5 rounded-lg transition-colors text-red-400 hover:text-red-500"
                 >
-                  <ChevronRight size={14} />
+                  <Trash2 size={14} />
                 </button>
+                <span className="ml-auto text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                  {p.year} · {p.type}
+                </span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Edit / Create Modal */}
       {editingId !== null && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+          <div
+            className="rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto border"
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+          >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">{editingId === 0 ? 'New Project' : 'Edit Project'}</h3>
-              <button onClick={() => setEditingId(null)} className="p-2 hover:bg-white/10 rounded-full"><X size={16} /></button>
+              <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {editingId === 0 ? 'New Project' : 'Edit Project'}
+              </h3>
+              <button
+                onClick={() => setEditingId(null)}
+                className="p-2 rounded-full transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X size={16} />
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Title</label>
-                <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Title</label>
+                <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Subtitle</label>
-                <input value={formData.subtitle} onChange={e => setFormData({...formData, subtitle: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Subtitle</label>
+                <input value={formData.subtitle} onChange={e => setFormData({...formData, subtitle: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs text-gray-400 block mb-1">Description</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" rows={2} />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={inputClass} style={inputStyle} rows={2} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs text-gray-400 block mb-1">Details (one per line)</label>
-                <textarea value={formData.detailsStr} onChange={e => setFormData({...formData, detailsStr: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" rows={4} />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (one per line)</label>
+                <textarea value={formData.detailsStr} onChange={e => setFormData({...formData, detailsStr: e.target.value})} className={inputClass} style={inputStyle} rows={4} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Tech (comma separated)</label>
-                <input value={formData.techStr} onChange={e => setFormData({...formData, techStr: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Tech (comma separated)</label>
+                <input value={formData.techStr} onChange={e => setFormData({...formData, techStr: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Image URL</label>
-                <input value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Image URL</label>
+                <input value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Fallback Image URL</label>
-                <input value={formData.fallback} onChange={e => setFormData({...formData, fallback: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Fallback Image URL</label>
+                <input value={formData.fallback} onChange={e => setFormData({...formData, fallback: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Year</label>
-                <input value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Year</label>
+                <input value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Type</label>
-                <input value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Type</label>
+                <input value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Color (Hex)</label>
-                <input value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" type="color" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Color (Hex)</label>
+                <input value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} className={inputClass} style={inputStyle} type="color" />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Repo URL</label>
-                <input value={formData.repo} onChange={e => setFormData({...formData, repo: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Repo URL</label>
+                <input value={formData.repo} onChange={e => setFormData({...formData, repo: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Demo URL</label>
-                <input value={formData.demo} onChange={e => setFormData({...formData, demo: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Demo URL</label>
+                <input value={formData.demo} onChange={e => setFormData({...formData, demo: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded text-sm text-gray-400 hover:text-white">Cancel</button>
-              <button onClick={handleSave} className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold flex items-center gap-2">
+              <button
+                onClick={() => setEditingId(null)}
+                className="px-4 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 rounded-lg text-white text-sm font-semibold flex items-center gap-2 transition-colors"
+                style={{ background: 'var(--accent-color, #3b82f6)' }}
+              >
                 <Save size={14} /> Save
               </button>
             </div>
