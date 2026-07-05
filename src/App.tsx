@@ -2,9 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
-import projects from './data/projects'
 import experience from './data/experience'
-import skills from './data/skills'
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
 import AboutSection from './components/AboutSection'
@@ -47,8 +45,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isResumeOpen, setIsResumeOpen] = useState(false)
-  const [projectsData, setProjectsData] = useState<any[]>(projects)
-  const [skillsData, setSkillsData] = useState<any>(skills)
+  const [projectsData, setProjectsData] = useState<any[]>([])
+  const [skillsData, setSkillsData] = useState<any>({})
 
   useEffect(() => {
     history.scrollRestoration = 'manual'
