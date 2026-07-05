@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import turso from '../db.js'
-import { seedFirstBlog } from '../blogSeed.js'
 
 const router = Router()
 
@@ -19,8 +18,6 @@ router.get('/api/blogs', async (_req, res) => {
 // Get single published blog post by slug
 router.get('/api/blogs/:slug', async (req, res) => {
   try {
-    await seedFirstBlog(turso)
-
     const result = await turso.execute({
       sql: 'SELECT * FROM blogs WHERE slug = ? AND published = 1',
       args: [req.params.slug as string],
