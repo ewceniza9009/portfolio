@@ -16,6 +16,9 @@ import adminLogsRoutes from '../server/routes/admin-logs.js'
 import cmsRoutes from '../server/routes/cms.js'
 import rssRoutes from '../server/routes/rss.js'
 import searchRoutes from '../server/routes/search.js'
+import experienceRoutes from '../server/routes/experience.js'
+import awardsRoutes from '../server/routes/awards.js'
+import aboutRoutes from '../server/routes/about.js'
 
 const app = express()
 
@@ -60,5 +63,8 @@ app.use(adminLogsRoutes)
 app.use(cmsRoutes)
 app.use(rssRoutes)
 app.use(searchRoutes)
+app.use(experienceRoutes)
+app.use(awardsRoutes)
+app.use(aboutRoutes)
 
 export default app

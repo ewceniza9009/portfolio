@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
-import experience from './data/experience'
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
 import AboutSection from './components/AboutSection'
@@ -16,7 +15,6 @@ import AwardsSection from './components/AwardsSection'
 import BackToTop from './components/BackToTop'
 import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
-import awards from './data/awards'
 import FloatingControl from './components/FloatingControl'
 import AdminPanel from './components/AdminPanel'
 import { ACCENT_THEMES } from './data/accents'
@@ -47,6 +45,9 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [isResumeOpen, setIsResumeOpen] = useState(false)
   const [projectsData, setProjectsData] = useState<any[]>([])
   const [skillsData, setSkillsData] = useState<any>({})
+  const [aboutData, setAboutData] = useState<{ title: string; paragraphs: string[] }>({ title: 'About Me', paragraphs: [] })
+  const [experienceData, setExperienceData] = useState<any[]>([])
+  const [awardsData, setAwardsData] = useState<any[]>([])
 
   useEffect(() => {
     history.scrollRestoration = 'manual'
@@ -75,6 +76,23 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
         setSkillsData(data.skills)
       }
     }).catch(err => console.error('Failed to load skills from API', err))
+
+    // Fetch about
+    apiFetch('/api/about').then(res => res.json()).then(data => {
+      if(data && data.paragraphs && data.paragraphs.length > 0) {
+        setAboutData(data)
+      }
+    }).catch(err => console.error('Failed to load about from API', err))
+
+    // Fetch experience
+    apiFetch('/api/experience').then(res => res.json()).then(data => {
+      if(Array.isArray(data) && data.length > 0) setExperienceData(data)
+    }).catch(err => console.error('Failed to load experience from API', err))
+
+    // Fetch awards
+    apiFetch('/api/awards').then(res => res.json()).then(data => {
+      if(Array.isArray(data) && data.length > 0) setAwardsData(data)
+    }).catch(err => console.error('Failed to load awards from API', err))
 
     return () => clearTimeout(timer)
   }, [])
@@ -133,16 +151,16 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const staticSections = useMemo(() => (
     <>
       <HeroSection onScrollTo={scrollTo} onViewResume={handleViewResume} />
-      <AboutSection />
-      <ExperienceSection experience={experience} />
-      <AwardsSection awards={awards} />
+      <AboutSection title={aboutData.title} paragraphs={aboutData.paragraphs} />
+      <ExperienceSection experience={experienceData} />
+      <AwardsSection awards={awardsData} />
       <ProjectsSection projects={projectsData} onSelectProject={setSelectedProject} />
       <ProjectModal project={selectedProjectData} onClose={handleCloseProject} />
       <GallerySection />
       <SkillsSection skills={skillsData} />
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [selectedProjectData, projectsData, skillsData])
+  ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData])
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])

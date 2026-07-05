@@ -1,5 +1,5 @@
 import { createClient } from '@libsql/client'
-import { seedFirstBlog } from './blogSeed.js'
+import { seedAll } from './seed.js'
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL!,
@@ -156,6 +156,42 @@ export async function initDb() {
     )
   `)
 
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS experience (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      year TEXT NOT NULL,
+      company TEXT NOT NULL,
+      location TEXT NOT NULL,
+      position TEXT NOT NULL,
+      descriptions TEXT,
+      technologies TEXT,
+      display_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS awards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      date TEXT NOT NULL,
+      company TEXT NOT NULL,
+      description TEXT NOT NULL,
+      image TEXT,
+      display_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS about (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      title TEXT DEFAULT 'About Me',
+      paragraphs TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+
   // Migration: add columns that may not exist yet
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN country TEXT') } catch {}
   try { await turso.execute('ALTER TABLE visitors ADD COLUMN region TEXT') } catch {}
@@ -193,8 +229,8 @@ export async function initDb() {
     ('n8n_webhook_url', '')
   `)
 
-  // Run seed function to add first EMR telemetry blog post
-  await seedFirstBlog(turso)
+  // Seed all data
+  await seedAll(turso)
 }
 
 export default turso

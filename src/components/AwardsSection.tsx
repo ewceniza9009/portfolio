@@ -1,7 +1,15 @@
 import { motion, useInView } from 'framer-motion'
 import React, { useRef } from 'react'
 import { Award as AwardIcon, Calendar, Building2 } from 'lucide-react'
-import { Award } from '../data/awards'
+
+interface Award {
+  id: string | number
+  title: string
+  date: string
+  company: string
+  description: string
+  image: string
+}
 
 interface AwardsSectionProps {
   awards: Award[]
