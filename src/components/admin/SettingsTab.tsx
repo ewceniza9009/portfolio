@@ -1,3 +1,4 @@
+import React from 'react';
 import type { ChangeEvent } from "react";
 import {
   Settings,
@@ -90,7 +91,7 @@ interface SettingsTabProps {
   getRequiredFieldsFilled: () => boolean;
 }
 
-export default function SettingsTab({
+function SettingsTab({
   blogs,
   defaultTheme,
   defaultAccent,
@@ -1328,3 +1329,5 @@ export default function SettingsTab({
     </div>
   );
 }
+
+export default React.memo(SettingsTab);

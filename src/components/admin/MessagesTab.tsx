@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -47,7 +48,7 @@ interface MessagesTabProps {
   handleCopyEmail: (email: string) => void;
 }
 
-export default function MessagesTab({
+function MessagesTab({
   refreshing,
   selected,
   setSelected,
@@ -580,3 +581,5 @@ export default function MessagesTab({
     </>
   );
 }
+
+export default React.memo(MessagesTab);

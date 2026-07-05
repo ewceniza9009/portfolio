@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -29,7 +30,7 @@ interface DashboardHeaderProps {
   inboxCount: number;
 }
 
-export default function DashboardHeader({
+function DashboardHeader({
   theme,
   toggleTheme,
   accent,
@@ -243,3 +244,5 @@ export default function DashboardHeader({
     </header>
   );
 }
+
+export default React.memo(DashboardHeader);

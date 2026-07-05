@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -104,7 +105,7 @@ interface BlogsTabProps {
   api: (path: string, options?: RequestInit) => Promise<Response>;
 }
 
-export default function BlogsTab({
+function BlogsTab({
   blogs,
   selectedBlog,
   setSelectedBlog,
@@ -1471,3 +1472,5 @@ export default function BlogsTab({
             </>
   );
 }
+
+export default React.memo(BlogsTab);

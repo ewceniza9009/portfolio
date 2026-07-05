@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion'
 import { Lock } from 'lucide-react'
 
@@ -8,7 +9,7 @@ interface LoginViewProps {
   loginError: string
 }
 
-export default function LoginView({ password, setPassword, handleLogin, loginError }: LoginViewProps) {
+function LoginView({ password, setPassword, handleLogin, loginError }: LoginViewProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-6 transition-all duration-300"
@@ -89,3 +90,5 @@ export default function LoginView({ password, setPassword, handleLogin, loginErr
     </div>
   )
 }
+
+export default React.memo(LoginView);

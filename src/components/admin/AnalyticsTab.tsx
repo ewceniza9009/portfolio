@@ -1,3 +1,4 @@
+import React from 'react';
 import { Fragment } from "react";
 import {
   BarChart,
@@ -95,7 +96,7 @@ export interface AnalyticsTabProps {
   executeCleanup: () => void;
 }
 
-export default function AnalyticsTab({
+function AnalyticsTab({
   visitors,
   dailyVisits,
   hourlyVisits,
@@ -1292,3 +1293,5 @@ export default function AnalyticsTab({
     </div>
   );
 }
+
+export default React.memo(AnalyticsTab);

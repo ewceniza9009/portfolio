@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2, Mail, Phone, Linkedin, Github, Copy, Check } from 'lucide-react'
+import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2, Mail, Phone, Linkedin, Github, Copy, Check, Network } from 'lucide-react'
 import { getSafeItem, setSafeItem } from '../utils/storage'
 import { getApiUrl } from '../utils/api'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
@@ -772,7 +772,7 @@ export default function FloatingControl() {
               <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
               >
-                Terminal &middot; Contact &middot; Cursor
+                Terminal &middot; Contact &middot; Cursor &middot; Graph
               </div>
             </div>
           </div>
@@ -821,6 +821,19 @@ export default function FloatingControl() {
             >
               <MousePointer2 size={14} /> Cursor
             </button>
+            <a
+              href="file:///X:/portfolio/graphify-out/graph.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+              style={{
+                background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--border) 150%, transparent)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Network size={14} /> Knowledge Graph
+            </a>
             <div className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
               style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }}
             />

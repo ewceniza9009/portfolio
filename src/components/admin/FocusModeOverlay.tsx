@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Minimize2, Maximize2, X, Check } from "lucide-react";
 import MarkdownEditor from "../MarkdownEditor";
@@ -19,7 +20,7 @@ interface FocusModeOverlayProps {
   applyZoomedChanges: () => void;
 }
 
-export default function FocusModeOverlay({
+function FocusModeOverlay({
   focusContentMode,
   setFocusContentMode,
   blogTitle,
@@ -197,3 +198,5 @@ export default function FocusModeOverlay({
     </>
   );
 }
+
+export default React.memo(FocusModeOverlay);

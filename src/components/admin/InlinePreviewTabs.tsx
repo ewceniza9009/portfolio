@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react'
 import { Sparkles, Loader } from 'lucide-react'
 
@@ -10,7 +11,7 @@ interface InlinePreviewTabsProps {
   aiSuggestions: Record<string, string>
 }
 
-export default function InlinePreviewTabs({ content, previewLogs, setPreviewLogs, handleAskAiFix, fixingErrorId, aiSuggestions }: InlinePreviewTabsProps) {
+function InlinePreviewTabs({ content, previewLogs, setPreviewLogs, handleAskAiFix, fixingErrorId, aiSuggestions }: InlinePreviewTabsProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'console'>('preview')
 
   return (
@@ -104,3 +105,5 @@ export default function InlinePreviewTabs({ content, previewLogs, setPreviewLogs
     </div>
   )
 }
+
+export default React.memo(InlinePreviewTabs);
