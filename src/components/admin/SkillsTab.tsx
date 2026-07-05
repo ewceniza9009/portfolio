@@ -331,13 +331,18 @@ export default function SkillsTab() {
       {editingCategory !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
-            className="rounded-2xl w-full max-w-md p-6 border"
+            className="rounded-2xl w-full max-w-md flex flex-col max-h-[90vh] border overflow-hidden shadow-2xl"
             style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
-            <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-              {!categories.find(c => c.id === editingCategory.id) ? 'New Category' : 'Edit Category'}
-            </h3>
-            <div className="space-y-4">
+            {/* Header */}
+            <div className="p-6 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+              <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {!categories.find(c => c.id === editingCategory.id) ? 'New Category' : 'Edit Category'}
+              </h3>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>ID (used in code, e.g., 'frontend')</label>
                 <input
@@ -367,7 +372,9 @@ export default function SkillsTab() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            
+            {/* Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
               <button
                 onClick={() => setEditingCategory(null)}
                 className="px-4 py-2 rounded-lg text-sm transition-colors"
@@ -377,8 +384,8 @@ export default function SkillsTab() {
               </button>
               <button
                 onClick={handleSaveCategory}
-                className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
-                style={{ background: 'var(--accent)' }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
               >
                 Save
               </button>
@@ -392,13 +399,18 @@ export default function SkillsTab() {
       {editingSkill !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
-            className="rounded-2xl w-full max-w-md p-6 border"
+            className="rounded-2xl w-full max-w-md flex flex-col max-h-[90vh] border overflow-hidden shadow-2xl"
             style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
-            <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-              {editingSkill.id === 0 ? 'New Skill' : 'Edit Skill'}
-            </h3>
-            <div className="space-y-4">
+            {/* Header */}
+            <div className="p-6 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+              <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {editingSkill.id === 0 ? 'New Skill' : 'Edit Skill'}
+              </h3>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Name</label>
                 <input
@@ -430,7 +442,9 @@ export default function SkillsTab() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            
+            {/* Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
               <button
                 onClick={() => setEditingSkill(null)}
                 className="px-4 py-2 rounded-lg text-sm transition-colors"
@@ -440,8 +454,8 @@ export default function SkillsTab() {
               </button>
               <button
                 onClick={handleSaveSkill}
-                className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
-                style={{ background: 'var(--accent)' }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
               >
                 Save
               </button>

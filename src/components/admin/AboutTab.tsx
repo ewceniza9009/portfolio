@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Plus, Trash2, GripVertical, AlertCircle } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 
 export default function AboutTab() {
@@ -7,8 +7,7 @@ export default function AboutTab() {
   const [paragraphs, setParagraphs] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
   const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
@@ -40,26 +39,7 @@ export default function AboutTab() {
     }
   }
 
-  const handleDragStart = (index: number) => setDragIndex(index)
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    if (dragOverIndex !== index) {
-      setDragOverIndex(index)
-    }
-  }
-  const handleDrop = (index: number) => {
-    if (dragIndex === null || dragIndex === index) {
-      setDragIndex(null)
-      setDragOverIndex(null)
-      return
-    }
-    const newParagraphs = [...paragraphs]
-    const [moved] = newParagraphs.splice(dragIndex, 1)
-    newParagraphs.splice(index, 0, moved)
-    setParagraphs(newParagraphs)
-    setDragIndex(null)
-    setDragOverIndex(null)
-  }
+
 
   if (loading) return <div className="p-6 text-center" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
 
@@ -109,76 +89,20 @@ export default function AboutTab() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                About Paragraphs
+                About Paragraphs (Separate with double newlines)
               </label>
-              <div className="group relative">
-                <AlertCircle size={12} style={{ color: 'var(--text-muted)' }} />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 text-[10px] rounded border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-                  Drag items by the grip icon to reorder them.
-                </div>
-              </div>
             </div>
-            
-            <button
-              onClick={() => setParagraphs([...paragraphs, ''])}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
-              style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
-            >
-              <Plus size={12} /> Add Paragraph
-            </button>
           </div>
 
           <div className="space-y-3">
-            {paragraphs.length === 0 && (
-              <div className="text-center py-8 text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                No paragraphs added yet. Click "Add Paragraph" to start.
-              </div>
-            )}
-
-            {paragraphs.map((p, i) => (
-              <div
-                key={i}
-                draggable
-                onDragStart={() => handleDragStart(i)}
-                onDragOver={e => handleDragOver(e, i)}
-                onDrop={() => handleDrop(i)}
-                onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
-                className={`flex gap-3 p-3 rounded-lg border transition-all duration-200 group ${dragOverIndex === i ? 'border-[var(--accent)] scale-[1.01]' : ''}`}
-                style={{
-                  background: 'var(--bg-secondary)',
-                  borderColor: dragOverIndex === i ? 'var(--accent)' : 'var(--border)',
-                  opacity: dragIndex === i ? 0.4 : 1
-                }}
-              >
-                <div className="pt-2 cursor-grab active:cursor-grabbing">
-                  <GripVertical size={16} style={{ color: 'var(--text-muted)' }} />
-                </div>
-                
-                <textarea
-                  value={p}
-                  onChange={e => {
-                    const next = [...paragraphs];
-                    next[i] = e.target.value;
-                    setParagraphs(next)
-                  }}
-                  rows={6}
-                  placeholder={`Paragraph ${i + 1}...`}
-                  className="flex-1 w-full bg-transparent border-none p-0 text-sm resize-y outline-none focus:ring-0"
-                  style={{ color: 'var(--text-primary)' }}
-                />
-
-                <div className="flex flex-col justify-start">
-                  <button
-                    onClick={() => setParagraphs(paragraphs.filter((_, j) => j !== i))}
-                    className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/10"
-                    style={{ color: '#ef4444' }}
-                    title="Remove Paragraph"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+            <textarea
+              defaultValue={paragraphs.join('\n\n')}
+              onChange={e => setParagraphs(e.target.value.split('\n\n').filter(p => p.trim() !== ''))}
+              rows={12}
+              placeholder="Write your about paragraphs here..."
+              className="w-full bg-transparent border rounded-lg p-4 text-sm resize-y outline-none focus:ring-2 focus:ring-blue-500/50"
+              style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}
+            />
           </div>
         </div>
       </div>

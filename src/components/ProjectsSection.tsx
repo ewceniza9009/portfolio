@@ -96,6 +96,7 @@ interface Project {
   video: string | null;
   image: string;
   fallback: string;
+  display_order?: number;
   testimonial?: {
     quote: string;
     author: string;
@@ -385,7 +386,7 @@ export default function ProjectsSection({
         );
       if (filter === "emerging") return project.type === "Emerging";
       return true;
-    });
+    }).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   }, [filter, search, projects]);
 
   return (

@@ -220,10 +220,11 @@ export default function ProjectsTab() {
       {editingId !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
-            className="rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto border"
+            className="rounded-2xl w-full max-w-3xl flex flex-col max-h-[90vh] border overflow-hidden shadow-2xl"
             style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
-            <div className="flex justify-between items-center mb-6">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
               <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 {editingId === 0 ? 'New Project' : 'Edit Project'}
               </h3>
@@ -235,7 +236,10 @@ export default function ProjectsTab() {
                 <X size={16} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Title</label>
                 <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={inputClass} style={inputStyle} />
@@ -249,30 +253,15 @@ export default function ProjectsTab() {
                 <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={inputClass} style={inputStyle} rows={6} />
               </div>
               <div className="md:col-span-2">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs block" style={{ color: 'var(--text-muted)' }}>Details</label>
-                  <button onClick={() => setFormData({ ...formData, details: [...formData.details, ''] })} className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}><Plus size={10} /> Add Bullet</button>
-                </div>
-                <div className="space-y-2">
-                  {formData.details.map((desc: string, i: number) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
-                      <textarea value={desc} onChange={e => {
-                        const newDetails = [...formData.details]
-                        newDetails[i] = e.target.value
-                        setFormData({ ...formData, details: newDetails })
-                      }} rows={4}
-                        className={inputClass}
-                        style={{ ...inputStyle, resize: 'vertical' }} />
-                      <button onClick={() => {
-                        const newDetails = formData.details.filter((_: any, idx: number) => idx !== i)
-                        setFormData({ ...formData, details: newDetails })
-                      }} className="p-1.5 rounded mt-0.5 hover:bg-red-500/20" style={{ color: 'var(--text-muted)' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (Separate paragraphs with double newlines)</label>
+                <textarea 
+                  key={`details-${editingId}`}
+                  defaultValue={formData.details.join('\n\n')} 
+                  onChange={e => setFormData({...formData, details: e.target.value.split('\n\n').filter(s => s.trim())})} 
+                  className={inputClass} 
+                  style={inputStyle} 
+                  rows={8} 
+                />
               </div>
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Tech (comma separated)</label>
@@ -307,7 +296,10 @@ export default function ProjectsTab() {
                 <input value={formData.demo} onChange={e => setFormData({...formData, demo: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
               <button
                 onClick={() => setEditingId(null)}
                 className="px-4 py-2 rounded-lg text-sm transition-colors"
@@ -317,8 +309,8 @@ export default function ProjectsTab() {
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-lg text-white text-sm font-semibold flex items-center gap-2 transition-colors"
-                style={{ background: 'var(--accent)' }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+                style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
               >
                 <Save size={14} /> Save
               </button>

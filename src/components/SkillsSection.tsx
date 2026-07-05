@@ -52,12 +52,12 @@ export type SkillItem = {
   level?: 'core' | 'familiar';
 }
 
-interface SkillsData {
-  [category: string]: {
-    image: string
-    items: SkillItem[]
-  }
-}
+type SkillsData = {
+  id: string
+  label: string
+  image: string
+  items: SkillItem[]
+}[]
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ size?: number | string; className?: string }>> = {
   frontend: Monitor,
@@ -242,7 +242,8 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(skills).map(([category, data], index) => {
+          {skills.map((data, index) => {
+            const category = data.id
             const visibleItemsCount = data.items.filter(
               item => filterMode === 'all' || item.level !== 'familiar'
             ).length

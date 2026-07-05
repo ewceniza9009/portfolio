@@ -104,30 +104,15 @@ export default function ExperienceTab() {
               ))}
             </div>
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Descriptions</label>
-                <button onClick={() => setFormData({ ...formData, descriptions: [...formData.descriptions, ''] })} className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}><Plus size={10} /> Add Bullet</button>
-              </div>
-              <div className="space-y-2">
-                {formData.descriptions.map((desc: string, i: number) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
-                    <textarea value={desc} onChange={e => {
-                      const newDesc = [...formData.descriptions]
-                      newDesc[i] = e.target.value
-                      setFormData({ ...formData, descriptions: newDesc })
-                    }} rows={4}
-                      className="flex-1 px-3 py-1.5 rounded border text-sm resize-y"
-                      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-                    <button onClick={() => {
-                      const newDesc = formData.descriptions.filter((_: any, idx: number) => idx !== i)
-                      setFormData({ ...formData, descriptions: newDesc })
-                    }} className="p-1.5 rounded mt-0.5 hover:bg-red-500/20" style={{ color: 'var(--text-muted)' }}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Descriptions (One bullet per line)</label>
+              <textarea 
+                key={`exp-${editingId}`}
+                defaultValue={formData.descriptions.join('\n')} 
+                onChange={e => setFormData({ ...formData, descriptions: e.target.value.split('\n').filter(s => s.trim()) })} 
+                rows={6}
+                className="w-full px-3 py-2 rounded border text-sm resize-y"
+                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+              />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Technologies (comma separated)</label>

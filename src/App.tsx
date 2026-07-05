@@ -72,8 +72,14 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
     // Fetch skills
     apiFetch('/api/skills').then(res => res.json()).then(data => {
-      if(data && data.skills && Object.keys(data.skills).length > 0) {
-        setSkillsData(data.skills)
+      if(data && data.categories && data.skills) {
+        const sortedSkillsData = data.categories.map((cat: any) => ({
+          id: cat.id,
+          label: cat.label,
+          image: cat.image,
+          items: data.skills[cat.id]?.items || []
+        }))
+        setSkillsData(sortedSkillsData)
       }
     }).catch(err => console.error('Failed to load skills from API', err))
 
