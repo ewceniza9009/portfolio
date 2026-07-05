@@ -57,7 +57,7 @@ export function AuditLogsTab() {
   );
 
   return (
-    <div className="flex flex-col h-full rounded-2xl border overflow-hidden" style={{ background: "var(--glass-bg)", borderColor: "var(--border-color)" }}>
+    <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden" style={{ background: "var(--glass-bg)", borderColor: "var(--border-color)" }}>
       {/* Header */}
       <div className="p-4 border-b flex justify-between items-center bg-black/10" style={{ borderColor: "var(--border-color)" }}>
         <div className="flex items-center gap-3">
