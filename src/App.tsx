@@ -67,7 +67,14 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
     // Fetch projects
     apiFetch('/api/projects').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) setProjectsData(data)
+      if(Array.isArray(data) && data.length > 0) {
+        const safeData = data.map(p => ({
+          ...p,
+          details: Array.isArray(p.details) ? p.details : (typeof p.details === 'string' ? [p.details] : []),
+          tech: Array.isArray(p.tech) ? p.tech : (typeof p.tech === 'string' ? p.tech.split(',').map((s: string) => s.trim()) : [])
+        }))
+        setProjectsData(safeData)
+      }
     }).catch(err => console.error('Failed to load projects from API', err))
 
     // Fetch skills
@@ -92,7 +99,14 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
     // Fetch experience
     apiFetch('/api/experience').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) setExperienceData(data)
+      if(Array.isArray(data) && data.length > 0) {
+        const safeData = data.map(exp => ({
+          ...exp,
+          descriptions: Array.isArray(exp.descriptions) ? exp.descriptions : (typeof exp.descriptions === 'string' ? [exp.descriptions] : []),
+          technologies: Array.isArray(exp.technologies) ? exp.technologies : (typeof exp.technologies === 'string' ? exp.technologies.split(',').map((s: string) => s.trim()) : [])
+        }))
+        setExperienceData(safeData)
+      }
     }).catch(err => console.error('Failed to load experience from API', err))
 
     // Fetch awards
