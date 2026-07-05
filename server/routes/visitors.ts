@@ -214,14 +214,14 @@ router.get('/api/visitors/pages', authMiddleware, async (req, res) => {
     const startDate = url.searchParams.get('startDate') || ''
     const endDate = url.searchParams.get('endDate') || ''
     
-    const conditions = []
+    const conditions = ['v.is_bot = 0', "pv.ip != '143.44.164.12'"]
     const args = []
-    if (startDate) { conditions.push('visited_at >= ?'); args.push(`${startDate} 00:00:00`) }
-    if (endDate) { conditions.push('visited_at <= ?'); args.push(`${endDate} 23:59:59`) }
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    if (startDate) { conditions.push('pv.visited_at >= ?'); args.push(`${startDate} 00:00:00`) }
+    if (endDate) { conditions.push('pv.visited_at <= ?'); args.push(`${endDate} 23:59:59`) }
+    const where = `WHERE ${conditions.join(' AND ')}`
 
     const result = await turso.execute({
-      sql: `SELECT path, COUNT(*) as views, COUNT(DISTINCT ip) as unique_visitors FROM page_visits ${where} GROUP BY path ORDER BY views DESC LIMIT 50`,
+      sql: `SELECT pv.path, COUNT(*) as views, COUNT(DISTINCT pv.ip) as unique_visitors FROM page_visits pv JOIN visitors v ON pv.ip = v.ip ${where} GROUP BY pv.path ORDER BY views DESC LIMIT 50`,
       args
     })
 
