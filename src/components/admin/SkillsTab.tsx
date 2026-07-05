@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 
 export default function SkillsTab() {
@@ -9,6 +9,14 @@ export default function SkillsTab() {
 
   const [editingCategory, setEditingCategory] = useState<any>(null)
   const [editingSkill, setEditingSkill] = useState<any>(null)
+
+  // Drag state for categories
+  const [dragCatIndex, setDragCatIndex] = useState<number | null>(null)
+  const [dragOverCatIndex, setDragOverCatIndex] = useState<number | null>(null)
+
+  // Drag state for skills
+  const [dragSkill, setDragSkill] = useState<{ catId: string; index: number } | null>(null)
+  const [dragOverSkill, setDragOverSkill] = useState<{ catId: string; index: number } | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -27,10 +35,8 @@ export default function SkillsTab() {
     }
   }
 
-  // Categories
-  const handleEditCategory = (c: any) => {
-    setEditingCategory(c)
-  }
+  // --- Category CRUD ---
+  const handleEditCategory = (c: any) => setEditingCategory(c)
 
   const handleCreateCategory = () => {
     setEditingCategory({ id: '', label: '', image: '', display_order: categories.length })
@@ -39,11 +45,6 @@ export default function SkillsTab() {
   const handleSaveCategory = async () => {
     try {
       const existing = categories.find(c => c.id === editingCategory.id)
-      if (!existing && !editingCategory.id) {
-         // handle creation with an ID generated or user typed. 
-         // Assuming editingCategory.id is filled.
-      }
-      
       if (!existing) {
         await apiFetch('/api/skill-categories', { method: 'POST', body: JSON.stringify(editingCategory) })
       } else {
@@ -62,7 +63,7 @@ export default function SkillsTab() {
     fetchData()
   }
 
-  // Skills
+  // --- Skill CRUD ---
   const handleEditSkill = (s: any, catId: string) => {
     setEditingSkill({ ...s, category_id: catId })
   }
@@ -91,18 +92,31 @@ export default function SkillsTab() {
     fetchData()
   }
 
-  const handleMoveCategory = async (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return
-    if (direction === 'down' && index === categories.length - 1) return
+  // --- Category Drag & Drop ---
+  const handleCatDragStart = (index: number) => {
+    setDragCatIndex(index)
+  }
+
+  const handleCatDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverCatIndex(index)
+  }
+
+  const handleCatDrop = async (index: number) => {
+    if (dragCatIndex === null || dragCatIndex === index) {
+      setDragCatIndex(null)
+      setDragOverCatIndex(null)
+      return
+    }
 
     const newCats = [...categories]
-    const swapIndex = direction === 'up' ? index - 1 : index + 1
-    const temp = newCats[index]
-    newCats[index] = newCats[swapIndex]
-    newCats[swapIndex] = temp
+    const [moved] = newCats.splice(dragCatIndex, 1)
+    newCats.splice(index, 0, moved)
 
     const updatedItems = newCats.map((c, i) => ({ id: c.id, display_order: i }))
     setCategories(newCats.map((c, i) => ({ ...c, display_order: i })))
+    setDragCatIndex(null)
+    setDragOverCatIndex(null)
 
     try {
       await apiFetch('/api/skill-categories/reorder', {
@@ -114,26 +128,45 @@ export default function SkillsTab() {
     }
   }
 
-  const handleMoveSkill = async (categoryId: string, index: number, direction: 'left' | 'right') => {
-    const catSkills = skills[categoryId]?.items || []
-    if (direction === 'left' && index === 0) return
-    if (direction === 'right' && index === catSkills.length - 1) return
+  // --- Skill Drag & Drop ---
+  const handleSkillDragStart = (catId: string, index: number) => {
+    setDragSkill({ catId, index })
+  }
 
-    const newSkills = [...catSkills]
-    const swapIndex = direction === 'left' ? index - 1 : index + 1
-    const temp = newSkills[index]
-    newSkills[index] = newSkills[swapIndex]
-    newSkills[swapIndex] = temp
+  const handleSkillDragOver = (e: React.DragEvent, catId: string, index: number) => {
+    e.preventDefault()
+    setDragOverSkill({ catId, index })
+  }
 
-    const updatedItems = newSkills.map((s, i) => ({ id: s.id, display_order: i }))
-    
+  const handleSkillDrop = async (catId: string, index: number) => {
+    if (!dragSkill || (dragSkill.catId === catId && dragSkill.index === index)) {
+      setDragSkill(null)
+      setDragOverSkill(null)
+      return
+    }
+
+    // Only allow reorder within the same category
+    if (dragSkill.catId !== catId) {
+      setDragSkill(null)
+      setDragOverSkill(null)
+      return
+    }
+
+    const catSkills = [...(skills[catId]?.items || [])]
+    const [moved] = catSkills.splice(dragSkill.index, 1)
+    catSkills.splice(index, 0, moved)
+
+    const updatedItems = catSkills.map((s, i) => ({ id: s.id, display_order: i }))
+
     setSkills({
       ...skills,
-      [categoryId]: {
-        ...skills[categoryId],
-        items: newSkills.map((s, i) => ({ ...s, display_order: i }))
+      [catId]: {
+        ...skills[catId],
+        items: catSkills.map((s, i) => ({ ...s, display_order: i }))
       }
     })
+    setDragSkill(null)
+    setDragOverSkill(null)
 
     try {
       await apiFetch('/api/skills/reorder', {
@@ -145,110 +178,263 @@ export default function SkillsTab() {
     }
   }
 
-  if (loading) return <div className="p-4">Loading...</div>
+  if (loading) return <div className="p-4" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
 
   return (
-    <div className="col-span-12 p-4 space-y-8 overflow-y-auto custom-scrollbar h-full">
+    <div className="col-span-12 p-4 md:p-6 space-y-6 overflow-y-auto custom-scrollbar h-full">
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Skills & Categories</h3>
-        <button onClick={handleCreateCategory} className="px-3 py-1.5 rounded bg-blue-500/20 text-blue-500 hover:bg-blue-500/30 flex items-center gap-1">
+        <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Skills &amp; Categories</h3>
+        <button
+          onClick={handleCreateCategory}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
+          style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff' }}
+        >
           <Plus size={14} /> Add Category
         </button>
       </div>
 
-      <div className="space-y-6">
-        {categories.map(cat => (
-          <div key={cat.id} className="p-4 rounded-xl border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-            <div className="flex justify-between items-center mb-4 pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
+      {/* Categories */}
+      <div className="space-y-4">
+        {categories.map((cat, catIdx) => (
+          <div
+            key={cat.id}
+            draggable
+            onDragStart={() => handleCatDragStart(catIdx)}
+            onDragOver={(e) => handleCatDragOver(e, catIdx)}
+            onDrop={() => handleCatDrop(catIdx)}
+            onDragEnd={() => { setDragCatIndex(null); setDragOverCatIndex(null) }}
+            className="rounded-xl border transition-all duration-200"
+            style={{
+              borderColor: dragOverCatIndex === catIdx && dragCatIndex !== catIdx
+                ? 'var(--accent-color, #3b82f6)'
+                : 'var(--border-color)',
+              background: 'var(--glass-bg)',
+              opacity: dragCatIndex === catIdx ? 0.5 : 1,
+              transform: dragOverCatIndex === catIdx && dragCatIndex !== catIdx ? 'scale(1.01)' : 'scale(1)',
+            }}
+          >
+            {/* Category Header */}
+            <div
+              className="flex justify-between items-center p-4 border-b"
+              style={{ borderColor: 'var(--border-color)' }}
+            >
               <div className="flex items-center gap-3">
-                <img src={cat.image} alt={cat.label} className="w-10 h-10 rounded object-cover bg-black/20" />
+                <div className="cursor-grab active:cursor-grabbing" style={{ color: 'var(--text-muted)' }}>
+                  <GripVertical size={16} />
+                </div>
+                <img src={cat.image} alt={cat.label} className="w-9 h-9 rounded-lg object-cover" style={{ background: 'var(--bg-secondary)' }} />
                 <div>
-                  <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{cat.label} <span className="text-xs font-normal text-gray-500">({cat.id})</span></h4>
+                  <h4 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                    {cat.label}
+                    <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>({cat.id})</span>
+                  </h4>
+                  <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    {skills[cat.id]?.items?.length || 0} skills
+                  </span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => handleCreateSkill(cat.id)} className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-white flex items-center gap-1"><Plus size={12}/> Skill</button>
-                <div className="flex bg-black/20 rounded mr-2">
-                  <button onClick={() => handleMoveCategory(categories.indexOf(cat), 'up')} disabled={categories.indexOf(cat) === 0} className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-30"><ChevronUp size={14}/></button>
-                  <button onClick={() => handleMoveCategory(categories.indexOf(cat), 'down')} disabled={categories.indexOf(cat) === categories.length - 1} className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-30"><ChevronDown size={14}/></button>
-                </div>
-                <button onClick={() => handleEditCategory(cat)} className="p-1.5 rounded hover:bg-white/10 text-gray-400"><Edit2 size={14} /></button>
-                <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 rounded hover:bg-red-500/10 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleCreateSkill(cat.id)}
+                  className="px-2 py-1 text-xs rounded-md flex items-center gap-1 transition-colors"
+                  style={{ background: 'var(--accent-color, #3b82f6)', color: '#fff', opacity: 0.85 }}
+                >
+                  <Plus size={12} /> Skill
+                </button>
+                <button
+                  onClick={() => handleEditCategory(cat)}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(cat.id)}
+                  className="p-1.5 rounded-lg transition-colors text-red-400 hover:text-red-500"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {skills[cat.id]?.items?.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-2 px-3 py-1.5 rounded bg-black/20 border text-xs" style={{ borderColor: 'var(--border)' }}>
-                  <span className="text-gray-300">{s.name}</span>
-                  <span className="text-gray-500 text-[10px]">{s.level}</span>
-                  <div className="flex gap-1 ml-2 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
-                    <button onClick={() => handleMoveSkill(cat.id, skills[cat.id]?.items.indexOf(s), 'left')} disabled={skills[cat.id]?.items.indexOf(s) === 0} className="text-gray-400 hover:text-white disabled:opacity-30"><ChevronLeft size={12} /></button>
-                    <button onClick={() => handleMoveSkill(cat.id, skills[cat.id]?.items.indexOf(s), 'right')} disabled={skills[cat.id]?.items.indexOf(s) === skills[cat.id]?.items.length - 1} className="text-gray-400 hover:text-white disabled:opacity-30 mr-1"><ChevronRight size={12} /></button>
-                    <button onClick={() => handleEditSkill(s, cat.id)} className="text-gray-400 hover:text-white"><Edit2 size={12} /></button>
-                    <button onClick={() => handleDeleteSkill(s.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
+            {/* Skills Grid */}
+            <div className="p-4 flex flex-wrap gap-2">
+              {skills[cat.id]?.items?.map((s: any, sIdx: number) => (
+                <div
+                  key={s.id}
+                  draggable
+                  onDragStart={(e) => { e.stopPropagation(); handleSkillDragStart(cat.id, sIdx) }}
+                  onDragOver={(e) => { e.stopPropagation(); handleSkillDragOver(e, cat.id, sIdx) }}
+                  onDrop={(e) => { e.stopPropagation(); handleSkillDrop(cat.id, sIdx) }}
+                  onDragEnd={() => { setDragSkill(null); setDragOverSkill(null) }}
+                  className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-lg border text-xs cursor-grab active:cursor-grabbing select-none transition-all duration-150"
+                  style={{
+                    borderColor: dragOverSkill?.catId === cat.id && dragOverSkill?.index === sIdx && dragSkill?.index !== sIdx
+                      ? 'var(--accent-color, #3b82f6)'
+                      : 'var(--border-color)',
+                    background: dragSkill?.catId === cat.id && dragSkill?.index === sIdx
+                      ? 'transparent'
+                      : 'var(--bg-secondary)',
+                    opacity: dragSkill?.catId === cat.id && dragSkill?.index === sIdx ? 0.4 : 1,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <GripVertical size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{
+                      background: s.level === 'core' ? 'rgba(59,130,246,0.15)' : 'rgba(168,85,247,0.15)',
+                      color: s.level === 'core' ? '#60a5fa' : '#a78bfa',
+                    }}
+                  >
+                    {s.level}
+                  </span>
+                  <div className="flex gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEditSkill(s, cat.id) }}
+                      className="p-0.5 rounded transition-colors"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      <Edit2 size={11} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteSkill(s.id) }}
+                      className="p-0.5 rounded text-red-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={11} />
+                    </button>
                   </div>
                 </div>
               ))}
               {(!skills[cat.id]?.items || skills[cat.id].items.length === 0) && (
-                <div className="text-xs text-gray-500">No skills in this category.</div>
+                <div className="text-xs py-2" style={{ color: 'var(--text-muted)' }}>No skills in this category yet.</div>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modals */}
+      {/* Category Edit Modal */}
       {editingCategory !== null && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md p-6">
-            <h3 className="text-xl font-bold mb-4">{!categories.find(c => c.id === editingCategory.id) ? 'New Category' : 'Edit Category'}</h3>
+          <div
+            className="rounded-2xl w-full max-w-md p-6 border"
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+          >
+            <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+              {!categories.find(c => c.id === editingCategory.id) ? 'New Category' : 'Edit Category'}
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400 block mb-1">ID (used in code, e.g., 'frontend')</label>
-                <input value={editingCategory.id} onChange={e => setEditingCategory({...editingCategory, id: e.target.value})} disabled={!!categories.find(c => c.id === editingCategory.id)} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm disabled:opacity-50" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>ID (used in code, e.g., 'frontend')</label>
+                <input
+                  value={editingCategory.id}
+                  onChange={e => setEditingCategory({ ...editingCategory, id: e.target.value })}
+                  disabled={!!categories.find(c => c.id === editingCategory.id)}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Label (Display Name)</label>
-                <input value={editingCategory.label} onChange={e => setEditingCategory({...editingCategory, label: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Label (Display Name)</label>
+                <input
+                  value={editingCategory.label}
+                  onChange={e => setEditingCategory({ ...editingCategory, label: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Image URL</label>
-                <input value={editingCategory.image} onChange={e => setEditingCategory({...editingCategory, image: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Image URL</label>
+                <input
+                  value={editingCategory.image}
+                  onChange={e => setEditingCategory({ ...editingCategory, image: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setEditingCategory(null)} className="px-4 py-2 rounded text-sm text-gray-400 hover:text-white">Cancel</button>
-              <button onClick={handleSaveCategory} className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold">Save</button>
+              <button
+                onClick={() => setEditingCategory(null)}
+                className="px-4 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveCategory}
+                className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
+                style={{ background: 'var(--accent-color, #3b82f6)' }}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Skill Edit Modal */}
       {editingSkill !== null && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md p-6">
-            <h3 className="text-xl font-bold mb-4">{editingSkill.id === 0 ? 'New Skill' : 'Edit Skill'}</h3>
+          <div
+            className="rounded-2xl w-full max-w-md p-6 border"
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+          >
+            <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+              {editingSkill.id === 0 ? 'New Skill' : 'Edit Skill'}
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Name</label>
-                <input value={editingSkill.name} onChange={e => setEditingSkill({...editingSkill, name: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Name</label>
+                <input
+                  value={editingSkill.name}
+                  onChange={e => setEditingSkill({ ...editingSkill, name: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Icon Name (e.g. SiReact, SiPython)</label>
-                <input value={editingSkill.icon || ''} onChange={e => setEditingSkill({...editingSkill, icon: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Icon Name (e.g. SiReact, SiPython)</label>
+                <input
+                  value={editingSkill.icon || ''}
+                  onChange={e => setEditingSkill({ ...editingSkill, icon: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Level</label>
-                <select value={editingSkill.level} onChange={e => setEditingSkill({...editingSkill, level: e.target.value})} className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-sm">
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Level</label>
+                <select
+                  value={editingSkill.level}
+                  onChange={e => setEditingSkill({ ...editingSkill, level: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                >
                   <option value="core">Core</option>
                   <option value="familiar">Familiar</option>
                 </select>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setEditingSkill(null)} className="px-4 py-2 rounded text-sm text-gray-400 hover:text-white">Cancel</button>
-              <button onClick={handleSaveSkill} className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold">Save</button>
+              <button
+                onClick={() => setEditingSkill(null)}
+                className="px-4 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSkill}
+                className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
+                style={{ background: 'var(--accent-color, #3b82f6)' }}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
