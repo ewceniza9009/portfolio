@@ -822,7 +822,7 @@ export default function FloatingControl() {
               <MousePointer2 size={14} /> Cursor
             </button>
             <a
-              href="file:///X:/portfolio/graphify-out/graph.html"
+              href="/graphify-out/graph.html"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
