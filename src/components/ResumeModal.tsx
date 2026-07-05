@@ -42,7 +42,7 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 
               <div className="flex items-center gap-2">
                 <a
-                  href="/Resume2026.4.pdf"
+                  href="/Resume2026.5.pdf"
                   download="Erwin_Wilson_Ceniza_Resume.pdf"
                   className="p-2.5 rounded-xl transition-all hover:scale-105 flex items-center gap-2 text-xs font-semibold"
                   style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
@@ -51,7 +51,7 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
                   <span className="hidden sm:inline">Download</span>
                 </a>
                 <a
-                  href="/Resume2026.4.pdf"
+                  href="/Resume2026.5.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2.5 rounded-xl transition-all hover:scale-105 flex items-center gap-2 text-xs font-semibold"
@@ -73,14 +73,14 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             {/* Document body / iframe */}
             <div className="flex-grow bg-[#525659] relative flex items-center justify-center">
               <iframe
-                src="/Resume2026.4.pdf#toolbar=0"
+                src="/Resume2026.5.pdf#toolbar=0"
                 title="Erwin Wilson Ceniza Resume"
                 className="w-full h-full border-none relative z-10"
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-0 bg-slate-900 text-white">
                 <p className="text-lg font-medium mb-4">PDF Preview is not supported by your browser.</p>
                 <a
-                  href="/Resume2026.4.pdf"
+                  href="/Resume2026.5.pdf"
                   download="Erwin_Wilson_Ceniza_Resume.pdf"
                   className="px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 flex items-center gap-2"
                   style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
