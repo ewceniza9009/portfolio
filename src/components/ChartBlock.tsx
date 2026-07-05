@@ -35,7 +35,9 @@ import YAML from 'yaml';
 
 function parseChartCode(code: string): ParsedChart | null {
   try {
-    const parsed = YAML.parse(code);
+    // Wrap hex colors in quotes so YAML doesn't treat them as comments
+    const safeCode = code.replace(/color:\s*(#[0-9a-fA-F]+)/g, 'color: "$1"');
+    const parsed = YAML.parse(safeCode);
     if (!parsed || typeof parsed !== 'object') return null;
     
     return {
@@ -240,7 +242,7 @@ export default memo(function ChartBlock({ code }: ChartBlockProps) {
           minWidth={1}
           minHeight={1}
         >
-          <PieChart>
+          <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
             <Tooltip
               contentStyle={tooltipContentStyle}
               itemStyle={tooltipItemStyle}
@@ -291,7 +293,13 @@ export default memo(function ChartBlock({ code }: ChartBlockProps) {
           minWidth={1}
           minHeight={1}
         >
-          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={rechartsData}>
+          <RadarChart 
+            cx="50%" 
+            cy="50%" 
+            outerRadius="75%" 
+            data={rechartsData}
+            margin={{ top: 10, right: 30, left: 30, bottom: 20 }}
+          >
             <PolarGrid stroke={gridColor} />
             <PolarAngleAxis
               dataKey="name"
@@ -342,7 +350,7 @@ export default memo(function ChartBlock({ code }: ChartBlockProps) {
         >
           <LineChart
             data={rechartsData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -403,7 +411,7 @@ export default memo(function ChartBlock({ code }: ChartBlockProps) {
       >
         <BarChart
           data={rechartsData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
