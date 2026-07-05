@@ -31,71 +31,72 @@ interface ParsedChart {
   datasets: { label: string; data: number[]; color: string }[];
 }
 
+import YAML from 'yaml';
+
 function parseChartCode(code: string): ParsedChart | null {
-  const lines = code
-    .trim()
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l);
-  if (lines.length < 3) return null;
-
-  const typeLine = lines.find((l) => l.startsWith("type:"));
-  const titleLine = lines.find((l) => l.startsWith("title:"));
-  const labelsLine = lines.find((l) => l.startsWith("labels:"));
-
-  if (!typeLine || !labelsLine) return null;
-
-  const chartType = typeLine.slice(5).trim().toLowerCase();
-  const title = titleLine ? titleLine.slice(6).trim() : "";
-  const labels = parseArray(labelsLine.slice(7).trim());
-
-  const datasetLines: string[] = [];
-  let inDatasets = false;
-  for (const line of lines) {
-    if (line.startsWith("datasets:")) {
-      inDatasets = true;
-      continue;
-    }
-    if (inDatasets) {
-      if (line.startsWith("- label:")) {
-        datasetLines.push(line);
-      } else if (
-        datasetLines.length > 0 &&
-        line.startsWith("label:") &&
-        !line.startsWith("-")
-      ) {
-        datasetLines[datasetLines.length - 1] += "\n" + line;
-      } else if (datasetLines.length > 0) {
-        datasetLines[datasetLines.length - 1] += "\n" + line;
+  try {
+    const parsed = YAML.parse(code);
+    if (!parsed || typeof parsed !== 'object') return null;
+    
+    return {
+      type: (parsed.type || 'bar').toLowerCase(),
+      title: parsed.title || '',
+      labels: Array.isArray(parsed.labels) ? parsed.labels.map(String) : [],
+      datasets: Array.isArray(parsed.datasets) 
+        ? parsed.datasets.map((ds: any) => ({
+            label: ds.label || '',
+            data: Array.isArray(ds.data) ? ds.data.map((v: any) => {
+              const num = Number(v);
+              return isNaN(num) ? null : num;
+            }) : [],
+            color: ds.color || '#3b82f6'
+          }))
+        : []
+    };
+  } catch (e) {
+    // Fallback to custom parser if YAML fails
+    const lines = code.trim().split("\n").map(l => l.trim()).filter(l => l);
+    if (lines.length < 3) return null;
+    
+    const typeLine = lines.find(l => l.startsWith("type:"));
+    const titleLine = lines.find(l => l.startsWith("title:"));
+    const labelsLine = lines.find(l => l.startsWith("labels:"));
+    
+    if (!typeLine || !labelsLine) return null;
+    
+    const chartType = typeLine.slice(5).trim().toLowerCase();
+    const title = titleLine ? titleLine.slice(6).trim() : "";
+    
+    const cleanedLabels = labelsLine.slice(7).trim().replace(/^\[/, "").replace(/\]$/, "").trim();
+    const labels = cleanedLabels ? cleanedLabels.split(",").map(item => item.trim().replace(/^["']|["']$/g, "")) : [];
+    
+    const datasetLines: string[] = [];
+    let inDatasets = false;
+    for (const line of lines) {
+      if (line.startsWith("datasets:")) { inDatasets = true; continue; }
+      if (inDatasets) {
+        if (line.startsWith("- label:")) datasetLines.push(line);
+        else if (datasetLines.length > 0 && line.startsWith("label:") && !line.startsWith("-")) datasetLines[datasetLines.length - 1] += "\n" + line;
+        else if (datasetLines.length > 0) datasetLines[datasetLines.length - 1] += "\n" + line;
       }
     }
+    
+    const datasets = datasetLines.map(block => {
+      const labelMatch = block.match(/label:\s*(.+)/);
+      const dataMatch = block.match(/data:\s*\[(.+?)\]/);
+      const colorMatch = block.match(/color:\s*(.+)/);
+      return {
+        label: labelMatch ? labelMatch[1].trim() : "",
+        data: dataMatch ? dataMatch[1].split(",").map(v => {
+          const num = Number(v.trim());
+          return isNaN(num) || v.trim().toLowerCase() === "null" ? null : num;
+        }) as number[] : [],
+        color: colorMatch ? colorMatch[1].trim() : "#3b82f6",
+      };
+    });
+    
+    return { type: chartType, title, labels, datasets };
   }
-
-  const datasets = datasetLines.map((block) => {
-    const labelMatch = block.match(/label:\s*(.+)/);
-    const dataMatch = block.match(/data:\s*\[(.+?)\]/);
-    const colorMatch = block.match(/color:\s*(.+)/);
-    return {
-      label: labelMatch ? labelMatch[1].trim() : "",
-      data: dataMatch
-        ? (dataMatch[1].split(",").map((v) => {
-            const num = Number(v.trim());
-            return isNaN(num) || v.trim().toLowerCase() === "null" ? null : num;
-          }) as number[])
-        : [],
-      color: colorMatch ? colorMatch[1].trim() : "#3b82f6",
-    };
-  });
-
-  return { type: chartType, title, labels, datasets };
-}
-
-function parseArray(s: string): string[] {
-  const cleaned = s.replace(/^\[/, "").replace(/\]$/, "").trim();
-  if (!cleaned) return [];
-  return cleaned
-    .split(",")
-    .map((item) => item.trim().replace(/^["']|["']$/g, ""));
 }
 
 const CHART_TYPE_MAP: Record<string, string> = {
