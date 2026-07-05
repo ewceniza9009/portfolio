@@ -76,7 +76,7 @@ export default function ProjectsTab() {
   if (loading) return <div className="p-4">Loading...</div>
 
   return (
-    <div className="col-span-12 p-4 space-y-4">
+    <div className="col-span-12 p-4 space-y-4 overflow-y-auto custom-scrollbar h-full">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Projects</h3>
         <button onClick={handleCreate} className="px-3 py-1.5 rounded bg-blue-500/20 text-blue-500 hover:bg-blue-500/30 flex items-center gap-1">
