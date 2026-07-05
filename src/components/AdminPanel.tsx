@@ -26,6 +26,9 @@ import DashboardHeader from "./admin/DashboardHeader";
 import FocusModeOverlay from "./admin/FocusModeOverlay";
 import ProjectsTab from "./admin/ProjectsTab";
 import SkillsTab from "./admin/SkillsTab";
+import AboutTab from "./admin/AboutTab";
+import ExperienceTab from "./admin/ExperienceTab";
+import AwardsTab from "./admin/AwardsTab";
 
 interface AdminPanelProps {
   theme: "dark" | "light";
@@ -42,7 +45,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
   // Dashboard Tab selection (persisted across refresh)
   const [activeTab, setActiveTabState] = useState<
-    "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills"
+    "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills" | "about" | "experience" | "awards"
   >(() => {
     try {
       const saved = localStorage.getItem("admin_active_tab");
@@ -62,7 +65,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   });
 
   const setActiveTab = (
-    tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills",
+    tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills" | "about" | "experience" | "awards",
   ) => {
     setActiveTabState(tab);
     try {
@@ -1796,6 +1799,15 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
            {/* TAB 7: SKILLS */}
            {activeTab === "skills" && <SkillsTab />}
+
+           {/* TAB 8: ABOUT */}
+           {activeTab === "about" && <AboutTab />}
+
+           {/* TAB 9: EXPERIENCE */}
+           {activeTab === "experience" && <ExperienceTab />}
+
+           {/* TAB 10: AWARDS */}
+           {activeTab === "awards" && <AwardsTab />}
 
            {/* TAB 8: AUDIT LOGS */}
            {activeTab === "audit" && (

@@ -1,6 +1,6 @@
 import { Client } from '@libsql/client'
-import fs from 'fs'
-import path from 'path'
+import * as fs from 'fs'
+import * as path from 'path'
 
 let lastBlogCheckedMtime = 0
 
@@ -301,7 +301,7 @@ async function seedBlog(db: Client) {
       const row = check.rows[0]
       const dbLikes = Number(row.likes || 0)
       const targetLikes = dbLikes === 12 ? 0 : dbLikes
-      const dbUpdatedStr = row.updated_at || '1970-01-01 00:00:00'
+      const dbUpdatedStr = String(row.updated_at || '1970-01-01 00:00:00')
       const dbMtime = new Date(dbUpdatedStr.replace(' ', 'T') + 'Z').getTime()
 
       if (currentMtime > dbMtime + 2000) {

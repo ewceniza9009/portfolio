@@ -12,7 +12,9 @@ import {
   Sun,
   ShieldAlert,
   Briefcase,
-  Code
+  Code,
+  User,
+  Award
 } from "lucide-react";
 import Logo from "../Logo";
 import { AccentDropdown } from "../Navbar";
@@ -26,8 +28,8 @@ interface DashboardHeaderProps {
   refreshing: boolean;
   refreshData: () => void;
   handleLogout: () => void;
-  activeTab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills";
-  setActiveTab: (tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills") => void;
+  activeTab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills" | "about" | "experience" | "awards";
+  setActiveTab: (tab: "messages" | "blogs" | "analytics" | "audit" | "settings" | "projects" | "skills" | "about" | "experience" | "awards") => void;
   setSelected: (val: null) => void;
   setSelectedBlog: (val: null) => void;
   inboxCount: number;
@@ -215,6 +217,51 @@ function DashboardHeader({
         >
           <Code size={11} />
           <span className="hidden sm:inline">Skills</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("about");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "about" ? "var(--accent)" : "transparent",
+            color: activeTab === "about" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <User size={11} />
+          <span className="hidden sm:inline">About</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("experience");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "experience" ? "var(--accent)" : "transparent",
+            color: activeTab === "experience" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Briefcase size={11} />
+          <span className="hidden sm:inline">Experience</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("awards");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "awards" ? "var(--accent)" : "transparent",
+            color: activeTab === "awards" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Award size={11} />
+          <span className="hidden sm:inline">Awards</span>
         </button>
         <button
           onClick={() => {
