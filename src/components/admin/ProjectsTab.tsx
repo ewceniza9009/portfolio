@@ -115,14 +115,17 @@ export default function ProjectsTab() {
   }
 
   // Shared input style
-  const inputStyle = { background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }
+  const inputStyle = { background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }
   const inputClass = "w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
 
   if (loading) return <div className="p-4" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
 
   return (
-    <div className="col-span-12 p-4 md:p-6 space-y-4 overflow-y-auto custom-scrollbar h-full">
-      <div className="flex justify-between items-center">
+    <div className="col-span-12 overflow-y-auto custom-scrollbar h-full">
+      <div
+        className="sticky top-0 z-10 flex justify-between items-center px-4 md:px-6 py-3 border-b backdrop-blur-md"
+        style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+      >
         <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Projects</h3>
         <button
           onClick={handleCreate}
@@ -132,6 +135,8 @@ export default function ProjectsTab() {
           <Plus size={14} /> Add Project
         </button>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.map((p, idx) => (
@@ -146,7 +151,7 @@ export default function ProjectsTab() {
             style={{
               borderColor: dragOverIndex === idx && dragIndex !== idx
                 ? 'var(--accent)'
-                : 'var(--border-color)',
+                : 'var(--border)',
               background: 'var(--glass-bg)',
               opacity: dragIndex === idx ? 0.4 : 1,
               transform: dragOverIndex === idx && dragIndex !== idx ? 'scale(1.02)' : 'scale(1)',
@@ -182,7 +187,7 @@ export default function ProjectsTab() {
                   )}
                 </div>
               )}
-              <div className="flex items-center gap-1 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center gap-1 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
                 <button
                   onClick={() => handleEdit(p)}
                   className="p-1.5 rounded-lg transition-colors"
@@ -212,7 +217,7 @@ export default function ProjectsTab() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto border"
-            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -295,6 +300,7 @@ export default function ProjectsTab() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

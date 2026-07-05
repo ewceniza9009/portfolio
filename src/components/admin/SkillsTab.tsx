@@ -181,9 +181,12 @@ export default function SkillsTab() {
   if (loading) return <div className="p-4" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
 
   return (
-    <div className="col-span-12 p-4 md:p-6 space-y-6 overflow-y-auto custom-scrollbar h-full">
+    <div className="col-span-12 overflow-y-auto custom-scrollbar h-full">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div
+        className="sticky top-0 z-10 flex justify-between items-center px-4 md:px-6 py-3 border-b backdrop-blur-md"
+        style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+      >
         <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Skills &amp; Categories</h3>
         <button
           onClick={handleCreateCategory}
@@ -194,6 +197,7 @@ export default function SkillsTab() {
         </button>
       </div>
 
+      <div className="p-4 md:p-6 space-y-6">
       {/* Categories */}
       <div className="space-y-4">
         {categories.map((cat, catIdx) => (
@@ -208,7 +212,7 @@ export default function SkillsTab() {
             style={{
               borderColor: dragOverCatIndex === catIdx && dragCatIndex !== catIdx
                 ? 'var(--accent)'
-                : 'var(--border-color)',
+                : 'var(--border)',
               background: 'var(--glass-bg)',
               opacity: dragCatIndex === catIdx ? 0.5 : 1,
               transform: dragOverCatIndex === catIdx && dragCatIndex !== catIdx ? 'scale(1.01)' : 'scale(1)',
@@ -217,7 +221,7 @@ export default function SkillsTab() {
             {/* Category Header */}
             <div
               className="flex justify-between items-center p-4 border-b"
-              style={{ borderColor: 'var(--border-color)' }}
+              style={{ borderColor: 'var(--border)' }}
             >
               <div className="flex items-center gap-3">
                 <div className="cursor-grab active:cursor-grabbing" style={{ color: 'var(--text-muted)' }}>
@@ -274,7 +278,7 @@ export default function SkillsTab() {
                   style={{
                     borderColor: dragOverSkill?.catId === cat.id && dragOverSkill?.index === sIdx && dragSkill?.index !== sIdx
                       ? 'var(--accent)'
-                      : 'var(--border-color)',
+                      : 'var(--border)',
                     background: dragSkill?.catId === cat.id && dragSkill?.index === sIdx
                       ? 'transparent'
                       : 'var(--bg-secondary)',
@@ -323,7 +327,7 @@ export default function SkillsTab() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-md p-6 border"
-            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
             <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               {!categories.find(c => c.id === editingCategory.id) ? 'New Category' : 'Edit Category'}
@@ -336,7 +340,7 @@ export default function SkillsTab() {
                   onChange={e => setEditingCategory({ ...editingCategory, id: e.target.value })}
                   disabled={!!categories.find(c => c.id === editingCategory.id)}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
@@ -345,7 +349,7 @@ export default function SkillsTab() {
                   value={editingCategory.label}
                   onChange={e => setEditingCategory({ ...editingCategory, label: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
@@ -354,7 +358,7 @@ export default function SkillsTab() {
                   value={editingCategory.image}
                   onChange={e => setEditingCategory({ ...editingCategory, image: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
@@ -383,7 +387,7 @@ export default function SkillsTab() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-md p-6 border"
-            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)' }}
+            style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
           >
             <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               {editingSkill.id === 0 ? 'New Skill' : 'Edit Skill'}
@@ -395,7 +399,7 @@ export default function SkillsTab() {
                   value={editingSkill.name}
                   onChange={e => setEditingSkill({ ...editingSkill, name: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
@@ -404,7 +408,7 @@ export default function SkillsTab() {
                   value={editingSkill.icon || ''}
                   onChange={e => setEditingSkill({ ...editingSkill, icon: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
@@ -413,7 +417,7 @@ export default function SkillsTab() {
                   value={editingSkill.level}
                   onChange={e => setEditingSkill({ ...editingSkill, level: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm border outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 >
                   <option value="core">Core</option>
                   <option value="familiar">Familiar</option>
@@ -439,6 +443,7 @@ export default function SkillsTab() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

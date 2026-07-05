@@ -57,9 +57,9 @@ export function AuditLogsTab() {
   );
 
   return (
-    <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden" style={{ background: "var(--glass-bg)", borderColor: "var(--border-color)" }}>
+    <div className="col-span-12 flex flex-col h-full rounded-2xl border overflow-hidden" style={{ background: "var(--glass-bg)", borderColor: "var(--border)" }}>
       {/* Header */}
-      <div className="p-4 border-b flex justify-between items-center bg-black/10" style={{ borderColor: "var(--border-color)" }}>
+      <div className="p-4 border-b flex justify-between items-center bg-black/10" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-500/20 text-blue-500">
             <ShieldAlert size={16} />
@@ -75,13 +75,13 @@ export function AuditLogsTab() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 pr-4 py-1.5 rounded-xl border text-sm w-64 bg-transparent outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
-              style={{ borderColor: "var(--border-color)", color: "var(--text-color)" }}
+              style={{ borderColor: "var(--border)", color: "var(--text-color)" }}
             />
           </div>
           <button
             onClick={clearLogs}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-red-500 hover:bg-red-500/10 transition-colors text-sm"
-            style={{ borderColor: "var(--border-color)" }}
+            style={{ borderColor: "var(--border)" }}
           >
             <Trash2 size={14} />
             <span>Clear All</span>
@@ -106,7 +106,7 @@ export function AuditLogsTab() {
                 <th className="px-6 py-3 font-medium">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border-color)]">
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
