@@ -130,28 +130,6 @@ function DashboardHeader({
       >
         <button
           onClick={() => {
-            setActiveTab("messages");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background:
-              activeTab === "messages" ? "var(--accent)" : "transparent",
-            color:
-              activeTab === "messages"
-                ? "var(--bg-primary)"
-                : "var(--text-secondary)",
-          }}
-        >
-          <MessageSquare size={11} />
-          <span className="hidden sm:inline">Inquiries</span>
-          {inboxCount > 0 && (
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-          )}
-        </button>
-        <button
-          onClick={() => {
             setActiveTab("blogs");
             setSelected(null);
             setSelectedBlog(null);
@@ -190,78 +168,25 @@ function DashboardHeader({
         </button>
         <button
           onClick={() => {
-            setActiveTab("projects");
+            setActiveTab("messages");
             setSelected(null);
             setSelectedBlog(null);
           }}
           className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
           style={{
-            background: activeTab === "projects" ? "var(--accent)" : "transparent",
-            color: activeTab === "projects" ? "var(--bg-primary)" : "var(--text-secondary)",
+            background:
+              activeTab === "messages" ? "var(--accent)" : "transparent",
+            color:
+              activeTab === "messages"
+                ? "var(--bg-primary)"
+                : "var(--text-secondary)",
           }}
         >
-          <Briefcase size={11} />
-          <span className="hidden sm:inline">Projects</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("skills");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background: activeTab === "skills" ? "var(--accent)" : "transparent",
-            color: activeTab === "skills" ? "var(--bg-primary)" : "var(--text-secondary)",
-          }}
-        >
-          <Code size={11} />
-          <span className="hidden sm:inline">Skills</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("about");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background: activeTab === "about" ? "var(--accent)" : "transparent",
-            color: activeTab === "about" ? "var(--bg-primary)" : "var(--text-secondary)",
-          }}
-        >
-          <User size={11} />
-          <span className="hidden sm:inline">About</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("experience");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background: activeTab === "experience" ? "var(--accent)" : "transparent",
-            color: activeTab === "experience" ? "var(--bg-primary)" : "var(--text-secondary)",
-          }}
-        >
-          <Briefcase size={11} />
-          <span className="hidden sm:inline">Experience</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("awards");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background: activeTab === "awards" ? "var(--accent)" : "transparent",
-            color: activeTab === "awards" ? "var(--bg-primary)" : "var(--text-secondary)",
-          }}
-        >
-          <Award size={11} />
-          <span className="hidden sm:inline">Awards</span>
+          <MessageSquare size={11} />
+          <span className="hidden sm:inline">Inquiries</span>
+          {inboxCount > 0 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+          )}
         </button>
         <button
           onClick={() => {
@@ -300,6 +225,81 @@ function DashboardHeader({
         >
           <ShieldAlert size={11} />
           <span className="hidden sm:inline">Audit</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("about");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "about" ? "var(--accent)" : "transparent",
+            color: activeTab === "about" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <User size={11} />
+          <span className="hidden sm:inline">About</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("experience");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "experience" ? "var(--accent)" : "transparent",
+            color: activeTab === "experience" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Briefcase size={11} />
+          <span className="hidden sm:inline">Experience</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("projects");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "projects" ? "var(--accent)" : "transparent",
+            color: activeTab === "projects" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Briefcase size={11} />
+          <span className="hidden sm:inline">Projects</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("skills");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "skills" ? "var(--accent)" : "transparent",
+            color: activeTab === "skills" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Code size={11} />
+          <span className="hidden sm:inline">Skills</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("awards");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "awards" ? "var(--accent)" : "transparent",
+            color: activeTab === "awards" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Award size={11} />
+          <span className="hidden sm:inline">Awards</span>
         </button>
       </div>
 
