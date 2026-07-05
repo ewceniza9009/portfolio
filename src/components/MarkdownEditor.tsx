@@ -40,6 +40,7 @@ interface MarkdownEditorProps {
   onEditorMount?: (editor: editor.IStandaloneCodeEditor) => void;
   extraWords?: string[];
   showToolbar?: boolean;
+  hideLineNumbers?: boolean;
   renderInlinePreview?: (
     type: string,
     code: string,
@@ -278,6 +279,7 @@ export default memo(function MarkdownEditor({
   onEditorMount,
   extraWords = [],
   showToolbar = false,
+  hideLineNumbers = false,
   renderInlinePreview,
   onZoomBlock,
 }: MarkdownEditorProps) {
@@ -765,6 +767,13 @@ export default memo(function MarkdownEditor({
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            ...(hideLineNumbers ? {
+              lineNumbers: "off",
+              glyphMargin: false,
+              folding: false,
+              lineDecorationsWidth: 0,
+              lineNumbersMinChars: 0
+            } : {})
           }}
         />
       </div>

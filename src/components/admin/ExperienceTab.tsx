@@ -113,6 +113,7 @@ export default function ExperienceTab() {
                   onChange={val => setFormData({ ...formData, descriptions: val.split('\n').filter(s => s.trim()) })} 
                   height="200px"
                   showToolbar={true}
+                  hideLineNumbers={true}
                 />
               </div>
             </div>

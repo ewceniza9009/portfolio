@@ -205,7 +205,8 @@ export default React.memo(function ExperienceSection({ experience }: ExperienceS
                     </p>
                     <ul className="text-sm leading-relaxed mb-4 space-y-2.5" style={{ color: 'var(--text-secondary)' }}>
                       {exp.descriptions.map((desc, i) => {
-                        const parts = desc.split(/\*\*(.*?)\*\*/g);
+                        const cleanDesc = desc.replace(/^[\-\*]\s+/, '');
+                        const parts = cleanDesc.split(/\*\*(.*?)\*\*/g);
                         return (
                           <li key={i} className="flex items-start gap-2.5">
                             <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />

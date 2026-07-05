@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
+import MarkdownEditor from '../MarkdownEditor'
 
 export default function AwardsTab() {
   const [items, setItems] = useState<any[]>([])
@@ -90,9 +91,16 @@ export default function AwardsTab() {
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
-              <textarea value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={6}
-                className="w-full px-3 py-1.5 rounded border text-sm resize-y"
-                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
+              <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                <MarkdownEditor 
+                  key={`awards-${editingId}`}
+                  value={formData.description || ''} 
+                  onChange={val => setFormData({ ...formData, description: val })} 
+                  height="150px"
+                  showToolbar={true}
+                  hideLineNumbers={true}
+                />
+              </div>
             </div>
             <div className="flex gap-2">
               <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold"

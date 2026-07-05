@@ -251,7 +251,16 @@ export default function ProjectsTab() {
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={inputClass} style={inputStyle} rows={6} />
+                <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                  <MarkdownEditor 
+                    key={`desc-${editingId}`}
+                    value={formData.description || ''} 
+                    onChange={val => setFormData({...formData, description: val})} 
+                    height="150px"
+                    showToolbar={true}
+                    hideLineNumbers={true}
+                  />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (Separate paragraphs with double newlines)</label>

@@ -102,6 +102,7 @@ export default function AboutTab() {
                 onChange={val => setParagraphs(val.split('\n\n').filter(p => p.trim() !== ''))} 
                 height="300px"
                 showToolbar={true}
+                hideLineNumbers={true}
               />
             </div>
           </div>
