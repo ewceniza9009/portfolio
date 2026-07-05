@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
+import MarkdownEditor from '../MarkdownEditor'
 
 export default function AboutTab() {
   const [title, setTitle] = useState('About Me')
@@ -95,14 +96,14 @@ export default function AboutTab() {
           </div>
 
           <div className="space-y-3">
-            <textarea
-              defaultValue={paragraphs.join('\n\n')}
-              onChange={e => setParagraphs(e.target.value.split('\n\n').filter(p => p.trim() !== ''))}
-              rows={12}
-              placeholder="Write your about paragraphs here..."
-              className="w-full bg-transparent border rounded-lg p-4 text-sm resize-y outline-none focus:ring-2 focus:ring-blue-500/50"
-              style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}
-            />
+            <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+              <MarkdownEditor 
+                value={paragraphs.join('\n\n')} 
+                onChange={val => setParagraphs(val.split('\n\n').filter(p => p.trim() !== ''))} 
+                height="300px"
+                showToolbar={true}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
+import MarkdownEditor from '../MarkdownEditor'
 
 export default function ExperienceTab() {
   const [items, setItems] = useState<any[]>([])
@@ -105,14 +106,15 @@ export default function ExperienceTab() {
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Descriptions (One bullet per line)</label>
-              <textarea 
-                key={`exp-${editingId}`}
-                defaultValue={formData.descriptions.join('\n')} 
-                onChange={e => setFormData({ ...formData, descriptions: e.target.value.split('\n').filter(s => s.trim()) })} 
-                rows={6}
-                className="w-full px-3 py-2 rounded border text-sm resize-y"
-                style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
-              />
+              <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                <MarkdownEditor 
+                  key={`exp-${editingId}`}
+                  value={formData.descriptions.join('\n')} 
+                  onChange={val => setFormData({ ...formData, descriptions: val.split('\n').filter(s => s.trim()) })} 
+                  height="200px"
+                  showToolbar={true}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Technologies (comma separated)</label>

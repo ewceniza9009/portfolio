@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, GripVertical, X, Save } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../utils/api'
+import MarkdownEditor from '../MarkdownEditor'
 
 export default function ProjectsTab() {
   const [projects, setProjects] = useState<any[]>([])
@@ -254,14 +255,15 @@ export default function ProjectsTab() {
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (Separate paragraphs with double newlines)</label>
-                <textarea 
-                  key={`details-${editingId}`}
-                  defaultValue={formData.details.join('\n\n')} 
-                  onChange={e => setFormData({...formData, details: e.target.value.split('\n\n').filter(s => s.trim())})} 
-                  className={inputClass} 
-                  style={inputStyle} 
-                  rows={8} 
-                />
+                <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                  <MarkdownEditor 
+                    key={`details-${editingId}`}
+                    value={formData.details.join('\n\n')} 
+                    onChange={val => setFormData({...formData, details: val.split('\n\n').filter(s => s.trim())})} 
+                    height="250px"
+                    showToolbar={true}
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Tech (comma separated)</label>
