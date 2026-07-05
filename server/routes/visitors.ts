@@ -21,8 +21,8 @@ router.post('/api/visit', async (req, res) => {
     const ref = req.body?.ref || ''
     const path = req.body?.path || ''
 
-    // Skip private/dev IPs entirely
-    if (isPrivateIP(ip)) {
+    // Skip private/dev IPs and specific owner IP entirely
+    if (isPrivateIP(ip) || ip === '143.44.164.12') {
       return res.json({ success: true, dev: true })
     }
 
@@ -129,6 +129,9 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
     if (humansOnly) {
       conditions.push('is_bot = 0')
     }
+    
+    // Always exclude owner IP from stats
+    conditions.push("ip != '143.44.164.12'")
 
     if (search) {
       conditions.push(`(ip LIKE ? OR country LIKE ? OR city LIKE ? OR region LIKE ? OR referrer LIKE ? OR ref LIKE ? OR user_agent LIKE ?)`)
@@ -186,8 +189,8 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
 
     const countries = await turso.execute("SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != '' ORDER BY country")
 
-    const unfilteredTotal = await turso.execute('SELECT COUNT(*) as count FROM visitors')
-    const unfilteredVisits = await turso.execute('SELECT SUM(visit_count) as count FROM visitors')
+    const unfilteredTotal = await turso.execute("SELECT COUNT(*) as count FROM visitors WHERE ip != '143.44.164.12'")
+    const unfilteredVisits = await turso.execute("SELECT SUM(visit_count) as count FROM visitors WHERE ip != '143.44.164.12'")
 
     res.json({
       visitors: visitors.rows,

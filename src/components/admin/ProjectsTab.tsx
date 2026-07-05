@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
+import { Plus, Edit2, Trash2, GripVertical, X, Save } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { apiFetch } from '../../utils/api'
 
 export default function ProjectsTab() {
@@ -32,7 +33,8 @@ export default function ProjectsTab() {
     setEditingId(p.id)
     setFormData({
       ...p,
-      detailsStr: p.details?.join('\n') || '',
+      ...p,
+      details: p.details?.length ? p.details : [''],
       techStr: p.tech?.join(', ') || ''
     })
   }
@@ -42,7 +44,7 @@ export default function ProjectsTab() {
     setFormData({
       title: '', subtitle: '', description: '', year: new Date().getFullYear().toString(),
       type: 'Personal', color: '#3b82f6', repo: '', demo: '', video: '', image: '', fallback: '',
-      detailsStr: '', techStr: '', display_order: projects.length
+      details: [''], techStr: '', display_order: projects.length
     })
   }
 
@@ -50,7 +52,7 @@ export default function ProjectsTab() {
     try {
       const payload = {
         ...formData,
-        details: formData.detailsStr.split('\n').filter((s: string) => s.trim()),
+        details: formData.details.filter((s: string) => s.trim()),
         tech: formData.techStr.split(',').map((s: string) => s.trim()).filter(Boolean)
       }
 
@@ -215,7 +217,7 @@ export default function ProjectsTab() {
       </div>
 
       {/* Edit / Create Modal */}
-      {editingId !== null && (
+      {editingId !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto border"
@@ -244,11 +246,33 @@ export default function ProjectsTab() {
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={inputClass} style={inputStyle} rows={2} />
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={inputClass} style={inputStyle} rows={6} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (one per line)</label>
-                <textarea value={formData.detailsStr} onChange={e => setFormData({...formData, detailsStr: e.target.value})} className={inputClass} style={inputStyle} rows={4} />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs block" style={{ color: 'var(--text-muted)' }}>Details</label>
+                  <button onClick={() => setFormData({ ...formData, details: [...formData.details, ''] })} className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}><Plus size={10} /> Add Bullet</button>
+                </div>
+                <div className="space-y-2">
+                  {formData.details.map((desc: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
+                      <textarea value={desc} onChange={e => {
+                        const newDetails = [...formData.details]
+                        newDetails[i] = e.target.value
+                        setFormData({ ...formData, details: newDetails })
+                      }} rows={4}
+                        className={inputClass}
+                        style={{ ...inputStyle, resize: 'vertical' }} />
+                      <button onClick={() => {
+                        const newDetails = formData.details.filter((_: any, idx: number) => idx !== i)
+                        setFormData({ ...formData, details: newDetails })
+                      }} className="p-1.5 rounded mt-0.5 hover:bg-red-500/20" style={{ color: 'var(--text-muted)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Tech (comma separated)</label>
@@ -300,7 +324,8 @@ export default function ProjectsTab() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       </div>
     </div>

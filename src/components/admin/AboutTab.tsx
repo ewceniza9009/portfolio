@@ -161,7 +161,7 @@ export default function AboutTab() {
                     next[i] = e.target.value;
                     setParagraphs(next)
                   }}
-                  rows={4}
+                  rows={6}
                   placeholder={`Paragraph ${i + 1}...`}
                   className="flex-1 w-full bg-transparent border-none p-0 text-sm resize-y outline-none focus:ring-0"
                   style={{ color: 'var(--text-primary)' }}

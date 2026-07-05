@@ -90,7 +90,7 @@ export default function AwardsTab() {
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
-              <textarea value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3}
+              <textarea value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={6}
                 className="w-full px-3 py-1.5 rounded border text-sm resize-y"
                 style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
             </div>

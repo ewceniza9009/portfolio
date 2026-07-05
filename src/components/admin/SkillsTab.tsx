@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { apiFetch } from '../../utils/api'
 
 export default function SkillsTab() {
@@ -327,7 +328,7 @@ export default function SkillsTab() {
       </div>
 
       {/* Category Edit Modal */}
-      {editingCategory !== null && (
+      {editingCategory !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-md p-6 border"
@@ -383,11 +384,12 @@ export default function SkillsTab() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Skill Edit Modal */}
-      {editingSkill !== null && (
+      {editingSkill !== null && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
             className="rounded-2xl w-full max-w-md p-6 border"
@@ -445,7 +447,8 @@ export default function SkillsTab() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       </div>
     </div>
