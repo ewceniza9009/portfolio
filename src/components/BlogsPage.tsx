@@ -9,59 +9,16 @@ import CursorFollower from './CursorFollower'
 import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
-
-interface Blog {
-  id: string
-  slug: string
-  title: string
-  content: string
-  summary: string | null
-  tags: string | null
-  category: string | null
-  published: number
-  likes: number
-  read_time: string | null
-  cover_image: string | null
-  created_at: string
-}
+import { getApiUrl } from '../utils/api'
+import { getGradient } from '../utils/gradients'
+import { formatDate } from '../utils/format'
+import type { Blog } from '../types/blog'
 
 interface BlogsPageProps {
   theme: 'dark' | 'light'
   toggleTheme: () => void
   accent: AccentKey
   setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
-}
-
-const getApiUrl = (path: string) => {
-  const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-    ? 'http://localhost:3000'
-    : ''
-  return `${baseUrl}${path}`
-}
-
-const getGradient = (slug: string) => {
-  const gradients = [
-    'from-rose-500/80 to-orange-500/80',
-    'from-emerald-500/80 to-teal-500/80',
-    'from-cyan-500/80 to-blue-500/80',
-    'from-purple-500/80 to-pink-500/80',
-    'from-amber-500/80 to-red-500/80',
-    'from-indigo-500/80 to-purple-500/80'
-  ]
-  let hash = 0
-  for (let i = 0; i < slug.length; i++) {
-    hash = slug.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const index = Math.abs(hash) % gradients.length
-  return gradients[index]
-}
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
 }
 
 const relativeDate = (dateStr: string) => {

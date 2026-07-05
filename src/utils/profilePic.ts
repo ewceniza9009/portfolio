@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { getApiUrl, getAdminToken } from './api'
 
 const DEFAULT_PIC = '/img/profile-pic.png'
 
@@ -9,29 +10,10 @@ interface ProfilePicState {
 }
 
 const FALLBACK_URL = DEFAULT_PIC
-const ADMIN_TOKEN_KEY = 'admin_token'
 
 let cachedUrl: string | null = null
 let inflight: Promise<string> | null = null
 const subscribers = new Set<(url: string) => void>()
-
-function getApiUrl(path: string): string {
-  if (typeof window === 'undefined') return path
-  const baseUrl =
-    window.location.hostname === 'localhost' && window.location.port === '5173'
-      ? 'http://localhost:3000'
-      : ''
-  return `${baseUrl}${path}`
-}
-
-function getAdminToken(): string {
-  if (typeof window === 'undefined') return ''
-  try {
-    return window.localStorage.getItem(ADMIN_TOKEN_KEY) || window.sessionStorage.getItem(ADMIN_TOKEN_KEY) || ''
-  } catch {
-    return ''
-  }
-}
 
 async function loadProfilePic(): Promise<string> {
   if (cachedUrl) return cachedUrl

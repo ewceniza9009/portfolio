@@ -30,6 +30,8 @@ import BlogPostPage from './components/BlogPostPage'
 import GallerySection from './components/GallerySection'
 import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
+import { getApiUrl } from './utils/api'
+import ErrorBoundary from './components/ErrorBoundary'
 
 interface PortfolioProps {
   theme: 'dark' | 'light'
@@ -213,12 +215,9 @@ export default function App() {
 
   // Record page visit on mount and route changes
   useEffect(() => {
-    const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-      ? 'http://localhost:3000'
-      : ''
     const params = new URLSearchParams(window.location.search)
     const ref = params.get('ref') || ''
-    fetch(`${baseUrl}/api/visit`, {
+    fetch(getApiUrl('/api/visit'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: location.pathname, ref }),
@@ -229,10 +228,7 @@ export default function App() {
   useEffect(() => {
     async function loadGlobalSettings() {
       try {
-        const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-          ? 'http://localhost:3000'
-          : ''
-        const res = await fetch(`${baseUrl}/api/settings`)
+        const res = await fetch(getApiUrl('/api/settings'))
         if (res.ok) {
           const data = await res.json()
           
@@ -434,16 +430,18 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/admin" element={<AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
-      <Route path="/blogs" element={<BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
-      <Route path="/blogs/:slug" element={<BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} />} />
+      <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+      <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+      <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
       <Route path="*" element={
-        <Portfolio 
-          theme={theme}
-          toggleTheme={toggleTheme}
-          accent={accent}
-          setAccent={setAccent}
-        />
+        <ErrorBoundary>
+          <Portfolio 
+            theme={theme}
+            toggleTheme={toggleTheme}
+            accent={accent}
+            setAccent={setAccent}
+          />
+        </ErrorBoundary>
       } />
     </Routes>
   )

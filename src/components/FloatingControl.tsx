@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Terminal, MessageCircle, X, Minimize2, Maximize2, SendHorizonal, Sparkles, Bot, User, MousePointer2, Mail, Phone, Linkedin, Github, Copy, Check } from 'lucide-react'
 import { getSafeItem, setSafeItem } from '../utils/storage'
+import { getApiUrl } from '../utils/api'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { parseMarkdown } from '../utils/markdown'
 import { useLocation } from 'react-router-dom'
@@ -455,7 +456,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
   }, [messages])
 
   useEffect(() => {
-    fetch('/api/blogs')
+    fetch(getApiUrl('/api/blogs'))
       .then(r => r.json())
       .then(blogs => {
         if (Array.isArray(blogs) && blogs.length) {
@@ -480,7 +481,7 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
     setLoading(true)
     try {
       const fullContext = PORTFOLIO_CONTEXT + blogContext
-      const res = await fetch('/api/ai/chat', {
+      const res = await fetch(getApiUrl('/api/ai/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: updatedMessages, context: fullContext }),

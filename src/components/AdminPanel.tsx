@@ -65,261 +65,13 @@ import {
   useProfilePic,
 } from "../utils/profilePic";
 import { AccentDropdown } from "./Navbar";
-
-const InlinePreviewTabs = ({ content, previewLogs, setPreviewLogs, handleAskAiFix, fixingErrorId, aiSuggestions }: any) => {
-  const [activeTab, setActiveTab] = useState<'preview' | 'console'>('preview');
-  
-  return (
-    <div className="flex flex-col h-full bg-[var(--bg-card)]">
-      {/* Tabs */}
-      <div className="flex items-center gap-2 px-3 pt-2 pb-0 border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <button
-          onPointerDown={(e) => { e.stopPropagation(); setActiveTab('preview'); }}
-          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'preview' ? 'border-[var(--accent)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
-        >
-          Preview
-        </button>
-        <button
-          onPointerDown={(e) => { e.stopPropagation(); setActiveTab('console'); }}
-          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'console' ? 'border-[var(--accent)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
-        >
-          Console
-          {previewLogs.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-500 text-[9px]">{previewLogs.length}</span>
-          )}
-        </button>
-      </div>
-      
-      {/* Content */}
-      <div className="flex-1 min-h-0 relative">
-        <div className={`absolute inset-0 h-full w-full ${activeTab === 'preview' ? 'block' : 'hidden'}`}>
-          {content}
-        </div>
-        <div className={`absolute inset-0 h-full w-full ${activeTab === 'console' ? 'block' : 'hidden'}`}>
-          <div className="h-full bg-black p-4 overflow-y-auto font-mono text-[11px] leading-relaxed relative">
-            <div className="sticky top-0 left-0 bg-black/80 backdrop-blur pb-3 flex justify-between items-center border-b border-gray-800/50 mb-3 z-10">
-              <span className="text-gray-400 font-bold uppercase text-[9px] tracking-wider">Console Logs</span>
-              <button
-                onPointerDown={(e) => { e.stopPropagation(); setPreviewLogs([]); }}
-                className="text-[9px] uppercase font-bold tracking-wider px-3 py-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-              >
-                Clear Logs
-              </button>
-            </div>
-            {previewLogs.length === 0 ? (
-              <div className="text-gray-600 italic text-center mt-8">No logs captured.</div>
-            ) : (
-              <div className="space-y-4">
-                {previewLogs.map((log: any) => (
-                  <div key={log.id} className="pb-3 border-b border-gray-800/50">
-                    <div className="flex gap-2">
-                      <span className="text-gray-500 shrink-0">{log.time}</span>
-                      <span className={`flex-1 whitespace-pre-wrap ${
-                        log.type === "error" ? "text-red-400" :
-                        log.type === "warn" ? "text-yellow-400" :
-                        "text-blue-300"
-                      }`}>
-                        {log.msg}
-                      </span>
-                    </div>
-                    {log.type === "error" && log.msg.includes("THREE.CSS2DObject is not a constructor") && (
-                      <div className="mt-2 ml-14 p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 text-[10px]">
-                        💡 <strong>Tip:</strong> Remove the <code>THREE.</code> namespace. Import and use <code>CSS2DObject</code> directly.
-                      </div>
-                    )}
-                    {log.type === "error" && (
-                      <div className="mt-2 ml-14">
-                        {!aiSuggestions[log.id] && fixingErrorId !== log.id && (
-                          <button
-                            onPointerDown={(e) => { e.stopPropagation(); handleAskAiFix(log.id, log.msg); }}
-                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors border border-indigo-500/30 font-sans text-[9px] font-bold"
-                          >
-                            <Sparkles size={10} /> Ask AI to Fix
-                          </button>
-                        )}
-                        {fixingErrorId === log.id && (
-                          <div className="flex items-center gap-1.5 text-indigo-400 text-[9px] font-sans">
-                            <Loader size={10} className="animate-spin" /> Analyzing error...
-                          </div>
-                        )}
-                        {aiSuggestions[log.id] && (
-                          <div className="p-3 rounded bg-indigo-500/10 border border-indigo-500/20 font-sans mt-2 shadow-inner">
-                            <div className="text-indigo-400 font-bold text-[10px] mb-1.5 flex items-center gap-1.5">
-                              <Sparkles size={10} /> AI Suggestion:
-                            </div>
-                            <div className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed">{aiSuggestions[log.id]}</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface Message {
-  id: string;
-  name: string;
-  email: string;
-  subject: string | null;
-  message: string;
-  replied: number;
-  reply_subject: string | null;
-  reply_body: string | null;
-  replied_at: string | null;
-  created_at: string;
-}
-
-interface Blog {
-  id: string;
-  slug: string;
-  title: string;
-  content: string;
-  summary: string | null;
-  tags: string | null;
-  category: string | null;
-  published: number;
-  likes: number;
-  read_time: string | null;
-  cover_image: string | null;
-  created_at: string;
-  updated_at: string;
-  devto_summary?: string | null;
-  social_summary?: string | null;
-}
-
-interface Comment {
-  id: string;
-  blog_id: string;
-  author_name: string;
-  author_email: string | null;
-  content: string;
-  created_at: string;
-}
-
-const getSafeItem = (key: string): string | null => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-const setSafeItem = (key: string, value: string): void => {
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
-};
-const removeSafeItem = (key: string): void => {
-  try {
-    localStorage.removeItem(key);
-  } catch {}
-};
-
-function parseUA(ua: string) {
-  const isMobile =
-    /Mobile|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-  const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua) && !isMobile;
-  const device = isTablet ? "Tablet" : isMobile ? "Mobile" : "Desktop";
-  let browser = "Other";
-  if (/Chrome/i.test(ua) && !/Edg|OPR/i.test(ua)) browser = "Chrome";
-  else if (/Firefox/i.test(ua)) browser = "Firefox";
-  else if (/Safari/i.test(ua) && !/Chrome|Edg/i.test(ua)) browser = "Safari";
-  else if (/Edg/i.test(ua)) browser = "Edge";
-  else if (/OPR/i.test(ua)) browser = "Opera";
-  let os = "Other";
-  if (/Windows/i.test(ua)) os = "Windows";
-  else if (/Mac OS|macOS/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua))
-    os = "macOS";
-  else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
-  else if (/Android/i.test(ua)) os = "Android";
-  else if (/Linux/i.test(ua)) os = "Linux";
-  return { device, browser, os };
-}
-
-function processUAStats(visitors: any[]) {
-  const deviceCount: Record<string, number> = {};
-  const browserCount: Record<string, number> = {};
-  const osCount: Record<string, number> = {};
-  visitors.forEach((v: any) => {
-    const parsed = parseUA(v.user_agent || "");
-    deviceCount[parsed.device] =
-      (deviceCount[parsed.device] || 0) + Number(v.visit_count || 1);
-    browserCount[parsed.browser] =
-      (browserCount[parsed.browser] || 0) + Number(v.visit_count || 1);
-    osCount[parsed.os] = (osCount[parsed.os] || 0) + Number(v.visit_count || 1);
-  });
-  return { deviceCount, browserCount, osCount };
-}
-
-function processCountryStats(visitors: any[]) {
-  const countryCount: Record<string, number> = {};
-  visitors.forEach((v: any) => {
-    const country = v.country || "Unknown";
-    countryCount[country] =
-      (countryCount[country] || 0) + Number(v.visit_count || 1);
-  });
-  return Object.entries(countryCount)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-const VISITOR_TABLE_COLUMNS = [
-  { key: "country", label: "Location", align: "left" as const },
-  { key: "ip", label: "IP", align: "left" as const },
-  { key: "visit_count", label: "Visits", align: "right" as const },
-  { key: null, label: "Referrer", align: "left" as const },
-  { key: null, label: "Ref", align: "left" as const },
-  { key: "first_visit", label: "First Visit", align: "left" as const },
-  { key: "last_visit", label: "Last Visit", align: "left" as const },
-];
-
-const AI_PRESETS = [
-  {
-    label: "Accept Offer",
-    prompt:
-      "Draft a warm, professional acceptance email. Express enthusiasm about the opportunity to collaborate, thank them for the offer, and ask about next onboarding steps.",
-  },
-  {
-    label: "Polite Decline",
-    prompt:
-      "Draft a professional decline email. Polite and appreciative tone. State that I am currently at capacity and cannot take on new work, but thank them for reaching out.",
-  },
-  {
-    label: "Request Call",
-    prompt:
-      "Draft a reply thanking them for their message. Express interest and ask if they are free to schedule a brief 15-minute Google Meet next week to discuss in detail.",
-  },
-  {
-    label: "General Thanks",
-    prompt:
-      "Draft a brief, friendly reply thanking them for reaching out and writing such a thoughtful message. Let them know I will review their comments shortly.",
-  },
-];
+import { getSafeItem, setSafeItem, removeSafeItem } from "../utils/storage";
+import { getApiUrl } from "../utils/api";
+import { formatDate, slugify } from "../utils/format";
+import type { Blog, Comment, Message } from "../types/blog";
+import InlinePreviewTabs from "./admin/InlinePreviewTabs";
+import LoginView from "./admin/LoginView";
+import { processUAStats, processCountryStats, VISITOR_TABLE_COLUMNS, AI_PRESETS } from "./admin/helpers";
 
 interface AdminPanelProps {
   theme: "dark" | "light";
@@ -1310,12 +1062,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   };
 
   const api = async (path: string, options?: RequestInit) => {
-    const baseUrl =
-      window.location.hostname === "localhost" &&
-      window.location.port === "5173"
-        ? "http://localhost:3000"
-        : "";
-    return fetch(`${baseUrl}${path}`, {
+    return fetch(getApiUrl(path), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -1864,83 +1611,12 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   // Login view
   if (!token) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-6 transition-all duration-300"
-        style={{ background: "var(--bg-primary)" }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", damping: 20 }}
-          className="w-full max-w-md rounded-3xl p-8 glass shadow-2xl border"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <div className="flex items-center justify-center mb-6">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center border shadow-inner"
-              style={{
-                background: "var(--accent-dim)",
-                borderColor: "var(--accent)",
-              }}
-            >
-              <Lock size={24} style={{ color: "var(--accent)" }} />
-            </div>
-          </div>
-          <h2 className="text-xl font-bold text-center mb-1">
-            Developer Cockpit
-          </h2>
-          <p
-            className="text-xs text-center mb-8"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Enter credentials to access admin functions
-          </p>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label
-                className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Security Token
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••••"
-                className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2"
-                style={{
-                  background: "var(--bg-secondary)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border)",
-                  outlineColor: "var(--accent)",
-                }}
-                autoFocus
-              />
-            </div>
-            {loginError && (
-              <motion.p
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-center font-medium"
-                style={{ color: "#ef4444" }}
-              >
-                {loginError}
-              </motion.p>
-            )}
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl text-sm font-bold transition-all shadow-lg hover:brightness-110 active:scale-[0.98]"
-              style={{
-                background: "var(--accent)",
-                color: "var(--bg-primary)",
-              }}
-            >
-              Sign In
-            </button>
-          </form>
-        </motion.div>
-      </div>
+      <LoginView
+        password={password}
+        setPassword={setPassword}
+        handleLogin={handleLogin}
+        loginError={loginError}
+      />
     );
   }
 
@@ -2398,7 +2074,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
                         className="text-[10px] font-semibold"
                         style={{ color: "var(--text-muted)" }}
                       >
-                        {formatDate(selected.created_at)}
+                        {formatDate(selected.created_at, { time: true })}
                       </span>
                     </div>
 
@@ -2461,7 +2137,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
                               className="text-[10px]"
                               style={{ color: "var(--text-muted)" }}
                             >
-                              Replied on {formatDate(selected.replied_at!)}
+                              Replied on {formatDate(selected.replied_at!, { time: true })}
                             </span>
                           </div>
                           <p className="text-xs font-bold mb-2">
@@ -3873,7 +3549,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
                                         </span>
                                       )}
                                       <span className="text-[9px] opacity-55">
-                                        {formatDate(comment.created_at)}
+                                        {formatDate(comment.created_at, { time: true })}
                                       </span>
                                     </div>
                                     <p className="text-xs opacity-90 select-text leading-relaxed">

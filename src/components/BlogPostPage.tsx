@@ -11,30 +11,10 @@ import PayPalDonate from './PayPalDonate'
 import HeadTags from './HeadTags'
 import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
-
-function getApiUrl(path: string): string {
-  const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-    ? 'http://localhost:3000'
-    : ''
-  return `${baseUrl}${path}`
-}
-
-function getGradient(slug: string): string {
-  const gradients = [
-    'from-rose-500/80 to-orange-500/80',
-    'from-emerald-500/80 to-teal-500/80',
-    'from-cyan-500/80 to-blue-500/80',
-    'from-purple-500/80 to-pink-500/80',
-    'from-amber-500/80 to-red-500/80',
-    'from-indigo-500/80 to-purple-500/80'
-  ]
-  let hash = 0
-  for (let i = 0; i < (slug || '').length; i++) {
-    hash = slug.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const index = Math.abs(hash) % gradients.length
-  return gradients[index]
-}
+import { getApiUrl } from '../utils/api'
+import { getGradient } from '../utils/gradients'
+import { formatDate } from '../utils/format'
+import type { Blog, Comment } from '../types/blog'
 
 function getAvatarColor(name: string): string {
   const colors = [
@@ -52,14 +32,6 @@ function getAvatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
   return colors[Math.abs(hash) % colors.length]
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
 }
 
 const BLOG_POST_STYLES = `
@@ -94,30 +66,6 @@ const BLOG_POST_STYLES = `
     scroll-margin-top: 100px;
   }
 `
-
-interface Blog {
-  id: string
-  slug: string
-  title: string
-  content: string
-  summary: string | null
-  tags: string | null
-  category: string | null
-  published: number
-  likes: number
-  read_time: string | null
-  cover_image: string | null
-  created_at: string
-}
-
-interface Comment {
-  id: string
-  blog_id: string
-  author_name: string
-  author_email: string | null
-  content: string
-  created_at: string
-}
 
 interface BlogPostPageProps {
   theme: 'dark' | 'light'
@@ -439,7 +387,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
             <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-xs border-b pb-6" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
               <span className="flex items-center gap-1.5">
                 <Calendar size={13} />
-                {formatDate(blog.created_at)}
+                {formatDate(blog.created_at, { month: 'long' })}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock size={13} />

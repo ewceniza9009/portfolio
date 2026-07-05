@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide-react'
 import { getSafeItem, setSafeItem } from '../utils/storage'
+import { getApiUrl } from '../utils/api'
 import MagneticWrapper from './MagneticWrapper'
 
 function CopyToast({ message }: { message: string }) {
@@ -136,10 +137,7 @@ export default function ContactSection({ theme = 'dark' }: ContactSectionProps) 
 
     setSending(true)
     try {
-      const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173'
-        ? 'http://localhost:3000'
-        : ''
-      const res = await fetch(`${baseUrl}/api/contact`, {
+      const res = await fetch(getApiUrl('/api/contact'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
