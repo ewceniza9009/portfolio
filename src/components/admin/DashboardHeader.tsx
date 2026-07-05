@@ -243,6 +243,21 @@ function DashboardHeader({
         </button>
         <button
           onClick={() => {
+            setActiveTab("awards");
+            setSelected(null);
+            setSelectedBlog(null);
+          }}
+          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
+          style={{
+            background: activeTab === "awards" ? "var(--accent)" : "transparent",
+            color: activeTab === "awards" ? "var(--bg-primary)" : "var(--text-secondary)",
+          }}
+        >
+          <Award size={11} />
+          <span className="hidden sm:inline">Awards</span>
+        </button>
+        <button
+          onClick={() => {
             setActiveTab("experience");
             setSelected(null);
             setSelectedBlog(null);
@@ -285,21 +300,6 @@ function DashboardHeader({
         >
           <Code size={11} />
           <span className="hidden sm:inline">Skills</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("awards");
-            setSelected(null);
-            setSelectedBlog(null);
-          }}
-          className="px-2.5 md:px-4 py-1.5 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1 md:gap-1.5"
-          style={{
-            background: activeTab === "awards" ? "var(--accent)" : "transparent",
-            color: activeTab === "awards" ? "var(--bg-primary)" : "var(--text-secondary)",
-          }}
-        >
-          <Award size={11} />
-          <span className="hidden sm:inline">Awards</span>
         </button>
       </div>
 
