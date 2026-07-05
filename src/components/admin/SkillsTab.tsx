@@ -99,7 +99,9 @@ export default function SkillsTab() {
 
   const handleCatDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    setDragOverCatIndex(index)
+    if (dragOverCatIndex !== index) {
+      setDragOverCatIndex(index)
+    }
   }
 
   const handleCatDrop = async (index: number) => {
@@ -135,7 +137,9 @@ export default function SkillsTab() {
 
   const handleSkillDragOver = (e: React.DragEvent, catId: string, index: number) => {
     e.preventDefault()
-    setDragOverSkill({ catId, index })
+    if (dragOverSkill?.catId !== catId || dragOverSkill?.index !== index) {
+      setDragOverSkill({ catId, index })
+    }
   }
 
   const handleSkillDrop = async (catId: string, index: number) => {
@@ -191,7 +195,7 @@ export default function SkillsTab() {
         <button
           onClick={handleCreateCategory}
           className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
         >
           <Plus size={14} /> Add Category
         </button>
@@ -242,7 +246,7 @@ export default function SkillsTab() {
                 <button
                   onClick={() => handleCreateSkill(cat.id)}
                   className="px-2 py-1 text-xs rounded-md flex items-center gap-1 transition-colors"
-                  style={{ background: 'var(--accent)', color: '#fff', opacity: 0.85 }}
+                  style={{ background: 'var(--accent)', color: 'var(--bg-primary)', opacity: 0.85 }}
                 >
                   <Plus size={12} /> Skill
                 </button>

@@ -84,7 +84,9 @@ export default function ProjectsTab() {
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    setDragOverIndex(index)
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
   }
 
   const handleDrop = async (index: number) => {
@@ -130,7 +132,7 @@ export default function ProjectsTab() {
         <button
           onClick={handleCreate}
           className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
         >
           <Plus size={14} /> Add Project
         </button>

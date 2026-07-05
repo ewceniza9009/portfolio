@@ -43,7 +43,9 @@ export default function AboutTab() {
   const handleDragStart = (index: number) => setDragIndex(index)
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    setDragOverIndex(index)
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
   }
   const handleDrop = (index: number) => {
     if (dragIndex === null || dragIndex === index) {
@@ -80,7 +82,7 @@ export default function AboutTab() {
           onClick={handleSave}
           disabled={saving}
           className="px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
         >
           <Save size={14} /> {saving ? 'Saving...' : 'Save Changes'}
         </button>

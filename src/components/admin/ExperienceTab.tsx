@@ -61,7 +61,7 @@ export default function ExperienceTab() {
   }
 
   const handleDragStart = (index: number) => setDragIndex(index)
-  const handleDragOver = (e: React.DragEvent, index: number) => { e.preventDefault(); setDragOverIndex(index) }
+  const handleDragOver = (e: React.DragEvent, index: number) => { e.preventDefault(); if (dragOverIndex !== index) setDragOverIndex(index) }
   const handleDrop = async (index: number) => {
     if (dragIndex === null || dragIndex === index) { setDragIndex(null); setDragOverIndex(null); return }
     const reordered = [...items]
