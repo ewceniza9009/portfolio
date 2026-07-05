@@ -693,11 +693,22 @@ export default function FloatingControl() {
   const isHomePage = location.pathname === '/' || location.pathname === ''
   const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | 'contact' | null>(null)
   const [cursorOn, setCursorOn] = useState(() => (getSafeItem('cursor_enabled') ?? 'true') === 'true')
+  const menuContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.body.dataset.fabActive = mode === 'menu' ? 'true' : 'false'
     document.body.dataset.windowActive = mode === 'chat' || mode === 'terminal' ? 'true' : 'false'
     return () => { document.body.dataset.fabActive = 'false'; document.body.dataset.windowActive = 'false' }
+  }, [mode])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mode === 'menu' && menuContainerRef.current && !menuContainerRef.current.contains(e.target as Node)) {
+        setMode(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [mode])
 
   const toggleCursor = useCallback(() => {
@@ -720,7 +731,7 @@ export default function FloatingControl() {
   const handleClose = () => setMode(null)
 
   return (
-    <>
+    <div ref={menuContainerRef}>
       {/* FAB Button */}
       {(!mode || mode === 'menu') && (
         <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3">
@@ -756,7 +767,7 @@ export default function FloatingControl() {
             >
               <Sparkles size={13} /> Launch
             </motion.button>
-            <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden sm:block">
+            <div className={`absolute bottom-full mb-3 right-0 opacity-0 ${mode !== 'menu' ? 'group-hover:opacity-100' : ''} transition-opacity duration-200 pointer-events-none hidden sm:block`}>
               <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
               >
@@ -830,7 +841,7 @@ export default function FloatingControl() {
       <AnimatePresence>
         {mode === 'contact' && <ContactPanel onClose={handleClose} />}
       </AnimatePresence>
-    </>
+    </div>
   )
 }
 
