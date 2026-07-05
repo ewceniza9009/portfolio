@@ -67,7 +67,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex flex-col justify-end lg:justify-center lg:items-center"
+          className="fixed inset-0 z-[150] flex flex-col justify-end lg:justify-center lg:items-center"
           style={{ background: "rgba(0,0,0,0.8)" }}
           onClick={onClose}
           role="dialog"
