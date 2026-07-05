@@ -348,7 +348,7 @@ function AnalyticsTab({
                 },
                 {
                   label: gridShowHumansOnly ? "Humans Only" : "All",
-                  value: visitors.length,
+                  value: gridPagination.total,
                   Icon: gridShowHumansOnly ? CheckCircle2 : Eye,
                 },
               ].map((stat, i) => (
