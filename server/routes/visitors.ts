@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import turso from '../db.js'
 import { authMiddleware } from '../auth.js'
-import { isBot } from '../utils/bot-detection.js'
+import { isBot, isSuspiciousRequest, isPrivateIP } from '../utils/bot-detection.js'
 import { geoLookup } from '../utils/geo.js'
 import { sendTelegramAlert } from '../utils/telegram.js'
 
@@ -20,7 +20,16 @@ router.post('/api/visit', async (req, res) => {
     const referrer = (req.headers['referer'] as string) || ''
     const ref = req.body?.ref || ''
     const path = req.body?.path || ''
-    const detectedBot = isBot(userAgent) ? 1 : 0
+
+    // Skip private/dev IPs entirely
+    if (isPrivateIP(ip)) {
+      return res.json({ success: true, dev: true })
+    }
+
+    // Enhanced bot detection: UA patterns + server-side header analysis
+    const uaBot = isBot(userAgent)
+    const headerSuspicious = isSuspiciousRequest(req.headers as Record<string, string | string[] | undefined>)
+    const detectedBot = (uaBot || headerSuspicious) ? 1 : 0
 
     const now = Date.now()
     const entry = visitRateLimit.get(ip)
