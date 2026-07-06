@@ -33,6 +33,7 @@ import SectionCounter from './components/SectionCounter'
 import ScrollProgress from './components/ScrollProgress'
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { queryClient } from './lib/queryClient'
 
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 const BlogsPage = lazy(() => import('./components/BlogsPage'))
@@ -139,12 +140,12 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       <ExperienceSection experience={experienceData} />
       <AwardsSection awards={awardsData} />
       <ProjectsSection projects={projectsData} onSelectProject={setSelectedProject} />
-      <ProjectModal project={selectedProjectData} onClose={handleCloseProject} />
+      <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
       <GallerySection />
       <SkillsSection skills={skillsData} />
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData])
+  ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData, theme, accent])
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
@@ -267,56 +268,60 @@ export default function App() {
   useEffect(() => {
     async function loadGlobalSettings() {
       try {
-        const res = await apiFetch('/api/settings')
-        if (res.ok) {
-          const data = await res.json()
-          
-          if (data.default_theme !== undefined) {
-            setSafeItem('default_theme', data.default_theme)
-          }
-          if (data.default_accent !== undefined) {
-            setSafeItem('default_accent', data.default_accent)
-          }
-          if (data.rotation_theme_enabled !== undefined) {
-            setSafeItem('rotation_theme_enabled', data.rotation_theme_enabled)
-          }
-          if (data.rotation_accent_enabled !== undefined) {
-            setSafeItem('rotation_accent_enabled', data.rotation_accent_enabled)
-          }
-          if (data.rotation_interval_hours !== undefined) {
-            setSafeItem('rotation_interval_hours', data.rotation_interval_hours)
-          }
-          if (data.cursor_enabled !== undefined) {
-            setSafeItem('cursor_enabled', data.cursor_enabled)
-          }
+        const data = await queryClient.fetchQuery({
+          queryKey: ['settings'],
+          queryFn: () => apiFetch('/api/settings').then(r => r.json()),
+          staleTime: 10 * 60 * 1000,
+        })
 
-          const isThemeRot = data.rotation_theme_enabled !== 'false'
-          const isAccentRot = data.rotation_accent_enabled === 'true'
-          const interval = Number(data.rotation_interval_hours || '2')
-          
-          const savedTheme = getSafeItem('theme')
-          const savedAccent = getSafeItem('accent')
-          const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null
-          const defaultAccent = getSafeItem('default_accent') as AccentKey | null
-          const hour = new Date().getHours()
+      if (data.default_theme !== undefined) {
+        setSafeItem('default_theme', data.default_theme)
+      }
+      if (data.default_accent !== undefined) {
+        setSafeItem('default_accent', data.default_accent)
+      }
+      if (data.rotation_theme_enabled !== undefined) {
+        setSafeItem('rotation_theme_enabled', data.rotation_theme_enabled)
+      }
+      if (data.rotation_accent_enabled !== undefined) {
+        setSafeItem('rotation_accent_enabled', data.rotation_accent_enabled)
+      }
+      if (data.rotation_interval_hours !== undefined) {
+        setSafeItem('rotation_interval_hours', data.rotation_interval_hours)
+      }
+      if (data.cursor_enabled !== undefined) {
+        setSafeItem('cursor_enabled', data.cursor_enabled)
+      }
 
-          if (isThemeRot && !savedTheme) {
-            setTheme(Math.floor(hour / interval) % 2 === 0 ? 'dark' : 'light')
-          } else if (!savedTheme && !isThemeRot && (defaultTheme === 'dark' || defaultTheme === 'light')) {
-            setTheme(defaultTheme)
-          }
-          if (isAccentRot && !savedAccent) {
-            const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
-            const accentIndex = Math.floor(hour / interval) % accentKeys.length
-            setAccent(accentKeys[accentIndex])
-          } else if (!savedAccent && !isAccentRot && defaultAccent && defaultAccent in ACCENT_THEMES) {
-            setAccent(defaultAccent)
-          }
-        }
-      } catch (err) {
+      const isThemeRot = data.rotation_theme_enabled !== 'false'
+      const isAccentRot = data.rotation_accent_enabled === 'true'
+      const interval = Number(data.rotation_interval_hours || '2')
+
+      const savedTheme = getSafeItem('theme')
+      const savedAccent = getSafeItem('accent')
+      const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null
+      const defaultAccent = getSafeItem('default_accent') as AccentKey | null
+      const hour = new Date().getHours()
+
+      if (isThemeRot && !savedTheme) {
+        setTheme(Math.floor(hour / interval) % 2 === 0 ? 'dark' : 'light')
+      } else if (!savedTheme && !isThemeRot && (defaultTheme === 'dark' || defaultTheme === 'light')) {
+        setTheme(defaultTheme)
+      }
+      if (isAccentRot && !savedAccent) {
+        const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
+        const accentIndex = Math.floor(hour / interval) % accentKeys.length
+        setAccent(accentKeys[accentIndex])
+      } else if (!savedAccent && !isAccentRot && defaultAccent && defaultAccent in ACCENT_THEMES) {
+        setAccent(defaultAccent)
+      }
+    } catch (err) {
         console.error('Failed to load global settings:', err)
       }
     }
+    
+    // Skip if already cached by useSettings
+    if (queryClient.getQueryData(['settings'])) return
     
     loadGlobalSettings()
   }, [])

@@ -1,16 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 
 export default function BackToTop() {
   const [isVisible, setIsVisible] = useState(false);
+  const frameRef = useRef(0);
 
   useEffect(() => {
-    const toggleVisibility = () => {
-      setIsVisible(window.scrollY > 400);
+    const onScroll = () => {
+      if (frameRef.current) return
+      frameRef.current = requestAnimationFrame(() => {
+        setIsVisible(window.scrollY > 400)
+        frameRef.current = 0
+      })
     };
-    window.addEventListener('scroll', toggleVisibility, { passive: true });
-    return () => window.removeEventListener('scroll', toggleVisibility);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frameRef.current)
+    };
   }, []);
 
   const scrollToTop = () => {

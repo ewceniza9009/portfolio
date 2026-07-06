@@ -7,7 +7,7 @@ const router = Router()
 // Get all published blogs
 router.get('/api/blogs', async (_req, res) => {
   try {
-    const result = await turso.execute('SELECT * FROM blogs WHERE published = 1 ORDER BY created_at DESC')
+    const result = await turso.execute('SELECT id, slug, title, summary, tags, category, published, likes, read_time, cover_image, created_at, updated_at FROM blogs WHERE published = 1 ORDER BY created_at DESC')
     res.json(result.rows)
   } catch (err) {
     console.error('Fetch blogs error:', err)

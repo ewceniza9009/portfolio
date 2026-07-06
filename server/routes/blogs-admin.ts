@@ -48,7 +48,7 @@ router.post('/api/admin/upload', authMiddleware, upload.single('image'), (req, r
 // Get all blogs (drafts + published)
 router.get('/api/admin/blogs', authMiddleware, async (_req, res) => {
   try {
-    const result = await turso.execute('SELECT * FROM blogs ORDER BY created_at DESC')
+    const result = await turso.execute('SELECT id, slug, title, summary, tags, category, published, likes, read_time, cover_image, created_at, updated_at FROM blogs ORDER BY created_at DESC')
     res.json(result.rows)
   } catch (err) {
     console.error('Fetch admin blogs error:', err)

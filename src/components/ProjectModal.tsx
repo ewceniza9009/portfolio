@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, ExternalLink } from "lucide-react";
 import { TechIcon } from "./ProjectsSection";
+import { parseMarkdown } from '../utils/markdown';
+import type { AccentKey } from '../data/accents';
 
 interface Project {
   id: number;
@@ -28,9 +30,11 @@ interface Project {
 interface ProjectModalProps {
   project: Project | null;
   onClose: () => void;
+  theme?: 'dark' | 'light';
+  accent?: AccentKey;
 }
 
-export default function ProjectModal({ project, onClose }: ProjectModalProps) {
+export default function ProjectModal({ project, onClose, theme = 'dark', accent = 'blue' }: ProjectModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const showFullscreenRef = useRef(showFullscreen);
@@ -288,12 +292,12 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </div>
                 </div>
 
-                <p
-                  className="mb-8 leading-relaxed text-sm"
+                <div
+                  className="mb-8 leading-relaxed text-sm prose max-w-none prose-sm article-content"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  {project.description}
-                </p>
+                  {parseMarkdown(project.description || '', theme, accent)}
+                </div>
 
                 {/* Testimonial */}
                 {project.testimonial && (
@@ -329,35 +333,21 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       Key Features
                     </h4>
                     <ul className="space-y-4">
-                      {project.details.map((detail, i) => {
-                        const parts = detail.split(/\*\*(.*?)\*\*/g);
-                        return (
-                          <li
-                            key={i}
-                            className="flex gap-4 text-sm leading-relaxed"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            <span
-                              className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: "var(--accent)" }}
-                            />
-                            <span>
-                              {parts.map((part, j) =>
-                                j % 2 === 1 ? (
-                                  <strong
-                                    key={j}
-                                    style={{ color: "var(--text-primary)" }}
-                                  >
-                                    {part}
-                                  </strong>
-                                ) : (
-                                  <span key={j}>{part}</span>
-                                ),
-                              )}
-                            </span>
-                          </li>
-                        );
-                      })}
+                      {project.details.map((detail, i) => (
+                        <li
+                          key={i}
+                          className="flex gap-4 text-sm leading-relaxed"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          <span
+                            className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ background: "var(--accent)" }}
+                          />
+                          <div className="prose max-w-none prose-sm w-full article-content">
+                            {parseMarkdown(detail, theme, accent)}
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}

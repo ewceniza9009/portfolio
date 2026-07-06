@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react'
 import React, { useRef } from 'react'
 
 interface Experience {
+  id?: number
   year: string
   company: string
   location: string
@@ -142,7 +143,7 @@ export default React.memo(function ExperienceSection({ experience }: ExperienceS
 
             return (
               <motion.div
-                key={index}
+                key={exp.id ?? `${exp.year}-${exp.company}`}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.12 }}

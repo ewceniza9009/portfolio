@@ -14,6 +14,8 @@ import { getGradient } from '../utils/gradients'
 import { formatDate } from '../utils/format'
 import type { Blog } from '../types/blog'
 
+const NOOP_SCROLL = () => {}
+
 interface BlogsPageProps {
   theme: 'dark' | 'light'
   toggleTheme: () => void
@@ -245,7 +247,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
           activeSection="blog"
           theme={theme}
           onToggleTheme={toggleTheme}
-          onScrollTo={() => {}}
+          onScrollTo={NOOP_SCROLL}
           accent={accent}
           onChangeAccent={setAccent}
         />
@@ -850,7 +852,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
           )}
         </main>
 
-        <Footer onScrollTo={() => {}} />
+        <Footer onScrollTo={NOOP_SCROLL} />
         <BackToTop />
       </div>
     </>

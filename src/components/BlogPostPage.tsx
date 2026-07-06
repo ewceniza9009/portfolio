@@ -18,6 +18,8 @@ import { getApiUrl } from '../utils/api'
 import type { Blog } from '../types/blog'
 import { slugifyHeading } from '../utils/slugify'
 
+const NOOP_SCROLL = () => {}
+
 function getAvatarColor(name: string): string {
   const colors = [
     'bg-red-500/20 text-red-500 border-red-500/30',
@@ -279,7 +281,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
-        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={() => {}} accent={accent} onChangeAccent={setAccent} />
+        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={NOOP_SCROLL} accent={accent} onChangeAccent={setAccent} />
         <div className="flex-grow max-w-4xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 animate-pulse">
           {/* Back button skeleton */}
           <div className="mb-10 w-24 h-4 rounded bg-[var(--skeleton-bg)]" />
@@ -325,7 +327,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
              <div className="h-4 w-full rounded bg-[var(--skeleton-bg)]" />
           </div>
         </div>
-        <Footer onScrollTo={() => {}} />
+        <Footer onScrollTo={NOOP_SCROLL} />
       </div>
     )
   }
@@ -333,7 +335,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   if (!blog) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
-        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={() => {}} accent={accent} onChangeAccent={setAccent} />
+        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={NOOP_SCROLL} accent={accent} onChangeAccent={setAccent} />
         <div className="flex-grow flex flex-col items-center justify-center space-y-4 px-6 text-center">
           <h2 className="text-2xl font-bold">Article Not Found</h2>
           <p className="text-sm text-secondary max-w-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
@@ -343,7 +345,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
             Return to Articles
           </Link>
         </div>
-        <Footer onScrollTo={() => {}} />
+        <Footer onScrollTo={NOOP_SCROLL} />
       </div>
     )
   }
@@ -398,7 +400,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           activeSection="blog"
           theme={theme}
           onToggleTheme={toggleTheme}
-          onScrollTo={() => {}}
+          onScrollTo={NOOP_SCROLL}
           accent={accent}
           onChangeAccent={setAccent}
         />
@@ -718,7 +720,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </section>
         </main>
 
-        <Footer onScrollTo={() => {}} />
+        <Footer onScrollTo={NOOP_SCROLL} />
         <BackToTop />
       </div>
     </>
