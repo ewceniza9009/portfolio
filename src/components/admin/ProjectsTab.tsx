@@ -143,14 +143,21 @@ export default function ProjectsTab() {
 
       <div className="p-4 md:p-6 space-y-4">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          if (dragIndex !== null) handleDrop(projects.length)
+        }}
+      >
         {projects.map((p, idx) => (
           <div
             key={p.id}
             draggable
-            onDragStart={() => handleDragStart(idx)}
-            onDragOver={(e) => handleDragOver(e, idx)}
-            onDrop={() => handleDrop(idx)}
+            onDragStart={(e) => { e.stopPropagation(); handleDragStart(idx) }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); handleDragOver(e, idx) }}
+            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(idx) }}
             onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
             className="rounded-xl border relative transition-all duration-200 group"
             style={{

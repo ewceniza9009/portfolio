@@ -204,14 +204,21 @@ export default function SkillsTab() {
 
       <div className="p-4 md:p-6 space-y-6">
       {/* Categories */}
-      <div className="space-y-4">
+      <div 
+        className="space-y-4"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          if (dragCatIndex !== null) handleCatDrop(categories.length)
+        }}
+      >
         {categories.map((cat, catIdx) => (
           <div
             key={cat.id}
             draggable
-            onDragStart={() => handleCatDragStart(catIdx)}
-            onDragOver={(e) => handleCatDragOver(e, catIdx)}
-            onDrop={() => handleCatDrop(catIdx)}
+            onDragStart={(e) => { e.stopPropagation(); handleCatDragStart(catIdx) }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); handleCatDragOver(e, catIdx) }}
+            onDrop={(e) => { e.stopPropagation(); handleCatDrop(catIdx) }}
             onDragEnd={() => { setDragCatIndex(null); setDragOverCatIndex(null) }}
             className="rounded-xl border transition-all duration-200"
             style={{
@@ -270,14 +277,24 @@ export default function SkillsTab() {
             </div>
 
             {/* Skills Grid */}
-            <div className="p-4 flex flex-wrap gap-2">
+            <div 
+              className="p-4 flex flex-wrap gap-2"
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (dragSkill?.catId === cat.id) {
+                  handleSkillDrop(cat.id, skills[cat.id]?.items?.length || 0)
+                }
+              }}
+            >
               {skills[cat.id]?.items?.map((s: any, sIdx: number) => (
                 <div
                   key={s.id}
                   draggable
                   onDragStart={(e) => { e.stopPropagation(); handleSkillDragStart(cat.id, sIdx) }}
-                  onDragOver={(e) => { e.stopPropagation(); handleSkillDragOver(e, cat.id, sIdx) }}
-                  onDrop={(e) => { e.stopPropagation(); handleSkillDrop(cat.id, sIdx) }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); handleSkillDragOver(e, cat.id, sIdx) }}
+                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleSkillDrop(cat.id, sIdx) }}
                   onDragEnd={() => { setDragSkill(null); setDragOverSkill(null) }}
                   className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-lg border text-xs cursor-grab active:cursor-grabbing select-none transition-all duration-150"
                   style={{

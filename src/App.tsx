@@ -47,7 +47,9 @@ interface PortfolioProps {
 function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   const [activeSection, setActiveSection] = useState('hero')
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => {
+    return typeof window !== 'undefined' && sessionStorage.getItem('hasSeenLoader') !== 'true'
+  })
   const [isResumeOpen, setIsResumeOpen] = useState(false)
 
   const { data: projectsData = [] } = useProjects()
@@ -62,20 +64,31 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setIsLoading(false)
+        sessionStorage.setItem('hasSeenLoader', 'true')
+        const hash = window.location.hash
+        if (hash) {
+          const id = hash.replace('#', '')
+          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 1500)
+      return () => clearTimeout(timer)
+    } else {
+      // If we skipped the loader, handle hash scrolling immediately
       const hash = window.location.hash
       if (hash) {
         const id = hash.replace('#', '')
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        }, 50)
       }
-      setIsLoading(false)
-    }, 1500)
-
-    return () => clearTimeout(timer)
-  }, [])
+    }
+  }, [isLoading])
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !window.location.hash) {
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [isLoading])

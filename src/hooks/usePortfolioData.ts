@@ -76,6 +76,7 @@ export function useBlogs() {
   return useQuery({
     queryKey: ['blogs'],
     queryFn: () => fetchJson<any[]>('/api/blogs'),
+    select: (data) => Array.isArray(data) ? data : [],
   })
 }
 

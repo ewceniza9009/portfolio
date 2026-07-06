@@ -107,8 +107,8 @@ export default memo(function GitHubSection({
                 Contribution Heatmap
               </h3>
             </div>
-            <div className="p-8 overflow-x-auto flex justify-center items-center">
-              <div className="min-w-[800px] w-full flex justify-center">
+            <div className="p-8 overflow-x-auto flex justify-center items-center w-full">
+              <div className="flex justify-center w-max min-w-full">
                 <img
                   src={`https://ghchart.rshah.org/${accentColorHex}/${GITHUB_USERNAME}`}
                   alt={`${GITHUB_USERNAME}'s GitHub Contributions Heatmap`}
@@ -192,7 +192,7 @@ export default memo(function GitHubSection({
                 alt="Overall GitHub Stats"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full max-h-56 object-contain drop-shadow-sm origin-left translate-x-10 sm:translate-x-14 scale-125 sm:scale-[1.60]"
+                className="w-full h-full max-h-56 object-contain drop-shadow-sm"
               />
             </div>
           </motion.div>
