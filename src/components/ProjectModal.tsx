@@ -323,34 +323,7 @@ export default function ProjectModal({ project, onClose, theme = 'dark', accent 
                   </div>
                 )}
 
-                {/* Detailed features */}
-                {project.details && project.details.length > 0 && (
-                  <div className="mb-8">
-                    <h4
-                      className="text-sm font-semibold mb-4 uppercase tracking-wider"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      Key Features
-                    </h4>
-                    <ul className="space-y-4">
-                      {project.details.map((detail, i) => (
-                        <li
-                          key={i}
-                          className="flex gap-4 text-sm leading-relaxed"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          <span
-                            className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: "var(--accent)" }}
-                          />
-                          <div className="prose max-w-none prose-sm w-full article-content">
-                            {parseMarkdown(detail, theme, accent)}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+
 
                 <div>
                   <h4

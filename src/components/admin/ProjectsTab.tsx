@@ -34,8 +34,7 @@ export default function ProjectsTab() {
     setEditingId(p.id)
     setFormData({
       ...p,
-      ...p,
-      details: p.details?.length ? p.details : [''],
+      details: [],
       techStr: p.tech?.join(', ') || ''
     })
   }
@@ -45,7 +44,7 @@ export default function ProjectsTab() {
     setFormData({
       title: '', subtitle: '', description: '', year: new Date().getFullYear().toString(),
       type: 'Personal', color: '#3b82f6', repo: '', demo: '', video: '', image: '', fallback: '',
-      details: [''], techStr: '', display_order: projects.length
+      details: [], techStr: '', display_order: projects.length
     })
   }
 
@@ -53,7 +52,7 @@ export default function ProjectsTab() {
     try {
       const payload = {
         ...formData,
-        details: formData.details.filter((s: string) => s.trim()),
+        details: [],
         tech: formData.techStr.split(',').map((s: string) => s.trim()).filter(Boolean)
       }
 
@@ -254,27 +253,15 @@ export default function ProjectsTab() {
                 <input value={formData.subtitle} onChange={e => setFormData({...formData, subtitle: e.target.value})} className={inputClass} style={inputStyle} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Description</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Description (Supports Markdown formatting)</label>
                 <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
                   <MarkdownEditor 
                     key={`desc-${editingId}`}
                     value={formData.description || ''} 
                     onChange={val => setFormData({...formData, description: val})} 
-                    height="150px"
+                    height="350px"
                     showToolbar={true}
                     hideLineNumbers={true}
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Details (Separate paragraphs with double newlines)</label>
-                <div className="rounded border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-                  <MarkdownEditor 
-                    key={`details-${editingId}`}
-                    value={formData.details.join('\n\n')} 
-                    onChange={val => setFormData({...formData, details: val.split('\n\n').filter(s => s.trim())})} 
-                    height="250px"
-                    showToolbar={true}
                   />
                 </div>
               </div>
