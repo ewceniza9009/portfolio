@@ -129,12 +129,11 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       <ExperienceSection experience={experienceData} />
       <AwardsSection awards={awardsData} />
       <ProjectsSection projects={projectsData} onSelectProject={setSelectedProject} />
-      <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
       <GallerySection />
       <SkillsSection skills={skillsData} />
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData, theme, accent])
+  ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData])
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
@@ -175,6 +174,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           {memoizedGitHubSection}
           {memoizedContactSection}
         </main>
+        <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
         {memoizedFloatingControl}
         {memoizedFooter}
         {memoizedBackToTop}
