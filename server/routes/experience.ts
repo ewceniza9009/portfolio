@@ -4,7 +4,7 @@ import { authMiddleware } from '../auth.js'
 
 const router = Router()
 
-router.get('/api/experience', async (req, res) => {
+router.get('/api/experience', async (_req, res) => {
   try {
     const result = await turso.execute('SELECT * FROM experience ORDER BY display_order ASC')
     const experience = result.rows.map(row => ({

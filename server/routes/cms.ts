@@ -6,7 +6,7 @@ const router = Router()
 
 // --- PROJECTS ---
 
-router.get('/api/projects', async (req, res) => {
+router.get('/api/projects', async (_req, res) => {
   try {
     const result = await turso.execute('SELECT * FROM projects ORDER BY display_order ASC, created_at DESC')
     const projects = result.rows.map((row: any) => ({
@@ -48,6 +48,25 @@ router.post('/api/projects', authMiddleware, async (req, res) => {
   }
 })
 
+router.put('/api/projects/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE projects SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    // Execute all updates in a transaction-like batch
+    await turso.batch(queries)
+    
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder projects error:', err)
+    res.status(500).json({ error: 'Failed to reorder projects' })
+  }
+})
+
 router.put('/api/projects/:id', authMiddleware, async (req, res) => {
   try {
     const { title, subtitle, description, details, tech, year, type, color, repo, demo, video, image, fallback, testimonial, display_order } = req.body
@@ -80,28 +99,10 @@ router.delete('/api/projects/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete project' })
   }
 })
-router.put('/api/projects/reorder', authMiddleware, async (req, res) => {
-  try {
-    const { items } = req.body // array of { id, display_order }
-    
-    const queries = items.map((item: any) => ({
-      sql: 'UPDATE projects SET display_order = ? WHERE id = ?',
-      args: [item.display_order, item.id]
-    }))
-    
-    // Execute all updates in a transaction-like batch
-    const results = await turso.batch(queries)
-    
-    res.json({ success: true })
-  } catch (err) {
-    console.error('Reorder projects error:', err)
-    res.status(500).json({ error: 'Failed to reorder projects' })
-  }
-})
 
 // --- SKILLS ---
 
-router.get('/api/skills', async (req, res) => {
+router.get('/api/skills', async (_req, res) => {
   try {
     const categoriesResult = await turso.execute('SELECT * FROM skill_categories ORDER BY display_order ASC')
     const skillsResult = await turso.execute('SELECT * FROM skills ORDER BY display_order ASC')
@@ -149,6 +150,23 @@ router.post('/api/skill-categories', authMiddleware, async (req, res) => {
   }
 })
 
+router.put('/api/skill-categories/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE skill_categories SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    await turso.batch(queries)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder skill categories error:', err)
+    res.status(500).json({ error: 'Failed to reorder skill categories' })
+  }
+})
+
 router.put('/api/skill-categories/:id', authMiddleware, async (req, res) => {
   try {
     const { label, image, display_order } = req.body
@@ -187,6 +205,23 @@ router.post('/api/skills', authMiddleware, async (req, res) => {
   }
 })
 
+router.put('/api/skills/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body // array of { id, display_order }
+    
+    const queries = items.map((item: any) => ({
+      sql: 'UPDATE skills SET display_order = ? WHERE id = ?',
+      args: [item.display_order, item.id]
+    }))
+    
+    await turso.batch(queries)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Reorder skills error:', err)
+    res.status(500).json({ error: 'Failed to reorder skills' })
+  }
+})
+
 router.put('/api/skills/:id', authMiddleware, async (req, res) => {
   try {
     const { category_id, name, icon, level, display_order } = req.body
@@ -208,40 +243,6 @@ router.delete('/api/skills/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Delete skill error:', err)
     res.status(500).json({ error: 'Failed to delete skill' })
-  }
-})
-
-router.put('/api/skill-categories/reorder', authMiddleware, async (req, res) => {
-  try {
-    const { items } = req.body // array of { id, display_order }
-    
-    const queries = items.map((item: any) => ({
-      sql: 'UPDATE skill_categories SET display_order = ? WHERE id = ?',
-      args: [item.display_order, item.id]
-    }))
-    
-    await turso.batch(queries)
-    res.json({ success: true })
-  } catch (err) {
-    console.error('Reorder skill categories error:', err)
-    res.status(500).json({ error: 'Failed to reorder skill categories' })
-  }
-})
-
-router.put('/api/skills/reorder', authMiddleware, async (req, res) => {
-  try {
-    const { items } = req.body // array of { id, display_order }
-    
-    const queries = items.map((item: any) => ({
-      sql: 'UPDATE skills SET display_order = ? WHERE id = ?',
-      args: [item.display_order, item.id]
-    }))
-    
-    await turso.batch(queries)
-    res.json({ success: true })
-  } catch (err) {
-    console.error('Reorder skills error:', err)
-    res.status(500).json({ error: 'Failed to reorder skills' })
   }
 })
 

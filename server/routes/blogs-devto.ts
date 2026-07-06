@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import turso from '../db.js'
 import { flexibleAuth } from '../auth.js'
 import { SITE_URL } from '../utils/indexnow.js'

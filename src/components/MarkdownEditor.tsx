@@ -83,9 +83,9 @@ const defineThemes: BeforeMount = (monaco) => {
 
 const getTheme = () => {
   if (typeof document !== "undefined") {
-    return document.documentElement.classList.contains("dark")
-      ? "portfolio-dark"
-      : "portfolio-light";
+    return document.documentElement.getAttribute("data-theme") === "light"
+      ? "portfolio-light"
+      : "portfolio-dark";
   }
   return "portfolio-dark";
 };
@@ -466,13 +466,13 @@ export default memo(function MarkdownEditor({
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.attributeName === "class") {
+        if (mutation.attributeName === "data-theme") {
           handleThemeChange();
         }
       });
     });
 
-    observer.observe(document.documentElement, { attributes: true });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
     // Listen to global CodeLens command
     const handleGlobalPreviewCommand = (e: any) => {

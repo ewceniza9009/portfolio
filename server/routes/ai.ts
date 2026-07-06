@@ -1,6 +1,4 @@
 import { Router } from 'express'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import turso from '../db.js'
 import { authMiddleware } from '../auth.js'
 import { FREE_MODELS, CHAT_MODELS, tryGenerate, createGeminiClient, getAiProvider, getAiModel } from '../utils/ai.js'
 

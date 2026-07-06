@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import turso, { initDb } from '../server/db.js'
+import { initDb } from '../server/db.js'
 
 import contactRoutes from '../server/routes/contact.js'
 import blogsPublicRoutes from '../server/routes/blogs-public.js'
