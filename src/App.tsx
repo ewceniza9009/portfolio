@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
 import { flushSync } from 'react-dom'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
@@ -84,12 +84,14 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     }
   }, [isLoading])
 
+  const isScrollingRef = useRef(false)
+
   useEffect(() => {
     const sectionIds = ['hero', 'about', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !isScrollingRef.current) {
           setActiveSection(entry.target.id)
         }
       })
@@ -109,19 +111,24 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
   const scrollTo = useCallback((id: string) => {
     setActiveSection(id)
+    isScrollingRef.current = true
+
     if (id === 'hero') {
-      const distance = window.scrollY
-      window.scrollTo({ top: 0, behavior: distance > 2500 ? 'auto' : 'smooth' })
-      return
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      const element = document.getElementById(id)
+      if (element) {
+        const navHeight = 80
+        const elementPosition = element.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.scrollY - navHeight
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' })
+      }
     }
-    const element = document.getElementById(id)
-    if (element) {
-      const navHeight = 80
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.scrollY - navHeight
-      const distance = Math.abs(elementPosition)
-      window.scrollTo({ top: offsetPosition, behavior: distance > 2500 ? 'auto' : 'smooth' })
-    }
+
+    // Free the observer slightly after the scroll finishes 
+    setTimeout(() => {
+      isScrollingRef.current = false
+    }, 1000)
   }, [])
 
   const selectedProjectData = useMemo(
@@ -147,6 +154,10 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData])
+
+  const memoizedProjectModal = useMemo(() => (
+    <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
+  ), [selectedProjectData, handleCloseProject, theme, accent])
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
@@ -187,7 +198,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           {memoizedGitHubSection}
           {memoizedContactSection}
         </main>
-        <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
+        {memoizedProjectModal}
         {memoizedFloatingControl}
         {memoizedFooter}
         {memoizedBackToTop}
