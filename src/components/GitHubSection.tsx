@@ -192,7 +192,7 @@ export default memo(function GitHubSection({
                 alt="Overall GitHub Stats"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full max-h-56 object-contain drop-shadow-sm"
+                className="w-full h-full max-h-56 object-contain drop-shadow-sm origin-left translate-x-10 sm:translate-x-14 scale-125 sm:scale-[1.60]"
               />
             </div>
           </motion.div>
