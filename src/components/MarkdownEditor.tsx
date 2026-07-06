@@ -83,7 +83,8 @@ const defineThemes: BeforeMount = (monaco) => {
 
 const getTheme = () => {
   if (typeof document !== "undefined") {
-    return document.documentElement.getAttribute("data-theme") === "light"
+    // Check if the body or html has a light theme class or data attribute
+    return document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("light")
       ? "portfolio-light"
       : "portfolio-dark";
   }
@@ -497,7 +498,7 @@ export default memo(function MarkdownEditor({
   }, []);
 
   return (
-    <div className={`w-full flex flex-col ${className}`} style={{ height }}>
+    <div className={`w-full flex flex-col ${className}`} style={{ height: height || "100%" }}>
       {showToolbar && (
         <div
           className="flex items-center gap-0.5 px-2 py-1.5 border-b shrink-0 flex-wrap"
@@ -746,7 +747,7 @@ export default memo(function MarkdownEditor({
           </div>
         </div>
       )}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 h-full w-full">
         <Editor
           defaultLanguage="markdown"
           value={value}

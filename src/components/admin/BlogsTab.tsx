@@ -748,16 +748,16 @@ function BlogsTab({
                             </div>
 
                             <div
-                              className="rounded-xl border overflow-hidden"
+                              className="rounded-xl border overflow-hidden flex flex-col"
                               style={{
                                 borderColor: "var(--border)",
-                                height: "350px",
+                                height: "500px",
                               }}
                             >
                               <MarkdownEditor
                                 value={blogContent}
                                 onChange={setBlogContent}
-                                height="350px"
+                                height="100%"
                                 autoFocus
                                 onEditorMount={setMonacoEditor}
                                 extraWords={blogWords}
