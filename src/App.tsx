@@ -66,19 +66,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        setIsLoading(false)
-        sessionStorage.setItem('hasSeenLoader', 'true')
-        const hash = window.location.hash
-        if (hash) {
-          const id = hash.replace('#', '')
-          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-        }
-      }, 1500)
-      return () => clearTimeout(timer)
-    } else {
-      // If we skipped the loader, handle hash scrolling immediately
+    if (!isLoading) {
+      sessionStorage.setItem('hasSeenLoader', 'true')
       const hash = window.location.hash
       if (hash) {
         const id = hash.replace('#', '')
@@ -172,7 +161,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       </AnimatePresence>
       <ScrollProgress visible={!selectedProject} />
       {!selectedProject && <SectionCounter active={activeSection} total={9} />}
-      <div className={`min-h-screen relative z-10 overflow-x-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-700`} style={{ color: 'var(--text-primary)' }}>
+      <div className="min-h-screen relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
           theme={theme}

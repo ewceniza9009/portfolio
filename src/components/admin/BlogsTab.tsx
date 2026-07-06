@@ -21,6 +21,7 @@ import {
 import { formatDate, slugify } from "../../utils/format";
 import type { Blog, Comment } from "../../types/blog";
 import MarkdownEditor from "../MarkdownEditor";
+import { loadPuter } from "../../utils/loadPuter";
 
 interface BlogsTabProps {
   blogs: Blog[];
@@ -976,6 +977,7 @@ function BlogsTab({
                                       if (!res.ok) return
                                       const data = await res.json()
 
+                                      await loadPuter()
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a short Dev.to blog post summarizing this technical article. Match this EXACT style:\n\n1. Start with a hook — casual, first person\n2. Say what the article covers in plain language\n3. Include 5-8 bullet points of key technical highlights\n4. End with a one-liner about real-world issues\n5. Finish with CTA: "Read the full article here:" followed by the link on its own line\n\nRules:\n- Max 250 words\n- No title, no front matter, no hashtags in body\n- Use markdown bullet points (- item)\n\nFull article URL: ${window.location.origin}/blogs/${selectedBlog.slug}\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
@@ -1028,6 +1030,7 @@ function BlogsTab({
                                     if (!instruction) return
                                     input.disabled = true
                                     try {
+                                      await loadPuter()
                                       const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
                                       if (usePuter) {
                                         const prompt = `Here is a Dev.to summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogDevtoSummary}`
@@ -1102,6 +1105,7 @@ function BlogsTab({
                                       if (!res.ok) return
                                       const data = await res.json()
 
+                                      await loadPuter()
                                       if (data.client_side && (window as any).puter?.ai?.chat) {
                                         const prompt = `Write a social media summary of this technical article suitable for LinkedIn and Facebook.\n\n1. Start with a hook — professional, engaging, first person\n2. 2-3 sentences explaining what it covers\n3. 3-4 bullet points of key takeaways\n4. End with: "Read the full article here: ${window.location.origin}/blogs/${selectedBlog.slug}"\n\nRules:\n- Max 200 words\n- No hashtags, no markdown\n- Use "—" dashes for bullet points\n\nArticle title: ${data.title}\n\nArticle content:\n${data.body_markdown}`
                                         const aiResult: any = await (window as any).puter.ai.chat(prompt, { model: summarizerModel || undefined })
@@ -1154,6 +1158,7 @@ function BlogsTab({
                                     if (!instruction) return
                                     input.disabled = true
                                     try {
+                                      await loadPuter()
                                       const usePuter = (summarizerProvider || '') === 'puter' && (window as any).puter?.ai?.chat
                                       if (usePuter) {
                                         const prompt = `Here is a social media summary of a technical article. Based on this instruction, rewrite the summary accordingly. Return ONLY the rewritten summary.\n\nInstruction: ${instruction}\n\nCurrent summary:\n${blogSocialSummary}`

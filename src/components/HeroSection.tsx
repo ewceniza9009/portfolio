@@ -125,6 +125,8 @@ export default React.memo(function HeroSection({
                 e.currentTarget.style.display = "none";
               }}
               key={profilePicUrl}
+              fetchPriority="high"
+              loading="eager"
             />
           </motion.div>
 

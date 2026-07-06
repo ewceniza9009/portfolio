@@ -24,6 +24,7 @@ import SettingsTab from "./admin/SettingsTab";
 import { AuditLogsTab } from "./admin/AuditLogsTab";
 import DashboardHeader from "./admin/DashboardHeader";
 import FocusModeOverlay from "./admin/FocusModeOverlay";
+import { loadPuter } from "../utils/loadPuter";
 import ProjectsTab from "./admin/ProjectsTab";
 import SkillsTab from "./admin/SkillsTab";
 import AboutTab from "./admin/AboutTab";
@@ -238,8 +239,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   const handleAskAiFix = async (logId: string, errorMsg: string) => {
     setFixingErrorId(logId);
     try {
-      const usePuter = (window as any).puter?.ai?.chat;
-      if (usePuter) {
+      await loadPuter()
+      if ((window as any).puter?.ai?.chat) {
         const prompt = `I got this error in my custom React/Markdown block editor:\n\nError: ${errorMsg}\n\nHere is my current markdown content:\n\n${blogContent}\n\nPlease tell me exactly what to change in the markdown to fix this error. Keep it brief.`;
         const aiResult: any = await (window as any).puter.ai.chat(prompt);
         const suggestion = typeof aiResult === "string" ? aiResult : String(aiResult);
@@ -336,6 +337,11 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       document.body.style.overflow = "";
     };
   }, [focusContentMode]);
+
+  // Preload Puter AI script on mount (lazy-loaded, non-blocking)
+  useEffect(() => {
+    loadPuter().catch(() => {})
+  }, []);
 
   // ── Visitor Analytics State ──
   const [visitors, setVisitors] = useState<any[]>([]);
@@ -1266,9 +1272,10 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
     setAiLoading(true);
     try {
-      if (aiProvider === "puter" && window.puter?.ai) {
+      await loadPuter()
+      if (aiProvider === "puter" && (window as any).puter?.ai) {
         const fullPrompt = `You are helping compose a professional email reply. Context:\nOriginal message from ${selected.name} (${selected.email}):\n${selected.message}\n\nInstructions: ${promptText}\n\nWrite the email reply body only (no subject line).`;
-        const response = await window.puter.ai.chat(fullPrompt, {
+        const response = await (window as any).puter.ai.chat(fullPrompt, {
           model: defaultAiModel,
         });
         setReplyBody(
@@ -1506,7 +1513,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
     try {
       let resultText = "";
 
-      if (aiProvider === "puter" && window.puter?.ai) {
+      await loadPuter()
+      if (aiProvider === "puter" && (window as any).puter?.ai) {
         let fullPrompt = "";
         if (mode === "outline") {
           fullPrompt = `You are a professional tech blogger. Generate a detailed, high-quality blog outline in Markdown for an article titled "${blogTitle}". Focus area/idea: ${blogAiPrompt || ""}. Focus on rendering clean headings, bullet points, and brief section ideas.`;
@@ -1517,7 +1525,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
         } else {
           fullPrompt = `Write or assist in writing a section for a tech blog post about: ${blogAiPrompt || ""}.\nContext/draft so far:\n${blogContent || ""}\n\nReturn output in clean Markdown format.`;
         }
-        const response = await window.puter.ai.chat(fullPrompt, {
+        const response = await (window as any).puter.ai.chat(fullPrompt, {
           model: defaultAiModel,
         });
         resultText = typeof response === "string" ? response : String(response);
