@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 import MarkdownEditor from '../MarkdownEditor'
+import { queryClient } from '../../lib/queryClient'
 
 export default function ExperienceTab() {
   const [items, setItems] = useState<any[]>([])
@@ -52,6 +53,7 @@ export default function ExperienceTab() {
       }
       setEditingId(null)
       fetchData()
+      queryClient.invalidateQueries({ queryKey: ['experience'] })
     } catch { alert('Failed to save') }
   }
 
@@ -59,6 +61,7 @@ export default function ExperienceTab() {
     if (!confirm('Delete this experience?')) return
     await apiFetch(`/api/experience/${id}`, { method: 'DELETE' })
     fetchData()
+    queryClient.invalidateQueries({ queryKey: ['experience'] })
   }
 
   const handleDragStart = (index: number) => setDragIndex(index)
@@ -76,6 +79,7 @@ export default function ExperienceTab() {
         method: 'PUT',
         body: JSON.stringify({ items: reordered.map((item, i) => ({ id: item.id, display_order: i })) })
       })
+      queryClient.invalidateQueries({ queryKey: ['experience'] })
     } catch { alert('Failed to reorder') }
   }
 

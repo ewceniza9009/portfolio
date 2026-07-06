@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
 import MarkdownEditor from '../MarkdownEditor'
+import { queryClient } from '../../lib/queryClient'
 
 export default function AboutTab() {
   const [title, setTitle] = useState('About Me')
@@ -32,6 +33,7 @@ export default function AboutTab() {
       })
       setSaveMessage('Successfully saved!')
       setTimeout(() => setSaveMessage(''), 3000)
+      queryClient.invalidateQueries({ queryKey: ['about'] })
     } catch {
       setSaveMessage('Failed to save.')
       setTimeout(() => setSaveMessage(''), 3000)

@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, GripVertical, X, Save } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../utils/api'
 import MarkdownEditor from '../MarkdownEditor'
+import { queryClient } from '../../lib/queryClient'
 
 export default function ProjectsTab() {
   const [projects, setProjects] = useState<any[]>([])
@@ -63,6 +64,7 @@ export default function ProjectsTab() {
       }
       setEditingId(null)
       fetchProjects()
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
     } catch (err) {
       console.error(err)
       alert('Failed to save')
@@ -74,6 +76,7 @@ export default function ProjectsTab() {
     try {
       await apiFetch(`/api/projects/${id}`, { method: 'DELETE' })
       fetchProjects()
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
     } catch (err) {
       console.error(err)
     }
@@ -112,6 +115,7 @@ export default function ProjectsTab() {
         method: 'PUT',
         body: JSON.stringify({ items: updatedItems })
       })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
     } catch (err) {
       console.error('Failed to reorder projects:', err)
       fetchProjects()

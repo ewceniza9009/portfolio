@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../utils/api'
+import { queryClient } from '../../lib/queryClient'
 
 export default function SkillsTab() {
   const [categories, setCategories] = useState<any[]>([])
@@ -53,6 +54,7 @@ export default function SkillsTab() {
       }
       setEditingCategory(null)
       fetchData()
+      queryClient.invalidateQueries({ queryKey: ['skills'] })
     } catch (err) {
       alert('Failed to save category')
     }
@@ -62,6 +64,7 @@ export default function SkillsTab() {
     if (!confirm('Delete this category and all its skills?')) return
     await apiFetch(`/api/skill-categories/${id}`, { method: 'DELETE' })
     fetchData()
+    queryClient.invalidateQueries({ queryKey: ['skills'] })
   }
 
   // --- Skill CRUD ---
@@ -82,6 +85,7 @@ export default function SkillsTab() {
       }
       setEditingSkill(null)
       fetchData()
+      queryClient.invalidateQueries({ queryKey: ['skills'] })
     } catch (err) {
       alert('Failed to save skill')
     }
@@ -91,6 +95,7 @@ export default function SkillsTab() {
     if (!confirm('Delete this skill?')) return
     await apiFetch(`/api/skills/${id}`, { method: 'DELETE' })
     fetchData()
+    queryClient.invalidateQueries({ queryKey: ['skills'] })
   }
 
   // --- Category Drag & Drop ---
