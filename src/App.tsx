@@ -108,7 +108,20 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   }, [])
 
   const scrollTo = useCallback((id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    setActiveSection(id)
+    if (id === 'hero') {
+      const distance = window.scrollY
+      window.scrollTo({ top: 0, behavior: distance > 2500 ? 'auto' : 'smooth' })
+      return
+    }
+    const element = document.getElementById(id)
+    if (element) {
+      const navHeight = 80
+      const elementPosition = element.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.scrollY - navHeight
+      const distance = Math.abs(elementPosition)
+      window.scrollTo({ top: offsetPosition, behavior: distance > 2500 ? 'auto' : 'smooth' })
+    }
   }, [])
 
   const selectedProjectData = useMemo(

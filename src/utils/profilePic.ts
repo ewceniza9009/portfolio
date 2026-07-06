@@ -10,20 +10,30 @@ interface ProfilePicState {
 }
 
 const FALLBACK_URL = DEFAULT_PIC
+const CACHE_KEY = 'cached_profile_pic_url'
 
-let cachedUrl: string | null = null
+let cachedUrl: string | null = typeof window !== 'undefined' ? localStorage.getItem(CACHE_KEY) : null
 let inflight: Promise<string> | null = null
 const subscribers = new Set<(url: string) => void>()
 
 async function loadProfilePic(): Promise<string> {
-  if (cachedUrl) return cachedUrl
+  if (cachedUrl && !inflight) {
+    // We have a cached URL, but we still want to fetch in the background to ensure it's up to date
+    // if a request isn't already inflight. We don't return early here if there is no inflight, 
+    // we let it fetch, but the initial render will use cachedUrl.
+  }
+  
   if (inflight) return inflight
+
   const url = getApiUrl('/api/settings')
   const promise = fetch(url, { cache: 'no-store' })
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
       const u = (data && data.profile_pic_url) || FALLBACK_URL
       cachedUrl = u
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CACHE_KEY, u)
+      }
       inflight = null
       subscribers.forEach((s) => s(u))
       return u
@@ -31,9 +41,11 @@ async function loadProfilePic(): Promise<string> {
     .catch(() => {
       inflight = null
       const fallback = FALLBACK_URL
-      cachedUrl = fallback
-      subscribers.forEach((s) => s(fallback))
-      return fallback
+      if (!cachedUrl) {
+        cachedUrl = fallback
+        subscribers.forEach((s) => s(fallback))
+      }
+      return cachedUrl || fallback
     })
   inflight = promise
   return promise
