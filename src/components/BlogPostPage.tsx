@@ -77,8 +77,8 @@ interface TocHeading {
   level: number
 }
 
-function BlogTOC({ headings }: { headings: TocHeading[] }) {
-  const [open, setOpen] = useState(false)
+function BlogTOC({ headings, alwaysOpen = false }: { headings: TocHeading[], alwaysOpen?: boolean }) {
+  const [open, setOpen] = useState(alwaysOpen)
   if (!headings.length) return null
   return (
     <nav
@@ -86,24 +86,36 @@ function BlogTOC({ headings }: { headings: TocHeading[] }) {
       className="mb-10 rounded-2xl border glass"
       style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
     >
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
-        style={{ color: 'var(--text-secondary)' }}
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2">
-          <List size={12} style={{ color: 'var(--accent)' }} />
-          On This Page
-        </span>
-        <span className="opacity-50">{open ? '−' : '+'}</span>
-      </button>
+      {!alwaysOpen ? (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-expanded={open}
+        >
+          <span className="flex items-center gap-2">
+            <List size={12} style={{ color: 'var(--accent)' }} />
+            On This Page
+          </span>
+          <span className="opacity-50">{open ? '−' : '+'}</span>
+        </button>
+      ) : (
+        <div
+          className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <span className="flex items-center gap-2">
+            <List size={12} style={{ color: 'var(--accent)' }} />
+            On This Page
+          </span>
+        </div>
+      )}
       <AnimatePresence initial={false}>
-        {open && (
+        {(open || alwaysOpen) && (
           <motion.ul
-            initial={{ height: 0, opacity: 0 }}
+            initial={alwaysOpen ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            exit={alwaysOpen ? undefined : { height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
             className="overflow-hidden px-5 pb-3 space-y-1"
           >
@@ -405,8 +417,9 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           onChangeAccent={setAccent}
         />
 
-        <main className="flex-grow max-w-4xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 select-text">
-          {/* Back button */}
+        <main className="flex-grow max-w-6xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 select-text flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+          <div className="flex-1 w-full max-w-3xl">
+            {/* Back button */}
           <Link 
             to="/blogs" 
             className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-10 transition-colors hover:text-[var(--accent)] group select-none"
@@ -501,7 +514,9 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           )}
 
           {/* TOC + Reading Time */}
-          {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} />}
+          <div className="lg:hidden">
+            {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} />}
+          </div>
 
           {/* Article Render Content */}
           <article className="prose max-w-none mb-12 leading-relaxed select-text text-sm sm:text-base article-content">
@@ -718,11 +733,17 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
               )}
             </div>
           </section>
-        </main>
+        </div>
 
-        <Footer onScrollTo={NOOP_SCROLL} />
-        <BackToTop />
-      </div>
-    </>
+        {/* Desktop Sidebar TOC */}
+        <aside className="hidden lg:block w-72 shrink-0 sticky top-32">
+          {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} alwaysOpen />}
+        </aside>
+      </main>
+
+      <Footer onScrollTo={NOOP_SCROLL} />
+      <BackToTop />
+    </div>
+  </>
   )
 }
