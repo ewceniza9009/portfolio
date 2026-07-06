@@ -104,9 +104,9 @@ function FocusModeOverlay({
               }}
             >
               <span>
-                {blogContent.split(/\s+/).filter(Boolean).length} words ·{" "}
-                {blogContent.length} chars ·{" "}
-                {blogContent.split("\n").length} lines
+                {(blogContent || "").split(/\s+/).filter(Boolean).length} words ·{" "}
+                {(blogContent || "").length} chars ·{" "}
+                {(blogContent || "").split("\n").length} lines
               </span>
               <button
                 type="button"

@@ -790,8 +790,8 @@ export default memo(function MarkdownEditor({
                     onZoomBlock({
                       type: vz.type,
                       code: vz.code,
-                      startLine: parseInt(vz.id.split("-")[1]),
-                      endLine: parseInt(vz.id.split("-")[2]),
+                      startLine: parseInt(vz.id?.split("-")[1] || "0"),
+                      endLine: parseInt(vz.id?.split("-")[2] || "0"),
                     });
                   }}
                   className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
@@ -805,8 +805,8 @@ export default memo(function MarkdownEditor({
                   e.stopPropagation();
                   handlePreviewBlockRef.current({
                     type: vz.type,
-                    startLine: parseInt(vz.id.split("-")[1]),
-                    endLine: parseInt(vz.id.split("-")[2]),
+                    startLine: parseInt(vz.id?.split("-")[1] || "0"),
+                    endLine: parseInt(vz.id?.split("-")[2] || "0"),
                   });
                 }}
                 className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
