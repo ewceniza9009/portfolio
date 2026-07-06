@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Github, ExternalLink, Play, Search, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import {
   SiDotnet,
   SiReact,
@@ -365,8 +366,22 @@ export default function ProjectsSection({
   projects,
   onSelectProject,
 }: ProjectsSectionProps) {
-  const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialFilter = searchParams.get('filter') || 'all'
+  const [filter, setFilter] = useState(initialFilter)
+  const [search, setSearch] = useState(searchParams.get('q') || '')
+  const isFirstWriteRef = useRef(true)
+
+  useEffect(() => {
+    if (isFirstWriteRef.current) {
+      isFirstWriteRef.current = false
+      return
+    }
+    const next = new URLSearchParams()
+    if (filter && filter !== 'all') next.set('filter', filter)
+    if (search.trim()) next.set('q', search.trim())
+    setSearchParams(next, { replace: true })
+  }, [filter, search, setSearchParams])
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {

@@ -25,6 +25,18 @@ export default function SearchPalette() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setIsOpen((prev) => !prev)
+        return
+      }
+      const target = e.target as HTMLElement | null
+      const isEditable = 
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.tagName === 'SELECT' ||
+        target?.isContentEditable === true
+      if (e.key === '/' && !isEditable) {
+        e.preventDefault()
+        setIsOpen(true)
+        return
       }
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false)
@@ -139,44 +151,76 @@ export default function SearchPalette() {
               {!loading && query.length > 1 && results.length === 0 && (
                 <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No results found for "{query}"</div>
               )}
-              {!loading && results.length > 0 && (
-                <div className="space-y-1">
-                  {results.map((result) => (
-                    <button
-                      key={`${result.type}-${result.id}`}
-                      onClick={() => handleSelect(result)}
-                      className="w-full flex items-center p-4 rounded-2xl transition-all group text-left relative overflow-hidden"
-                      style={{ color: 'var(--text-primary)' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--glass-bg)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.05] transition-opacity" />
-                      
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mr-5 flex-shrink-0 shadow-sm border transition-transform group-hover:scale-110"
-                        style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)', color: 'var(--accent)' }}
-                      >
-                        {result.type === 'project' && <Folder size={18} />}
-                        {result.type === 'blog' && <FileText size={18} />}
-                        {result.type === 'skill' && <Star size={18} />}
-                      </div>
-                      <div className="flex-1 min-w-0 pr-6 relative z-10">
-                        <div className="font-medium text-lg truncate tracking-tight" style={{ color: 'var(--text-primary)' }}>{result.title}</div>
-                        {result.description && (
-                          <div className="text-sm truncate mt-1" style={{ color: 'var(--text-muted)' }}>{result.description}</div>
-                        )}
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                        <ArrowRight size={16} />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {!loading && results.length > 0 && (() => {
+                const groups: Record<'project' | 'blog' | 'skill', SearchResult[]> = {
+                  project: [],
+                  blog: [],
+                  skill: [],
+                }
+                results.forEach((r) => { groups[r.type].push(r) })
+                const groupMeta: Record<'project' | 'blog' | 'skill', { label: string; icon: React.ReactNode }> = {
+                  project: { label: 'Projects', icon: <Folder size={12} /> },
+                  blog: { label: 'Articles', icon: <FileText size={12} /> },
+                  skill: { label: 'Skills', icon: <Star size={12} /> },
+                }
+                return (
+                  <div className="space-y-4">
+                    {(Object.keys(groups) as Array<keyof typeof groups>).map((type) => {
+                      const list = groups[type]
+                      if (!list.length) return null
+                      const meta = groupMeta[type]
+                      return (
+                        <div key={type}>
+                          <div
+                            className="px-2 mb-1.5 flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            {meta.icon}
+                            <span>{meta.label}</span>
+                            <span className="opacity-40">·</span>
+                            <span className="opacity-40">{list.length}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {list.map((result) => (
+                              <button
+                                key={`${result.type}-${result.id}`}
+                                onClick={() => handleSelect(result)}
+                                className="w-full flex items-center p-3 rounded-xl transition-all group text-left relative overflow-hidden"
+                                style={{ color: 'var(--text-primary)' }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'var(--glass-bg)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.05] transition-opacity" />
+                                <div
+                                  className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 border transition-transform group-hover:scale-110"
+                                  style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)', color: 'var(--accent)' }}
+                                >
+                                  {result.type === 'project' && <Folder size={16} />}
+                                  {result.type === 'blog' && <FileText size={16} />}
+                                  {result.type === 'skill' && <Star size={16} />}
+                                </div>
+                                <div className="flex-1 min-w-0 pr-4 relative z-10">
+                                  <div className="font-medium text-sm truncate tracking-tight" style={{ color: 'var(--text-primary)' }}>{result.title}</div>
+                                  {result.description && (
+                                    <div className="text-xs truncate mt-0.5" style={{ color: 'var(--text-muted)' }}>{result.description}</div>
+                                  )}
+                                </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                                  <ArrowRight size={14} />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
               {query.length === 0 && (
                 <div className="p-6 text-center text-xs flex flex-col items-center gap-2" style={{ color: 'var(--text-muted)' }}>
                   <Search size={24} />

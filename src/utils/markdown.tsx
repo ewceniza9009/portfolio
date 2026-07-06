@@ -5,6 +5,7 @@ import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'luc
 import Interactive3DBlock from '../components/Interactive3DBlock'
 import InteractiveBlock from '../components/InteractiveBlock'
 import ChartBlock from '../components/ChartBlock'
+import { slugifyHeading } from './slugify'
 
 const MERMAID_STYLES = `
   .mermaid-svg-container svg {
@@ -751,6 +752,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
   let inCodeBlock = false
   let codeLines: string[] = []
   let codeLang = ''
+  const slugCounter = new Map<string, number>()
   let currentBlock: string[] = []
   let keyIndex = 0
   let currentBlockType: 'paragraph' | 'list-unordered' | 'list-ordered' | 'none' = 'none'
@@ -759,7 +761,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
     if (currentBlock.length > 0) {
       const blockText = currentBlock.join('\n').trim()
       if (blockText) {
-        result.push(parseBlock(blockText, keyIndex++))
+        result.push(parseBlock(blockText, keyIndex++, slugCounter))
       }
       currentBlock = []
     }
@@ -805,7 +807,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
         codeLang = trimmedLine.slice(3).trim()
       } else if (trimmedLine.startsWith('#')) {
         flushCurrentBlock()
-        result.push(parseBlock(trimmedLine, keyIndex++))
+        result.push(parseBlock(trimmedLine, keyIndex++, slugCounter))
       } else if (/^[-*_]{3,}$/.test(trimmedLine)) {
         flushCurrentBlock()
         result.push(<hr key={keyIndex++} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />)
@@ -838,7 +840,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
   return result
 }
 
-function parseBlock(block: string, i: number): React.ReactNode {
+function parseBlock(block: string, i: number, slugCounter: Map<string, number>): React.ReactNode {
   // Horizontal Rule
   if (/^[-*_]{3,}$/.test(block.trim())) {
     return <hr key={i} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />
@@ -903,8 +905,9 @@ function parseBlock(block: string, i: number): React.ReactNode {
       "text-xs font-bold mt-3 mb-1 tracking-tight text-[var(--text-muted)]"
     ]
     const HeadingTag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+    const headingId = slugifyHeading(content, slugCounter)
     return (
-      <HeadingTag key={i} className={headerClasses[level - 1]}>
+      <HeadingTag key={i} id={headingId} className={headerClasses[level - 1]}>
         {parseInline(content)}
       </HeadingTag>
     )

@@ -23,41 +23,54 @@ const ROLES = [
   "SaaS Builder",
 ];
 
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 5) return "Working late"
+  if (h < 12) return "Good morning"
+  if (h < 18) return "Good afternoon"
+  return "Good evening"
+}
+
 function useTypewriter(
   words: string[],
   typingSpeed = 80,
   deletingSpeed = 40,
   pauseTime = 2000,
 ) {
-  const [text, setText] = useState("");
-  const [wordIndex, setWordIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const reduceMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const [text, setText] = useState(reduceMotion ? words[0] : "")
+  const [wordIndex, setWordIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const tick = useCallback(() => {
-    const currentWord = words[wordIndex];
+    if (reduceMotion) return
+    const currentWord = words[wordIndex]
 
     if (!isDeleting) {
-      setText(currentWord.substring(0, text.length + 1));
+      setText(currentWord.substring(0, text.length + 1))
       if (text.length + 1 === currentWord.length) {
-        setTimeout(() => setIsDeleting(true), pauseTime);
-        return;
+        setTimeout(() => setIsDeleting(true), pauseTime)
+        return
       }
     } else {
-      setText(currentWord.substring(0, text.length - 1));
+      setText(currentWord.substring(0, text.length - 1))
       if (text.length === 0) {
-        setIsDeleting(false);
-        setWordIndex((prev) => (prev + 1) % words.length);
+        setIsDeleting(false)
+        setWordIndex((prev) => (prev + 1) % words.length)
       }
     }
-  }, [text, wordIndex, isDeleting, words, pauseTime]);
+  }, [text, wordIndex, isDeleting, words, pauseTime, reduceMotion])
 
   useEffect(() => {
-    const speed = isDeleting ? deletingSpeed : typingSpeed;
-    const timer = setTimeout(tick, speed);
-    return () => clearTimeout(timer);
-  }, [tick, isDeleting, typingSpeed, deletingSpeed]);
+    if (reduceMotion) return
+    const speed = isDeleting ? deletingSpeed : typingSpeed
+    const timer = setTimeout(tick, speed)
+    return () => clearTimeout(timer)
+  }, [tick, isDeleting, typingSpeed, deletingSpeed, reduceMotion])
 
-  return text;
+  return text
 }
 
 export default React.memo(function HeroSection({
@@ -65,6 +78,7 @@ export default React.memo(function HeroSection({
   onViewResume,
 }: HeroSectionProps) {
   const typedRole = useTypewriter(ROLES);
+  const greeting = React.useMemo(() => getGreeting(), []);
   const [imgLoaded, setImgLoaded] = useState(false);
   const { url: profilePicUrl } = useProfilePic();
 
@@ -115,6 +129,9 @@ export default React.memo(function HeroSection({
           </motion.div>
 
           {/* Name */}
+          <span className="block text-xs font-mono uppercase tracking-[0.3em] mb-3" style={{ color: 'var(--text-muted)' }}>
+            {greeting}.
+          </span>
           <h1
             className="text-5xl md:text-6xl font-normal font-signature tracking-tight"
             style={{ lineHeight: 1.3 }}

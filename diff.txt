@@ -1,0 +1,707 @@
+﻿diff --git a/src/App.tsx b/src/App.tsx
+index b303365..08adbe3 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,7 +1,7 @@
+ import { useState, useEffect, useMemo, useCallback } from 'react'
+ import { flushSync } from 'react-dom'
+-import { Routes, Route, useLocation } from 'react-router-dom'
+-import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
++import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
++import { AnimatePresence } from 'framer-motion'
+ import Navbar from './components/Navbar'
+ import HeroSection from './components/HeroSection'
+ import AboutSection from './components/AboutSection'
+@@ -31,6 +31,11 @@ import { useProjects, useSkills, useAbout, useExperience, useAwards } from './ho
+ import ErrorBoundary from './components/ErrorBoundary'
+ import NotFound from './components/NotFound'
+ import SearchPalette from './components/SearchPalette'
++import CheatsheetModal from './components/CheatsheetModal'
++import SectionCounter from './components/SectionCounter'
++import ScrollProgress from './components/ScrollProgress'
++import RouteTransition from './components/RouteTransition'
++import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+ 
+ interface PortfolioProps {
+   theme: 'dark' | 'light'
+@@ -75,13 +80,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
+     }
+   }, [isLoading])
+ 
+-  const { scrollYProgress } = useScroll()
+-  const scaleX = useSpring(scrollYProgress, {
+-    stiffness: 100,
+-    damping: 30,
+-    restDelta: 0.001
+-  })
+-
+   useEffect(() => {
+     const sectionIds = ['hero', 'about', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
+ 
+@@ -157,12 +155,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
+           <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
+         )}
+       </AnimatePresence>
+-      {!selectedProject && (
+-        <motion.div
+-          className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--accent)] origin-left z-[100]"
+-          style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
+-        />
+-      )}
++      <ScrollProgress visible={!selectedProject} />
++      {!selectedProject && <SectionCounter active={activeSection} total={9} />}
+       <div className={`min-h-screen relative z-10 overflow-x-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-700`} style={{ color: 'var(--text-primary)' }}>
+         <Navbar
+           activeSection={activeSection}
+@@ -188,6 +182,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
+ 
+ export default function App() {
+   const [isOffline, setIsOffline] = useState(false)
++  const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
++  const navigate = useNavigate()
+ 
+   useEffect(() => {
+     const handleOffline = () => setIsOffline(true)
+@@ -457,32 +453,65 @@ export default function App() {
+     });
+   }, [])
+ 
++  const shortcutGroups = useMemo(() => [
++    {
++      title: 'Navigation',
++      shortcuts: [
++        { keys: 'g+h', description: 'Go to home', action: () => navigate('/') },
++        { keys: 'g+b', description: 'Go to blog', action: () => navigate('/blogs') },
++        { keys: 'g+p', description: 'Go to projects', action: () => navigate('/#projects') },
++      ],
++    },
++    {
++      title: 'Search',
++      shortcuts: [
++        { keys: '/', description: 'Open search', action: () => window.dispatchEvent(new Event('open-search')) },
++        { keys: '?', description: 'Show shortcuts', action: () => setIsCheatsheetOpen(true) },
++      ],
++    },
++    {
++      title: 'Appearance',
++      shortcuts: [
++        { keys: 'g+t', description: 'Toggle theme', action: () => toggleTheme() },
++      ],
++    },
++  ], [navigate, toggleTheme])
++
++  useKeyboardShortcuts(shortcutGroups, () => setIsCheatsheetOpen(true))
++
+   return (
+     <>
+     <SearchPalette />
+-    <Routes>
+-      <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+-      <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+-      <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+-      <Route path="/" element={
+-        <ErrorBoundary>
+-          <Portfolio 
+-            theme={theme}
+-            toggleTheme={toggleTheme}
+-            accent={accent}
+-            setAccent={setAccent}
+-          />
+-        </ErrorBoundary>
+-      } />
+-      <Route path="*" element={
+-        <ErrorBoundary>
+-          <NotFound 
+-            theme={theme}
+-            accent={accent}
+-          />
+-        </ErrorBoundary>
+-      } />
+-    </Routes>
++    <CheatsheetModal
++      open={isCheatsheetOpen}
++      onClose={() => setIsCheatsheetOpen(false)}
++      groups={shortcutGroups}
++    />
++    <RouteTransition>
++      <Routes location={location}>
++        <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
++        <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
++        <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
++        <Route path="/" element={
++          <ErrorBoundary>
++            <Portfolio
++              theme={theme}
++              toggleTheme={toggleTheme}
++              accent={accent}
++              setAccent={setAccent}
++            />
++          </ErrorBoundary>
++        } />
++        <Route path="*" element={
++          <ErrorBoundary>
++            <NotFound
++              theme={theme}
++              accent={accent}
++            />
++          </ErrorBoundary>
++        } />
++      </Routes>
++    </RouteTransition>
+     {isOffline && (
+       <div className="fixed bottom-4 right-4 z-[9999] bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
+         <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+diff --git a/src/components/BlogPostPage.tsx b/src/components/BlogPostPage.tsx
+index 96b586b..582534a 100644
+--- a/src/components/BlogPostPage.tsx
++++ b/src/components/BlogPostPage.tsx
+@@ -1,7 +1,7 @@
+ import { useState, useEffect, useMemo } from 'react'
+ import { useParams, Link } from 'react-router-dom'
+ import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
+-import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder } from 'lucide-react'
++import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder, List } from 'lucide-react'
+ import Navbar from './Navbar'
+ import Footer from './Footer'
+ import BackToTop from './BackToTop'
+@@ -16,6 +16,7 @@ import { getGradient } from '../utils/gradients'
+ import { formatDate } from '../utils/format'
+ import { getApiUrl } from '../utils/api'
+ import type { Blog } from '../types/blog'
++import { slugifyHeading } from '../utils/slugify'
+ 
+ function getAvatarColor(name: string): string {
+   const colors = [
+@@ -68,6 +69,68 @@ const BLOG_POST_STYLES = `
+   }
+ `
+ 
++interface TocHeading {
++  id: string
++  text: string
++  level: number
++}
++
++function BlogTOC({ headings }: { headings: TocHeading[] }) {
++  const [open, setOpen] = useState(false)
++  if (!headings.length) return null
++  return (
++    <nav
++      aria-label="Table of contents"
++      className="mb-10 rounded-2xl border glass"
++      style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
++    >
++      <button
++        onClick={() => setOpen((o) => !o)}
++        className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
++        style={{ color: 'var(--text-secondary)' }}
++        aria-expanded={open}
++      >
++        <span className="flex items-center gap-2">
++          <List size={12} style={{ color: 'var(--accent)' }} />
++          On This Page
++        </span>
++        <span className="opacity-50">{open ? 'ΓêÆ' : '+'}</span>
++      </button>
++      <AnimatePresence initial={false}>
++        {open && (
++          <motion.ul
++            initial={{ height: 0, opacity: 0 }}
++            animate={{ height: 'auto', opacity: 1 }}
++            exit={{ height: 0, opacity: 0 }}
++            transition={{ duration: 0.18 }}
++            className="overflow-hidden px-5 pb-3 space-y-1"
++          >
++            {headings.map((h) => (
++              <li
++                key={h.id}
++                style={{ paddingLeft: `${(h.level - 2) * 14}px` }}
++              >
++                <a
++                  href={`#${h.id}`}
++                  onClick={(e) => {
++                    e.preventDefault()
++                    const el = document.getElementById(h.id)
++                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
++                  }}
++                  className="block text-xs py-1 transition-colors hover:underline truncate"
++                  style={{ color: 'var(--text-secondary)' }}
++                >
++                  {h.text}
++                </a>
++              </li>
++            ))}
++          </motion.ul>
++        )}
++      </AnimatePresence>
++    </nav>
++  )
++}
++
+ interface BlogPostPageProps {
+   theme: 'dark' | 'light'
+   toggleTheme: () => void
+@@ -193,6 +256,26 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }:
+ 
+   const parsedContent = useMemo(() => blog ? parseMarkdown(blog.content, theme, accent) : '', [blog, theme, accent])
+ 
++  const tableOfContents = useMemo(() => {
++    if (!blog?.content) return []
++    const lines = blog.content.split('\n')
++    const headings: { id: string; text: string; level: number }[] = []
++    let inCodeBlock = false
++    const counter = new Map<string, number>()
++    for (const line of lines) {
++      if (line.startsWith('```')) { inCodeBlock = !inCodeBlock; continue }
++      if (inCodeBlock) continue
++      const m = line.match(/^(#{1,6})\s+(.+)$/)
++      if (!m) continue
++      const level = m[1].length
++      const text = m[2].replace(/[*_`~\[\]\(\)]/g, '').trim()
++      if (!text) continue
++      const id = slugifyHeading(m[2], counter)
++      headings.push({ id, text, level })
++    }
++    return headings.filter(h => h.level >= 2 && h.level <= 3).slice(0, 20)
++  }, [blog?.content])
++
+   if (loading) {
+     return (
+       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
+@@ -415,6 +498,9 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }:
+             </div>
+           )}
+ 
++          {/* TOC + Reading Time */}
++          {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} />}
++
+           {/* Article Render Content */}
+           <article className="prose max-w-none mb-12 leading-relaxed select-text text-sm sm:text-base article-content">
+             {parsedContent}
+diff --git a/src/components/HeroSection.tsx b/src/components/HeroSection.tsx
+index 2509d28..ce20be2 100644
+--- a/src/components/HeroSection.tsx
++++ b/src/components/HeroSection.tsx
+@@ -23,41 +23,54 @@ const ROLES = [
+   "SaaS Builder",
+ ];
+ 
++function getGreeting(): string {
++  const h = new Date().getHours()
++  if (h < 5) return "Working late"
++  if (h < 12) return "Good morning"
++  if (h < 18) return "Good afternoon"
++  return "Good evening"
++}
++
+ function useTypewriter(
+   words: string[],
+   typingSpeed = 80,
+   deletingSpeed = 40,
+   pauseTime = 2000,
+ ) {
+-  const [text, setText] = useState("");
+-  const [wordIndex, setWordIndex] = useState(0);
+-  const [isDeleting, setIsDeleting] = useState(false);
++  const reduceMotion = typeof window !== 'undefined'
++    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
++
++  const [text, setText] = useState(reduceMotion ? words[0] : "")
++  const [wordIndex, setWordIndex] = useState(0)
++  const [isDeleting, setIsDeleting] = useState(false)
+ 
+   const tick = useCallback(() => {
+-    const currentWord = words[wordIndex];
++    if (reduceMotion) return
++    const currentWord = words[wordIndex]
+ 
+     if (!isDeleting) {
+-      setText(currentWord.substring(0, text.length + 1));
++      setText(currentWord.substring(0, text.length + 1))
+       if (text.length + 1 === currentWord.length) {
+-        setTimeout(() => setIsDeleting(true), pauseTime);
+-        return;
++        setTimeout(() => setIsDeleting(true), pauseTime)
++        return
+       }
+     } else {
+-      setText(currentWord.substring(0, text.length - 1));
++      setText(currentWord.substring(0, text.length - 1))
+       if (text.length === 0) {
+-        setIsDeleting(false);
+-        setWordIndex((prev) => (prev + 1) % words.length);
++        setIsDeleting(false)
++        setWordIndex((prev) => (prev + 1) % words.length)
+       }
+     }
+-  }, [text, wordIndex, isDeleting, words, pauseTime]);
++  }, [text, wordIndex, isDeleting, words, pauseTime, reduceMotion])
+ 
+   useEffect(() => {
+-    const speed = isDeleting ? deletingSpeed : typingSpeed;
+-    const timer = setTimeout(tick, speed);
+-    return () => clearTimeout(timer);
+-  }, [tick, isDeleting, typingSpeed, deletingSpeed]);
++    if (reduceMotion) return
++    const speed = isDeleting ? deletingSpeed : typingSpeed
++    const timer = setTimeout(tick, speed)
++    return () => clearTimeout(timer)
++  }, [tick, isDeleting, typingSpeed, deletingSpeed, reduceMotion])
+ 
+-  return text;
++  return text
+ }
+ 
+ export default React.memo(function HeroSection({
+@@ -65,6 +78,7 @@ export default React.memo(function HeroSection({
+   onViewResume,
+ }: HeroSectionProps) {
+   const typedRole = useTypewriter(ROLES);
++  const greeting = React.useMemo(() => getGreeting(), []);
+   const [imgLoaded, setImgLoaded] = useState(false);
+   const { url: profilePicUrl } = useProfilePic();
+ 
+@@ -115,6 +129,9 @@ export default React.memo(function HeroSection({
+           </motion.div>
+ 
+           {/* Name */}
++          <span className="block text-xs font-mono uppercase tracking-[0.3em] mb-3" style={{ color: 'var(--text-muted)' }}>
++            {greeting}.
++          </span>
+           <h1
+             className="text-5xl md:text-6xl font-normal font-signature tracking-tight"
+             style={{ lineHeight: 1.3 }}
+diff --git a/src/components/NotFound.tsx b/src/components/NotFound.tsx
+index 1c5a4a3..cb308d2 100644
+--- a/src/components/NotFound.tsx
++++ b/src/components/NotFound.tsx
+@@ -1,8 +1,11 @@
+ import { Link } from 'react-router-dom'
+ import { motion } from 'framer-motion'
++import { ArrowLeft, FileText } from 'lucide-react'
+ import HeadTags from './HeadTags'
+ import type { AccentKey } from '../data/accents'
+ import { ACCENT_THEMES } from '../data/accents'
++import { useBlogs } from '../hooks/usePortfolioData'
++import { formatDate } from '../utils/format'
+ 
+ interface NotFoundProps {
+   theme: 'dark' | 'light'
+@@ -12,32 +15,73 @@ interface NotFoundProps {
+ export default function NotFound({ theme, accent }: NotFoundProps) {
+   const isDark = theme === 'dark'
+   const accentColor = ACCENT_THEMES[accent][isDark ? 'dark' : 'light'].accent
++  const { data: blogs = [] } = useBlogs()
++  const recent = blogs.slice(0, 3)
+ 
+   return (
+     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ background: 'var(--bg-primary)' }}>
+-      <HeadTags 
++      <HeadTags
+         title="404 - Page Not Found"
+         description="The page you are looking for does not exist."
+       />
+-      
++
+       <motion.div
+         initial={{ opacity: 0, scale: 0.9 }}
+         animate={{ opacity: 1, scale: 1 }}
+-        className="text-center"
++        className="text-center max-w-2xl"
+       >
+         <h1 className="text-9xl font-bold mb-4 font-display" style={{ color: accentColor }}>404</h1>
+         <h2 className="text-3xl font-semibold mb-6">Page Not Found</h2>
+         <p className="mb-8 max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+           The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+         </p>
+-        
+-        <Link 
+-          to="/"
+-          className="inline-flex items-center px-6 py-3 rounded-full text-white font-medium transition-transform hover:scale-105"
+-          style={{ background: accentColor }}
+-        >
+-          Return Home
+-        </Link>
++
++        <div className="flex items-center justify-center gap-3 mb-12">
++          <Link
++            to="/"
++            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-transform hover:scale-105"
++            style={{ background: accentColor, color: 'var(--bg-primary)' }}
++          >
++            <ArrowLeft size={16} />
++            Return Home
++          </Link>
++          <Link
++            to="/blogs"
++            className="inline-flex items-center px-6 py-3 rounded-full font-medium border transition-transform hover:scale-105"
++            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
++          >
++            Read Articles
++          </Link>
++        </div>
++
++        {recent.length > 0 && (
++          <div className="text-left">
++            <p className="text-[10px] uppercase tracking-widest font-bold mb-3" style={{ color: 'var(--text-muted)' }}>
++              Recent Articles
++            </p>
++            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
++              {recent.map((b: any) => (
++                <Link
++                  key={b.id ?? b.slug}
++                  to={`/blogs/${b.slug}`}
++                  className="p-4 rounded-2xl border text-left transition-all hover:scale-[1.02] block"
++                  style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
++                >
++                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: 'var(--accent)' }}>
++                    <FileText size={11} />
++                    Article
++                  </div>
++                  <h3 className="text-sm font-semibold leading-snug mb-1 line-clamp-2">{b.title}</h3>
++                  {b.created_at && (
++                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
++                      {formatDate(b.created_at, { month: 'short' })}
++                    </p>
++                  )}
++                </Link>
++              ))}
++            </div>
++          </div>
++        )}
+       </motion.div>
+     </div>
+   )
+diff --git a/src/components/ProjectsSection.tsx b/src/components/ProjectsSection.tsx
+index b5e1969..d02fafb 100644
+--- a/src/components/ProjectsSection.tsx
++++ b/src/components/ProjectsSection.tsx
+@@ -1,6 +1,7 @@
+ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+ import { motion } from "framer-motion";
+ import { Github, ExternalLink, Play, Search, X } from "lucide-react";
++import { useSearchParams } from "react-router-dom";
+ import {
+   SiDotnet,
+   SiReact,
+@@ -365,8 +366,22 @@ export default function ProjectsSection({
+   projects,
+   onSelectProject,
+ }: ProjectsSectionProps) {
+-  const [filter, setFilter] = useState("all");
+-  const [search, setSearch] = useState("");
++  const [searchParams, setSearchParams] = useSearchParams()
++  const initialFilter = searchParams.get('filter') || 'all'
++  const [filter, setFilter] = useState(initialFilter)
++  const [search, setSearch] = useState(searchParams.get('q') || '')
++  const isFirstWriteRef = useRef(true)
++
++  useEffect(() => {
++    if (isFirstWriteRef.current) {
++      isFirstWriteRef.current = false
++      return
++    }
++    const next = new URLSearchParams()
++    if (filter && filter !== 'all') next.set('filter', filter)
++    if (search.trim()) next.set('q', search.trim())
++    setSearchParams(next, { replace: true })
++  }, [filter, search, setSearchParams])
+ 
+   const filteredProjects = useMemo(() => {
+     return projects.filter((project) => {
+diff --git a/src/components/SearchPalette.tsx b/src/components/SearchPalette.tsx
+index e6553d5..bb30561 100644
+--- a/src/components/SearchPalette.tsx
++++ b/src/components/SearchPalette.tsx
+@@ -25,6 +25,18 @@ export default function SearchPalette() {
+       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+         e.preventDefault()
+         setIsOpen((prev) => !prev)
++        return
++      }
++      const target = e.target as HTMLElement | null
++      const isEditable = 
++        target?.tagName === 'INPUT' ||
++        target?.tagName === 'TEXTAREA' ||
++        target?.tagName === 'SELECT' ||
++        target?.isContentEditable === true
++      if (e.key === '/' && !isEditable) {
++        e.preventDefault()
++        setIsOpen(true)
++        return
+       }
+       if (e.key === 'Escape' && isOpen) {
+         setIsOpen(false)
+@@ -139,44 +151,76 @@ export default function SearchPalette() {
+               {!loading && query.length > 1 && results.length === 0 && (
+                 <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No results found for "{query}"</div>
+               )}
+-              {!loading && results.length > 0 && (
+-                <div className="space-y-1">
+-                  {results.map((result) => (
+-                    <button
+-                      key={`${result.type}-${result.id}`}
+-                      onClick={() => handleSelect(result)}
+-                      className="w-full flex items-center p-4 rounded-2xl transition-all group text-left relative overflow-hidden"
+-                      style={{ color: 'var(--text-primary)' }}
+-                      onMouseEnter={(e) => {
+-                        e.currentTarget.style.background = 'var(--glass-bg)'
+-                      }}
+-                      onMouseLeave={(e) => {
+-                        e.currentTarget.style.background = 'transparent'
+-                      }}
+-                    >
+-                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.05] transition-opacity" />
+-                      
+-                      <div
+-                        className="w-12 h-12 rounded-xl flex items-center justify-center mr-5 flex-shrink-0 shadow-sm border transition-transform group-hover:scale-110"
+-                        style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)', color: 'var(--accent)' }}
+-                      >
+-                        {result.type === 'project' && <Folder size={18} />}
+-                        {result.type === 'blog' && <FileText size={18} />}
+-                        {result.type === 'skill' && <Star size={18} />}
+-                      </div>
+-                      <div className="flex-1 min-w-0 pr-6 relative z-10">
+-                        <div className="font-medium text-lg truncate tracking-tight" style={{ color: 'var(--text-primary)' }}>{result.title}</div>
+-                        {result.description && (
+-                          <div className="text-sm truncate mt-1" style={{ color: 'var(--text-muted)' }}>{result.description}</div>
+-                        )}
+-                      </div>
+-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+-                        <ArrowRight size={16} />
+-                      </div>
+-                    </button>
+-                  ))}
+-                </div>
+-              )}
++              {!loading && results.length > 0 && (() => {
++                const groups: Record<'project' | 'blog' | 'skill', SearchResult[]> = {
++                  project: [],
++                  blog: [],
++                  skill: [],
++                }
++                results.forEach((r) => { groups[r.type].push(r) })
++                const groupMeta: Record<'project' | 'blog' | 'skill', { label: string; icon: React.ReactNode }> = {
++                  project: { label: 'Projects', icon: <Folder size={12} /> },
++                  blog: { label: 'Articles', icon: <FileText size={12} /> },
++                  skill: { label: 'Skills', icon: <Star size={12} /> },
++                }
++                return (
++                  <div className="space-y-4">
++                    {(Object.keys(groups) as Array<keyof typeof groups>).map((type) => {
++                      const list = groups[type]
++                      if (!list.length) return null
++                      const meta = groupMeta[type]
++                      return (
++                        <div key={type}>
++                          <div
++                            className="px-2 mb-1.5 flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest"
++                            style={{ color: 'var(--text-muted)' }}
++                          >
++                            {meta.icon}
++                            <span>{meta.label}</span>
++                            <span className="opacity-40">┬╖</span>
++                            <span className="opacity-40">{list.length}</span>
++                          </div>
++                          <div className="space-y-1">
++                            {list.map((result) => (
++                              <button
++                                key={`${result.type}-${result.id}`}
++                                onClick={() => handleSelect(result)}
++                                className="w-full flex items-center p-3 rounded-xl transition-all group text-left relative overflow-hidden"
++                                style={{ color: 'var(--text-primary)' }}
++                                onMouseEnter={(e) => {
++                                  e.currentTarget.style.background = 'var(--glass-bg)'
++                                }}
++                                onMouseLeave={(e) => {
++                                  e.currentTarget.style.background = 'transparent'
++                                }}
++                              >
++                                <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.05] transition-opacity" />
++                                <div
++                                  className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 border transition-transform group-hover:scale-110"
++                                  style={{ background: 'var(--glass-bg)', borderColor: 'var(--border-color)', color: 'var(--accent)' }}
++                                >
++                                  {result.type === 'project' && <Folder size={16} />}
++                                  {result.type === 'blog' && <FileText size={16} />}
++                                  {result.type === 'skill' && <Star size={16} />}
++                                </div>
++                                <div className="flex-1 min-w-0 pr-4 relative z-10">
++                                  <div className="font-medium text-sm truncate tracking-tight" style={{ color: 'var(--text-primary)' }}>{result.title}</div>
++                                  {result.description && (
++                                    <div className="text-xs truncate mt-0.5" style={{ color: 'var(--text-muted)' }}>{result.description}</div>
++                                  )}
++                                </div>
++                                <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
++                                  <ArrowRight size={14} />
++                                </div>
++                              </button>
++                            ))}
++                          </div>
++                        </div>
++                      )
++                    })}
++                  </div>
++                )
++              })()}
+               {query.length === 0 && (
+                 <div className="p-6 text-center text-xs flex flex-col items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                   <Search size={24} />
+diff --git a/src/utils/markdown.tsx b/src/utils/markdown.tsx
+index 59e4de1..d14e6eb 100644
+--- a/src/utils/markdown.tsx
++++ b/src/utils/markdown.tsx
+@@ -5,6 +5,7 @@ import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'luc
+ import Interactive3DBlock from '../components/Interactive3DBlock'
+ import InteractiveBlock from '../components/InteractiveBlock'
+ import ChartBlock from '../components/ChartBlock'
++import { slugifyHeading } from './slugify'
+ 
+ const MERMAID_STYLES = `
+   .mermaid-svg-container svg {
+@@ -751,6 +752,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
+   let inCodeBlock = false
+   let codeLines: string[] = []
+   let codeLang = ''
++  const slugCounter = new Map<string, number>()
+   let currentBlock: string[] = []
+   let keyIndex = 0
+   let currentBlockType: 'paragraph' | 'list-unordered' | 'list-ordered' | 'none' = 'none'
+@@ -759,7 +761,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
+     if (currentBlock.length > 0) {
+       const blockText = currentBlock.join('\n').trim()
+       if (blockText) {
+-        result.push(parseBlock(blockText, keyIndex++))
++        result.push(parseBlock(blockText, keyIndex++, slugCounter))
+       }
+       currentBlock = []
+     }
+@@ -805,7 +807,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
+         codeLang = trimmedLine.slice(3).trim()
+       } else if (trimmedLine.startsWith('#')) {
+         flushCurrentBlock()
+-        result.push(parseBlock(trimmedLine, keyIndex++))
++        result.push(parseBlock(trimmedLine, keyIndex++, slugCounter))
+       } else if (/^[-*_]{3,}$/.test(trimmedLine)) {
+         flushCurrentBlock()
+         result.push(<hr key={keyIndex++} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />)
+@@ -838,7 +840,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
+   return result
+ }
+ 
+-function parseBlock(block: string, i: number): React.ReactNode {
++function parseBlock(block: string, i: number, slugCounter: Map<string, number>): React.ReactNode {
+   // Horizontal Rule
+   if (/^[-*_]{3,}$/.test(block.trim())) {
+     return <hr key={i} className="my-8 border-t" style={{ borderColor: 'var(--border)' }} />
+@@ -903,8 +905,9 @@ function parseBlock(block: string, i: number): React.ReactNode {
+       "text-xs font-bold mt-3 mb-1 tracking-tight text-[var(--text-muted)]"
+     ]
+     const HeadingTag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
++    const headingId = slugifyHeading(content, slugCounter)
+     return (
+-      <HeadingTag key={i} className={headerClasses[level - 1]}>
++      <HeadingTag key={i} id={headingId} className={headerClasses[level - 1]}>
+         {parseInline(content)}
+       </HeadingTag>
+     )

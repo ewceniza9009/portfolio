@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { flushSync } from 'react-dom'
-import { Routes, Route, useLocation } from 'react-router-dom'
-import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
 import AboutSection from './components/AboutSection'
@@ -31,6 +31,11 @@ import { useProjects, useSkills, useAbout, useExperience, useAwards } from './ho
 import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './components/NotFound'
 import SearchPalette from './components/SearchPalette'
+import CheatsheetModal from './components/CheatsheetModal'
+import SectionCounter from './components/SectionCounter'
+import ScrollProgress from './components/ScrollProgress'
+import RouteTransition from './components/RouteTransition'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 interface PortfolioProps {
   theme: 'dark' | 'light'
@@ -74,13 +79,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [isLoading])
-
-  const { scrollYProgress } = useScroll()
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  })
 
   useEffect(() => {
     const sectionIds = ['hero', 'about', 'experience', 'awards', 'projects', 'gallery', 'github', 'skills', 'contact']
@@ -157,12 +155,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
         )}
       </AnimatePresence>
-      {!selectedProject && (
-        <motion.div
-          className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--accent)] origin-left z-[100]"
-          style={{ scaleX, boxShadow: "0 0 15px var(--accent)" }}
-        />
-      )}
+      <ScrollProgress visible={!selectedProject} />
+      {!selectedProject && <SectionCounter active={activeSection} total={9} />}
       <div className={`min-h-screen relative z-10 overflow-x-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-700`} style={{ color: 'var(--text-primary)' }}>
         <Navbar
           activeSection={activeSection}
@@ -188,6 +182,8 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
 export default function App() {
   const [isOffline, setIsOffline] = useState(false)
+  const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const handleOffline = () => setIsOffline(true)
@@ -457,32 +453,65 @@ export default function App() {
     });
   }, [])
 
+  const shortcutGroups = useMemo(() => [
+    {
+      title: 'Navigation',
+      shortcuts: [
+        { keys: 'g+h', description: 'Go to home', action: () => navigate('/') },
+        { keys: 'g+b', description: 'Go to blog', action: () => navigate('/blogs') },
+        { keys: 'g+p', description: 'Go to projects', action: () => navigate('/#projects') },
+      ],
+    },
+    {
+      title: 'Search',
+      shortcuts: [
+        { keys: '/', description: 'Open search', action: () => window.dispatchEvent(new Event('open-search')) },
+        { keys: '?', description: 'Show shortcuts', action: () => setIsCheatsheetOpen(true) },
+      ],
+    },
+    {
+      title: 'Appearance',
+      shortcuts: [
+        { keys: 'g+t', description: 'Toggle theme', action: () => toggleTheme() },
+      ],
+    },
+  ], [navigate, toggleTheme])
+
+  useKeyboardShortcuts(shortcutGroups, () => setIsCheatsheetOpen(true))
+
   return (
     <>
     <SearchPalette />
-    <Routes>
-      <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-      <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-      <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-      <Route path="/" element={
-        <ErrorBoundary>
-          <Portfolio 
-            theme={theme}
-            toggleTheme={toggleTheme}
-            accent={accent}
-            setAccent={setAccent}
-          />
-        </ErrorBoundary>
-      } />
-      <Route path="*" element={
-        <ErrorBoundary>
-          <NotFound 
-            theme={theme}
-            accent={accent}
-          />
-        </ErrorBoundary>
-      } />
-    </Routes>
+    <CheatsheetModal
+      open={isCheatsheetOpen}
+      onClose={() => setIsCheatsheetOpen(false)}
+      groups={shortcutGroups}
+    />
+    <RouteTransition>
+      <Routes location={location}>
+        <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+        <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+        <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+        <Route path="/" element={
+          <ErrorBoundary>
+            <Portfolio
+              theme={theme}
+              toggleTheme={toggleTheme}
+              accent={accent}
+              setAccent={setAccent}
+            />
+          </ErrorBoundary>
+        } />
+        <Route path="*" element={
+          <ErrorBoundary>
+            <NotFound
+              theme={theme}
+              accent={accent}
+            />
+          </ErrorBoundary>
+        } />
+      </Routes>
+    </RouteTransition>
     {isOffline && (
       <div className="fixed bottom-4 right-4 z-[9999] bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
         <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
