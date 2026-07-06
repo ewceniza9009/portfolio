@@ -386,7 +386,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
         style={{ scaleX, boxShadow: "0 0 10px var(--accent)" }}
       />
       
-      <div className="min-h-screen transition-colors duration-300 relative overflow-x-hidden flex flex-col justify-between" style={{ color: 'var(--text-primary)', background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen transition-colors duration-300 relative overflow-clip flex flex-col justify-between" style={{ color: 'var(--text-primary)', background: 'var(--bg-primary)' }}>
         
         {/* Dynamic Aurora Backdrop */}
         <div className="aurora-container">

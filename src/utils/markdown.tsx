@@ -205,39 +205,43 @@ export function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: Merma
 
     setIsLoading(true)
     setIsError(false)
-    setSvgHtml('')
 
-    async function render() {
-      try {
-        const mermaidModule = await import('mermaid')
-        const mermaid = mermaidModule.default
-        mermaid.initialize(mermaidConfig)
-        // Use module counter + cycle + timestamp for truly unique IDs
-        const id = `mermaid-${++_mermaidIdCounter}-${cycle}-${Date.now()}`
-        const result = await mermaid.render(id, cleanCode)
-        const svg = typeof result === 'string' ? result : (result as { svg?: string }).svg
-        // Ignore result if this render cycle was cancelled or superseded
-        if (cancelled || cycle !== renderCycleRef.current) return
-        if (svg) {
-          setSvgHtml(svg)
-        } else {
-          setIsError(true)
-        }
-      } catch (e) {
-        console.warn('[Mermaid] render error:', e)
-        if (!cancelled && cycle === renderCycleRef.current) {
-          setIsError(true)
-        }
-      } finally {
-        if (!cancelled && cycle === renderCycleRef.current) {
-          setIsLoading(false)
+    // Wait for the theme CSS transition to finish before blocking the thread with Mermaid
+    const timeoutId = setTimeout(() => {
+      async function render() {
+        try {
+          const mermaidModule = await import('mermaid')
+          const mermaid = mermaidModule.default
+          mermaid.initialize(mermaidConfig)
+          // Use module counter + cycle + timestamp for truly unique IDs
+          const id = `mermaid-${++_mermaidIdCounter}-${cycle}-${Date.now()}`
+          const result = await mermaid.render(id, cleanCode)
+          const svg = typeof result === 'string' ? result : (result as { svg?: string }).svg
+          // Ignore result if this render cycle was cancelled or superseded
+          if (cancelled || cycle !== renderCycleRef.current) return
+          if (svg) {
+            setSvgHtml(svg)
+          } else {
+            setIsError(true)
+          }
+        } catch (e) {
+          console.warn('[Mermaid] render error:', e)
+          if (!cancelled && cycle === renderCycleRef.current) {
+            setIsError(true)
+          }
+        } finally {
+          if (!cancelled && cycle === renderCycleRef.current) {
+            setIsLoading(false)
+          }
         }
       }
+      render()
+    }, 400) // 300ms for transition + 100ms buffer
+
+    return () => { 
+      cancelled = true 
+      clearTimeout(timeoutId)
     }
-
-    render()
-
-    return () => { cancelled = true }
   }, [cleanCode, theme, accent])
 
   // Mouse Drag handlers
@@ -659,7 +663,14 @@ function CodeBlock({ code, lang, highlightedHtml }: CodeBlockProps) {
   )
 }
 
+const highlightCache = new Map<string, string>()
+
 function highlightCode(code: string, lang: string): string {
+  const cacheKey = `${lang}:${code}`
+  if (highlightCache.has(cacheKey)) {
+    return highlightCache.get(cacheKey)!
+  }
+
   const l = lang ? lang.toLowerCase() : ''
   
   // Escape HTML entities to prevent rendering tags
