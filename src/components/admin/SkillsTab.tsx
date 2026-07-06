@@ -207,10 +207,7 @@ export default function SkillsTab() {
       <div 
         className="space-y-4"
         onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault()
-          if (dragCatIndex !== null) handleCatDrop(categories.length)
-        }}
+        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
       >
         {categories.map((cat, catIdx) => (
           <div
@@ -280,13 +277,7 @@ export default function SkillsTab() {
             <div 
               className="p-4 flex flex-wrap gap-2"
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                if (dragSkill?.catId === cat.id) {
-                  handleSkillDrop(cat.id, skills[cat.id]?.items?.length || 0)
-                }
-              }}
+              onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
             >
               {skills[cat.id]?.items?.map((s: any, sIdx: number) => (
                 <div

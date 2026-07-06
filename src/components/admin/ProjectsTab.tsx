@@ -146,10 +146,7 @@ export default function ProjectsTab() {
       <div 
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault()
-          if (dragIndex !== null) handleDrop(projects.length)
-        }}
+        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
       >
         {projects.map((p, idx) => (
           <div

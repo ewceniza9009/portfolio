@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react'
 import { flushSync } from 'react-dom'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
@@ -16,13 +16,10 @@ import BackToTop from './components/BackToTop'
 import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
 import FloatingControl from './components/FloatingControl'
-import AdminPanel from './components/AdminPanel'
 import { ACCENT_THEMES } from './data/accents'
 import type { AccentKey } from './data/accents'
 import CursorFollower from './components/CursorFollower'
 import ResumeModal from './components/ResumeModal'
-import BlogsPage from './components/BlogsPage'
-import BlogPostPage from './components/BlogPostPage'
 import GallerySection from './components/GallerySection'
 import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
@@ -34,8 +31,12 @@ import SearchPalette from './components/SearchPalette'
 import CheatsheetModal from './components/CheatsheetModal'
 import SectionCounter from './components/SectionCounter'
 import ScrollProgress from './components/ScrollProgress'
-import RouteTransition from './components/RouteTransition'
+
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+
+const AdminPanel = lazy(() => import('./components/AdminPanel'))
+const BlogsPage = lazy(() => import('./components/BlogsPage'))
+const BlogPostPage = lazy(() => import('./components/BlogPostPage'))
 
 interface PortfolioProps {
   theme: 'dark' | 'light'
@@ -500,8 +501,9 @@ export default function App() {
       onClose={() => setIsCheatsheetOpen(false)}
       groups={shortcutGroups}
     />
-    <RouteTransition>
-      <Routes location={location}>
+    <>
+      <Suspense fallback={null}>
+        <Routes location={location}>
         <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
         <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
         <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
@@ -524,7 +526,8 @@ export default function App() {
           </ErrorBoundary>
         } />
       </Routes>
-    </RouteTransition>
+      </Suspense>
+    </>
     {isOffline && (
       <div className="fixed bottom-4 right-4 z-[9999] bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
         <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
