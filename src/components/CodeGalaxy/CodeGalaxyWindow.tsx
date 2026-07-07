@@ -72,6 +72,11 @@ export function CodeGalaxyWindow({ onClose, onOpenChat }: CodeGalaxyWindowProps)
     return data.linksByNode.get(selectedId) || [];
   }, [selectedId, data.linksByNode]);
 
+  // Stable nodes list to prevent CanvasGraph from infinitely re-mounting
+  const stableNodesList = useMemo(() => {
+    return data.nodesById ? Array.from(data.nodesById.values()) : [];
+  }, [data.nodesById]);
+
   // AI bridge
   const handleAskAI = useCallback((node: GraphNode, neighbors: GraphNode[]) => {
     if (!onOpenChat) return;
@@ -189,6 +194,8 @@ export function CodeGalaxyWindow({ onClose, onOpenChat }: CodeGalaxyWindowProps)
       {/* Canvas area */}
       <div className="relative flex-1 h-[calc(100%-56px)]">
         <CanvasGraph
+          nodes={stableNodesList}
+          links={data.payload?.links || []}
           layout={layout}
           layoutRef={layoutRef}
           selectedId={selectedId}
@@ -211,6 +218,43 @@ export function CodeGalaxyWindow({ onClose, onOpenChat }: CodeGalaxyWindowProps)
             onAskAI={handleAskAI}
             onSelect={setSelectedId}
           />
+        )}
+        {/* Elite Hover Tooltip */}
+        {tooltip && (
+          <div
+            className="fixed z-[200] pointer-events-none rounded-xl border backdrop-blur-xl shadow-2xl p-4 flex flex-col gap-2 transition-opacity duration-150"
+            style={{
+              left: tooltip.x + 15,
+              top: tooltip.y + 15,
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 90%, transparent) 0%, color-mix(in srgb, var(--bg-secondary) 80%, transparent) 100%)',
+              borderColor: 'color-mix(in srgb, var(--accent) 40%, transparent)',
+              color: 'var(--text-primary)',
+              minWidth: '220px',
+            }}
+          >
+            <div className="font-bold text-base border-b pb-2 mb-1 truncate" style={{ borderColor: 'var(--border)' }}>
+              {tooltip.node.label}
+            </div>
+            <div className="text-xs space-y-1">
+              <div className="flex justify-between items-center">
+                <span style={{ color: 'var(--text-muted)' }}>Type</span>
+                <span className="font-mono px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}>
+                  {tooltip.node.file_type}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span style={{ color: 'var(--text-muted)' }}>Cluster</span>
+                <span className="font-mono">{tooltip.node.community}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span style={{ color: 'var(--text-muted)' }}>Connections</span>
+                <span className="font-bold" style={{ color: 'var(--accent)' }}>{tooltip.node.degree}</span>
+              </div>
+              <div className="pt-2 text-[10px] truncate" style={{ maxWidth: '200px', color: 'var(--text-muted)' }}>
+                {tooltip.node.source_file}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Filter bar */}
