@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -55,7 +55,13 @@ interface CanvasGraphProps {
   onTooltip: (t: { x: number; y: number; node: GraphNode } | null) => void;
 }
 
-export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onHover, onTooltip }: CanvasGraphProps) {
+export interface CanvasGraphHandle {
+  resetView: () => void;
+}
+
+export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(function CanvasGraph(
+  { nodes, links, selectedId, onSelect, hoveredId, onHover, onTooltip }, ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const sceneRef = useRef<{
@@ -70,6 +76,8 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
     moonSprites: THREE.Sprite[];
     lineSegments: THREE.LineSegments;
     packetPoints: THREE.Points;
+    starLayers: THREE.Points[];
+    shipGroup: THREE.Group;
     links: GraphLink[];
     clock: THREE.Clock;
   } | null>(null);
@@ -80,12 +88,38 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
   useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
   useEffect(() => { hoveredRef.current = hoveredId; }, [hoveredId]);
 
+  useImperativeHandle(ref, () => ({
+    resetView: () => {
+      const c = sceneRef.current;
+      if (!c) return;
+      // Default camera position and target - view pillars of creation
+      const startPos = c.camera.position.clone();
+      const endPos = new THREE.Vector3(0, 0, 250);
+      const startTarget = c.controls.target.clone();
+      const endTarget = new THREE.Vector3(0, 0, 0);
+      let progress = 0;
+      const anim = () => {
+        progress += 0.03;
+        if (progress >= 1) {
+          c.camera.position.copy(endPos);
+          c.controls.target.copy(endTarget);
+          return;
+        }
+        const t = easeInOut(progress);
+        c.camera.position.lerpVectors(startPos, endPos, t);
+        c.controls.target.lerpVectors(startTarget, endTarget, t);
+        requestAnimationFrame(anim);
+      };
+      anim();
+    }
+  }));
+
   const flyToNode = (id: string | null) => {
     const c = sceneRef.current;
     if (!c) return;
     
     let targetPos = new THREE.Vector3(0, 0, 0); 
-    let targetCam = new THREE.Vector3(50, 30, 70); 
+    let targetCam = new THREE.Vector3(0, 0, 250); 
     let shouldAnimate = false;
 
     if (id) {
@@ -147,10 +181,10 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
     const height = container.clientHeight || window.innerHeight || 800;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020205, 0.002);
+    scene.fog = new THREE.FogExp2(0x020205, 0.003);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 4000);
-    camera.position.set(50, 30, 70);
+    camera.position.set(0, 0, 250);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
@@ -203,33 +237,192 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
         size, map: starTex, vertexColors: true, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false
       }));
     };
-    scene.add(createStarLayer(12000, 1.0, 0.5, 900, 350, ['#ffffff', '#ffcc88', '#99ccff']));
-    scene.add(createStarLayer(800, 2.5, 0.8, 700, 500, ['#ffffff', '#ffaa44', '#44aaff', '#ffddaa']));
+    const starLayers: THREE.Points[] = [];
+    const star1 = createStarLayer(12000, 1.0, 0.5, 900, 350, ['#ffffff', '#ffcc88', '#99ccff']);
+    const star2 = createStarLayer(800, 2.5, 0.8, 700, 500, ['#ffffff', '#ffaa44', '#44aaff', '#ffddaa']);
+    starLayers.push(star1, star2);
+    scene.add(star1);
+    scene.add(star2);
 
     const createNebulaLayer = () => {
       const group = new THREE.Group();
-      const colors = ['#882233', '#cc5533', '#115577', '#228899', '#442255', '#663322'];
-      for (let i = 0; i < 20; i++) {
-        const col = new THREE.Color(colors[i % colors.length]);
-        const tex = createGlowTexture(col.r * 255, col.g * 255, col.b * 255, 256, false);
-        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false });
-        mat.rotation = Math.random() * Math.PI;
-        const sprite = new THREE.Sprite(mat);
-        
-        // Emulate towering pillar-like shapes and deep clouds
-        const width = 200 + Math.random() * 300;
-        const height = 400 + Math.random() * 500;
-        sprite.scale.set(width, height, 1);
-        
-        const px = (Math.random() - 0.5) * 800;
-        const py = (Math.random() - 0.5) * 600;
-        const pz = -400 - Math.random() * 400; // Far in the background
-        sprite.position.set(px, py, pz);
-        group.add(sprite);
-      }
+      
+      // 1. Deep ambient background glow
+      const ambientTex = createGlowTexture(12, 45, 75, 256, false);
+      const ambient = new THREE.Sprite(new THREE.SpriteMaterial({ map: ambientTex, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false }));
+      ambient.scale.set(3200, 2200, 1);
+      ambient.position.set(0, 0, -200);
+      group.add(ambient);
+
+      // 2. Pillars of Creation — Eagle Nebula (M16), mimicking the Hubble SHO palette:
+      //    SII = red-orange, H-alpha = pink-magenta, OIII = blue-green.
+      //    Pillars are cold molecular hydrogen columns being photoevaporated by
+      //    ultraviolet radiation from nearby massive O/B stars.
+
+      const pillars = [
+        { x: -200, h: 400, w: 120, y: -100, z: -150 },
+        { x: 40, h: 350, w: 100, y: -100, z: -100 },
+        { x: 200, h: 300, w: 80, y: -100, z: -120 }
+      ];
+
+      // === TEXTURES (all 256px — fast to create, smooth on screen) ===
+      const coreTex = createGlowTexture(4, 2, 1, 256, false);
+      const dustBaseTex = createGlowTexture(30, 14, 6, 256, false);
+      const dustMidTex = createGlowTexture(65, 35, 16, 256, false);
+      const dustUpperTex = createGlowTexture(110, 55, 24, 256, false);
+      const haGlowTex = createGlowTexture(230, 50, 80, 256, false);
+      const oiiiGlowTex = createGlowTexture(30, 175, 190, 256, false);
+      const siiGlowTex = createGlowTexture(210, 110, 40, 256, false);
+      const starBlueTex = createGlowTexture(160, 200, 255, 128, true);
+      const starWhiteTex = createGlowTexture(255, 252, 240, 128, true);
+      const tinyStarTex = createGlowTexture(220, 210, 245, 16, true);
+
+      // === SHARED MATERIALS ===
+      const matCore = new THREE.SpriteMaterial({ map: coreTex, transparent: true, opacity: 0.75, blending: THREE.NormalBlending, depthWrite: false });
+      const matDustBase = new THREE.SpriteMaterial({ map: dustBaseTex, transparent: true, opacity: 0.55, blending: THREE.NormalBlending, depthWrite: false });
+      const matDustMid = new THREE.SpriteMaterial({ map: dustMidTex, transparent: true, opacity: 0.45, blending: THREE.NormalBlending, depthWrite: false });
+      const matDustUpper = new THREE.SpriteMaterial({ map: dustUpperTex, transparent: true, opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matHA = new THREE.SpriteMaterial({ map: haGlowTex, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matOIII = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matSII = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matStarBlue = new THREE.SpriteMaterial({ map: starBlueTex, transparent: true, opacity: 0.80, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matStarWhite = new THREE.SpriteMaterial({ map: starWhiteTex, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matTinyStar = new THREE.SpriteMaterial({ map: tinyStarTex, transparent: true, opacity: 0.60, blending: THREE.AdditiveBlending, depthWrite: false });
+
+      pillars.forEach(p => {
+        const numBlobs = Math.floor(p.h / 45);
+
+        for (let i = 0; i < numBlobs; i++) {
+          const blobY = p.y + (i * (p.h / numBlobs));
+          const taper = 1.0 - (i / numBlobs) * 0.55;
+          const blobW = p.w * taper;
+          const blobH = 140 * taper;
+
+          // Dense shadow core — the dark opaque center of each pillar segment
+          const core = new THREE.Sprite(matCore.clone());
+          core.scale.set(blobW * 0.35, blobH * 0.70, 1);
+          core.position.set(p.x + (Math.random()-0.5)*25, blobY + (Math.random()-0.5)*10, p.z + 3);
+          group.add(core);
+
+          // Brown dusty mid-body enveloping the core
+          const dustBase = new THREE.Sprite(matDustBase.clone());
+          dustBase.scale.set(blobW * 0.55, blobH * 0.85, 1);
+          dustBase.position.set(p.x + (Math.random()-0.5)*18, blobY + (Math.random()-0.5)*7, p.z + 2);
+          group.add(dustBase);
+
+          // Warmer dust — inner illumination from embedded protostars
+          const dustMid = new THREE.Sprite(matDustMid.clone());
+          dustMid.scale.set(blobW * 0.70, blobH * 0.95, 1);
+          dustMid.position.set(p.x + (Math.random()-0.5)*15, blobY + (Math.random()-0.5)*5, p.z + 1);
+          group.add(dustMid);
+
+          // Upper dust with subtle additive glow
+          const dustUpper = new THREE.Sprite(matDustUpper.clone());
+          dustUpper.scale.set(blobW * 0.85, blobH * 1.05, 1);
+          dustUpper.position.set(p.x + (Math.random()-0.5)*12, blobY + (Math.random()-0.5)*4, p.z);
+          group.add(dustUpper);
+
+          // ———— Photoionized edges (Hubble SHO palette) ————
+
+          // H-alpha: magenta-pink fringe at the photoevaporation boundary
+          const haEdge = new THREE.Sprite(matHA.clone());
+          haEdge.scale.set(blobW * 1.15, blobH * 1.15, 1);
+          haEdge.position.set(p.x + (Math.random()-0.5)*8 + 3, blobY + (Math.random()-0.5)*4, p.z - 5);
+          group.add(haEdge);
+
+          // OIII: blue-green electric rim (oxygen doubly ionized)
+          const oiiiEdge = new THREE.Sprite(matOIII.clone());
+          oiiiEdge.scale.set(blobW * 1.10, blobH * 1.10, 1);
+          oiiiEdge.position.set(p.x + (Math.random()-0.5)*8 - 3, blobY + (Math.random()-0.5)*4, p.z - 5);
+          group.add(oiiiEdge);
+
+          // SII: warm red-orange outer glow (sulfur singly ionized)
+          const siiEdge = new THREE.Sprite(matSII.clone());
+          siiEdge.scale.set(blobW * 1.20, blobH * 1.20, 1);
+          siiEdge.position.set(p.x + (Math.random()-0.5)*10, blobY + (Math.random()-0.5)*5, p.z - 3);
+          group.add(siiEdge);
+        }
+
+        // === Newborn stars at pillar tips ===
+        const tipBlue = new THREE.Sprite(matStarBlue.clone());
+        tipBlue.scale.set(70, 70, 1);
+        tipBlue.position.set(p.x - 5, p.y + p.h + 10, p.z + 8);
+        group.add(tipBlue);
+
+        const tipWhite = new THREE.Sprite(matStarWhite.clone());
+        tipWhite.scale.set(45, 45, 1);
+        tipWhite.position.set(p.x + 8, p.y + p.h + 25, p.z + 12);
+        group.add(tipWhite);
+
+        // Scattered EGGs (Evaporating Gaseous Globules) — tiny embedded protostars
+        for (let s = 0; s < 6; s++) {
+          const egg = new THREE.Sprite(matTinyStar.clone());
+          egg.scale.set(10 + Math.random() * 14, 10 + Math.random() * 14, 1);
+          egg.position.set(
+            p.x + (Math.random()-0.5)*p.w * 0.6,
+            p.y + p.h * 0.2 + Math.random() * p.h * 0.7,
+            p.z + (Math.random()-0.5)*20 + 2
+          );
+          group.add(egg);
+        }
+      });
+
+      // === 3. Diffuse nebula backdrop — the Eagle's characteristic glow ===
+      const matWisp1 = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.10, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matWisp2 = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false });
+      const w1 = new THREE.Sprite(matWisp1.clone());
+      w1.scale.set(650, 450, 1); w1.position.set(-80, -180, -160); group.add(w1);
+      const w2 = new THREE.Sprite(matWisp2.clone());
+      w2.scale.set(580, 420, 1); w2.position.set(140, -220, -140); group.add(w2);
+      const w3 = new THREE.Sprite(matWisp1.clone());
+      w3.scale.set(750, 550, 1); w3.position.set(30, -150, -170); group.add(w3);
+
+      // === 4. Massive background outflow layers ===
+      const bgTex1 = createGlowTexture(140, 70, 55, 1024, false);
+      const bgTex2 = createGlowTexture(50, 130, 150, 1024, false);
+      const matBg1 = new THREE.SpriteMaterial({ map: bgTex1, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matBg2 = new THREE.SpriteMaterial({ map: bgTex2, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false });
+
+      const bg1 = new THREE.Sprite(matBg1.clone());
+      bg1.scale.set(1300, 850, 1); bg1.position.set(30, -100, -180); group.add(bg1);
+      const bg2 = new THREE.Sprite(matBg2.clone());
+      bg2.scale.set(1100, 720, 1); bg2.position.set(-25, -80, -175); group.add(bg2);
+      const bg3 = new THREE.Sprite(matBg1.clone());
+      bg3.scale.set(900, 600, 1); bg3.position.set(10, -40, -170); group.add(bg3);
+
+      // === 5. "Pillars of Creation" label ===
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 768; labelCanvas.height = 180;
+      const lctx = labelCanvas.getContext('2d')!;
+      lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+
+      // Shadow/glow layers
+      lctx.shadowColor = 'rgba(180, 120, 50, 0.10)'; lctx.shadowBlur = 10;
+      lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
+      lctx.fillStyle = 'rgba(210, 155, 80, 0.25)';
+      lctx.fillText('PILLARS OF CREATION', 384, 90);
+      lctx.shadowBlur = 0;
+
+      // Subtle outline for readability
+      lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
+      lctx.strokeStyle = 'rgba(8, 4, 1, 0.20)'; lctx.lineWidth = 1;
+      lctx.strokeText('PILLARS OF CREATION', 384, 90);
+      lctx.fillStyle = 'rgba(220, 175, 95, 0.22)';
+      lctx.fillText('PILLARS OF CREATION', 384, 90);
+
+      const labelTex = new THREE.CanvasTexture(labelCanvas);
+      labelTex.minFilter = THREE.LinearFilter;
+      const matLabel = new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: 0.5, blending: THREE.NormalBlending, depthWrite: false });
+      const label = new THREE.Sprite(matLabel);
+      label.scale.set(450, 110, 1);
+      label.position.set(0, -80, -30);
+      group.add(label);
+
       return group;
     };
     scene.add(createNebulaLayer());
+
+    
 
     const allNodesSorted = [...nodes].sort((a, b) => {
       const aIsApp = a.label.toLowerCase().includes('app.tsx') || a.label.toLowerCase().includes('app.jsx');
@@ -247,7 +440,7 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
       const n = godNodesList[i];
       const col = new THREE.Color(COMMUNITY_PALETTE[n.community % COMMUNITY_PALETTE.length]);
       const tex = createGlowTexture(Math.round(col.r*255), Math.round(col.g*255), Math.round(col.b*255), 128, true);
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.6 }));
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.2 }));
       const gSize = 8.0 + Math.pow(n.degree, 0.6) * 2.0;
       sprite.scale.set(gSize, gSize, 1);
       
@@ -263,6 +456,33 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
       scene.add(sprite);
       godNodesMap.set(n.id, sprite);
     }
+
+    // Spaceship orbiting app.tsx (the first god node at origin)
+    const shipGroup = new THREE.Group();
+    const shipBody = new THREE.Mesh(
+      new THREE.ConeGeometry(0.6, 2.5, 4),
+      new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.25 })
+    );
+    shipBody.rotation.x = Math.PI / 2;
+    shipGroup.add(shipBody);
+
+    const shipGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: createGlowTexture(100, 180, 255, 64, true),
+      transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false
+    }));
+    shipGlow.scale.set(3, 3, 1);
+    shipGroup.add(shipGlow);
+
+    const shipTrail = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: createGlowTexture(60, 140, 255, 64, true),
+      transparent: true, opacity: 0.10, blending: THREE.AdditiveBlending, depthWrite: false
+    }));
+    shipTrail.scale.set(1.5, 4, 1);
+    shipTrail.position.z = 1.5;
+    shipGroup.add(shipTrail);
+
+    shipGroup.position.set(6, 0, 0);
+    scene.add(shipGroup);
 
     const planetSprites = new Map<string, THREE.Sprite>();
     const moonSprites: THREE.Sprite[] = [];
@@ -281,7 +501,7 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
       const moonMembers = localMembers.slice(1);
 
       const pTex = createGlowTexture(Math.round(col.r*255), Math.round(col.g*255), Math.round(col.b*255), 128, true);
-      const pSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: pTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 }));
+      const pSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: pTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.12 }));
       const pSize = 5.0 + Math.pow(hubNode.degree, 0.6) * 1.5 + Math.pow(localMembers.length, 0.4);
       pSprite.scale.set(pSize, pSize, 1);
       
@@ -299,7 +519,7 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
         const mr = 4.0 + Math.pow(mIdx, 0.6) * 1.8;
         
         const mSize = 3.0 + Math.pow(n.degree, 0.5) * 1.5;
-        const mSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: mTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.35 }));
+        const mSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: mTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.08 }));
         mSprite.scale.set(mSize, mSize, 1);
         mSprite.frustumCulled = false;
         
@@ -331,13 +551,26 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
 
     const clock = new THREE.Clock();
     sceneRef.current = {
-      scene, camera, renderer, controls, composer, animFrame: 0, godNodes: godNodesMap, planetSprites, moonSprites, lineSegments, packetPoints, links, clock
+      scene, camera, renderer, controls, composer, animFrame: 0, godNodes: godNodesMap, planetSprites, moonSprites, lineSegments, packetPoints, starLayers, shipGroup, links, clock
     };
 
     const animate = () => {
       const c = sceneRef.current;
       if (!c) return;
       const elapsed = clock.getElapsedTime();
+      
+      c.starLayers[0].rotation.y = elapsed * 0.008;
+      c.starLayers[0].rotation.x = Math.sin(elapsed * 0.003) * 0.05;
+      c.starLayers[1].rotation.y = elapsed * 0.012;
+      c.starLayers[1].rotation.x = Math.sin(elapsed * 0.005) * 0.08;
+
+      const shipAngle = elapsed * 0.5;
+      const shipR = 8 + Math.sin(elapsed * 0.3) * 2;
+      c.shipGroup.position.x = Math.cos(shipAngle) * shipR;
+      c.shipGroup.position.z = Math.sin(shipAngle) * shipR;
+      c.shipGroup.position.y = Math.sin(elapsed * 0.7) * 2;
+      c.shipGroup.rotation.y = -shipAngle + Math.PI / 2;
+      c.shipGroup.rotation.z = Math.sin(elapsed * 0.4) * 0.15;
       
       for (const [, p] of c.planetSprites) {
         const ud = p.userData;
@@ -348,10 +581,10 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
         p.position.y = Math.sin(newAngle + ud.phaseY) * (ud.orbitR * ud.incl);
         
         if (ud.node.id === selectedRef.current || ud.node.id === hoveredRef.current) {
-          p.material.opacity = 0.8;
+          p.material.opacity = 0.25;
           p.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
         } else {
-          p.material.opacity = selectedRef.current ? 0.2 : 0.5;
+          p.material.opacity = selectedRef.current ? 0.08 : 0.12;
           p.scale.set(ud.baseSize, ud.baseSize, 1);
         }
       }
@@ -367,10 +600,10 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
           m.position.y = pSprite.position.y + Math.sin(a + ud.phaseY) * (ud.r * ud.incl);
           
           if (ud.node.id === selectedRef.current || ud.node.id === hoveredRef.current) {
-            m.material.opacity = 1.0;
+            m.material.opacity = 0.3;
             m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
           } else {
-            m.material.opacity = selectedRef.current ? 0.15 : 0.35;
+            m.material.opacity = selectedRef.current ? 0.05 : 0.08;
             m.scale.set(ud.baseSize, ud.baseSize, 1);
           }
         }
@@ -441,13 +674,13 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
         const ud = sprite.userData;
         if (id === selectedRef.current) {
           sprite.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
-          sprite.material.opacity = 0.8;
+          sprite.material.opacity = 0.35;
         } else if (id === hoveredRef.current) {
           sprite.scale.set(ud.baseSize * 1.1, ud.baseSize * 1.1, 1);
-          sprite.material.opacity = 0.8;
+          sprite.material.opacity = 0.35;
         } else {
           sprite.scale.set(ud.baseSize, ud.baseSize, 1);
-          sprite.material.opacity = selectedRef.current ? 0.2 : 0.6;
+          sprite.material.opacity = selectedRef.current ? 0.1 : 0.2;
         }
       }
       
@@ -561,4 +794,4 @@ export function CanvasGraph({ nodes, links, selectedId, onSelect, hoveredId, onH
   }, [nodes?.length > 0 ? true : false]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ touchAction: 'none' }} />;
-}
+});
