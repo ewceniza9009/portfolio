@@ -125,7 +125,8 @@ export default React.memo(function HeroSection({
                 e.currentTarget.style.display = "none";
               }}
               key={profilePicUrl}
-              fetchPriority="high"
+              // @ts-expect-error — fetchpriority is valid HTML but not in React's type defs
+              fetchpriority="high"
               loading="eager"
             />
           </motion.div>

@@ -5,6 +5,7 @@ import { getApiUrl } from '../utils/api'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { parseMarkdown } from '../utils/markdown'
 import { useLocation } from 'react-router-dom'
+import { CodeGalaxyWindow } from './CodeGalaxy/CodeGalaxyWindow'
 
 // ── Terminal Types ──
 type HistoryLine = {
@@ -491,18 +492,19 @@ const SUGGESTIONS = [
   'What tech stack do you use?',
 ]
 
-function ChatWindow({ onClose }: { onClose: () => void }) {
+function ChatWindow({ onClose, initialPrompt }: { onClose: () => void; initialPrompt?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', content: 'Hey! Ask me anything about Erwin — his skills, projects, experience, or blog posts. 👋' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [blogContext, setBlogContext] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(true)
+  const [showSuggestions, setShowSuggestions] = useState(!initialPrompt)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const dragControls = useDragControls()
   const [isMaximized, setIsMaximized] = useState(false)
+  const initialPromptSent = useRef(false)
 
   const parsedContent = useMemo(() => {
     return messages.map(msg => msg.role === 'assistant' ? parseMarkdown(msg.content) : null)
@@ -523,6 +525,14 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Send initial prompt from CodeGalaxy
+  useEffect(() => {
+    if (initialPrompt && !initialPromptSent.current) {
+      initialPromptSent.current = true
+      setTimeout(() => handleSend(initialPrompt), 100)
+    }
+  }, [initialPrompt])
 
   const handleSend = async (text?: string) => {
     const msg = (text || input).trim()
@@ -745,8 +755,9 @@ function ChatWindow({ onClose }: { onClose: () => void }) {
 export default function FloatingControl() {
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
-  const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | 'contact' | null>(null)
+  const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | 'contact' | 'codegalaxy' | null>(null)
   const [cursorOn, setCursorOn] = useState(() => (getSafeItem('cursor_enabled') ?? 'true') === 'true')
+  const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null)
   const menuContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -782,13 +793,16 @@ export default function FloatingControl() {
     else setMode('menu')
   }
 
-  const handleClose = () => setMode(null)
+  const handleClose = () => {
+    setMode(null)
+    setPendingChatPrompt(null)
+  }
 
   return (
     <div ref={menuContainerRef}>
       {/* FAB Button */}
       {(!mode || mode === 'menu') && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3">
+        <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-3">
           {/* AI Chat Standalone Button */}
           <motion.button
             onClick={() => setMode('chat')}
@@ -874,10 +888,8 @@ export default function FloatingControl() {
             >
               <MousePointer2 size={14} /> Cursor
             </button>
-            <a
-              href="/graphify-out/graph.html"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setMode('codegalaxy')}
               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
                 background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
@@ -885,8 +897,8 @@ export default function FloatingControl() {
                 color: 'var(--text-secondary)',
               }}
             >
-              <Network size={14} /> Knowledge Graph
-            </a>
+              <Network size={14} /> Code Galaxy
+            </button>
             <div className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
               style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }}
             />
@@ -899,9 +911,23 @@ export default function FloatingControl() {
         {mode === 'terminal' && <TerminalWindow onClose={handleClose} />}
       </AnimatePresence>
 
+      {/* Code Galaxy Window */}
+      <AnimatePresence>
+        {mode === 'codegalaxy' && (
+          <CodeGalaxyWindow
+            onClose={handleClose}
+            onOpenChat={(prompt) => {
+              // Store prompt and switch to chat mode
+              setPendingChatPrompt(prompt)
+              setMode('chat')
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Chat Window */}
       <AnimatePresence>
-        {mode === 'chat' && <ChatWindow onClose={handleClose} />}
+        {mode === 'chat' && <ChatWindow onClose={handleClose} initialPrompt={pendingChatPrompt ?? undefined} />}
       </AnimatePresence>
 
       {/* Contact Panel */}
