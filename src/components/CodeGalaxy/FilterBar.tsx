@@ -150,7 +150,7 @@ export function FilterBar({
 
         {/* Stats toggle */}
         <button
-          onClick={() => setShowStats(!showStats)}
+          onClick={() => { setShowStats(!showStats); setShowCommunities(false); setShowFiles(false); }}
           className="px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors hover:bg-white/10"
           style={{ color: showStats ? '#a78bfa' : '#888' }}
         >
@@ -159,7 +159,7 @@ export function FilterBar({
 
         {/* Community filter */}
         <button
-          onClick={() => { setShowCommunities(!showCommunities); setShowFiles(false); }}
+          onClick={() => { setShowCommunities(!showCommunities); setShowFiles(false); setShowStats(false); }}
           className="px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors hover:bg-white/10 flex items-center gap-1"
           style={{ color: selectedCommunities.size > 0 ? '#a78bfa' : '#888' }}
         >
@@ -170,7 +170,7 @@ export function FilterBar({
 
         {/* File filter */}
         <button
-          onClick={() => { setShowFiles(!showFiles); setShowCommunities(false); }}
+          onClick={() => { setShowFiles(!showFiles); setShowCommunities(false); setShowStats(false); }}
           className="px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors hover:bg-white/10 flex items-center gap-1"
           style={{ color: selectedFiles.size > 0 ? '#a78bfa' : '#888' }}
         >

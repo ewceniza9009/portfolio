@@ -182,9 +182,9 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           <TechLoader key="tech-loader" onComplete={() => setIsLoading(false)} />
         )}
       </AnimatePresence>
-      <ScrollProgress visible={!selectedProject} />
-      {!selectedProject && <SectionCounter active={activeSection} total={9} />}
       <div className="min-h-screen relative z-10 overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
+        <ScrollProgress visible={!selectedProject} />
+        {!selectedProject && <SectionCounter active={activeSection} total={9} />}
         <Navbar
           activeSection={activeSection}
           theme={theme}
