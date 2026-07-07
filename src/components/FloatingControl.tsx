@@ -492,7 +492,7 @@ const SUGGESTIONS = [
   'What tech stack do you use?',
 ]
 
-function ChatWindow({ onClose, initialPrompt }: { onClose: () => void; initialPrompt?: string }) {
+function ChatWindow({ onClose, initialPrompt, codebaseContext }: { onClose: () => void; initialPrompt?: string; codebaseContext?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', content: 'Hey! Ask me anything about Erwin — his skills, projects, experience, or blog posts. 👋' }
   ])
@@ -543,7 +543,7 @@ function ChatWindow({ onClose, initialPrompt }: { onClose: () => void; initialPr
     setMessages(updatedMessages)
     setLoading(true)
     try {
-      const fullContext = PORTFOLIO_CONTEXT + blogContext
+      const fullContext = PORTFOLIO_CONTEXT + blogContext + (codebaseContext ? `\n\n${codebaseContext}` : '')
       const res = await fetch(getApiUrl('/api/ai/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -758,6 +758,7 @@ export default function FloatingControl() {
   const [mode, setMode] = useState<'menu' | 'terminal' | 'chat' | 'contact' | 'codegalaxy' | null>(null)
   const [cursorOn, setCursorOn] = useState(() => (getSafeItem('cursor_enabled') ?? 'true') === 'true')
   const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null)
+  const [pendingCodebaseContext, setPendingCodebaseContext] = useState<string | null>(null)
   const menuContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -796,6 +797,7 @@ export default function FloatingControl() {
   const handleClose = () => {
     setMode(null)
     setPendingChatPrompt(null)
+    setPendingCodebaseContext(null)
   }
 
   return (
@@ -916,9 +918,9 @@ export default function FloatingControl() {
         {mode === 'codegalaxy' && (
           <CodeGalaxyWindow
             onClose={handleClose}
-            onOpenChat={(prompt) => {
-              // Store prompt and switch to chat mode
+            onOpenChat={(prompt, codebaseContext) => {
               setPendingChatPrompt(prompt)
+              setPendingCodebaseContext(codebaseContext ?? null)
               setMode('chat')
             }}
           />
@@ -927,7 +929,7 @@ export default function FloatingControl() {
 
       {/* Chat Window */}
       <AnimatePresence>
-        {mode === 'chat' && <ChatWindow onClose={handleClose} initialPrompt={pendingChatPrompt ?? undefined} />}
+        {mode === 'chat' && <ChatWindow onClose={handleClose} initialPrompt={pendingChatPrompt ?? undefined} codebaseContext={pendingCodebaseContext ?? undefined} />}
       </AnimatePresence>
 
       {/* Contact Panel */}

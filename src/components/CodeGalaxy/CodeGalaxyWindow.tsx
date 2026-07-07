@@ -7,10 +7,11 @@ import { CanvasGraph, type CanvasGraphHandle } from "./CanvasGraph";
 import { SidePanel } from "./SidePanel";
 import { FilterBar } from "./FilterBar";
 import type { GraphNode } from "./constants";
+import { buildCodebaseContext } from "./buildCodebaseContext";
 
 interface CodeGalaxyWindowProps {
   onClose: () => void;
-  onOpenChat?: (prompt: string) => void;
+  onOpenChat?: (prompt: string, codebaseContext?: string) => void;
 }
 
 export function CodeGalaxyWindow({
@@ -101,15 +102,16 @@ export function CodeGalaxyWindow({
 
   const handleAskAI = useCallback(
     (node: GraphNode, neighbors: GraphNode[]) => {
-      if (!onOpenChat) return;
+      if (!onOpenChat || !data.payload) return;
       const neighborList = neighbors
         .slice(0, 10)
         .map((n) => `- ${n.label} (${n.source_file})`)
         .join("\n");
       const prompt = `Explain the role of "${node.label}" from ${node.source_file}:${node.source_location} in the codebase. It belongs to community "${node.community_name}" and connects to:\n${neighborList}\nWhat does it do and why is it important?`;
-      onOpenChat(prompt);
+      const codebaseContext = buildCodebaseContext(data.payload, node, neighbors);
+      onOpenChat(prompt, codebaseContext);
     },
-    [onOpenChat],
+    [onOpenChat, data.payload],
   );
 
   // Filter handlers
