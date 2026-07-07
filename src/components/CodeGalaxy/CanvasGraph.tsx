@@ -94,7 +94,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       if (!c) return;
       // Default camera position and target - view pillars of creation
       const startPos = c.camera.position.clone();
-      const endPos = new THREE.Vector3(0, 0, 250);
+      const endPos = new THREE.Vector3(0, 0, 180);
       const startTarget = c.controls.target.clone();
       const endTarget = new THREE.Vector3(0, 0, 0);
       let progress = 0;
@@ -244,6 +244,102 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
     scene.add(star1);
     scene.add(star2);
 
+    const createBlackHoleLayer = () => {
+      const group = new THREE.Group();
+      
+      // Accretion Disk (hot swirling gas)
+      const diskTex = createGlowTexture(255, 120, 30, 256, false);
+      const diskMat = new THREE.SpriteMaterial({ map: diskTex, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
+      const disk = new THREE.Sprite(diskMat);
+      disk.scale.set(500, 100, 1); // Highly elliptical due to inclination
+      group.add(disk);
+
+      // Inner hotter disk (blue-white)
+      const innerTex = createGlowTexture(150, 200, 255, 256, false);
+      const inner = new THREE.Sprite(new THREE.SpriteMaterial({ map: innerTex, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+      inner.scale.set(220, 50, 1);
+      group.add(inner);
+
+      // Event Horizon (pure black hole) with a thin photon ring
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext('2d')!;
+      ctx.beginPath();
+      ctx.arc(128, 128, 100, 0, Math.PI * 2);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(128, 128, 104, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 200, 100, 0.8)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      const bhTex = new THREE.CanvasTexture(canvas);
+      const bh = new THREE.Sprite(new THREE.SpriteMaterial({ map: bhTex, transparent: true, depthWrite: false }));
+      bh.scale.set(120, 120, 1);
+      group.add(bh);
+
+      // Relativistic jets
+      const jetTex = createGlowTexture(100, 150, 255, 256, false);
+      const jet = new THREE.Sprite(new THREE.SpriteMaterial({ map: jetTex, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
+      jet.scale.set(40, 700, 1);
+      group.add(jet);
+
+      group.position.set(450, 250, -900);
+      group.rotation.z = -0.15;
+      return group;
+    };
+
+    const createSpiralGalaxyLayer = () => {
+      const group = new THREE.Group();
+      
+      const pCount = 25000;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(pCount * 3);
+      const col = new Float32Array(pCount * 3);
+      
+      const colors = [new THREE.Color('#ffbb77'), new THREE.Color('#77aaff'), new THREE.Color('#ffccff')];
+      
+      for (let i = 0; i < pCount; i++) {
+        const arm = i % 3;
+        const r = Math.pow(Math.random(), 2.0) * 700; // Dense center, spreads to 700
+        const angle = r * 0.015 + (arm * Math.PI * 2 / 3);
+        
+        const disp = (700 - r) * 0.15 * (Math.random() - 0.5);
+        const y = (Math.random() - 0.5) * (30 - r * 0.03); 
+        
+        pos[i*3] = Math.cos(angle + disp) * r;
+        pos[i*3+1] = y;
+        pos[i*3+2] = Math.sin(angle + disp) * r;
+        
+        const color = colors[arm];
+        col[i*3] = color.r * (0.7 + Math.random()*0.5);
+        col[i*3+1] = color.g * (0.7 + Math.random()*0.5);
+        col[i*3+2] = color.b * (0.7 + Math.random()*0.5);
+      }
+      
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      
+      const tex = createGlowTexture(255, 255, 255, 32, false);
+      const points = new THREE.Points(geo, new THREE.PointsMaterial({
+        size: 3.5, map: tex, vertexColors: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false
+      }));
+      
+      // Central galactic bulge
+      const bulgeTex = createGlowTexture(255, 220, 180, 256, false);
+      const bulge = new THREE.Sprite(new THREE.SpriteMaterial({ map: bulgeTex, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+      bulge.scale.set(250, 120, 1);
+      
+      group.add(points);
+      group.add(bulge);
+
+      group.position.set(-500, 250, -1100);
+      group.rotation.x = 0.6; // Tilt to look elliptical
+      group.rotation.z = -0.2;
+      return group;
+    };
+
     const createNebulaLayer = () => {
       const group = new THREE.Group();
       
@@ -281,10 +377,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       const matCore = new THREE.SpriteMaterial({ map: coreTex, transparent: true, opacity: 0.75, blending: THREE.NormalBlending, depthWrite: false });
       const matDustBase = new THREE.SpriteMaterial({ map: dustBaseTex, transparent: true, opacity: 0.55, blending: THREE.NormalBlending, depthWrite: false });
       const matDustMid = new THREE.SpriteMaterial({ map: dustMidTex, transparent: true, opacity: 0.45, blending: THREE.NormalBlending, depthWrite: false });
-      const matDustUpper = new THREE.SpriteMaterial({ map: dustUpperTex, transparent: true, opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false });
-      const matHA = new THREE.SpriteMaterial({ map: haGlowTex, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false });
-      const matOIII = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
-      const matSII = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matDustUpper = new THREE.SpriteMaterial({ map: dustUpperTex, transparent: true, opacity: 0.25, blending: THREE.NormalBlending, depthWrite: false });
+      const matHA = new THREE.SpriteMaterial({ map: haGlowTex, transparent: true, opacity: 0.20, blending: THREE.NormalBlending, depthWrite: false });
+      const matOIII = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.15, blending: THREE.NormalBlending, depthWrite: false });
+      const matSII = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.18, blending: THREE.NormalBlending, depthWrite: false });
       const matStarBlue = new THREE.SpriteMaterial({ map: starBlueTex, transparent: true, opacity: 0.80, blending: THREE.AdditiveBlending, depthWrite: false });
       const matStarWhite = new THREE.SpriteMaterial({ map: starWhiteTex, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false });
       const matTinyStar = new THREE.SpriteMaterial({ map: tinyStarTex, transparent: true, opacity: 0.60, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -368,8 +464,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       });
 
       // === 3. Diffuse nebula backdrop — the Eagle's characteristic glow ===
-      const matWisp1 = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.10, blending: THREE.AdditiveBlending, depthWrite: false });
-      const matWisp2 = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false });
+      const matWisp1 = new THREE.SpriteMaterial({ map: siiGlowTex, transparent: true, opacity: 0.10, blending: THREE.NormalBlending, depthWrite: false });
+      const matWisp2 = new THREE.SpriteMaterial({ map: oiiiGlowTex, transparent: true, opacity: 0.09, blending: THREE.NormalBlending, depthWrite: false });
       const w1 = new THREE.Sprite(matWisp1.clone());
       w1.scale.set(650, 450, 1); w1.position.set(-80, -180, -160); group.add(w1);
       const w2 = new THREE.Sprite(matWisp2.clone());
@@ -415,14 +511,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       const matLabel = new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: 0.5, blending: THREE.NormalBlending, depthWrite: false });
       const label = new THREE.Sprite(matLabel);
       label.scale.set(450, 110, 1);
-      label.position.set(0, -80, -30);
+      label.position.set(0, 80, -50);
       group.add(label);
 
       return group;
     };
     scene.add(createNebulaLayer());
-
-    
+    scene.add(createBlackHoleLayer());
+    scene.add(createSpiralGalaxyLayer());
 
     const allNodesSorted = [...nodes].sort((a, b) => {
       const aIsApp = a.label.toLowerCase().includes('app.tsx') || a.label.toLowerCase().includes('app.jsx');
@@ -720,6 +816,79 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       return null;
     };
 
+    const getIntersectedLink = (e: MouseEvent | PointerEvent) => {
+      const c = sceneRef.current;
+      if (!c || !container || !selectedRef.current || !c.links) return null;
+      const rect = container.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left)/rect.width)*2-1;
+      mouse.y = -((e.clientY - rect.top)/rect.height)*2+1;
+      raycaster.setFromCamera(mouse, camera);
+      raycaster.params.Line = { threshold: 4.0 }; // Generous click area for lasers
+      const hits = raycaster.intersectObject(c.lineSegments, false);
+      if (hits.length > 0) {
+        for (const hit of hits) {
+          if (hit.index !== undefined) {
+             const linkIdx = Math.floor(hit.index / 2);
+             const link = c.links[linkIdx];
+             if (link) {
+               if (link.source === selectedRef.current || link.target === selectedRef.current) {
+                 return link.source === selectedRef.current ? link.target : link.source;
+               }
+             }
+          }
+        }
+      }
+      return null;
+    };
+
+    const rideToNode = (targetId: string) => {
+      const c = sceneRef.current;
+      if (!c || !selectedRef.current) return;
+      
+      const getNodePos = (id: string) => {
+        if (c.godNodes.has(id)) return c.godNodes.get(id)!.position;
+        const moon = c.moonSprites.find(m => m.userData.node.id === id);
+        if (moon) return moon.position;
+        const planet = Array.from(c.planetSprites.values()).find(p => p.userData.node.id === id);
+        if (planet) return planet.position;
+        return new THREE.Vector3();
+      };
+
+      const startPos = getNodePos(selectedRef.current).clone();
+      const targetPos = getNodePos(targetId).clone();
+      
+      const dir = targetPos.clone().sub(startPos).normalize();
+      
+      // Ride above the line like a roller coaster
+      const up = new THREE.Vector3(0, 1, 0);
+      const right = dir.clone().cross(up).normalize();
+      const offset = up.clone().multiplyScalar(4).add(right.clone().multiplyScalar(2));
+      
+      const startCam = startPos.clone().add(offset);
+      const endCam = targetPos.clone().sub(dir.clone().multiplyScalar(20)).add(offset);
+      
+      const startTarget = c.controls.target.clone();
+      
+      let progress = 0;
+      const anim = () => {
+        progress += 0.012; // slow, cinematic ride
+        if (progress >= 1) {
+          isCanvasClickRef.current = true;
+          onSelect(targetId);
+          setTimeout(() => { isCanvasClickRef.current = false; }, 100);
+          flyToNode(targetId); // settle into final position
+          return;
+        }
+        // Smooth sine ease in-out
+        const t = (1 - Math.cos(progress * Math.PI)) / 2;
+        c.camera.position.lerpVectors(startCam, endCam, t);
+        // Look directly ahead along the line at the destination node
+        c.controls.target.lerpVectors(startTarget, targetPos, t);
+        requestAnimationFrame(anim);
+      };
+      anim();
+    };
+
     let pointerDownPos = { x: 0, y: 0 };
     
     const handlePointerDown = (e: PointerEvent) => {
@@ -731,13 +900,20 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       if (dist > 5) return; // It was a drag to pan the camera, ignore click
       
       const hitNode = getIntersectedNode(e);
-      isCanvasClickRef.current = true;
       if (hitNode) {
+        isCanvasClickRef.current = true;
         onSelect(hitNode.id);
+        setTimeout(() => { isCanvasClickRef.current = false; }, 100);
       } else {
-        onSelect(null);
+        const hitLinkId = getIntersectedLink(e);
+        if (hitLinkId) {
+           rideToNode(hitLinkId);
+        } else {
+           isCanvasClickRef.current = true;
+           onSelect(null);
+           setTimeout(() => { isCanvasClickRef.current = false; }, 100);
+        }
       }
-      setTimeout(() => { isCanvasClickRef.current = false; }, 100);
     };
 
     const handleDblClick = () => {
