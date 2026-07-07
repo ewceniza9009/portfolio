@@ -146,7 +146,7 @@ export function CodeGalaxyWindow({ onClose, onOpenChat }: CodeGalaxyWindowProps)
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="fixed inset-0 z-[100] shadow-2xl overflow-hidden text-sm border-0 rounded-none"
+      className="fixed inset-0 z-[100] shadow-2xl overflow-hidden text-sm border-0 rounded-none flex flex-col"
       style={{
         background: 'var(--bg-card)',
         borderColor: 'var(--accent)',

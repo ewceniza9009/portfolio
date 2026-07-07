@@ -27,12 +27,59 @@ export type GraphPayload = {
   built_at_commit?: string;
 };
 
-// Community palette — assigning a unique glow hue per nebula.
+// Community palette — solar system planets + dwarf planets + moons.
+// Each community maps to a real celestial body with its actual colors.
 export const COMMUNITY_PALETTE = [
-  '#7c3aed', '#06b6d4', '#f59e0b', '#ef4444', '#10b981',
-  '#ec4899', '#3b82f6', '#84cc16', '#a855f7', '#14b8a6',
-  '#f97316', '#8b5cf6', '#22c55e', '#eab308', '#0ea5e9',
-  '#d946ef', '#fb7185', '#4ade80', '#fbbf24', '#60a5fa',
+  '#b5b5b5', // 0  Mercury — grey cratered
+  '#e8cda0', // 1  Venus — pale yellow-orange
+  '#4a90d9', // 2  Earth — blue ocean
+  '#c1440e', // 3  Mars — rusty red
+  '#c88b3a', // 4  Jupiter — amber brown bands
+  '#d4a843', // 5  Saturn — golden beige
+  '#72b5c4', // 6  Uranus — pale cyan
+  '#3b5d9e', // 7  Neptune — deep azure
+  '#9a8c7a', // 8  Pluto — tan/brown
+  '#e04040', // 9  Ceres — dark reddish
+  '#c0c0c0', // 10 Io — sulfurous yellow-grey
+  '#d4e0f0', // 11 Europa — icy white-blue
+  '#c47030', // 12 Ganymede — brown-grey
+  '#f0d0a0', // 13 Titan — orange haze
+  '#b0d0e8', // 14 Triton — nitrogen blue
+  '#e88070', // 15 Enceladus — warm ice pink
+  '#8060a0', // 16 Oberon — dark purple-grey
+  '#f0c848', // 17 Phobos — golden rock
+  '#5890c0', // 18 Callisto — dark blue-grey
+];
+
+// Planet type classifications for visual rendering
+export type PlanetType = 'star' | 'gasGiant' | 'terrestrial' | 'icePlanet' | 'dwarf' | 'moon' | 'asteroid';
+
+export const COMMUNITY_PLANET_TYPE: PlanetType[] = [
+  'asteroid',  // 0  Mercury
+  'terrestrial', // 1  Venus
+  'terrestrial', // 2  Earth
+  'terrestrial', // 3  Mars
+  'gasGiant',   // 4  Jupiter
+  'gasGiant',   // 5  Saturn
+  'icePlanet',  // 6  Uranus
+  'icePlanet',  // 7  Neptune
+  'dwarf',      // 8  Pluto
+  'dwarf',      // 9  Ceres
+  'moon',       // 10 Io
+  'moon',       // 11 Europa
+  'moon',       // 12 Ganymede
+  'moon',       // 13 Titan
+  'moon',       // 14 Triton
+  'moon',       // 15 Enceladus
+  'moon',       // 16 Oberon
+  'moon',       // 17 Phobos
+  'moon',       // 18 Callisto
+];
+
+export const PLANET_NAMES: string[] = [
+  'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn',
+  'Uranus', 'Neptune', 'Pluto', 'Ceres',
+  'Io', 'Europa', 'Ganymede', 'Titan', 'Triton', 'Enceladus', 'Oberon', 'Phobos', 'Callisto',
 ];
 
 // Edge relation aesthetics
@@ -61,12 +108,12 @@ export const nebulaColor = (community: number, alpha = 1) => COMMUNITY_PALETTE[c
 
 // Layout & camera
 export const HUB_RADIUS = 360;          // distance of community hubs from origin
-export const NODE_BASE_RADIUS = 7;     // base px
-export const NODE_MAX_RADIUS = 22;     // max px (proportional to degree)
+export const NODE_BASE_RADIUS = 10;     // base px
+export const NODE_MAX_RADIUS = 30;     // max px (proportional to degree)
 export const DRIFT_AMPLITUDE = 6;      // px
 export const DRIFT_SPEED = 0.0003;     // ms scale
-export const MIN_ZOOM = 0.3;
-export const MAX_ZOOM = 4;
+export const MIN_ZOOM = 0.2;
+export const MAX_ZOOM = 12;
 export const PICK_RADIUS_PX = 18;      // click hit-test radius in screen px
 export const FOCUS_RADIUS = 220;       // radius around selection to keep bright
 export const EDGE_ALPHA_DIM = 0.12;
