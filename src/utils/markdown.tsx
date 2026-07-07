@@ -5,7 +5,21 @@ import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'luc
 import Interactive3DBlock from '../components/Interactive3DBlock'
 import InteractiveBlock from '../components/InteractiveBlock'
 import ChartBlock from '../components/ChartBlock'
+import CodeHikeBlock from '../components/CodeHikeBlock'
+import RemotionBlock from '../components/RemotionBlock'
 import { slugifyHeading } from './slugify'
+
+function detectLang(code: string): string {
+  const t = code.trim()
+  if (t.startsWith('{') || t.startsWith('[')) return 'json'
+  if (/^\s*</.test(t)) return 'html'
+  if (/\b(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/i.test(t)) return 'sql'
+  if (/\b(class|public|private|namespace|using|void|string|int|var|decimal|bool)\b/.test(t)) return 'csharp'
+  if (/\b(import|export|const|let|var|function|=>|async|await|require)\b/.test(t)) return 'javascript'
+  if (/^(type|interface|enum)\s/.test(t)) return 'typescript'
+  if (/^#/.test(t) || /\b(def|print|return)\b/.test(t)) return 'python'
+  return 'text'
+}
 
 const MERMAID_STYLES = `
   .mermaid-svg-container svg {
@@ -791,6 +805,11 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<InteractiveBlock key={keyIndex++} html={codeText} />)
         } else if (codeLang.toLowerCase() === 'chart') {
           result.push(<ChartBlock key={keyIndex++} code={codeText} />)
+        } else if (codeLang.toLowerCase().startsWith('codehike') || codeLang.toLowerCase().startsWith('code-hike')) {
+          const meta = codeLang.replace(/code-?hike/i, '').trim()
+          result.push(<CodeHikeBlock key={keyIndex++} code={codeText} lang={detectLang(codeText)} meta={meta} theme={theme} accent={accent} />)
+        } else if (codeLang.toLowerCase() === 'remotion') {
+          result.push(<RemotionBlock key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(

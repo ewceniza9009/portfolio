@@ -74,3 +74,21 @@ export const CHART_SNIPPET = buildSnippet([
   '    color: #10b981',
   '```',
 ])
+
+export const CODEHIKE_SNIPPET = buildSnippet([
+  '```codehike',
+  'const greeting = "Hello, Code Hike!";',
+  'console.log(greeting);',
+  '```',
+])
+
+export const REMOTION_SNIPPET = buildSnippet([
+  '```remotion',
+  '{',
+  '  "src": "https://example.com/video.mp4",',
+  '  "title": "My Video",',
+  '  "controls": true,',
+  '  "loop": false',
+  '}',
+  '```',
+])

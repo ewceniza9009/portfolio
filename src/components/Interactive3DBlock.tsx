@@ -185,7 +185,8 @@ export default memo(function Interactive3DBlock({
             if (attr.name !== "type")
               newScript.setAttribute(attr.name, attr.value);
           });
-          newScript.textContent = rawCode;
+          // Wrap non-module scripts in a block to prevent global variable redeclaration errors during React StrictMode/HMR
+          newScript.textContent = `{\n${rawCode}\n}`;
           newScript.dataset.i3dDone = "1";
           wrapper.appendChild(newScript);
           oldScript.remove();

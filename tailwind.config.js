@@ -51,5 +51,6 @@ export default {
       },
     },
   },
+  safelist: ['line-through', 'bg-red-700', 'rounded-lg', 'px-1'],
   plugins: [],
 }

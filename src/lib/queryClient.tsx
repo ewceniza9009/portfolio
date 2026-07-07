@@ -8,7 +8,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       gcTime: 30 * 60 * 1000,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 2,
     },
   },
@@ -30,7 +30,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         maxAge: 30 * 60 * 1000,
         dehydrateOptions: {
           shouldDehydrateQuery: (query) => {
-            return query.state.status === 'success'
+            if (query.state.status !== 'success') return false
+            const key = query.queryKey[0] as string
+            const adminEditable = ['about', 'experience', 'skills', 'projects', 'awards', 'blogs']
+            return !adminEditable.includes(key)
           },
         },
       }}

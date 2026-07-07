@@ -421,7 +421,8 @@ export default memo(function InteractiveBlock({
         fn(wrapper).catch((e: any) => console.error("[interactive]", e));
       } else {
         const s = document.createElement("script");
-        s.textContent = rawCode;
+        // Wrap non-module scripts in a block to prevent global variable redeclaration errors during React StrictMode/HMR
+        s.textContent = `{\n${rawCode}\n}`;
         s.dataset.ibDone = "1";
         wrapper.appendChild(s);
       }

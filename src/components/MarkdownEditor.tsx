@@ -29,6 +29,8 @@ import {
   INTERACTIVE3D_SNIPPET,
   MERMAID_SNIPPET,
   CHART_SNIPPET,
+  CODEHIKE_SNIPPET,
+  REMOTION_SNIPPET,
 } from "../utils/snippets";
 
 interface MarkdownEditorProps {
@@ -143,6 +145,8 @@ function registerCompletionProvider(
           interactive: getGenericSnippet(),
           "interactive-3d": INTERACTIVE3D_SNIPPET,
           chart: CHART_SNIPPET,
+          codehike: CODEHIKE_SNIPPET,
+          remotion: REMOTION_SNIPPET,
         };
 
         for (const [key, snippet] of Object.entries(markdownSnippets)) {
@@ -741,6 +745,43 @@ export default memo(function MarkdownEditor({
                     <line x1="6" y1="20" x2="6" y2="14" />
                   </svg>
                   Chart
+                </button>
+                <div
+                  className="my-1 border-t"
+                  style={{ borderColor: "var(--border)" }}
+                />
+                <button
+                  onClick={() => {
+                    insertSnippet(CODEHIKE_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <Code size={12} />
+                  Code Hike Block
+                </button>
+                <button
+                  onClick={() => {
+                    insertSnippet(REMOTION_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Remotion Video
                 </button>
               </div>
             )}
