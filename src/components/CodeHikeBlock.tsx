@@ -71,15 +71,31 @@ function parseAnnotations(code: string): ParsedAnnotations {
   // Track open start/end pairs: Map<name, { startLine, query }>
   const openPairs = new Map<string, { startLine: number; query: string }>()
 
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim()
-    const blockMatch = trimmed.match(/^\/\/\s*!(\w+)\(([^)]*)\)\s*(.*)/)
-    const inlineMatch = trimmed.match(/^\/\/\s*!(\w+)\[([^\]]*)\]\s*(.*)/)
-    const simpleMatch = trimmed.match(/^\/\/\s*!(\w+)\s*(.*)/)
+  // Regex for each supported comment style
+  // Line-level (applies to following line(s)): !name(query)  or  !name  or  !name[range](query)
+  // Inline (applies to the SAME line it's appended to): code...  // !name(query) or // !name/regex/(query)
+  const LINE_COMMENT_RE = /^\s*\/\/\s*!(\w+)\(([^)]*)\)\s*$/
+  const LINE_SIMPLE_RE = /^\s*\/\/\s*!(\w+)\s*$/
 
-    if (blockMatch) {
-      const [, name, range, query] = blockMatch
-      const q = query || ''
+  function stripTrailingInlineComment(text: string): string {
+    // Remove trailing // !...comment but preserve preceding code on the line
+    const m = text.match(/^(.*?)\s*\/\/\s*!\w+.*/)
+    return m ? m[1] : text
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i]
+    const trimmed = raw.trim()
+
+    // Check if line is ONLY a comment (line-level annotation)
+    const onlyMatch = trimmed.match(LINE_COMMENT_RE) || trimmed.match(LINE_SIMPLE_RE)
+    // Check if line has code + trailing inline annotation
+    const inlineM = raw.match(/\/\/\s*!(\w+)(?:\/((?:[^\/\\]|\\.)+)\/([gimsuy]*))?\s*(?:\(([^)]*)\))?\s*$/)
+
+    if (onlyMatch) {
+      const name = onlyMatch[1]
+      const range = onlyMatch[2] || '' // may be undefined for simple
+      const q = onlyMatch[3] || ''
 
       // Handle !name(start) / !name(end) pairs
       if (range === 'start') {
@@ -89,10 +105,6 @@ function parseAnnotations(code: string): ParsedAnnotations {
       if (range === 'end') {
         const open = openPairs.get(name)
         if (open) {
-          // Border applies to lines BETWEEN start and end (exclusive of both comment lines)
-          // open.startLine = cleanIndex when start was seen = index of next line to be pushed
-          // cleanIndex = current cleanIndex when end is seen
-          // Lines between: open.startLine to cleanIndex-1
           if (cleanIndex - 1 >= open.startLine) {
             annotations.push({ name, query: open.query, startLine: open.startLine, endLine: cleanIndex - 1 })
           }
@@ -101,53 +113,62 @@ function parseAnnotations(code: string): ParsedAnnotations {
         continue
       }
 
-      // Handle numeric ranges like (1:5) or (+3) — numbers are RELATIVE to the comment line
+      // Diff shorthand: !diff(-) or !diff(+)
+      if (name.toLowerCase() === 'diff') {
+        annotations.push({ name, query: q, startLine: cleanIndex, endLine: cleanIndex, range })
+        continue
+      }
+
+      // Numeric ranges like (1:5) or (+3) — relative to the comment line (next line = +1)
       const ann: Annotation = { name, query: q, startLine: cleanIndex, range }
       const rangeMatch = range.match(/^(\+?\d+):(\+?\d+)$/) || range.match(/^(\+?\d+)$/)
       if (rangeMatch) {
         if (rangeMatch[2]) {
-          // (1:5) means lines 1 to 5 relative to this comment
           ann.startLine = cleanIndex + parseInt(rangeMatch[1])
           ann.endLine = cleanIndex + parseInt(rangeMatch[2])
         } else {
-          // (+3) means 3 lines from this comment
-          ann.endLine = cleanIndex + parseInt(rangeMatch[1])
+          // (+3) means lines starting at next line (cleanIndex) for 3 lines
+          ann.startLine = cleanIndex
+          ann.endLine = cleanIndex + parseInt(rangeMatch[1]) - 1
         }
       } else {
         // No numeric range, apply to next line only
-        ann.endLine = cleanIndex + 1
+        ann.startLine = cleanIndex
+        ann.endLine = cleanIndex
       }
       annotations.push(ann)
       continue
     }
 
-    if (inlineMatch) {
-      const [, name, range, query] = inlineMatch
+    // Handle inline-column annotations on their own line: !name[10:30](query)
+    const inlineColMatch = trimmed.match(/^\s*\/\/\s*!(\w+)\[(\d+):(\d+)\]\s*(?:\(([^)]*)\))?\s*$/)
+    if (inlineColMatch) {
+      const [, name, start, end, query] = inlineColMatch
+      annotations.push({
+        name,
+        query: query || '',
+        startLine: cleanIndex, // applies to NEXT clean line
+        inlineStart: parseInt(start) - 1,
+        inlineEnd: parseInt(end) - 1,
+      })
+      continue
+    }
+
+    // Inline annotation: code ... // !name(query) or code ... // !name/regex/(query)
+    if (inlineM && raw.indexOf('//') > 0) {
+      const [, name, regexBody, regexFlags, query] = inlineM
       const ann: Annotation = { name, query: query || '', startLine: cleanIndex }
-      const colMatch = range.match(/^(\d+):(\d+)$/)
-      const regexMatch = range.match(/^\/(.+)\/([gimsuy]*)$/)
-      if (colMatch) {
-        ann.inlineStart = parseInt(colMatch[1]) - 1
-        ann.inlineEnd = parseInt(colMatch[2]) - 1
-      } else if (regexMatch) {
-        try { ann.regex = new RegExp(regexMatch[1], regexMatch[2] || 'g') } catch {}
+      if (regexBody) {
+        try { ann.regex = new RegExp(regexBody, regexFlags || 'g') } catch {}
       }
       annotations.push(ann)
+      // Strip the trailing comment from the clean line
+      cleanLines.push(stripTrailingInlineComment(raw))
+      cleanIndex++
       continue
     }
 
-    if (simpleMatch) {
-      const [, name, query] = simpleMatch
-      const ann: Annotation = { name, query: query || '', startLine: cleanIndex }
-      const regexInQuery = query.match(/^\/(.+)\/([gimsuy]*)/)
-      if (regexInQuery) {
-        try { ann.regex = new RegExp(regexInQuery[1], regexInQuery[2] || 'g') } catch {}
-      }
-      annotations.push(ann)
-      continue
-    }
-
-    cleanLines.push(lines[i])
+    cleanLines.push(raw)
     cleanIndex++
   }
 
@@ -161,6 +182,7 @@ function parseAnnotations(code: string): ParsedAnnotations {
     const color = ann.query || undefined
 
     const lowerName = ann.name.toLowerCase()
+
     if (['border', 'mark', 'bg', 'focus', 'highlight', 'add', 'remove', 'diff', 'collapse', 'fold', 'wrap', 'classname'].includes(lowerName)) {
       for (let i = ann.startLine; i <= endLine && i < cleanLines.length; i++) {
         if (!lineAnnotations.has(i)) lineAnnotations.set(i, [])
@@ -171,15 +193,14 @@ function parseAnnotations(code: string): ParsedAnnotations {
         lineAnnotations.get(i)!.push({ type: t, color, inlineStart: ann.inlineStart, inlineEnd: ann.inlineEnd, regex: ann.regex, startLine: ann.startLine, endLine })
       }
     } else if (['callout', 'tooltip', 'link', 'footnote', 'label', 'style'].includes(lowerName)) {
-      // Inline annotations: callout, tooltip, link, footnote, label, style
+      // Inline annotations apply to the target line; if regex/column, apply to that line, otherwise next line
       const targetLine = ann.startLine
       if (targetLine < cleanLines.length) {
         if (!lineAnnotations.has(targetLine)) lineAnnotations.set(targetLine, [])
-        lineAnnotations.get(targetLine)!.push({ type: lowerName, text: color, regex: ann.regex })
+        lineAnnotations.get(targetLine)!.push({ type: lowerName, text: color, regex: ann.regex, inlineStart: ann.inlineStart, inlineEnd: ann.inlineEnd })
       }
     } else if (ann.regex) {
-      // Unknown regex annotations apply only to the NEXT line after the comment
-      const targetLine = ann.startLine + 1
+      const targetLine = ann.startLine
       if (targetLine < cleanLines.length && ann.regex.test(cleanLines[targetLine])) {
         if (!lineAnnotations.has(targetLine)) lineAnnotations.set(targetLine, [])
         lineAnnotations.get(targetLine)!.push({ type: lowerName, color })
@@ -451,8 +472,11 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           50% { box-shadow: inset 0 0 16px color-mix(in srgb, var(--ch-ann-color, var(--accent)) 8%, transparent); }
         }
         .ch-line-border {
+          border: 1px solid var(--ch-ann-color, var(--accent)) !important;
           border-left-width: 3px !important;
-          border-left-style: solid !important;
+          border-radius: 6px;
+          margin: 2px 8px;
+          box-shadow: 0 0 0 1px var(--ch-ann-color, var(--accent)) !important;
           animation: ch-border-glow 3s ease-in-out infinite !important;
         }
 
@@ -461,7 +485,14 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           50% { background-color: var(--ch-bg-color-hover); }
         }
         .ch-line-bg {
+          background-color: var(--ch-bg-color) !important;
           animation: ch-bg-pulse 3s ease-in-out infinite !important;
+        }
+
+        .ch-line-mark {
+          background-color: var(--ch-bg-color) !important;
+          border-radius: 4px;
+          box-shadow: inset 0 0 0 1px var(--ch-ann-color, var(--accent)) !important;
         }
 
         .ch-line-diff-add {
@@ -505,6 +536,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           padding: 4px 8px;
           border-radius: 4px;
           backdrop-filter: blur(8px);
+          opacity: 1;
         }
         .ch-callout-target {
           border-bottom: 2px dashed var(--accent);
@@ -713,17 +745,18 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     cls += ' ch-line-border'
                     borderLeftColor = getLineColor(a.color)
                   }
+                  else if (a.type === 'highlight') cls += ' ch-line-focused'
                   else if (a.type === 'mark') {
                     cls += ' ch-line-mark'
-                    bgColor = getLineColor(a.color) + '20'
-                    bgColorHover = getLineColor(a.color) + '30'
+                    bgColor = getLineColor(a.color) + '30'
+                    bgColorHover = getLineColor(a.color) + '40'
+                    borderLeftColor = getLineColor(a.color)
                   }
                   else if (a.type === 'bg') {
                     cls += ' ch-line-bg'
-                    bgColor = getLineColor(a.color) + '12'
-                    bgColorHover = getLineColor(a.color) + '20'
+                    bgColor = getLineColor(a.color) + '25'
+                    bgColorHover = getLineColor(a.color) + '35'
                   }
-                  else if (a.type === 'highlight') cls += ' ch-line-focused'
                   else if (a.type === 'add') {
                     cls += ' ch-line-diff-add'
                     borderLeftColor = '#22c55e'
@@ -738,11 +771,12 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       isCollapsed = true
                     }
                   }
-                  else if (a.type === 'classname' && a.inlineStart === undefined && !a.regex) {
-                    if (a.color) cls += ' ' + a.color
+                  else if (a.type === 'callout') {
+                    cls += ' ch-line-callout'
                   }
                 }
 
+                // Inline annotations with regex match a token in the line and wrap it
                 const inlineAnns = anns.filter(a => ['classname', 'callout', 'tooltip', 'link', 'footnote', 'label', 'style'].includes(a.type) && a.regex)
                 inlineAnns.forEach(a => {
                   if (a.regex) {
@@ -772,10 +806,8 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       const color = 'var(--accent)'
                       wrapper = (m) => `<span class="ch-label-wrapper">${m}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span></span>`
                     } else if (a.type === 'style') {
-                      // Custom style injection! e.g. !style[/token/] background-color: red; color: white
                       wrapper = (m) => `<span style="${a.text || ''}">${m}</span>`
                     } else {
-                      // classname (uses color, not text, because it was parsed in the first block)
                       wrapper = (m) => `<span class="${a.color || ''}">${m}</span>`
                     }
                     const parts = lineHtml.split(/(<[^>]+>)/g)
@@ -786,6 +818,49 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     }
                     lineHtml = parts.join('')
                   }
+                })
+
+                // Inline annotations with column range (no regex): wrap the column range
+                const colAnns = anns.filter(a => ['callout', 'tooltip', 'link', 'footnote', 'label', 'style', 'classname', 'mark', 'highlight'].includes(a.type) && a.inlineStart !== undefined && a.inlineEnd !== undefined && !a.regex)
+                colAnns.forEach(a => {
+                  // Column-range wrapping is complex with HTML; use a simple wrapper around the visible text
+                  // Extract visible text from lineHtml (strip tags), then apply range, then re-insert
+                  const parts = lineHtml.split(/(<[^>]+>)/g)
+                  let visiblePos = 0
+                  for (let p = 0; p < parts.length; p++) {
+                    if (!parts[p].startsWith('<')) {
+                      const segLen = parts[p].length
+                      const segStart = visiblePos
+                      const segEnd = visiblePos + segLen
+                      if (segEnd > (a.inlineStart ?? 0) && segStart < (a.inlineEnd ?? 0) + 1) {
+                        const localStart = Math.max(0, (a.inlineStart ?? 0) - segStart)
+                        const localEnd = Math.min(segLen, (a.inlineEnd ?? 0) - segStart + 1)
+                        const before = parts[p].slice(0, localStart)
+                        const target = parts[p].slice(localStart, localEnd)
+                        const after = parts[p].slice(localEnd)
+                        let wrapped = target
+                        if (a.type === 'mark' || a.type === 'highlight') {
+                          wrapped = `<span style="background:${getLineColor(a.color)}40;border-radius:3px;padding:0 2px">${target}</span>`
+                        } else if (a.type === 'callout' || a.type === 'tooltip') {
+                          const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
+                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                          const color = isDark ? '#e6edf3' : '#1f2328'
+                          wrapped = `<span class="ch-callout-target">${target}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                        } else if (a.type === 'label') {
+                          const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
+                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                          wrapped = `<span class="ch-label-wrapper">${target}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                        } else if (a.type === 'style') {
+                          wrapped = `<span style="${a.text || ''}">${target}</span>`
+                        } else if (a.type === 'classname') {
+                          wrapped = `<span class="${a.color || ''}">${target}</span>`
+                        }
+                        parts[p] = before + wrapped + after
+                      }
+                      visiblePos = segEnd
+                    }
+                  }
+                  lineHtml = parts.join('')
                 })
               }
 
@@ -849,16 +924,16 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       Fold
                     </span>
                   )}
-                  {anns?.filter(a => a.type === 'callout' && !a.regex).map((a, j) => (
+                  {anns?.filter(a => (a.type === 'callout' || a.type === 'tooltip' || a.type === 'label') && !a.regex && a.inlineStart === undefined).map((a, j) => (
                     <span
                       key={j}
                       className="ch-callout-tag"
                       style={{
                         color: getLineColor(a.color),
                         background: isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)',
-                        border: `1px solid ${getLineColor(a.color)}50`,
+                        border: `1px solid ${getLineColor(a.color || a.text)}50`,
+                        opacity: linesRevealed ? 1 : 0,
                         animation: linesRevealed ? `ch-callout-in 0.4s ${0.2 + i * 0.03}s ease forwards` : 'none',
-                        opacity: linesRevealed ? 1 : 0
                       }}
                     >
                       {a.text}
