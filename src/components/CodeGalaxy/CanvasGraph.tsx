@@ -1115,11 +1115,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           if (!model) return;
           // Scale proportionally to fit the chair
           model.scale.set(4, 4, 4);
-          // Position the programmer to sit perfectly in the chair
-          // Chair is at y = -3.5, z = 7. Floor is at y = -8.
-          // Move him back to z = 6 (so hands reach keyboard at z = 0.5)
-          // Drop him to y = -8 (floor) so his butt rests on the chair at y = -3.5
-          model.position.set(0, -7.5, 6);
+          // Position the programmer so hands are at desk level
+          // Hands are ~50% up the model height. Move model up so hands reach keyboard.
+          model.position.set(0, -5.5, 6);
           // Model faces -Z in local space (towards the desk) → after group's Math.PI rotation → faces spectator
           model.rotation.y = Math.PI;
           workstation.wsGroup.add(model);
@@ -1146,7 +1144,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             metalness: 0.0,
           });
           const hairMat = new THREE.MeshStandardMaterial({
-            color: 0x1a0a00,
+            color: 0x000000,
             roughness: 0.9,
             metalness: 0.0,
           });
