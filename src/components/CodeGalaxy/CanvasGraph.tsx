@@ -459,13 +459,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       bhCtx.fillRect(0, 0, bhSize, bhSize);
 
       // 2. Accretion disk — thin bright ellipse across the center
-      //    Clip so it doesn't draw OVER the event horizon
-      bhCtx.save();
-      bhCtx.beginPath();
-      bhCtx.rect(0, 0, bhSize, cy - ehR * 0.25);
-      bhCtx.rect(0, cy + ehR * 0.25, bhSize, bhSize);
-      bhCtx.clip();
       // Outer disk (deep red-orange)
+      bhCtx.save();
       bhCtx.beginPath();
       bhCtx.ellipse(cx, cy, 480, 45, 0, 0, Math.PI * 2);
       const diskGrad1 = bhCtx.createRadialGradient(cx, cy, 0, cx, cy, 480);
@@ -855,11 +850,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
       const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
       // Place hitbox at the WORLD position of the model's torso
-      // Local (0, -7.5, 6) -> World (0, 55 - (-7.5), -20 - 6) -> (0, 62.5, -26)
-      // Then add 7 to Y for the torso height -> 62.5 + 7 = 69.5
+      // Local (0, -7.5, 6) -> World (0, 55 - 7.5, -20 - 6) -> (0, 47.5, -26)
+      // Then add 7 to Y for the torso height -> 47.5 + 7 = 54.5
       hitbox.position.set(
         workstation.WORKSTATION_POS.x,
-        workstation.WORKSTATION_POS.y + 7.5 + 7,
+        workstation.WORKSTATION_POS.y - 7.5 + 7,
         workstation.WORKSTATION_POS.z - 6
       );
       hitbox.userData = { isProgrammerHitbox: true };
