@@ -50,16 +50,13 @@ function easeInOut(t: number): number {
 }
 
 // === Programmer Workstation Builder ===
-// Creates a desk, laptop, lamp, and apparatus — all in a rotated group facing the spectator
 function createProgrammerWorkstation(parentGroup: THREE.Group) {
   const WORKSTATION_POS = new THREE.Vector3(0, 30, -20);
 
-  // Create a pivot group: everything is built in local coords, then the whole thing rotates
   const wsGroup = new THREE.Group();
   wsGroup.position.copy(WORKSTATION_POS);
-  wsGroup.rotation.y = Math.PI; // Face toward spectator (camera at +Z)
+  wsGroup.rotation.y = Math.PI;
 
-  // --- DESK (at local origin) ---
   const deskGeo = new THREE.BoxGeometry(18, 0.6, 10);
   const deskMat = new THREE.MeshBasicMaterial({
     color: 0x1a1020,
@@ -70,7 +67,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   desk.position.set(0, 0, 0);
   wsGroup.add(desk);
 
-  // Desk legs (reach down to y = -8)
   const legGeo = new THREE.CylinderGeometry(0.25, 0.25, 8, 6);
   const legMat = new THREE.MeshBasicMaterial({
     color: 0x2a1a30,
@@ -88,7 +84,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     wsGroup.add(leg);
   });
 
-  // --- LAPTOP ---
   const laptopBaseGeo = new THREE.BoxGeometry(6, 0.25, 4);
   const laptopBaseMat = new THREE.MeshBasicMaterial({
     color: 0x111118,
@@ -99,7 +94,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   laptopBase.position.set(1, 0.45, 3);
   wsGroup.add(laptopBase);
 
-  // Screen (holographic glow)
   const laptopScreenGeo = new THREE.PlaneGeometry(5.5, 3.5);
   const laptopScreenMat = new THREE.MeshBasicMaterial({
     color: 0x00aaff,
@@ -113,7 +107,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   laptopScreen.rotation.x = -0.15;
   wsGroup.add(laptopScreen);
 
-  // Screen glow aura
   const screenGlowTex = createGlowTexture(0, 170, 255, 256, false);
   const screenGlow = new THREE.Sprite(
     new THREE.SpriteMaterial({
@@ -128,7 +121,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   screenGlow.position.set(1, 2.5, -0.5);
   wsGroup.add(screenGlow);
 
-  // Screen code lines
   const codeLineColors = [0x00ff88, 0xffaa00, 0x00ccff, 0xff66aa, 0xaaff00];
   for (let i = 0; i < 8; i++) {
     const lineW = 1.5 + Math.random() * 2.5;
@@ -145,7 +137,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     wsGroup.add(line);
   }
 
-  // --- STYLISH LAMP ---
   const armGeo = new THREE.CylinderGeometry(0.15, 0.15, 8, 6);
   const armMat = new THREE.MeshBasicMaterial({
     color: 0x333340,
@@ -195,7 +186,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   lampCone.position.set(-6.5, 2, -2);
   wsGroup.add(lampCone);
 
-  // --- APPARATUS / TOOLS ---
   const holoGeo = new THREE.RingGeometry(1.5, 2, 16);
   const holoMat = new THREE.MeshBasicMaterial({
     color: 0x00ffcc,
@@ -225,7 +215,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   holoRing2.rotation.x = Math.PI / 2;
   wsGroup.add(holoRing2);
 
-  // Small floating orbs
   const orbPositions = [
     [9, 4.5, 1],
     [7, 5, -1],
@@ -251,7 +240,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     orbs.push(orb);
   });
 
-  // Coffee mug
   const mugGeo = new THREE.CylinderGeometry(0.5, 0.45, 1, 8);
   const mugMat = new THREE.MeshBasicMaterial({
     color: 0x442200,
@@ -262,7 +250,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   mug.position.set(5, 0.9, 2);
   wsGroup.add(mug);
 
-  // Mug smoke wisps — swirling rising steam
   const smokeCount = 16;
   const smokeSprites: THREE.Sprite[] = [];
   for (let i = 0; i < smokeCount; i++) {
@@ -281,7 +268,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     );
     steam.scale.set(0.3, 0.3, 1);
     steam.userData = {
-      life: Math.random() * 4, // start at random point in cycle
+      life: Math.random() * 4,
       maxLife: 3 + Math.random() * 2,
       swirlSpeed: 1.2 + Math.random() * 0.8,
       swirlPhase: Math.random() * Math.PI * 2,
@@ -295,7 +282,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     smokeSprites.push(steam);
   }
 
-  // --- SEAT / CHAIR ---
   const seatGeo = new THREE.BoxGeometry(4, 0.5, 4);
   const seatMat = new THREE.MeshBasicMaterial({
     color: 0x1a0a20,
@@ -303,8 +289,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     opacity: 0.75,
   });
   const seat = new THREE.Mesh(seatGeo, seatMat);
-  // Place chair at y = -3.5 (halfway between floor at -8 and desk at 0)
-  // Push it back to z = 7 so it's behind the front edge of the desk (z = 5)
   seat.position.set(1, -3.5, 7);
   wsGroup.add(seat);
 
@@ -388,7 +372,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       resetView: () => {
         const c = sceneRef.current;
         if (!c) return;
-        // Default camera position and target - view pillars of creation
         const startPos = c.camera.position.clone();
         const endPos = new THREE.Vector3(0, 0, 180);
         const startTarget = c.controls.target.clone();
@@ -486,7 +469,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(0x020205, 0.003);
 
-      // Lighting for GLB model (PBR materials need lights)
       const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
       scene.add(ambientLight);
       const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -598,63 +580,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       scene.add(star1);
       scene.add(star2);
 
-      const createBlackHoleLayer = () => {
-        const group = new THREE.Group();
-
-        // === Black hole — simple glow sprites, no canvas drawing ===
-        // Bright warm glow (accretion disk effect)
-        const bhGlow1 = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: createGlowTexture(255, 180, 60, 1024),
-            transparent: true,
-            depthWrite: false,
-          }),
-        );
-        bhGlow1.scale.set(800, 800, 1);
-        group.add(bhGlow1);
-
-        // Hot white center
-        const bhGlow2 = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: createGlowTexture(255, 240, 200, 512),
-            transparent: true,
-            depthWrite: false,
-          }),
-        );
-        bhGlow2.scale.set(300, 300, 1);
-        group.add(bhGlow2);
-
-        // Inner bright core
-        const bhGlow3 = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: createGlowTexture(255, 255, 240, 256),
-            transparent: true,
-            depthWrite: false,
-          }),
-        );
-        bhGlow3.scale.set(120, 120, 1);
-        group.add(bhGlow3);
-
-        // Subtle relativistic jet (dimmer, more background)
-        const jetTex = createGlowTexture(80, 120, 200, 128, false);
-        const jetUp = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: jetTex,
-            transparent: true,
-            opacity: 0.1,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-          }),
-        );
-        jetUp.scale.set(60, 1000, 1);
-        jetUp.position.set(0, 700, 0);
-        group.add(jetUp);
-
-        // Position behind the pillars but visible
-        group.position.set(0, 80, -700);
-        return group;
-      };
-
       const createSpiralGalaxyLayer = () => {
         const group = new THREE.Group();
 
@@ -671,7 +596,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         for (let i = 0; i < pCount; i++) {
           const arm = i % 3;
-          const r = Math.pow(Math.random(), 2.0) * 700; // Dense center, spreads to 700
+          const r = Math.pow(Math.random(), 2.0) * 700;
           const angle = r * 0.015 + (arm * Math.PI * 2) / 3;
 
           const disp = (700 - r) * 0.15 * (Math.random() - 0.5);
@@ -704,7 +629,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }),
         );
 
-        // Central galactic bulge
         const bulgeTex = createGlowTexture(255, 220, 180, 256, false);
         const bulge = new THREE.Sprite(
           new THREE.SpriteMaterial({
@@ -721,7 +645,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         group.add(bulge);
 
         group.position.set(-500, 250, -1100);
-        group.rotation.x = 0.6; // Tilt to look elliptical
+        group.rotation.x = 0.6;
         group.rotation.z = -0.2;
         return group;
       };
@@ -729,7 +653,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const createNebulaLayer = () => {
         const group = new THREE.Group();
 
-        // 1. Deep ambient background glow
         const ambientTex = createGlowTexture(12, 45, 75, 256, false);
         const ambient = new THREE.Sprite(
           new THREE.SpriteMaterial({
@@ -744,18 +667,12 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         ambient.position.set(0, 0, -200);
         group.add(ambient);
 
-        // 2. Pillars of Creation — Eagle Nebula (M16), mimicking the Hubble SHO palette:
-        //    SII = red-orange, H-alpha = pink-magenta, OIII = blue-green.
-        //    Pillars are cold molecular hydrogen columns being photoevaporated by
-        //    ultraviolet radiation from nearby massive O/B stars.
-
         const pillars = [
           { x: -200, h: 400, w: 120, y: -100, z: -150 },
           { x: 40, h: 350, w: 100, y: -100, z: -100 },
           { x: 200, h: 300, w: 80, y: -100, z: -120 },
         ];
 
-        // === TEXTURES (all 256px — fast to create, smooth on screen) ===
         const coreTex = createGlowTexture(4, 2, 1, 256, false);
         const dustBaseTex = createGlowTexture(30, 14, 6, 256, false);
         const dustMidTex = createGlowTexture(65, 35, 16, 256, false);
@@ -767,7 +684,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const starWhiteTex = createGlowTexture(255, 252, 240, 128, true);
         const tinyStarTex = createGlowTexture(220, 210, 245, 16, true);
 
-        // === SHARED MATERIALS ===
         const matCore = new THREE.SpriteMaterial({
           map: coreTex,
           transparent: true,
@@ -848,7 +764,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             const blobW = p.w * taper;
             const blobH = 140 * taper;
 
-            // Dense shadow core
             const core = new THREE.Sprite(matCore);
             core.scale.set(blobW * 0.35, blobH * 0.7, 1);
             core.position.set(
@@ -858,7 +773,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(core);
 
-            // Brown dusty mid-body
             const dustBase = new THREE.Sprite(matDustBase);
             dustBase.scale.set(blobW * 0.55, blobH * 0.85, 1);
             dustBase.position.set(
@@ -868,7 +782,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(dustBase);
 
-            // Warmer dust
             const dustMid = new THREE.Sprite(matDustMid);
             dustMid.scale.set(blobW * 0.7, blobH * 0.95, 1);
             dustMid.position.set(
@@ -878,7 +791,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(dustMid);
 
-            // Upper dust
             const dustUpper = new THREE.Sprite(matDustUpper);
             dustUpper.scale.set(blobW * 0.85, blobH * 1.05, 1);
             dustUpper.position.set(
@@ -888,7 +800,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(dustUpper);
 
-            // H-alpha edge
             const haEdge = new THREE.Sprite(matHA);
             haEdge.scale.set(blobW * 1.15, blobH * 1.15, 1);
             haEdge.position.set(
@@ -898,7 +809,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(haEdge);
 
-            // OIII edge
             const oiiiEdge = new THREE.Sprite(matOIII);
             oiiiEdge.scale.set(blobW * 1.1, blobH * 1.1, 1);
             oiiiEdge.position.set(
@@ -908,7 +818,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             );
             group.add(oiiiEdge);
 
-            // SII edge
             const siiEdge = new THREE.Sprite(matSII);
             siiEdge.scale.set(blobW * 1.2, blobH * 1.2, 1);
             siiEdge.position.set(
@@ -919,7 +828,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             group.add(siiEdge);
           }
 
-          // === Newborn stars at pillar tips ===
           const tipBlue = new THREE.Sprite(matStarBlue);
           tipBlue.scale.set(70, 70, 1);
           tipBlue.position.set(p.x - 5, p.y + p.h + 10, p.z + 8);
@@ -930,7 +838,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           tipWhite.position.set(p.x + 8, p.y + p.h + 25, p.z + 12);
           group.add(tipWhite);
 
-          // Scattered EGGs
           for (let s = 0; s < 6; s++) {
             const egg = new THREE.Sprite(matTinyStar);
             egg.scale.set(10 + Math.random() * 14, 10 + Math.random() * 14, 1);
@@ -943,7 +850,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
         });
 
-        // === 3. Diffuse nebula backdrop — the Eagle's characteristic glow ===
         const matWisp1 = new THREE.SpriteMaterial({
           map: siiGlowTex,
           transparent: true,
@@ -971,7 +877,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         w3.position.set(30, -150, -170);
         group.add(w3);
 
-        // === 4. Massive background outflow layers ===
         const bgTex1 = createGlowTexture(140, 70, 55, 1024, false);
         const bgTex2 = createGlowTexture(50, 130, 150, 1024, false);
         const matBg1 = new THREE.SpriteMaterial({
@@ -1002,7 +907,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         bg3.position.set(10, -40, -170);
         group.add(bg3);
 
-        // === 5. "Pillars of Creation" label ===
         const labelCanvas = document.createElement("canvas");
         labelCanvas.width = 768;
         labelCanvas.height = 180;
@@ -1010,7 +914,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         lctx.textAlign = "center";
         lctx.textBaseline = "middle";
 
-        // Shadow/glow layers
         lctx.shadowColor = "rgba(180, 120, 50, 0.10)";
         lctx.shadowBlur = 10;
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
@@ -1018,7 +921,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         lctx.fillText("PILLARS OF CREATION", 384, 90);
         lctx.shadowBlur = 0;
 
-        // Subtle outline for readability
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         lctx.strokeStyle = "rgba(8, 4, 1, 0.20)";
         lctx.lineWidth = 1;
@@ -1042,10 +944,177 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         return group;
       };
-      // === Programmer Workstation on Pillars of Creation ===
+
       const nebulaGroup = createNebulaLayer();
       scene.add(nebulaGroup);
-      scene.add(createBlackHoleLayer());
+
+      // ============================================================
+      // GARGANTUA BLACK HOLE - WILL ENGULF EVERYTHING
+      // ============================================================
+      const blackHoleGroup = new THREE.Group();
+
+      const bhCanvas = document.createElement("canvas");
+      bhCanvas.width = 2048;
+      bhCanvas.height = 2048;
+      const bhCtx = bhCanvas.getContext("2d")!;
+
+      function drawBlackHole(time: number) {
+        const cx = 1024,
+          cy = 1024;
+        const ehR = 200;
+        bhCtx.clearRect(0, 0, 2048, 2048);
+
+        const lensGrad = bhCtx.createRadialGradient(
+          cx,
+          cy,
+          ehR + 50,
+          cx,
+          cy,
+          800,
+        );
+        lensGrad.addColorStop(0, "rgba(255, 200, 100, 0.3)");
+        lensGrad.addColorStop(0.2, "rgba(255, 180, 80, 0.2)");
+        lensGrad.addColorStop(0.5, "rgba(200, 120, 50, 0.1)");
+        lensGrad.addColorStop(0.8, "rgba(100, 60, 30, 0.05)");
+        lensGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        bhCtx.fillStyle = lensGrad;
+        bhCtx.fillRect(0, 0, 2048, 2048);
+
+        const tiltAngle = 0.05 + Math.sin(time * 0.02) * 0.01;
+        bhCtx.save();
+        bhCtx.translate(cx, cy);
+        bhCtx.rotate(tiltAngle);
+
+        for (let layer = 0; layer < 12; layer++) {
+          const progress = layer / 12;
+          const radius = ehR + 50 + progress * 350;
+          const width = 30 + (1 - progress) * 40;
+          const opacity = 0.4 - progress * 0.35;
+          bhCtx.beginPath();
+          bhCtx.ellipse(0, 0, radius, radius * 0.08, 0, 0, Math.PI * 2);
+          const temp = 1 - progress;
+          const r = Math.round(80 + 175 * temp);
+          const g = Math.round(60 + 195 * temp * temp);
+          const b = Math.round(40 + 215 * temp * temp * temp);
+          bhCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (0.8 + Math.sin(time * 0.1 + layer) * 0.2)})`;
+          bhCtx.lineWidth = width;
+          bhCtx.stroke();
+        }
+        bhCtx.restore();
+
+        const ringPulse = 0.8 + Math.sin(time * 0.1) * 0.2;
+        bhCtx.save();
+        bhCtx.beginPath();
+        bhCtx.arc(
+          cx,
+          cy,
+          ehR + 15,
+          Math.PI + 0.3 + Math.sin(time * 0.05) * 0.05,
+          -0.3 + Math.sin(time * 0.04) * 0.05,
+          false,
+        );
+        const topGrad = bhCtx.createLinearGradient(cx - ehR, cy, cx + ehR, cy);
+        topGrad.addColorStop(0, "rgba(255, 180, 80, 0)");
+        topGrad.addColorStop(0.15, `rgba(255, 220, 150, ${0.6 * ringPulse})`);
+        topGrad.addColorStop(0.3, `rgba(255, 240, 200, ${0.8 * ringPulse})`);
+        topGrad.addColorStop(0.5, `rgba(255, 255, 220, ${0.9 * ringPulse})`);
+        topGrad.addColorStop(0.7, `rgba(255, 240, 200, ${0.8 * ringPulse})`);
+        topGrad.addColorStop(0.85, `rgba(255, 220, 150, ${0.6 * ringPulse})`);
+        topGrad.addColorStop(1, "rgba(255, 180, 80, 0)");
+        bhCtx.strokeStyle = topGrad;
+        bhCtx.lineWidth = 12 + Math.sin(time * 0.08) * 2;
+        bhCtx.stroke();
+        bhCtx.restore();
+
+        const breathe = 1 + Math.sin(time * 0.03) * 0.02;
+        const currentEhR = ehR * breathe;
+        const ehGrad = bhCtx.createRadialGradient(
+          cx,
+          cy,
+          0,
+          cx,
+          cy,
+          currentEhR + 10,
+        );
+        ehGrad.addColorStop(0, "rgba(0, 0, 0, 1)");
+        ehGrad.addColorStop(0.6, "rgba(0, 0, 0, 1)");
+        ehGrad.addColorStop(0.85, "rgba(0, 0, 0, 0.95)");
+        ehGrad.addColorStop(
+          0.95,
+          `rgba(20, 10, 5, ${0.5 + Math.sin(time * 0.05) * 0.2})`,
+        );
+        ehGrad.addColorStop(1, "rgba(40, 20, 10, 0)");
+        bhCtx.beginPath();
+        bhCtx.arc(cx, cy, currentEhR + 10, 0, Math.PI * 2);
+        bhCtx.fillStyle = ehGrad;
+        bhCtx.fill();
+
+        const ringBrightness = 0.7 + Math.sin(time * 0.1) * 0.3;
+        bhCtx.beginPath();
+        bhCtx.arc(cx, cy, currentEhR + 2, 0, Math.PI * 2);
+        bhCtx.strokeStyle = `rgba(255, 240, 180, ${0.9 * ringBrightness})`;
+        bhCtx.lineWidth = 3 + Math.sin(time * 0.12) * 0.5;
+        bhCtx.stroke();
+
+        bhCtx.beginPath();
+        bhCtx.arc(cx, cy, currentEhR + 6, 0, Math.PI * 2);
+        bhCtx.strokeStyle = `rgba(255, 210, 150, ${0.5 * ringBrightness})`;
+        bhCtx.lineWidth = 2 + Math.sin(time * 0.09 + 0.3) * 0.5;
+        bhCtx.stroke();
+
+        bhCtx.beginPath();
+        bhCtx.arc(cx, cy, currentEhR + 12, 0, Math.PI * 2);
+        bhCtx.strokeStyle = `rgba(255, 180, 120, ${0.3 * ringBrightness})`;
+        bhCtx.lineWidth = 1.5 + Math.sin(time * 0.07 + 0.6) * 0.5;
+        bhCtx.stroke();
+
+        for (let i = 0; i < 16; i++) {
+          const angle = (i / 16) * Math.PI * 2 + time * 0.005;
+          const dist = currentEhR + 20 + Math.sin(i * 1.7 + time * 0.03) * 15;
+          const x = cx + Math.cos(angle + time * 0.003) * dist;
+          const y = cy + Math.sin(angle + time * 0.003) * dist * 0.4;
+          const size = 20 + Math.sin(i * 2.3 + time * 0.04) * 10;
+          const brightness =
+            0.08 + Math.sin(i * 1.7 + time * 0.05) * 0.05 + 0.08;
+          const grad = bhCtx.createRadialGradient(x, y, 0, x, y, size);
+          grad.addColorStop(
+            0,
+            `rgba(255, 220, 150, ${brightness * ringBrightness})`,
+          );
+          grad.addColorStop(
+            0.5,
+            `rgba(255, 200, 120, ${brightness * ringBrightness * 0.5})`,
+          );
+          grad.addColorStop(1, `rgba(255, 200, 100, 0)`);
+          bhCtx.fillStyle = grad;
+          bhCtx.beginPath();
+          bhCtx.arc(x, y, size, 0, Math.PI * 2);
+          bhCtx.fill();
+        }
+      }
+
+      drawBlackHole(0);
+      const bhTexture = new THREE.CanvasTexture(bhCanvas);
+      const bhSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: bhTexture,
+          transparent: true,
+          depthWrite: false,
+          opacity: 0.65,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      bhSprite.scale.set(600, 600, 1);
+      blackHoleGroup.add(bhSprite);
+
+      (blackHoleGroup as any).texture = bhTexture;
+      (blackHoleGroup as any).canvas = bhCanvas;
+      (blackHoleGroup as any).drawFunction = drawBlackHole;
+      (blackHoleGroup as any).sprite = bhSprite;
+
+      blackHoleGroup.position.set(0, 30, -300);
+      scene.add(blackHoleGroup);
+
       scene.add(createSpiralGalaxyLayer());
       const workstation = createProgrammerWorkstation(nebulaGroup);
 
@@ -1061,28 +1130,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         (gltf) => {
           const model = gltf.scene as THREE.Group;
           if (!model) return;
-          // Scale proportionally to fit the chair
           model.scale.set(4, 4, 4);
-          // Position the programmer so hands are at desk level
           model.position.set(1, -5.5, 6);
           model.rotation.y = Math.PI;
           workstation.wsGroup.add(model);
 
-          // === Programmer glow — just a soft light, no visible sprites/orbs ===
-          const glowLight = new THREE.PointLight(0xa8c0ff, 2.5, 30, 1.5);
-          glowLight.position.set(1, 0, 6);
-          workstation.wsGroup.add(glowLight);
-          const glowLight2 = new THREE.PointLight(0xffffff, 1.2, 20, 1.5);
-          glowLight2.position.set(1, 4, 6);
-          workstation.wsGroup.add(glowLight2);
-
-          // === Add invisible hitbox sphere for reliable click/hover detection ===
           const hitboxGeo = new THREE.SphereGeometry(2.5, 8, 6);
           const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
           const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
-          // Place hitbox at the WORLD position of the model's torso
-          // Local (0, -7.5, 6) -> World (0, 55 - 7.5, -20 - 6) -> (0, 47.5, -26)
-          // Then add 7 to Y for the torso height -> 47.5 + 7 = 54.5
           hitbox.position.set(
             workstation.WORKSTATION_POS.x,
             workstation.WORKSTATION_POS.y - 7.5 + 7,
@@ -1091,7 +1146,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           hitbox.userData = { isProgrammerHitbox: true };
           scene.add(hitbox);
 
-          // Play the typing animation
           const mixer = new THREE.AnimationMixer(model);
           if (gltf.animations.length > 0) {
             const clip = gltf.animations[0];
@@ -1099,7 +1153,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             action.setLoop(THREE.LoopRepeat, Infinity);
             action.play();
           }
-          // Store for animation loop
           if (sceneRef.current) {
             (sceneRef.current as any).mixer = mixer;
             (sceneRef.current as any).programmerHitbox = hitbox;
@@ -1187,7 +1240,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       shipBody.rotation.x = Math.PI / 2;
       shipGroup.add(shipBody);
 
-      // Ship engine glow
       const shipGlow = new THREE.Sprite(
         new THREE.SpriteMaterial({
           map: createGlowTexture(100, 180, 255, 64, true),
@@ -1200,7 +1252,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       shipGlow.scale.set(4, 4, 1);
       shipGroup.add(shipGlow);
 
-      // Ship trail (engine exhaust)
       const shipTrail = new THREE.Sprite(
         new THREE.SpriteMaterial({
           map: createGlowTexture(60, 140, 255, 64, true),
@@ -1221,7 +1272,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       );
       scene.add(shipGroup);
 
-      // === Data Particles streaming between programmer and pillars ===
+      // Data Particles
       const particleCount = 200;
       const particleGeo = new THREE.BufferGeometry();
       const particlePositions = new Float32Array(particleCount * 3);
@@ -1336,7 +1387,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           mSprite.scale.set(mSize, mSize, 1);
           mSprite.frustumCulled = false;
 
-          const mIncl = (Math.random() - 0.5) * 2.0; // Huge 3D variance
+          const mIncl = (Math.random() - 0.5) * 2.0;
           const mPhaseY = Math.random() * Math.PI * 2;
 
           mSprite.userData = {
@@ -1369,7 +1420,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       scene.add(lineSegments);
 
       const packetGeo = new THREE.BufferGeometry();
-      const packetPos = new Float32Array(links.length * 3 * 3); // 3 packets per link
+      const packetPos = new Float32Array(links.length * 3 * 3);
       packetGeo.setAttribute(
         "position",
         new THREE.BufferAttribute(packetPos, 3),
@@ -1390,7 +1441,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const clock = new THREE.Clock();
       let lastElapsed = 0;
 
-      // === Performance: Build O(1) nodeId → sprite lookup map ===
       const nodeIdToSprite = new Map<string, THREE.Object3D>();
       for (const [id, s] of godNodesMap) nodeIdToSprite.set(id, s);
       for (const [, p] of planetSprites)
@@ -1445,7 +1495,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.shipGroup.rotation.y = -shipAngle + Math.PI / 2;
         c.shipGroup.rotation.z = Math.sin(elapsed * 0.4) * 0.15;
 
-        // Animate holographic rings and orbs
         if (c.workstation) {
           c.workstation.holoRing.rotation.z = elapsed * 0.3;
           c.workstation.holoRing2.rotation.z = -elapsed * 0.5;
@@ -1458,7 +1507,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           });
         }
 
-        // Animate data particles
         if (c.dataParticles) {
           const pos = c.dataParticles.geometry.attributes
             .position as THREE.BufferAttribute;
@@ -1485,19 +1533,37 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           pos.needsUpdate = true;
         }
 
-        // Update GLB animation mixer
         if ((c as any).mixer) {
           (c as any).mixer.update(delta);
         }
 
-        // Animate swirling smoke from coffee mug
-        const smokeSprites = (workstation as any)?.smokeSprites as THREE.Sprite[] | undefined;
+        // GARGANTUA BLACK HOLE ANIMATION
+        if ((blackHoleGroup as any).canvas) {
+          const bhData = blackHoleGroup as any;
+          const tex = bhData.texture as THREE.CanvasTexture;
+          const drawFn = bhData.drawFunction;
+          const sprite = bhData.sprite;
+
+          drawFn(elapsed);
+          tex.needsUpdate = true;
+          tex.rotation = elapsed * 0.0005;
+
+          const engulfPulse = 1 + Math.sin(elapsed * 0.02) * 0.03;
+          sprite.scale.set(600 * engulfPulse, 600 * engulfPulse, 1);
+
+          const sway = Math.sin(elapsed * 0.01) * 5;
+          blackHoleGroup.position.x = sway;
+          blackHoleGroup.position.y = 30 + Math.sin(elapsed * 0.015) * 3;
+        }
+
+        const smokeSprites = (workstation as any)?.smokeSprites as
+          | THREE.Sprite[]
+          | undefined;
         if (smokeSprites) {
           smokeSprites.forEach((spr) => {
             const ud = spr.userData;
             ud.life += delta;
             if (ud.life > ud.maxLife) {
-              // Reset particle
               ud.life = 0;
               spr.position.x = ud.startX + (Math.random() - 0.5) * 0.3;
               spr.position.z = ud.startZ + (Math.random() - 0.5) * 0.3;
@@ -1505,21 +1571,20 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               spr.scale.set(0.3, 0.3, 1);
             }
             const lifeRatio = ud.life / ud.maxLife;
-            // Swirling motion: rise + sinusoidal X/Z drift
             const swirlAngle = ud.life * ud.swirlSpeed + ud.swirlPhase;
-            spr.position.x = ud.startX + Math.sin(swirlAngle) * ud.driftX * lifeRatio;
-            spr.position.z = ud.startZ + Math.cos(swirlAngle) * ud.driftZ * lifeRatio;
+            spr.position.x =
+              ud.startX + Math.sin(swirlAngle) * ud.driftX * lifeRatio;
+            spr.position.z =
+              ud.startZ + Math.cos(swirlAngle) * ud.driftZ * lifeRatio;
             spr.position.y = 1.4 + ud.life * ud.riseSpeed * 1.5;
-            // Scale grows as it rises
             const scale = 0.3 + lifeRatio * 1.4;
             spr.scale.set(scale, scale, 1);
-            // Fade in then out
             const opacity =
               lifeRatio < 0.2
-                ? lifeRatio / 0.2 * 0.5
+                ? (lifeRatio / 0.2) * 0.5
                 : lifeRatio > 0.7
-                ? (1 - (lifeRatio - 0.7) / 0.3) * 0.5
-                : 0.5;
+                  ? (1 - (lifeRatio - 0.7) / 0.3) * 0.5
+                  : 0.5;
             (spr.material as THREE.SpriteMaterial).opacity = opacity;
           });
         }
@@ -1568,7 +1633,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
         }
 
-        // Update line and packet positions
         const lp = c.lineSegments.geometry.attributes
           .position as THREE.BufferAttribute;
         const pp = c.packetPoints.geometry.attributes
@@ -1584,7 +1648,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               link.target === selectedRef.current);
 
           if (isConnected) {
-            // O(1) lookup instead of O(n) find()
             const sObj = nodeIdToSprite.get(link.source);
             const tObj = nodeIdToSprite.get(link.target);
             const sx = sObj ? sObj.position.x : 0,
@@ -1665,7 +1728,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           if (hit.point && hit.object) {
             const dist = hit.point.distanceTo(hit.object.position);
             const normalizedDist = dist / hit.object.scale.x;
-            // The glow is in the inner 40% of the quad (radius 0.2)
             if (normalizedDist <= 0.2) {
               return hit.object.userData.node as GraphNode;
             }
@@ -1681,7 +1743,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
-        raycaster.params.Line = { threshold: 4.0 }; // Generous click area for lasers
+        raycaster.params.Line = { threshold: 4.0 };
         const hits = raycaster.intersectObject(c.lineSegments, false);
         if (hits.length > 0) {
           for (const hit of hits) {
@@ -1724,7 +1786,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         const dir = targetPos.clone().sub(startPos).normalize();
 
-        // Ride above the line like a roller coaster
         const up = new THREE.Vector3(0, 1, 0);
         const right = dir.clone().cross(up).normalize();
         const offset = up
@@ -1742,20 +1803,18 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         let progress = 0;
         const anim = () => {
-          progress += 0.012; // slow, cinematic ride
+          progress += 0.012;
           if (progress >= 1) {
             isCanvasClickRef.current = true;
             onSelect(targetId);
             setTimeout(() => {
               isCanvasClickRef.current = false;
             }, 100);
-            flyToNode(targetId); // settle into final position
+            flyToNode(targetId);
             return;
           }
-          // Smooth sine ease in-out
           const t = (1 - Math.cos(progress * Math.PI)) / 2;
           c.camera.position.lerpVectors(startCam, endCam, t);
-          // Look directly ahead along the line at the destination node
           c.controls.target.lerpVectors(startTarget, targetPos, t);
           requestAnimationFrame(anim);
         };
@@ -1773,7 +1832,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           e.clientX - pointerDownPos.x,
           e.clientY - pointerDownPos.y,
         );
-        if (dist > 5) return; // It was a drag to pan the camera, ignore click
+        if (dist > 5) return;
 
         const hitNode = getIntersectedNode(e);
         if (hitNode) {
@@ -1783,13 +1842,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             isCanvasClickRef.current = false;
           }, 100);
         } else {
-          // Check if clicked on programmer hitbox (reuse existing raycaster)
           const c = sceneRef.current;
           const hitbox = (c as any)?.programmerHitbox as THREE.Mesh | null;
           if (hitbox) {
             const hits = raycaster.intersectObject(hitbox, false);
             if (hits.length > 0) {
-              // Single click on programmer: just show it's interactive, don't fly
               return;
             }
           }
@@ -1810,7 +1867,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const c = sceneRef.current;
         if (!c) return;
 
-        // Check if double-clicked on the programmer hitbox
         const hitbox = (c as any)?.programmerHitbox as THREE.Mesh | null;
         if (hitbox) {
           const rect = container.getBoundingClientRect();
@@ -1821,7 +1877,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           if (hits.length > 0) {
             const targetPos = hitbox.position.clone();
             const startPos = c.camera.position.clone();
-            // Top-down view: camera high above, looking down at programmer with pillars visible behind
             const endPos = targetPos.clone().add(new THREE.Vector3(0, 50, 35));
             const startTarget = c.controls.target.clone();
             const endTarget = targetPos.clone();
@@ -1856,7 +1911,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             onTooltip({ x: e.clientX, y: e.clientY, node: hitNode });
           }
         } else {
-          // Check if hovering over programmer hitbox (raycaster already set from getIntersectedNode)
           const c = sceneRef.current;
           const hitbox = (c as any)?.programmerHitbox as THREE.Mesh | null;
           if (hitbox) {
@@ -1910,7 +1964,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         container.removeEventListener("pointermove", handlePointerMove);
         cancelAnimationFrame(sceneRef.current?.animFrame || 0);
         window.removeEventListener("resize", handleResize);
-        // Cleanup GLB model
         if (sceneRef.current?.programmerModel) {
           sceneRef.current.programmerModel.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -1923,7 +1976,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             }
           });
         }
-        // Cleanup data particles
         if (sceneRef.current?.dataParticles) {
           sceneRef.current.dataParticles.geometry.dispose();
           (sceneRef.current.dataParticles.material as THREE.Material).dispose();
