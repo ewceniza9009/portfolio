@@ -297,35 +297,59 @@ export function CodeGalaxyWindow({
               {tooltip.node.label}
             </div>
             <div className="text-xs space-y-1">
-              <div className="flex justify-between items-center">
-                <span style={{ color: "var(--text-muted)" }}>Type</span>
-                <span
-                  className="font-mono px-1.5 py-0.5 rounded"
-                  style={{
-                    background:
-                      "color-mix(in srgb, var(--accent) 15%, transparent)",
-                    color: "var(--accent)",
-                  }}
-                >
-                  {tooltip.node.file_type}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span style={{ color: "var(--text-muted)" }}>Cluster</span>
-                <span className="font-mono">{tooltip.node.community}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span style={{ color: "var(--text-muted)" }}>Connections</span>
-                <span className="font-bold" style={{ color: "var(--accent)" }}>
-                  {tooltip.node.degree}
-                </span>
-              </div>
-              <div
-                className="pt-2 text-[10px] truncate"
-                style={{ maxWidth: "200px", color: "var(--text-muted)" }}
-              >
-                {tooltip.node.source_file}
-              </div>
+              {tooltip.node.id === "__programmer__" ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: "var(--text-muted)" }}>Role</span>
+                    <span
+                      className="font-mono px-1.5 py-0.5 rounded"
+                      style={{
+                        background: "color-mix(in srgb, var(--accent) 15%, transparent)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {tooltip.node.source_file}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: "var(--text-muted)" }}>Created nodes</span>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>
+                      {tooltip.node.degree}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: "var(--text-muted)" }}>Type</span>
+                    <span
+                      className="font-mono px-1.5 py-0.5 rounded"
+                      style={{
+                        background: "color-mix(in srgb, var(--accent) 15%, transparent)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {tooltip.node.file_type}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: "var(--text-muted)" }}>Cluster</span>
+                    <span className="font-mono">{tooltip.node.community}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: "var(--text-muted)" }}>Connections</span>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>
+                      {tooltip.node.degree}
+                    </span>
+                  </div>
+                  <div
+                    className="pt-2 text-[10px] truncate"
+                    style={{ maxWidth: "200px", color: "var(--text-muted)" }}
+                  >
+                    {tooltip.node.source_file}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

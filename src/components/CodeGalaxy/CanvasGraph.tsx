@@ -584,108 +584,39 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const createBlackHoleLayer = () => {
         const group = new THREE.Group();
 
-        // === Interstellar Gargantua — procedural canvas texture ===
-        const bhSize = 1024;
-        const bhCanvas = document.createElement("canvas");
-        bhCanvas.width = bhSize;
-        bhCanvas.height = bhSize;
-        const bhCtx = bhCanvas.getContext("2d")!;
-        const cx = bhSize / 2,
-          cy = bhSize / 2;
-        const ehR = 140; // event horizon radius
-
-        // 1. Outer gravitational lensing glow (warm orange-gold halo) — brighter for visibility
-        const lensGrad = bhCtx.createRadialGradient(
-          cx,
-          cy,
-          ehR + 40,
-          cx,
-          cy,
-          500,
-        );
-        lensGrad.addColorStop(0, "rgba(255, 180, 60, 0.45)");
-        lensGrad.addColorStop(0.3, "rgba(255, 140, 40, 0.25)");
-        lensGrad.addColorStop(0.7, "rgba(200, 100, 30, 0.10)");
-        lensGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        bhCtx.fillStyle = lensGrad;
-        bhCtx.fillRect(0, 0, bhSize, bhSize);
-
-        // 2. Accretion disk — brighter for visibility
-        // Outer disk (deep red-orange)
-        bhCtx.save();
-        bhCtx.beginPath();
-        bhCtx.ellipse(cx, cy, 480, 45, 0, 0, Math.PI * 2);
-        const diskGrad1 = bhCtx.createRadialGradient(cx, cy, 0, cx, cy, 480);
-        diskGrad1.addColorStop(0, "rgba(255, 220, 150, 1.0)");
-        diskGrad1.addColorStop(0.3, "rgba(255, 180, 80, 0.9)");
-        diskGrad1.addColorStop(0.6, "rgba(255, 120, 30, 0.6)");
-        diskGrad1.addColorStop(1, "rgba(180, 60, 10, 0)");
-        bhCtx.fillStyle = diskGrad1;
-        bhCtx.fill();
-        // Inner hot disk (blue-white core)
-        bhCtx.beginPath();
-        bhCtx.ellipse(cx, cy, 280, 22, 0, 0, Math.PI * 2);
-        const diskGrad2 = bhCtx.createRadialGradient(cx, cy, 0, cx, cy, 280);
-        diskGrad2.addColorStop(0, "rgba(220, 240, 255, 1.0)");
-        diskGrad2.addColorStop(0.5, "rgba(255, 210, 150, 0.8)");
-        diskGrad2.addColorStop(1, "rgba(255, 140, 60, 0)");
-        bhCtx.fillStyle = diskGrad2;
-        bhCtx.fill();
-        bhCtx.restore();
-
-        // 3. Gravitationally lensed disk — wraps OVER the top of the event horizon
-        bhCtx.save();
-        bhCtx.beginPath();
-        bhCtx.arc(cx, cy, ehR + 12, Math.PI + 0.2, -0.2, false);
-        const topGrad = bhCtx.createLinearGradient(cx - ehR, cy, cx + ehR, cy);
-        topGrad.addColorStop(0, "rgba(255, 160, 50, 0)");
-        topGrad.addColorStop(0.15, "rgba(255, 200, 100, 0.85)");
-        topGrad.addColorStop(0.5, "rgba(255, 250, 200, 1.0)");
-        topGrad.addColorStop(0.85, "rgba(255, 200, 100, 0.85)");
-        topGrad.addColorStop(1, "rgba(255, 160, 50, 0)");
-        bhCtx.strokeStyle = topGrad;
-        bhCtx.lineWidth = 16;
-        bhCtx.stroke();
-        // Second lensed arc
-        bhCtx.beginPath();
-        bhCtx.arc(cx, cy, ehR + 30, Math.PI + 0.3, -0.3, false);
-        bhCtx.strokeStyle = "rgba(255, 180, 80, 0.45)";
-        bhCtx.lineWidth = 8;
-        bhCtx.stroke();
-        bhCtx.restore();
-
-        // 4. Lensed disk wrapping UNDER the event horizon
-        bhCtx.save();
-        bhCtx.beginPath();
-        bhCtx.arc(cx, cy, ehR + 12, 0.2, Math.PI - 0.2, false);
-        const botGrad = bhCtx.createLinearGradient(cx - ehR, cy, cx + ehR, cy);
-        botGrad.addColorStop(0, "rgba(255, 140, 40, 0)");
-        botGrad.addColorStop(0.15, "rgba(255, 170, 80, 0.65)");
-        botGrad.addColorStop(0.5, "rgba(255, 220, 160, 0.95)");
-        botGrad.addColorStop(0.85, "rgba(255, 170, 80, 0.65)");
-        botGrad.addColorStop(1, "rgba(255, 140, 40, 0)");
-        bhCtx.strokeStyle = botGrad;
-        bhCtx.lineWidth = 12;
-        bhCtx.stroke();
-        bhCtx.restore();
-
-        // 5. Photon ring — bright ring at the edge of no return
-        bhCtx.beginPath();
-        bhCtx.arc(cx, cy, ehR + 3, 0, Math.PI * 2);
-        bhCtx.strokeStyle = "rgba(255, 230, 160, 1.0)";
-        bhCtx.lineWidth = 3;
-        bhCtx.stroke();
-
-        const bhTex = new THREE.CanvasTexture(bhCanvas);
-        const bh = new THREE.Sprite(
+        // === Black hole — simple glow sprites, no canvas drawing ===
+        // Bright warm glow (accretion disk effect)
+        const bhGlow1 = new THREE.Sprite(
           new THREE.SpriteMaterial({
-            map: bhTex,
+            map: createGlowTexture(255, 180, 60, 1024),
             transparent: true,
             depthWrite: false,
           }),
         );
-        bh.scale.set(1600, 1600, 1);
-        group.add(bh);
+        bhGlow1.scale.set(800, 800, 1);
+        group.add(bhGlow1);
+
+        // Hot white center
+        const bhGlow2 = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: createGlowTexture(255, 240, 200, 512),
+            transparent: true,
+            depthWrite: false,
+          }),
+        );
+        bhGlow2.scale.set(300, 300, 1);
+        group.add(bhGlow2);
+
+        // Inner bright core
+        const bhGlow3 = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: createGlowTexture(255, 255, 240, 256),
+            transparent: true,
+            depthWrite: false,
+          }),
+        );
+        bhGlow3.scale.set(120, 120, 1);
+        group.add(bhGlow3);
 
         // Subtle relativistic jet (dimmer, more background)
         const jetTex = createGlowTexture(80, 120, 200, 128, false);
@@ -702,9 +633,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         jetUp.position.set(0, 700, 0);
         group.add(jetUp);
 
-      // Position behind the pillars but visible
-      group.position.set(0, 80, -700);
-      return group;
+        // Position behind the pillars but visible
+        group.position.set(0, 80, -700);
+        return group;
       };
 
       const createSpiralGalaxyLayer = () => {
@@ -1116,66 +1047,38 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           // Scale proportionally to fit the chair
           model.scale.set(4, 4, 4);
           // Position the programmer so hands are at desk level
-          // Hands are ~50% up the model height. Move model up so hands reach keyboard.
           model.position.set(0, -5.5, 6);
-          // Model faces -Z in local space (towards the desk) → after group's Math.PI rotation → faces spectator
           model.rotation.y = Math.PI;
           workstation.wsGroup.add(model);
+          model.updateMatrixWorld(true);
 
-          // === Apply colors to the model meshes ===
-          const skinMat = new THREE.MeshStandardMaterial({
-            color: 0xc68642,
-            roughness: 0.7,
-            metalness: 0.05,
-          });
-          const shirtMat = new THREE.MeshStandardMaterial({
-            color: 0x1a1a3e,
-            roughness: 0.6,
-            metalness: 0.1,
-          });
-          const pantsMat = new THREE.MeshStandardMaterial({
-            color: 0x222222,
-            roughness: 0.8,
-            metalness: 0.0,
-          });
-          const shoeMat = new THREE.MeshStandardMaterial({
-            color: 0x111111,
-            roughness: 0.9,
-            metalness: 0.0,
-          });
-          const hairMat = new THREE.MeshStandardMaterial({
-            color: 0x000000,
-            roughness: 0.9,
-            metalness: 0.0,
-          });
-
-          // Compute bounding box to determine head position
           const bbox = new THREE.Box3().setFromObject(model);
           const modelHeight = bbox.max.y - bbox.min.y;
 
+          const forceMat = (color: number) => {
+            const m = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+            return m;
+          };
+
           model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
-              // Determine body region from relative Y position of mesh center
               const meshBBox = new THREE.Box3().setFromObject(child);
               const meshCenterY = (meshBBox.min.y + meshBBox.max.y) / 2;
               const relativeY = (meshCenterY - bbox.min.y) / modelHeight;
 
-              if (relativeY > 0.85) {
-                // Head region — skin
-                child.material = skinMat;
-              } else if (relativeY > 0.55) {
-                // Torso — shirt
-                child.material = shirtMat;
-              } else if (relativeY > 0.45) {
-                // Hands/forearms — skin
-                child.material = skinMat;
-              } else if (relativeY > 0.1) {
-                // Legs — pants
-                child.material = pantsMat;
+              // Pure position-based: model sits facing us, Y=bottom(shoes) to Y=top(hair)
+              if (relativeY > 0.88) {
+                child.material = forceMat(0x000000); // hair
+              } else if (relativeY > 0.72) {
+                child.material = forceMat(0xc68642); // face/skin
+              } else if (relativeY > 0.35) {
+                child.material = forceMat(0x2a2a5e); // shirt
+              } else if (relativeY > 0.08) {
+                child.material = forceMat(0x222222); // pants
               } else {
-                // Feet — shoes
-                child.material = shoeMat;
+                child.material = forceMat(0x111111); // shoes
               }
+              child.material.needsUpdate = true;
             }
           });
 
@@ -1185,7 +1088,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           const headCenterZ = (bbox.min.z + bbox.max.z) / 2;
           const hairGeo = new THREE.SphereGeometry(0.28, 12, 8);
           hairGeo.scale(1.0, 0.45, 1.1); // Flatten into a hair-cap shape
-          const hair = new THREE.Mesh(hairGeo, hairMat);
+          const hair = new THREE.Mesh(hairGeo, forceMat(0x000000));
           hair.position.set(headCenterX, headY - 0.02, headCenterZ);
           model.add(hair);
 
@@ -1946,8 +1849,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                 y: e.clientY,
                 node: {
                   id: "__programmer__",
-                  label: "The Programmer",
-                  source_file: "Creator of this codebase",
+                  label: "Erwin Wilson Ceniza",
+                  source_file: "Dev",
+                  norm_label: "Created nodes: " + nodes.length,
                   degree: nodes.length,
                   community: 0,
                 } as GraphNode,
