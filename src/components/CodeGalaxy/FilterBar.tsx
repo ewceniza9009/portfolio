@@ -190,28 +190,28 @@ export function FilterBar({
             pointerEvents: 'auto',
           }}
         >
-          <div className="text-[10px] uppercase tracking-wider font-semibold opacity-50 mb-2">Code Graph Stats</div>
+          <div className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: 'rgba(200,180,255,0.6)' }}>Code Graph Stats</div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="text-center">
-              <div className="text-lg font-bold text-white">{nodeCount}</div>
-              <div className="text-[10px] opacity-50">Nodes</div>
+              <div className="text-lg font-bold" style={{ color: '#fff' }}>{nodeCount}</div>
+              <div className="text-[10px]" style={{ color: 'rgba(200,200,220,0.5)' }}>Nodes</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-white">{edgeCount}</div>
-              <div className="text-[10px] opacity-50">Edges</div>
+              <div className="text-lg font-bold" style={{ color: '#fff' }}>{edgeCount}</div>
+              <div className="text-[10px]" style={{ color: 'rgba(200,200,220,0.5)' }}>Edges</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-white">{communityCount}</div>
-              <div className="text-[10px] opacity-50">Communities</div>
+              <div className="text-lg font-bold" style={{ color: '#fff' }}>{communityCount}</div>
+              <div className="text-[10px]" style={{ color: 'rgba(200,200,220,0.5)' }}>Communities</div>
             </div>
           </div>
-          <div className="text-[10px] uppercase tracking-wider font-semibold opacity-50 mb-1">Top God Nodes</div>
+          <div className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: 'rgba(200,180,255,0.6)' }}>Top God Nodes</div>
           <div className="space-y-1">
             {topHubs.slice(0, 5).map((h, i) => (
               <div key={h.id} className="flex items-center gap-2 text-[11px]" style={{ color: '#ccc' }}>
-                <span className="opacity-40 w-3">{i + 1}</span>
+                <span style={{ color: 'rgba(200,200,220,0.4)' }} className="w-3">{i + 1}</span>
                 <span className="font-medium truncate">{h.label}</span>
-                <span className="opacity-40 ml-auto">{h.degree} edges</span>
+                <span style={{ color: 'rgba(200,200,220,0.4)' }} className="ml-auto">{h.degree} edges</span>
               </div>
             ))}
           </div>
@@ -229,8 +229,12 @@ export function FilterBar({
           }}
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wider font-semibold opacity-50">Communities</div>
-            <button onClick={onSelectAllCommunities} className="text-[10px] opacity-60 hover:opacity-100 transition-opacity" style={{ color: '#a78bfa' }}>
+            <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'rgba(200,180,255,0.6)' }}>Communities</div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelectAllCommunities(); }}
+              className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
+              style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+            >
               {selectedCommunities.size > 0 ? 'Show all' : 'Clear'}
             </button>
           </div>
@@ -241,15 +245,15 @@ export function FilterBar({
               return (
                 <button
                   key={c.id}
-                  onClick={() => onToggleCommunity(c.id)}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-all"
+                  onClick={(e) => { e.stopPropagation(); onToggleCommunity(c.id); }}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-all hover:brightness-125"
                   style={{
                     background: active ? `${col}25` : 'rgba(255,255,255,0.03)',
                     color: active ? '#fff' : '#555',
                     border: `1px solid ${active ? col + '50' : 'transparent'}`,
                   }}
                 >
-                  <div className="w-2 h-2 rounded-full" style={{ background: active ? col : '#333' }} />
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: active ? col : '#333' }} />
                   {c.name} ({c.count})
                 </button>
               );
@@ -269,8 +273,12 @@ export function FilterBar({
           }}
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wider font-semibold opacity-50">Files</div>
-            <button onClick={onSelectAllFiles} className="text-[10px] opacity-60 hover:opacity-100 transition-opacity" style={{ color: '#a78bfa' }}>
+            <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'rgba(200,180,255,0.6)' }}>Files</div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelectAllFiles(); }}
+              className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
+              style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+            >
               {selectedFiles.size > 0 ? 'Show all' : 'Clear'}
             </button>
           </div>
@@ -280,8 +288,8 @@ export function FilterBar({
               return (
                 <button
                   key={f}
-                  onClick={() => onToggleFile(f)}
-                  className="px-2 py-1 rounded-md text-[10px] font-medium transition-all"
+                  onClick={(e) => { e.stopPropagation(); onToggleFile(f); }}
+                  className="px-2 py-1 rounded-md text-[10px] font-medium transition-all hover:brightness-125"
                   style={{
                     background: active ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.03)',
                     color: active ? '#fff' : '#555',
