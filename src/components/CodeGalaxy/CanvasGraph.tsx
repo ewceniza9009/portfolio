@@ -164,7 +164,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   arm.castShadow = true;
   wsGroup.add(arm);
 
-  // Lamp head (the physical lamp)
+  // Lamp head
   const lampHeadGeo = new THREE.ConeGeometry(2, 5, 8);
   const lampHeadMat = new THREE.MeshStandardMaterial({
     color: 0x222230,
@@ -179,9 +179,8 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   lampHead.castShadow = true;
   wsGroup.add(lampHead);
 
-  // Light cone - points DOWNWARD from the lamp
+  // Light cone
   const lampConeGeo = new THREE.CylinderGeometry(0.2, 4, 10, 12, 1, true);
-  //                                        tip   base  height
   const lampConeMat = new THREE.MeshBasicMaterial({
     color: 0xffcc66,
     transparent: true,
@@ -192,11 +191,11 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     depthTest: true,
   });
   const lampCone = new THREE.Mesh(lampConeGeo, lampConeMat);
-  lampCone.position.set(-6.5, 4.5, -2); // Tip at lamp position
-  lampCone.rotation.x = 0; // Default orientation: tip up, base down
+  lampCone.position.set(-6.5, 4.5, -2);
+  lampCone.rotation.x = 0;
   wsGroup.add(lampCone);
 
-  // Spotlight for actual lighting and shadows
+  // Spotlight
   const lampLight = new THREE.SpotLight(0xffcc66, 0.6);
   lampLight.position.set(-6.5, 7.5, -2);
   lampLight.angle = 0.5;
@@ -212,7 +211,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   lampLight.target = target;
   wsGroup.add(lampLight);
 
-  // Light pool on the desk (to show where light hits)
+  // Light pool
   const lightPoolTex = createGlowTexture(255, 200, 100, 256, false);
   const lightPool = new THREE.Sprite(
     new THREE.SpriteMaterial({
@@ -228,7 +227,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   lightPool.position.set(-6.5, 0.35, -2);
   wsGroup.add(lightPool);
 
-  // Glow at the lamp (visible glow effect)
+  // Glow at the lamp
   const lampGlowTex = createGlowTexture(255, 200, 100, 128, false);
   const lampGlow = new THREE.Sprite(
     new THREE.SpriteMaterial({
@@ -297,6 +296,10 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     orbs.push(orb);
   });
 
+  // ============================================================
+  // COFFEE MUG
+  // ============================================================
+
   const mugGeo = new THREE.CylinderGeometry(0.5, 0.45, 1, 8);
   const mugMat = new THREE.MeshStandardMaterial({
     color: 0x442200,
@@ -310,6 +313,175 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   mug.castShadow = true;
   mug.receiveShadow = true;
   wsGroup.add(mug);
+
+  // ============================================================
+  // BOOK - WITH SHORTER TITLES AND TEXT WRAPPING
+  // ============================================================
+
+  // Position on the LEFT edge, near the programmer
+  const bookPosX = -6;
+  const bookPosZ = 3;
+
+  // Book titles - SHORTER versions that fit on the cover
+  const bookTitles = [
+    { title: "Relativity", author: "Einstein", year: "1915" },
+    { title: "GoF & SOLID", author: "Gamma et al.", year: "1994" },
+    { title: "Art of Programming", author: "D. Knuth", year: "1968" },
+    { title: "Clean Code", author: "R. Martin", year: "2008" },
+    { title: "Design Patterns", author: "C. Alexander", year: "1977" },
+    { title: "Pragmatic Programmer", author: "Thomas & Hunt", year: "1999" },
+    { title: "SICP", author: "Abelson & Sussman", year: "1985" },
+    { title: "C Programming", author: "Kernighan & Ritchie", year: "1978" },
+    { title: "Algorithms", author: "Cormen et al.", year: "1990" },
+    { title: "Mythical Man-Month", author: "F. Brooks", year: "1975" },
+  ];
+
+  // Create canvas with text wrapping
+  const bookCanvas = document.createElement("canvas");
+  bookCanvas.width = 1024;
+  bookCanvas.height = 768;
+  const ctx = bookCanvas.getContext("2d")!;
+
+  function wrapText(text: string, maxWidth: number, fontSize: number) {
+    ctx.font = `bold ${fontSize}px "Georgia", "Times New Roman", serif`;
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = "";
+
+    for (let word of words) {
+      const testLine = currentLine + word + " ";
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine.length > 0) {
+        lines.push(currentLine.trim());
+        currentLine = word + " ";
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine.length > 0) {
+      lines.push(currentLine.trim());
+    }
+    return lines;
+  }
+
+  function updateBookCover(titleIndex: number) {
+    // Dark background
+    ctx.fillStyle = "#0a0515";
+    ctx.fillRect(0, 0, 1024, 768);
+
+    // Subtle gradient
+    const grad = ctx.createLinearGradient(0, 0, 1024, 768);
+    grad.addColorStop(0, "rgba(20, 10, 40, 0.3)");
+    grad.addColorStop(0.5, "rgba(10, 5, 20, 0.1)");
+    grad.addColorStop(1, "rgba(20, 10, 40, 0.3)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 768);
+
+    // Border
+    ctx.strokeStyle = "rgba(180, 150, 100, 0.2)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(30, 30, 964, 708);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const bookData = bookTitles[titleIndex];
+    const maxWidth = 800;
+
+    // Title with wrapping
+    const titleFontSize = Math.min(72, (800 / bookData.title.length) * 1.2);
+    const titleLines = wrapText(bookData.title, maxWidth, titleFontSize);
+    const titleY = 260 - (titleLines.length - 1) * 35;
+
+    ctx.font = `bold ${titleFontSize}px "Georgia", "Times New Roman", serif`;
+    ctx.fillStyle = "#f0e5ff";
+    titleLines.forEach((line, i) => {
+      ctx.fillText(line, 512, titleY + i * 70);
+    });
+
+    // Author
+    ctx.font = '40px "Georgia", "Times New Roman", serif';
+    ctx.fillStyle = "#d4c0e8";
+    ctx.fillText(bookData.author, 512, 430);
+
+    // Year
+    ctx.font = '32px "Georgia", "Times New Roman", serif';
+    ctx.fillStyle = "rgba(180, 160, 200, 0.6)";
+    ctx.fillText(bookData.year, 512, 530);
+
+    // Decorative line
+    ctx.beginPath();
+    const lineY = 380;
+    ctx.moveTo(200, lineY);
+    ctx.lineTo(824, lineY);
+    ctx.strokeStyle = "rgba(180, 150, 100, 0.15)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Create the cover
+  let currentTitleIndex = 0;
+  updateBookCover(0);
+  const bookCoverTex = new THREE.CanvasTexture(bookCanvas);
+  bookCoverTex.needsUpdate = true;
+  bookCoverTex.minFilter = THREE.LinearFilter;
+  bookCoverTex.magFilter = THREE.LinearFilter;
+
+  // Book cover - lying flat
+  const coverGeo = new THREE.PlaneGeometry(4.5, 3.2);
+  const coverMat = new THREE.MeshBasicMaterial({
+    map: bookCoverTex,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 1.0,
+  });
+  const coverMesh = new THREE.Mesh(coverGeo, coverMat);
+  coverMesh.position.set(bookPosX, 0.4, bookPosZ);
+  coverMesh.rotation.x = -Math.PI / 2;
+  coverMesh.rotation.z = 0.15;
+  wsGroup.add(coverMesh);
+
+  // Book thickness
+  const thicknessGeo = new THREE.BoxGeometry(4.5, 0.3, 0.3);
+  const thicknessMat = new THREE.MeshBasicMaterial({
+    color: 0x150a20,
+    side: THREE.DoubleSide,
+  });
+  const thickness = new THREE.Mesh(thicknessGeo, thicknessMat);
+  thickness.position.set(bookPosX, 0.15, bookPosZ + 1.6);
+  thickness.rotation.x = 0;
+  thickness.rotation.z = 0.15;
+  wsGroup.add(thickness);
+
+  // Book pages edge
+  const pagesEdgeGeo = new THREE.BoxGeometry(4.3, 0.25, 0.1);
+  const pagesEdgeMat = new THREE.MeshBasicMaterial({
+    color: 0xe8e0d0,
+    transparent: true,
+    opacity: 0.3,
+    side: THREE.DoubleSide,
+  });
+  const pagesEdge = new THREE.Mesh(pagesEdgeGeo, pagesEdgeMat);
+  pagesEdge.position.set(bookPosX, 0.15, bookPosZ + 1.45);
+  pagesEdge.rotation.x = 0;
+  pagesEdge.rotation.z = 0.15;
+  wsGroup.add(pagesEdge);
+
+  // Store book data
+  const bookData = {
+    coverTex: bookCoverTex,
+    canvas: bookCanvas,
+    titleIndex: currentTitleIndex,
+    lastSwap: 0,
+    updateCover: updateBookCover,
+    bookTitles: bookTitles,
+    coverMesh: coverMesh,
+  };
+  (wsGroup as any).bookData = bookData;
+
+  // ============================================================
+  // SMOKE
+  // ============================================================
 
   const smokeCount = 16;
   const smokeSprites: THREE.Sprite[] = [];
@@ -377,6 +549,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     smokeSprites,
     lampLight,
     lightPool,
+    bookData,
   };
 }
 
@@ -1766,6 +1939,18 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           } else {
             sprite.scale.set(ud.baseSize, ud.baseSize, 1);
             sprite.material.opacity = selectedRef.current ? 0.1 : 0.2;
+          }
+        }
+
+        // Rotate book titles every 10 seconds
+        if (c.workstation && (c.workstation.wsGroup as any).bookData) {
+          const bookData = (c.workstation.wsGroup as any).bookData;
+          if (elapsed - bookData.lastSwap > 10) {
+            bookData.lastSwap = elapsed;
+            bookData.titleIndex =
+              (bookData.titleIndex + 1) % bookData.bookTitles.length;
+            bookData.updateCover(bookData.titleIndex);
+            bookData.coverTex.needsUpdate = true;
           }
         }
 
