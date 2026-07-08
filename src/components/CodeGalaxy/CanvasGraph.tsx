@@ -58,20 +58,26 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   wsGroup.rotation.y = Math.PI;
 
   const deskGeo = new THREE.BoxGeometry(18, 0.6, 10);
-  const deskMat = new THREE.MeshBasicMaterial({
+  const deskMat = new THREE.MeshStandardMaterial({
     color: 0x1a1020,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.95,
+    roughness: 0.7,
+    metalness: 0.3,
+    side: THREE.DoubleSide,
   });
   const desk = new THREE.Mesh(deskGeo, deskMat);
   desk.position.set(0, 0, 0);
+  desk.receiveShadow = true;
   wsGroup.add(desk);
 
   const legGeo = new THREE.CylinderGeometry(0.25, 0.25, 8, 6);
-  const legMat = new THREE.MeshBasicMaterial({
+  const legMat = new THREE.MeshStandardMaterial({
     color: 0x2a1a30,
     transparent: true,
     opacity: 0.7,
+    roughness: 0.5,
+    metalness: 0.4,
   });
   [
     [-7, -4, -4],
@@ -81,26 +87,32 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   ].forEach(([lx, ly, lz]) => {
     const leg = new THREE.Mesh(legGeo, legMat);
     leg.position.set(lx, ly, lz);
+    leg.castShadow = true;
     wsGroup.add(leg);
   });
 
   const laptopBaseGeo = new THREE.BoxGeometry(6, 0.25, 4);
-  const laptopBaseMat = new THREE.MeshBasicMaterial({
+  const laptopBaseMat = new THREE.MeshStandardMaterial({
     color: 0x111118,
     transparent: true,
     opacity: 0.9,
+    roughness: 0.3,
+    metalness: 0.6,
   });
   const laptopBase = new THREE.Mesh(laptopBaseGeo, laptopBaseMat);
   laptopBase.position.set(1, 0.45, 3);
+  laptopBase.castShadow = true;
+  laptopBase.receiveShadow = true;
   wsGroup.add(laptopBase);
 
   const laptopScreenGeo = new THREE.PlaneGeometry(5.5, 3.5);
-  const laptopScreenMat = new THREE.MeshBasicMaterial({
+  const laptopScreenMat = new THREE.MeshStandardMaterial({
     color: 0x00aaff,
     transparent: true,
     opacity: 0.35,
     side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
+    emissive: 0x0066ff,
+    emissiveIntensity: 0.2,
   });
   const laptopScreen = new THREE.Mesh(laptopScreenGeo, laptopScreenMat);
   laptopScreen.position.set(1, 2.4, 1);
@@ -131,6 +143,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
       opacity: 0.3 + Math.random() * 0.2,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const line = new THREE.Mesh(lineGeo, lineMat);
     line.position.set(-0.5 + Math.random() * 3, 1.0 + i * 0.35, 1.05);
@@ -138,53 +151,97 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   }
 
   const armGeo = new THREE.CylinderGeometry(0.15, 0.15, 8, 6);
-  const armMat = new THREE.MeshBasicMaterial({
+  const armMat = new THREE.MeshStandardMaterial({
     color: 0x333340,
     transparent: true,
     opacity: 0.8,
+    roughness: 0.4,
+    metalness: 0.5,
   });
   const arm = new THREE.Mesh(armGeo, armMat);
   arm.position.set(-7, 4, -2);
   arm.rotation.z = 0.15;
+  arm.castShadow = true;
   wsGroup.add(arm);
 
-  const lampHeadGeo = new THREE.ConeGeometry(1.5, 2, 8);
-  const lampHeadMat = new THREE.MeshBasicMaterial({
+  // Lamp head (the physical lamp)
+  const lampHeadGeo = new THREE.ConeGeometry(2, 5, 8);
+  const lampHeadMat = new THREE.MeshStandardMaterial({
     color: 0x222230,
     transparent: true,
     opacity: 0.8,
+    roughness: 0.3,
+    metalness: 0.6,
   });
   const lampHead = new THREE.Mesh(lampHeadGeo, lampHeadMat);
   lampHead.position.set(-6.5, 8.2, -2);
   lampHead.rotation.z = Math.PI;
+  lampHead.castShadow = true;
   wsGroup.add(lampHead);
 
+  // Light cone - points DOWNWARD from the lamp
+  const lampConeGeo = new THREE.CylinderGeometry(0.2, 4, 10, 12, 1, true);
+  //                                        tip   base  height
+  const lampConeMat = new THREE.MeshBasicMaterial({
+    color: 0xffcc66,
+    transparent: true,
+    opacity: 0.08,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: true,
+  });
+  const lampCone = new THREE.Mesh(lampConeGeo, lampConeMat);
+  lampCone.position.set(-6.5, 4.5, -2); // Tip at lamp position
+  lampCone.rotation.x = 0; // Default orientation: tip up, base down
+  wsGroup.add(lampCone);
+
+  // Spotlight for actual lighting and shadows
+  const lampLight = new THREE.SpotLight(0xffcc66, 0.6);
+  lampLight.position.set(-6.5, 7.5, -2);
+  lampLight.angle = 0.5;
+  lampLight.penumbra = 0.5;
+  lampLight.decay = 1.5;
+  lampLight.distance = 15;
+  lampLight.castShadow = true;
+  lampLight.shadow.mapSize.width = 512;
+  lampLight.shadow.mapSize.height = 512;
+  const target = new THREE.Object3D();
+  target.position.set(-6.5, 0, -2);
+  wsGroup.add(target);
+  lampLight.target = target;
+  wsGroup.add(lampLight);
+
+  // Light pool on the desk (to show where light hits)
+  const lightPoolTex = createGlowTexture(255, 200, 100, 256, false);
+  const lightPool = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: lightPoolTex,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true,
+    }),
+  );
+  lightPool.scale.set(10, 10, 1);
+  lightPool.position.set(-6.5, 0.35, -2);
+  wsGroup.add(lightPool);
+
+  // Glow at the lamp (visible glow effect)
   const lampGlowTex = createGlowTexture(255, 200, 100, 128, false);
   const lampGlow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: lampGlowTex,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.2,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     }),
   );
   lampGlow.scale.set(5, 5, 1);
-  lampGlow.position.set(-6.5, 7, -2);
+  lampGlow.position.set(-6.5, 5, -2);
   wsGroup.add(lampGlow);
-
-  const lampConeGeo = new THREE.ConeGeometry(4, 10, 12, 1, true);
-  const lampConeMat = new THREE.MeshBasicMaterial({
-    color: 0xffcc66,
-    transparent: true,
-    opacity: 0.04,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const lampCone = new THREE.Mesh(lampConeGeo, lampConeMat);
-  lampCone.position.set(-6.5, 2, -2);
-  wsGroup.add(lampCone);
 
   const holoGeo = new THREE.RingGeometry(1.5, 2, 16);
   const holoMat = new THREE.MeshBasicMaterial({
@@ -241,13 +298,17 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   });
 
   const mugGeo = new THREE.CylinderGeometry(0.5, 0.45, 1, 8);
-  const mugMat = new THREE.MeshBasicMaterial({
+  const mugMat = new THREE.MeshStandardMaterial({
     color: 0x442200,
     transparent: true,
     opacity: 0.8,
+    roughness: 0.8,
+    metalness: 0.2,
   });
   const mug = new THREE.Mesh(mugGeo, mugMat);
   mug.position.set(5, 0.9, 2);
+  mug.castShadow = true;
+  mug.receiveShadow = true;
   wsGroup.add(mug);
 
   const smokeCount = 16;
@@ -283,18 +344,24 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   }
 
   const seatGeo = new THREE.BoxGeometry(4, 0.5, 4);
-  const seatMat = new THREE.MeshBasicMaterial({
+  const seatMat = new THREE.MeshStandardMaterial({
     color: 0x1a0a20,
     transparent: true,
     opacity: 0.75,
+    roughness: 0.9,
+    metalness: 0.1,
   });
   const seat = new THREE.Mesh(seatGeo, seatMat);
   seat.position.set(1, -3.5, 7);
+  seat.receiveShadow = true;
+  seat.castShadow = true;
   wsGroup.add(seat);
 
   const backGeo = new THREE.BoxGeometry(4, 5, 0.5);
   const back = new THREE.Mesh(backGeo, seatMat.clone());
   back.position.set(1, -1.0, 9);
+  back.castShadow = true;
+  back.receiveShadow = true;
   wsGroup.add(back);
 
   parentGroup.add(wsGroup);
@@ -308,6 +375,8 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     WORKSTATION_POS,
     wsGroup,
     smokeSprites,
+    lampLight,
+    lightPool,
   };
 }
 
