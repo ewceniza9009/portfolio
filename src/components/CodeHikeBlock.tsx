@@ -71,35 +71,35 @@ function parseAnnotations(code: string): ParsedAnnotations {
   // Track open start/end pairs: Map<name, { startLine, query }>
   const openPairs = new Map<string, { startLine: number; query: string }>()
 
-  // Regex for each supported comment style
-  // Line-level (applies to following line(s)): !name(query)  or  !name  or  !name[range](query)
-  // Inline (applies to the SAME line it's appended to): code...  // !name(query) or // !name/regex/(query)
-  const LINE_COMMENT_RE = /^\s*\/\/\s*!(\w+)\(([^)]*)\)\s*$/
-  const LINE_SIMPLE_RE = /^\s*\/\/\s*!(\w+)\s*$/
-
   function stripTrailingInlineComment(text: string): string {
-    // Remove trailing // !...comment but preserve preceding code on the line
-    const m = text.match(/^(.*?)\s*\/\/\s*!\w+.*/)
+    // Remove trailing // !...comment (including regex and column range styles) but preserve preceding code
+    const m = text.match(/^(.*?)\s*\/\/\s*!\w+(?:\[\d+:\d+\]|(?:\/(?:[^\/\\]|\\.)+\/[gimsuy]*))?\s*(?:\([^)]*\)|.*)?\s*$/)
     return m ? m[1] : text
   }
-
-  for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i]
+  for (let raw of lines) {
     const trimmed = raw.trim()
+    // Handle standalone annotations on their own line: !name(query), !name, !name[range](query), !name/regex/ query, !name[/regex/] query
+    const standaloneMatch = trimmed.match(/^\s*\/\/\s*!(\w+)(?:\[(\d+):(\d+)\]|(?:\[?\/((?:[^\/\\]|\\.)+)\/([gimsuy]*)\]?))?\s*(?:\(([^)]*)\)|(.*))?\s*$/)
+    const inlineM = !standaloneMatch ? raw.match(/^(.*?)\/\/\s*!(\w+)(?:\[(\d+):(\d+)\]|(?:\[?\/((?:[^\/\\]|\\.)+)\/([gimsuy]*)\]?))?\s*(?:\(([^)]*)\)|(.*))?\s*$/) : null
 
-    // Check if line is ONLY a comment (line-level annotation)
-    const onlyMatch = trimmed.match(LINE_COMMENT_RE) || trimmed.match(LINE_SIMPLE_RE)
-    // Check if line has code + trailing inline annotation
-    const inlineM = raw.match(/\/\/\s*!(\w+)(?:\/((?:[^\/\\]|\\.)+)\/([gimsuy]*))?\s*(?:\(([^)]*)\))?\s*$/)
+    if (standaloneMatch) {
+      const [, name, colStart, colEnd, regexBody, regexFlags, parens, unparens] = standaloneMatch
+      let range = ''
+      let query = ''
+      
+      const val = parens !== undefined ? parens : (unparens || '').trim()
 
-    if (onlyMatch) {
-      const name = onlyMatch[1]
-      const range = onlyMatch[2] || '' // may be undefined for simple
-      const q = onlyMatch[3] || ''
+      if (val) {
+        if (val === 'start' || val === 'end' || val === '-' || val === '+' || val.match(/^(\+?\d+):(\+?\d+)$/) || val.match(/^(\+?\d+)$/)) {
+          range = val
+        } else {
+          query = val
+        }
+      }
 
       // Handle !name(start) / !name(end) pairs
       if (range === 'start') {
-        openPairs.set(name, { startLine: cleanIndex, query: q })
+        openPairs.set(name, { startLine: cleanIndex, query })
         continue
       }
       if (range === 'end') {
@@ -115,24 +115,37 @@ function parseAnnotations(code: string): ParsedAnnotations {
 
       // Diff shorthand: !diff(-) or !diff(+)
       if (name.toLowerCase() === 'diff') {
-        annotations.push({ name, query: q, startLine: cleanIndex, endLine: cleanIndex, range })
+        annotations.push({ name, query, startLine: cleanIndex, endLine: cleanIndex, range })
         continue
       }
 
-      // Numeric ranges like (1:5) or (+3) — relative to the comment line (next line = +1)
-      const ann: Annotation = { name, query: q, startLine: cleanIndex, range }
-      const rangeMatch = range.match(/^(\+?\d+):(\+?\d+)$/) || range.match(/^(\+?\d+)$/)
-      if (rangeMatch) {
-        if (rangeMatch[2]) {
-          ann.startLine = cleanIndex + parseInt(rangeMatch[1])
-          ann.endLine = cleanIndex + parseInt(rangeMatch[2])
-        } else {
-          // (+3) means lines starting at next line (cleanIndex) for 3 lines
+      const ann: Annotation = { name, query, startLine: cleanIndex, range }
+      
+      if (regexBody) {
+        try { ann.regex = new RegExp(regexBody, regexFlags || 'g') } catch {}
+      } else if (colStart && colEnd) {
+        ann.inlineStart = parseInt(colStart) - 1
+        ann.inlineEnd = parseInt(colEnd) - 1
+      }
+
+      if (range) {
+        const rangeMatch = range.match(/^(\+?\d+)(?::(\+?\d+))?$/)
+        if (rangeMatch && rangeMatch[2]) {
+          ann.startLine = cleanIndex + parseInt(rangeMatch[1]) - 1
+          ann.endLine = cleanIndex + parseInt(rangeMatch[2]) - 1
+        } else if (rangeMatch) {
           ann.startLine = cleanIndex
           ann.endLine = cleanIndex + parseInt(rangeMatch[1]) - 1
+        } else if (range === '+' || range === '-') {
+          ann.startLine = cleanIndex
+          ann.endLine = cleanIndex
         }
       } else {
-        // No numeric range, apply to next line only
+        const lowerName = name.toLowerCase()
+        if ((lowerName === 'fold' || lowerName === 'collapse') && range === '') {
+          openPairs.set(name, { startLine: cleanIndex, query })
+          continue
+        }
         ann.startLine = cleanIndex
         ann.endLine = cleanIndex
       }
@@ -140,29 +153,17 @@ function parseAnnotations(code: string): ParsedAnnotations {
       continue
     }
 
-    // Handle inline-column annotations on their own line: !name[10:30](query)
-    const inlineColMatch = trimmed.match(/^\s*\/\/\s*!(\w+)\[(\d+):(\d+)\]\s*(?:\(([^)]*)\))?\s*$/)
-    if (inlineColMatch) {
-      const [, name, start, end, query] = inlineColMatch
-      annotations.push({
-        name,
-        query: query || '',
-        startLine: cleanIndex, // applies to NEXT clean line
-        inlineStart: parseInt(start) - 1,
-        inlineEnd: parseInt(end) - 1,
-      })
-      continue
-    }
-
-    // Inline annotation: code ... // !name(query) or code ... // !name/regex/(query)
-    if (inlineM && raw.indexOf('//') > 0) {
-      const [, name, regexBody, regexFlags, query] = inlineM
-      const ann: Annotation = { name, query: query || '', startLine: cleanIndex }
+    if (inlineM && inlineM[1].trim().length > 0) {
+      const [, , name, colStart, colEnd, regexBody, regexFlags, parens, unparens] = inlineM
+      const val = parens !== undefined ? parens : (unparens || '').trim()
+      const ann: Annotation = { name, query: val, startLine: cleanIndex }
       if (regexBody) {
         try { ann.regex = new RegExp(regexBody, regexFlags || 'g') } catch {}
+      } else if (colStart && colEnd) {
+        ann.inlineStart = parseInt(colStart) - 1
+        ann.inlineEnd = parseInt(colEnd) - 1
       }
       annotations.push(ann)
-      // Strip the trailing comment from the clean line
       cleanLines.push(stripTrailingInlineComment(raw))
       cleanIndex++
       continue
@@ -182,8 +183,9 @@ function parseAnnotations(code: string): ParsedAnnotations {
     const color = ann.query || undefined
 
     const lowerName = ann.name.toLowerCase()
+    const isInlineRange = !!(ann.regex || (ann.inlineStart !== undefined && ann.inlineEnd !== undefined))
 
-    if (['border', 'mark', 'bg', 'focus', 'highlight', 'add', 'remove', 'diff', 'collapse', 'fold', 'wrap', 'classname'].includes(lowerName)) {
+    if (!isInlineRange && ['border', 'mark', 'bg', 'focus', 'highlight', 'add', 'remove', 'diff', 'collapse', 'fold', 'wrap', 'classname'].includes(lowerName)) {
       for (let i = ann.startLine; i <= endLine && i < cleanLines.length; i++) {
         if (!lineAnnotations.has(i)) lineAnnotations.set(i, [])
         let t = lowerName
@@ -192,7 +194,7 @@ function parseAnnotations(code: string): ParsedAnnotations {
         }
         lineAnnotations.get(i)!.push({ type: t, color, inlineStart: ann.inlineStart, inlineEnd: ann.inlineEnd, regex: ann.regex, startLine: ann.startLine, endLine })
       }
-    } else if (['callout', 'tooltip', 'link', 'footnote', 'label', 'style'].includes(lowerName)) {
+    } else if (!isInlineRange && ['callout', 'tooltip', 'link', 'footnote', 'label', 'style'].includes(lowerName)) {
       // Inline annotations apply to the target line; if regex/column, apply to that line, otherwise next line
       const targetLine = ann.startLine
       if (targetLine < cleanLines.length) {
@@ -203,9 +205,15 @@ function parseAnnotations(code: string): ParsedAnnotations {
       const targetLine = ann.startLine
       if (targetLine < cleanLines.length && ann.regex.test(cleanLines[targetLine])) {
         if (!lineAnnotations.has(targetLine)) lineAnnotations.set(targetLine, [])
-        lineAnnotations.get(targetLine)!.push({ type: lowerName, color })
+        lineAnnotations.get(targetLine)!.push({ type: lowerName, color, text: color, regex: ann.regex })
       }
       ann.regex.lastIndex = 0
+    } else if (isInlineRange) {
+      const targetLine = ann.startLine
+      if (targetLine < cleanLines.length) {
+        if (!lineAnnotations.has(targetLine)) lineAnnotations.set(targetLine, [])
+        lineAnnotations.get(targetLine)!.push({ type: lowerName, color, text: color, inlineStart: ann.inlineStart, inlineEnd: ann.inlineEnd, regex: ann.regex })
+      }
     }
   }
 
@@ -447,10 +455,13 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           min-height: 1.4em;
           position: relative;
           z-index: 1;
+          overflow: visible;
         }
         .ch-line:hover {
-          z-index: 50;
+          z-index: 100;
         }
+        /* Ensure code block container doesn't clip tooltip/footnote popups */
+        .ch-container { overflow: visible !important; }
 
         @keyframes ch-focus-border-in {
           0% { border-left-width: 0; opacity: 0; }
@@ -467,17 +478,37 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           animation: ch-focus-border-in 0.4s ease both, ch-focus-glow 3s ease-in-out infinite !important;
         }
 
-        @keyframes ch-border-glow {
-          0%, 100% { box-shadow: none; }
-          50% { box-shadow: inset 0 0 16px color-mix(in srgb, var(--ch-ann-color, var(--accent)) 8%, transparent); }
-        }
-        .ch-line-border {
+        /* Border: grouped box (first / mid / last / single) */
+        .ch-line-border-single {
           border: 1px solid var(--ch-ann-color, var(--accent)) !important;
           border-left-width: 3px !important;
           border-radius: 6px;
           margin: 2px 8px;
-          box-shadow: 0 0 0 1px var(--ch-ann-color, var(--accent)) !important;
-          animation: ch-border-glow 3s ease-in-out infinite !important;
+        }
+        .ch-line-border-first {
+          border-top: 1px solid var(--ch-ann-color, var(--accent)) !important;
+          border-left: 3px solid var(--ch-ann-color, var(--accent)) !important;
+          border-right: 1px solid var(--ch-ann-color, var(--accent)) !important;
+          border-bottom: none !important;
+          border-top-left-radius: 6px;
+          border-top-right-radius: 6px;
+          margin: 2px 8px 0 8px;
+        }
+        .ch-line-border-mid {
+          border-left: 3px solid var(--ch-ann-color, var(--accent)) !important;
+          border-right: 1px solid var(--ch-ann-color, var(--accent)) !important;
+          border-top: none !important;
+          border-bottom: none !important;
+          margin: 0 8px;
+        }
+        .ch-line-border-last {
+          border-bottom: 1px solid var(--ch-ann-color, var(--accent)) !important;
+          border-left: 3px solid var(--ch-ann-color, var(--accent)) !important;
+          border-right: 1px solid var(--ch-ann-color, var(--accent)) !important;
+          border-top: none !important;
+          border-bottom-left-radius: 6px;
+          border-bottom-right-radius: 6px;
+          margin: 0 8px 2px 8px;
         }
 
         @keyframes ch-bg-pulse {
@@ -486,23 +517,22 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         }
         .ch-line-bg {
           background-color: var(--ch-bg-color) !important;
-          animation: ch-bg-pulse 3s ease-in-out infinite !important;
         }
 
         .ch-line-mark {
           background-color: var(--ch-bg-color) !important;
-          border-radius: 4px;
-          box-shadow: inset 0 0 0 1px var(--ch-ann-color, var(--accent)) !important;
+          border-left: 3px solid var(--ch-ann-color, var(--accent)) !important;
+          border-radius: 0;
         }
 
         .ch-line-diff-add {
-          background-color: rgba(34, 197, 94, 0.08) !important;
+          background-color: rgba(34, 197, 94, 0.15) !important;
           border-left-color: #22c55e !important;
           border-left-width: 3px !important;
           border-left-style: solid !important;
         }
         .ch-line-diff-remove {
-          background-color: rgba(239, 68, 68, 0.08) !important;
+          background-color: rgba(239, 68, 68, 0.15) !important;
           border-left-color: #ef4444 !important;
           border-left-width: 3px !important;
           border-left-style: solid !important;
@@ -511,12 +541,6 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         .ch-line-diff-remove .text-xs {
           text-decoration: line-through;
           opacity: 0.6;
-        }
-
-        .ch-line-mark {
-          background-color: var(--ch-bg-color) !important;
-          border-radius: 2px;
-          margin: 0 4px;
         }
 
         .ch-line-callout { position: relative; }
@@ -553,34 +577,83 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           border-bottom: 1px dotted var(--accent);
           cursor: help;
           position: relative;
+          display: inline-block;
         }
         .ch-tooltip-popup {
           position: absolute;
-          top: calc(100% + 8px);
+          bottom: calc(100% + 10px);
           left: 50%;
-          transform: translateX(-50%) scale(0.92);
-          padding: 6px 10px;
+          transform: translateX(-50%) translateY(4px);
+          padding: 8px 12px;
           border-radius: 6px;
           font-size: 11px;
           font-family: inherit;
-          white-space: nowrap;
+          max-width: 280px;
+          width: max-content;
           pointer-events: none;
           opacity: 0;
           transition: opacity 0.18s ease, transform 0.18s ease;
-          z-index: 50;
+          z-index: 100;
           backdrop-filter: blur(12px);
+          white-space: normal;
+          background: var(--accent);
+          color: #fff;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
         .ch-tooltip-trigger:hover .ch-tooltip-popup {
           opacity: 1;
-          transform: translateX(-50%) scale(1);
+          transform: translateX(-50%) translateY(0);
         }
-        .ch-tooltip-popup::after {
-          content: '';
+        .ch-tooltip-arrow {
           position: absolute;
-          bottom: 100%;
+          top: 100%;
           left: 50%;
           transform: translateX(-50%);
-          border: 5px solid transparent;
+          width: 0;
+          height: 0;
+          border: 6px solid transparent;
+          border-top-color: var(--accent);
+        }
+
+        /* Footnote */
+        .ch-footnote-trigger {
+          position: relative;
+          cursor: help;
+          border-bottom: 1px dashed currentColor;
+        }
+        .ch-footnote-popup {
+          position: absolute;
+          bottom: calc(100% + 10px);
+          left: 50%;
+          transform: translateX(-50%) translateY(4px);
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-family: inherit;
+          max-width: 280px;
+          width: max-content;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.18s ease, transform 0.18s ease;
+          z-index: 100;
+          backdrop-filter: blur(12px);
+          white-space: normal;
+          background: var(--accent);
+          color: #fff;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .ch-footnote-trigger:hover .ch-footnote-popup {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+        .ch-footnote-popup::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 6px solid transparent;
+          border-top-color: var(--accent);
         }
 
         /* Callout (Always visible, inline next to token) */
@@ -742,20 +815,26 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                 for (const a of anns) {
                   if (a.type === 'focus') cls += ' ch-line-focused'
                   else if (a.type === 'border') {
-                    cls += ' ch-line-border'
+                    // Grouped border: determine position within range
+                    const bStart = a.startLine ?? i
+                    const bEnd = a.endLine ?? i
+                    if (bStart === bEnd) cls += ' ch-line-border-single'
+                    else if (i === bStart) cls += ' ch-line-border-first'
+                    else if (i === bEnd) cls += ' ch-line-border-last'
+                    else cls += ' ch-line-border-mid'
                     borderLeftColor = getLineColor(a.color)
                   }
                   else if (a.type === 'highlight') cls += ' ch-line-focused'
                   else if (a.type === 'mark') {
                     cls += ' ch-line-mark'
-                    bgColor = getLineColor(a.color) + '30'
-                    bgColorHover = getLineColor(a.color) + '40'
+                    bgColor = `color-mix(in srgb, ${getLineColor(a.color)} 25%, transparent)`
+                    bgColorHover = `color-mix(in srgb, ${getLineColor(a.color)} 35%, transparent)`
                     borderLeftColor = getLineColor(a.color)
                   }
                   else if (a.type === 'bg') {
                     cls += ' ch-line-bg'
-                    bgColor = getLineColor(a.color) + '25'
-                    bgColorHover = getLineColor(a.color) + '35'
+                    bgColor = `color-mix(in srgb, ${getLineColor(a.color)} 25%, transparent)`
+                    bgColorHover = `color-mix(in srgb, ${getLineColor(a.color)} 35%, transparent)`
                   }
                   else if (a.type === 'add') {
                     cls += ' ch-line-diff-add'
@@ -776,6 +855,72 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   }
                 }
 
+                // Inline annotations at LINE LEVEL (no regex, no column range):
+                // treat the whole visible text on the line as the trigger.
+                // Used by: !tooltip(text), !footnote(text), !label(text), !style(...), !link(url), !callout(text), !classname(class)
+                const lineAnns = anns.filter(a =>
+                  ['tooltip', 'footnote', 'label', 'style', 'link', 'callout', 'classname'].includes(a.type)
+                  && !a.regex
+                  && a.inlineStart === undefined
+                  && a.inlineEnd === undefined
+                )
+                lineAnns.forEach(a => {
+                  // Apply once to whole visible text (strip tags, wrap, reinsert)
+                  const parts = lineHtml.split(/(<[^>]+>)/g)
+                  // Collect visible text
+                  const visibleParts: { idx: number; text: string }[] = []
+                  for (let p = 0; p < parts.length; p++) {
+                    if (!parts[p].startsWith('<')) visibleParts.push({ idx: p, text: parts[p] })
+                  }
+                  if (visibleParts.length === 0) return
+                  let whole = visibleParts.map(v => v.text).join('')
+                  if (!whole.trim()) return
+
+                  let wrapped: string
+                  if (a.type === 'tooltip') {
+                    const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
+                    const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+                    const color = isDark ? '#e6edf3' : '#1f2328'
+                    const arrowColor = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
+                    wrapped = `<span class="ch-tooltip-trigger">${whole}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                  } else if (a.type === 'footnote') {
+                    footnoteCounter++
+                    const num = footnoteCounter
+                    footnotes.push({ num, text: a.text || '' })
+                    const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
+                    const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+                    const color = isDark ? '#e6edf3' : '#1f2328'
+                    wrapped = `<span class="ch-footnote-trigger">${whole}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35);border-bottom-color:${bg}">${a.text || ''}</span></span>`
+                  } else if (a.type === 'link') {
+                    const url = a.text || '#'
+                    wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${whole}</a>`
+                  } else if (a.type === 'callout') {
+                    const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
+                    const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    const color = isDark ? '#e6edf3' : '#1f2328'
+                    wrapped = `<span class="ch-callout-target">${whole}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
+                  } else if (a.type === 'label') {
+                    const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
+                    const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    wrapped = `<span class="ch-label-wrapper">${whole}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                  } else if (a.type === 'style') {
+                    wrapped = `<span style="${a.text || ''}">${whole}</span>`
+                  } else {
+                    // classname
+                    wrapped = `<span class="${a.color || ''}">${whole}</span>`
+                  }
+
+                  // Replace visible parts with the wrapped whole, keep HTML tags intact
+                  // Strategy: replace the first visible part with wrapped, empty the rest
+                  if (visibleParts.length > 0) {
+                    parts[visibleParts[0].idx] = wrapped
+                    for (let v = 1; v < visibleParts.length; v++) {
+                      parts[visibleParts[v].idx] = ''
+                    }
+                  }
+                  lineHtml = parts.join('')
+                })
+
                 // Inline annotations with regex match a token in the line and wrap it
                 const inlineAnns = anns.filter(a => ['classname', 'callout', 'tooltip', 'link', 'footnote', 'label', 'style'].includes(a.type) && a.regex)
                 inlineAnns.forEach(a => {
@@ -790,7 +935,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       if (isCallout) {
                         wrapper = (m) => `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${m}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
                       } else {
-                        wrapper = (m) => `<span class="ch-tooltip-trigger">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.3)">${a.text || ''}<span style="position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:${arrowColor}"></span></span></span>`
+                        wrapper = (m) => `<span class="ch-tooltip-trigger">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.3)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
                       }
                     } else if (a.type === 'link') {
                       const url = a.text || '#'
@@ -799,7 +944,10 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       footnoteCounter++
                       const num = footnoteCounter
                       footnotes.push({ num, text: a.text || '' })
-                      wrapper = (m) => `<span class="ch-footnote-marker">${m}<sup class="ch-footnote-sup">[${num}]</sup></span>`
+                      const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
+                      const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+                      const color = isDark ? '#e6edf3' : '#1f2328'
+                      wrapper = (m) => `<span class="ch-footnote-trigger">${m}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}</span></span>`
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                       const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
@@ -840,12 +988,29 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                         const after = parts[p].slice(localEnd)
                         let wrapped = target
                         if (a.type === 'mark' || a.type === 'highlight') {
-                          wrapped = `<span style="background:${getLineColor(a.color)}40;border-radius:3px;padding:0 2px">${target}</span>`
-                        } else if (a.type === 'callout' || a.type === 'tooltip') {
+                          wrapped = `<span style="background:color-mix(in srgb, ${getLineColor(a.color)} 25%, transparent);border-radius:3px;padding:0 2px">${target}</span>`
+                        } else if (a.type === 'callout') {
                           const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
                           const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
                           const color = isDark ? '#e6edf3' : '#1f2328'
-                          wrapped = `<span class="ch-callout-target">${target}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                          wrapped = `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${target}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                        } else if (a.type === 'tooltip') {
+                          const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
+                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                          const color = isDark ? '#e6edf3' : '#1f2328'
+                          const arrowColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                          wrapped = `<span class="ch-tooltip-trigger">${target}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.3)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                        } else if (a.type === 'link') {
+                          const url = a.text || '#'
+                          wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${target}</a>`
+                        } else if (a.type === 'footnote') {
+                          footnoteCounter++
+                          const num = footnoteCounter
+                          footnotes.push({ num, text: a.text || '' })
+                          const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
+                          const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+                          const color = isDark ? '#e6edf3' : '#1f2328'
+                          wrapped = `<span class="ch-footnote-trigger">${target}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}</span></span>`
                         } else if (a.type === 'label') {
                           const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                           const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
@@ -867,28 +1032,102 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
               const isFocused = anns?.some(a => a.type === 'focus' || a.type === 'highlight')
               const isDimmed = hasFocus && !isFocused
 
-              if (isCollapsed) {
-                const collapseAnn = anns?.find(a => a.type === 'collapse' || a.type === 'fold')
-                if (collapseAnn && i === collapseAnn.startLine) {
-                  const rangeKey = `${collapseAnn.startLine}-${collapseAnn.endLine}`
-                  const linesHidden = (collapseAnn.endLine ?? collapseAnn.startLine!) - collapseAnn.startLine! + 1
-                  return (
-                    <div 
-                      key={`collapse-${i}`} 
-                      className="ch-collapse-bar flex items-center justify-center my-2 mx-4 cursor-pointer hover:bg-[var(--accent)] hover:bg-opacity-10 transition-colors rounded-lg py-1.5 border border-dashed border-[var(--border)]"
-                      onClick={() => setUnfoldedRanges([...unfoldedRanges, rangeKey])}
-                    >
-                      <span className="text-[10px] text-[var(--text-secondary)] font-bold tracking-widest uppercase">
-                        {linesHidden} lines collapsed
-                      </span>
-                    </div>
-                  )
-                }
-                return null // Completely remove from layout to prevent any gaps
-              }
-              const collapseAnnForFold = anns?.find(a => a.type === 'collapse' || a.type === 'fold')
-              const isUnfoldedFirstLine = collapseAnnForFold && i === collapseAnnForFold.startLine && unfoldedRanges.includes(`${collapseAnnForFold.startLine}-${collapseAnnForFold.endLine}`)
+              // --- VS Code-style fold/collapse ---
+              const collapseAnn = anns?.find(a => a.type === 'collapse' || a.type === 'fold')
+              const isFoldFirstLine = collapseAnn && i === collapseAnn.startLine
+              const rangeKey = collapseAnn ? `${collapseAnn.startLine}-${collapseAnn.endLine}` : ''
+              const isFolded = isCollapsed // this line is in a folded range and NOT unfolded
+              const isUnfolded = collapseAnn && unfoldedRanges.includes(rangeKey)
 
+              // If this line is inside a folded range but NOT the first line, skip it entirely
+              if (isFolded && !isFoldFirstLine) {
+                return null
+              }
+
+              // First line of a folded range: show line + ellipsis badge
+              if (isFolded && isFoldFirstLine) {
+                const linesHidden = (collapseAnn!.endLine ?? collapseAnn!.startLine!) - collapseAnn!.startLine!
+                return (
+                  <div
+                    key={i}
+                    className={cls}
+                    style={{
+                      animation: linesRevealed
+                        ? isDimmed
+                          ? `ch-line-dim-reveal 0.3s ${0.05 + i * 0.02}s ease both`
+                          : `ch-line-reveal 0.4s ${0.05 + i * 0.025}s cubic-bezier(0.16, 1, 0.3, 1) both`
+                        : 'none',
+                      borderLeftColor,
+                      background: bgColor,
+                      whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+                      wordBreak: isWrapped ? 'break-word' : 'normal',
+                      '--ch-ann-color': borderLeftColor !== 'transparent' ? borderLeftColor : undefined,
+                      '--ch-bg-color': bgColor,
+                      '--ch-bg-color-hover': bgColorHover,
+                    } as React.CSSProperties}
+                  >
+                    <span
+                      className="ch-fold-chevron"
+                      onClick={() => setUnfoldedRanges([...unfoldedRanges, rangeKey])}
+                      title={`Expand ${linesHidden} hidden lines`}
+                      style={{
+                        display: 'inline-block',
+                        width: '2rem',
+                        textAlign: 'right',
+                        marginRight: '1rem',
+                        color: 'var(--accent)',
+                        userSelect: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        opacity: 0.7,
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+                    >
+                      ▶
+                    </span>
+                    <span
+                      className="text-xs font-mono select-text"
+                      dangerouslySetInnerHTML={{ __html: lineHtml || '&nbsp;' }}
+                    />
+                    <span
+                      className="ch-fold-ellipsis"
+                      onClick={() => setUnfoldedRanges([...unfoldedRanges, rangeKey])}
+                      title={`Expand ${linesHidden} hidden lines`}
+                      style={{
+                        display: 'inline-block',
+                        marginLeft: '8px',
+                        padding: '0 6px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        letterSpacing: '1px',
+                        cursor: 'pointer',
+                        background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+                        color: isDark ? '#8b949e' : '#656d76',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                        userSelect: 'none',
+                        lineHeight: '18px',
+                        verticalAlign: 'middle',
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)'
+                        e.currentTarget.style.color = isDark ? '#c9d1d9' : '#1f2328'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
+                        e.currentTarget.style.color = isDark ? '#8b949e' : '#656d76'
+                      }}
+                    >
+                      ⋯ {linesHidden} lines
+                    </span>
+                  </div>
+                )
+              }
+
+              // Normal line render (including unfolded fold lines)
               return (
                 <div
                   key={i}
@@ -908,37 +1147,38 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     '--ch-bg-color-hover': bgColorHover,
                   } as React.CSSProperties}
                 >
-                  <span style={{ display: 'inline-block', width: '2rem', textAlign: 'right', marginRight: '1rem', color: isDark ? '#6e7681' : '#8c959f', userSelect: 'none', opacity: isDimmed ? 0.5 : 1 }}>
-                    {i + 1}
-                  </span>
+                  {/* Gutter: ▼ chevron for unfold-first-line, else line number */}
+                  {isFoldFirstLine && isUnfolded ? (
+                    <span
+                      className="ch-fold-chevron"
+                      onClick={() => setUnfoldedRanges(unfoldedRanges.filter(r => r !== rangeKey))}
+                      title="Fold lines"
+                      style={{
+                        display: 'inline-block',
+                        width: '2rem',
+                        textAlign: 'right',
+                        marginRight: '1rem',
+                        color: 'var(--accent)',
+                        userSelect: 'none',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        opacity: 0.7,
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+                    >
+                      ▼
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-block', width: '2rem', textAlign: 'right', marginRight: '1rem', color: isDark ? '#6e7681' : '#8c959f', userSelect: 'none', opacity: isDimmed ? 0.5 : 1 }}>
+                      {i + 1}
+                    </span>
+                  )}
                   <span
                     className="text-xs font-mono select-text flex-1"
                     dangerouslySetInnerHTML={{ __html: lineHtml || '&nbsp;' }}
                   />
-                  {isUnfoldedFirstLine && (
-                    <span 
-                      className="ml-auto text-[10px] text-[var(--text-secondary)] opacity-50 hover:opacity-100 cursor-pointer px-2 py-0.5 rounded border border-[var(--border)] transition-opacity uppercase font-bold"
-                      onClick={() => setUnfoldedRanges(unfoldedRanges.filter(r => r !== `${collapseAnnForFold.startLine}-${collapseAnnForFold.endLine}`))}
-                      title="Fold lines"
-                    >
-                      Fold
-                    </span>
-                  )}
-                  {anns?.filter(a => (a.type === 'callout' || a.type === 'tooltip' || a.type === 'label') && !a.regex && a.inlineStart === undefined).map((a, j) => (
-                    <span
-                      key={j}
-                      className="ch-callout-tag"
-                      style={{
-                        color: getLineColor(a.color),
-                        background: isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)',
-                        border: `1px solid ${getLineColor(a.color || a.text)}50`,
-                        opacity: linesRevealed ? 1 : 0,
-                        animation: linesRevealed ? `ch-callout-in 0.4s ${0.2 + i * 0.03}s ease forwards` : 'none',
-                      }}
-                    >
-                      {a.text}
-                    </span>
-                  ))}
                 </div>
               )
             })
