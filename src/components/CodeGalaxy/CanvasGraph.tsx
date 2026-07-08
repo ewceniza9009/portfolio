@@ -45,7 +45,7 @@ function easeInOut(t: number): number {
 // === Programmer Workstation Builder ===
 // Creates a desk, laptop, lamp, and apparatus — all in a rotated group facing the spectator
 function createProgrammerWorkstation(parentGroup: THREE.Group) {
-  const WORKSTATION_POS = new THREE.Vector3(0, 55, -20);
+  const WORKSTATION_POS = new THREE.Vector3(0, 45, -20);
 
   // Create a pivot group: everything is built in local coords, then the whole thing rotates
   const wsGroup = new THREE.Group();
@@ -72,7 +72,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   const laptopBaseGeo = new THREE.BoxGeometry(6, 0.25, 4);
   const laptopBaseMat = new THREE.MeshBasicMaterial({ color: 0x111118, transparent: true, opacity: 0.9 });
   const laptopBase = new THREE.Mesh(laptopBaseGeo, laptopBaseMat);
-  laptopBase.position.set(0, 0.45, 0.5);
+  laptopBase.position.set(1, 0.45, 3);
   wsGroup.add(laptopBase);
 
   // Screen (holographic glow)
@@ -82,7 +82,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     side: THREE.DoubleSide, blending: THREE.AdditiveBlending
   });
   const laptopScreen = new THREE.Mesh(laptopScreenGeo, laptopScreenMat);
-  laptopScreen.position.set(0, 2.4, -1.4);
+  laptopScreen.position.set(1, 2.4, 1);
   laptopScreen.rotation.x = -0.15;
   wsGroup.add(laptopScreen);
 
@@ -93,7 +93,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     blending: THREE.AdditiveBlending, depthWrite: false
   }));
   screenGlow.scale.set(12, 8, 1);
-  screenGlow.position.set(0, 2.5, -2);
+  screenGlow.position.set(1, 2.5, -0.5);
   wsGroup.add(screenGlow);
 
   // Screen code lines
@@ -107,7 +107,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
       blending: THREE.AdditiveBlending, side: THREE.DoubleSide
     });
     const line = new THREE.Mesh(lineGeo, lineMat);
-    line.position.set(-1.5 + Math.random() * 3, 1.0 + i * 0.35, -1.35);
+    line.position.set(-0.5 + Math.random() * 3, 1.0 + i * 0.35, 1.05);
     wsGroup.add(line);
   }
 
@@ -449,24 +449,24 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       const cx = bhSize / 2, cy = bhSize / 2;
       const ehR = 140; // event horizon radius
 
-      // 1. Outer gravitational lensing glow (warm orange-gold halo)
+      // 1. Outer gravitational lensing glow (warm orange-gold halo) — brighter for visibility
       const lensGrad = bhCtx.createRadialGradient(cx, cy, ehR + 40, cx, cy, 500);
-      lensGrad.addColorStop(0, 'rgba(255, 180, 60, 0.22)');
-      lensGrad.addColorStop(0.3, 'rgba(255, 140, 40, 0.12)');
-      lensGrad.addColorStop(0.7, 'rgba(200, 100, 30, 0.05)');
+      lensGrad.addColorStop(0, 'rgba(255, 180, 60, 0.45)');
+      lensGrad.addColorStop(0.3, 'rgba(255, 140, 40, 0.25)');
+      lensGrad.addColorStop(0.7, 'rgba(200, 100, 30, 0.10)');
       lensGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       bhCtx.fillStyle = lensGrad;
       bhCtx.fillRect(0, 0, bhSize, bhSize);
 
-      // 2. Accretion disk — thin bright ellipse across the center
+      // 2. Accretion disk — brighter for visibility
       // Outer disk (deep red-orange)
       bhCtx.save();
       bhCtx.beginPath();
       bhCtx.ellipse(cx, cy, 480, 45, 0, 0, Math.PI * 2);
       const diskGrad1 = bhCtx.createRadialGradient(cx, cy, 0, cx, cy, 480);
-      diskGrad1.addColorStop(0, 'rgba(255, 220, 150, 0.9)');
-      diskGrad1.addColorStop(0.3, 'rgba(255, 180, 80, 0.8)');
-      diskGrad1.addColorStop(0.6, 'rgba(255, 120, 30, 0.5)');
+      diskGrad1.addColorStop(0, 'rgba(255, 220, 150, 1.0)');
+      diskGrad1.addColorStop(0.3, 'rgba(255, 180, 80, 0.9)');
+      diskGrad1.addColorStop(0.6, 'rgba(255, 120, 30, 0.6)');
       diskGrad1.addColorStop(1, 'rgba(180, 60, 10, 0)');
       bhCtx.fillStyle = diskGrad1;
       bhCtx.fill();
@@ -474,32 +474,31 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       bhCtx.beginPath();
       bhCtx.ellipse(cx, cy, 280, 22, 0, 0, Math.PI * 2);
       const diskGrad2 = bhCtx.createRadialGradient(cx, cy, 0, cx, cy, 280);
-      diskGrad2.addColorStop(0, 'rgba(200, 220, 255, 0.9)');
-      diskGrad2.addColorStop(0.5, 'rgba(255, 200, 140, 0.7)');
+      diskGrad2.addColorStop(0, 'rgba(220, 240, 255, 1.0)');
+      diskGrad2.addColorStop(0.5, 'rgba(255, 210, 150, 0.8)');
       diskGrad2.addColorStop(1, 'rgba(255, 140, 60, 0)');
       bhCtx.fillStyle = diskGrad2;
       bhCtx.fill();
       bhCtx.restore();
 
       // 3. Gravitationally lensed disk — wraps OVER the top of the event horizon
-      //    This is the iconic Interstellar Gargantua visual
       bhCtx.save();
       bhCtx.beginPath();
       bhCtx.arc(cx, cy, ehR + 12, Math.PI + 0.2, -0.2, false);
       const topGrad = bhCtx.createLinearGradient(cx - ehR, cy, cx + ehR, cy);
       topGrad.addColorStop(0, 'rgba(255, 160, 50, 0)');
-      topGrad.addColorStop(0.15, 'rgba(255, 200, 100, 0.7)');
-      topGrad.addColorStop(0.5, 'rgba(255, 250, 200, 1)'); // Brighter core
-      topGrad.addColorStop(0.85, 'rgba(255, 200, 100, 0.7)');
+      topGrad.addColorStop(0.15, 'rgba(255, 200, 100, 0.85)');
+      topGrad.addColorStop(0.5, 'rgba(255, 250, 200, 1.0)');
+      topGrad.addColorStop(0.85, 'rgba(255, 200, 100, 0.85)');
       topGrad.addColorStop(1, 'rgba(255, 160, 50, 0)');
       bhCtx.strokeStyle = topGrad;
-      bhCtx.lineWidth = 14;
+      bhCtx.lineWidth = 16;
       bhCtx.stroke();
-      // Dimmer second lensed arc
+      // Second lensed arc
       bhCtx.beginPath();
       bhCtx.arc(cx, cy, ehR + 30, Math.PI + 0.3, -0.3, false);
-      bhCtx.strokeStyle = 'rgba(255, 180, 80, 0.3)';
-      bhCtx.lineWidth = 6;
+      bhCtx.strokeStyle = 'rgba(255, 180, 80, 0.45)';
+      bhCtx.lineWidth = 8;
       bhCtx.stroke();
       bhCtx.restore();
 
@@ -509,20 +508,20 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       bhCtx.arc(cx, cy, ehR + 12, 0.2, Math.PI - 0.2, false);
       const botGrad = bhCtx.createLinearGradient(cx - ehR, cy, cx + ehR, cy);
       botGrad.addColorStop(0, 'rgba(255, 140, 40, 0)');
-      botGrad.addColorStop(0.15, 'rgba(255, 170, 80, 0.5)');
-      botGrad.addColorStop(0.5, 'rgba(255, 220, 160, 0.85)'); // Brighter core
-      botGrad.addColorStop(0.85, 'rgba(255, 170, 80, 0.5)');
+      botGrad.addColorStop(0.15, 'rgba(255, 170, 80, 0.65)');
+      botGrad.addColorStop(0.5, 'rgba(255, 220, 160, 0.95)');
+      botGrad.addColorStop(0.85, 'rgba(255, 170, 80, 0.65)');
       botGrad.addColorStop(1, 'rgba(255, 140, 40, 0)');
       bhCtx.strokeStyle = botGrad;
-      bhCtx.lineWidth = 9;
+      bhCtx.lineWidth = 12;
       bhCtx.stroke();
       bhCtx.restore();
 
-      // 5. Photon ring — ultra-thin bright ring at the edge of no return
+      // 5. Photon ring — bright ring at the edge of no return
       bhCtx.beginPath();
       bhCtx.arc(cx, cy, ehR + 3, 0, Math.PI * 2);
-      bhCtx.strokeStyle = 'rgba(255, 230, 160, 0.85)';
-      bhCtx.lineWidth = 2;
+      bhCtx.strokeStyle = 'rgba(255, 230, 160, 1.0)';
+      bhCtx.lineWidth = 3;
       bhCtx.stroke();
 
       // 6. Event Horizon — absolute blackness
@@ -543,8 +542,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
       jetUp.position.set(0, 700, 0);
       group.add(jetUp);
 
-      // Position deeply BEHIND the pillars of creation
-      group.position.set(0, 200, -800);
+      // Position behind the pillars but visible
+      group.position.set(0, 80, -500);
       return group;
     };
 
@@ -1351,12 +1350,13 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(funct
         if (hits.length > 0) {
           const targetPos = hitbox.position.clone();
           const startPos = c.camera.position.clone();
-          const endPos = targetPos.clone().add(new THREE.Vector3(15, 3, 25)); // Offset from the torso
+          // Top-down view: camera high above, looking down at programmer with pillars visible behind
+          const endPos = targetPos.clone().add(new THREE.Vector3(0, 50, 35));
           const startTarget = c.controls.target.clone();
           const endTarget = targetPos.clone();
           let progress = 0;
           const travelAnim = () => {
-            progress += 0.02;
+            progress += 0.015;
             if (progress >= 1) {
               c.camera.position.copy(endPos);
               c.controls.target.copy(endTarget);
