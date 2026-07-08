@@ -17,6 +17,8 @@ import {
   Copy,
   Check,
   Network,
+  Music,
+  VolumeX,
 } from "lucide-react";
 import { getSafeItem, setSafeItem } from "../utils/storage";
 import { getApiUrl } from "../utils/api";
@@ -1364,6 +1366,80 @@ export default function FloatingControl() {
   >(null);
   const menuContainerRef = useRef<HTMLDivElement>(null);
 
+  // ── Music player — plays all tracks from /audios on loop, on by default ──
+  const PLAYLIST = [
+    "/audios/bwy-sv-lofi1.mp3",
+    "/audios/bwy-sv-lofi2.mp3",
+    "/audios/home.mp3",
+    "/audios/luke-jzz1.mkv",
+    "/audios/ss-alxhtcs1.MP3",
+  ];
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [trackIndex, setTrackIndex] = useState(0);
+  const [musicOn, setMusicOn] = useState(true);
+
+  // Init audio element once
+  useEffect(() => {
+    const audio = new Audio(PLAYLIST[0]);
+    audio.loop = false;
+    audio.volume = 0.55;
+    audio.preload = "auto";
+    audioRef.current = audio;
+    // Autoplay on first user gesture (browsers block pure autoplay)
+    const startPlayback = () => {
+      audio.play().catch(() => {
+        /* autoplay blocked — wait for user interaction */
+      });
+      window.removeEventListener("pointerdown", startPlayback);
+      window.removeEventListener("keydown", startPlayback);
+      window.removeEventListener("touchstart", startPlayback);
+    };
+    window.addEventListener("pointerdown", startPlayback, { once: false });
+    window.addEventListener("keydown", startPlayback, { once: false });
+    window.addEventListener("touchstart", startPlayback, { once: false });
+    // Try immediate autoplay anyway (some browsers allow it)
+    audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.src = "";
+      window.removeEventListener("pointerdown", startPlayback);
+      window.removeEventListener("keydown", startPlayback);
+      window.removeEventListener("touchstart", startPlayback);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When track changes, swap src
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.src = PLAYLIST[trackIndex];
+    if (musicOn) audio.play().catch(() => {});
+  }, [trackIndex, musicOn]);
+
+  // Play/pause based on musicOn
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (musicOn) audio.play().catch(() => {});
+    else audio.pause();
+  }, [musicOn]);
+
+  // Advance to next track when one ends → loops through playlist
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onEnded = () => {
+      setTrackIndex((i) => (i + 1) % PLAYLIST.length);
+    };
+    audio.addEventListener("ended", onEnded);
+    return () => audio.removeEventListener("ended", onEnded);
+  }, []);
+
+  const toggleMusic = useCallback(() => {
+    setMusicOn((p) => !p);
+  }, []);
+
   useEffect(() => {
     document.body.dataset.fabActive = mode === "menu" ? "true" : "false";
     document.body.dataset.windowActive =
@@ -1480,6 +1556,19 @@ export default function FloatingControl() {
             className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
           >
             <button
+              onClick={() => setMode("codegalaxy")}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+              style={{
+                background:
+                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                borderColor:
+                  "color-mix(in srgb, var(--border) 150%, transparent)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <Network size={14} /> Code Galaxy
+            </button>
+            <button
               onClick={() => setMode("terminal")}
               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
@@ -1520,18 +1609,33 @@ export default function FloatingControl() {
               <MousePointer2 size={14} /> Cursor
             </button>
             <button
-              onClick={() => setMode("codegalaxy")}
+              onClick={toggleMusic}
               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
               style={{
                 background:
                   "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor:
-                  "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: "var(--text-secondary)",
+                borderColor: musicOn
+                  ? "var(--accent)"
+                  : "color-mix(in srgb, var(--border) 150%, transparent)",
+                color: musicOn ? "var(--accent)" : "var(--text-muted)",
               }}
             >
-              <Network size={14} /> Code Galaxy
+              {musicOn ? (
+                <>
+                  <Music size={14} /> Music On
+                  <span className="inline-flex gap-0.5 items-end ml-1">
+                    <span className="w-0.5 bg-current rounded-full" style={{ height: "6px", animation: "musicBar 0.6s ease-in-out infinite alternate" }} />
+                    <span className="w-0.5 bg-current rounded-full" style={{ height: "10px", animation: "musicBar 0.9s ease-in-out infinite alternate" }} />
+                    <span className="w-0.5 bg-current rounded-full" style={{ height: "8px", animation: "musicBar 0.7s ease-in-out infinite alternate" }} />
+                  </span>
+                </>
+              ) : (
+                <>
+                  <VolumeX size={14} /> Music Off
+                </>
+              )}
             </button>
+            <style>{`@keyframes musicBar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }`}</style>
             <div
               className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
               style={{
