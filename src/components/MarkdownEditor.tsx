@@ -88,7 +88,8 @@ const defineThemes: BeforeMount = (monaco) => {
 const getTheme = () => {
   if (typeof document !== "undefined") {
     // Check if the body or html has a light theme class or data attribute
-    return document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("light")
+    return document.documentElement.getAttribute("data-theme") === "light" ||
+      document.body.classList.contains("light")
       ? "portfolio-light"
       : "portfolio-dark";
   }
@@ -480,7 +481,10 @@ export default memo(function MarkdownEditor({
       });
     });
 
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
 
     // Listen to global CodeLens command
     const handleGlobalPreviewCommand = (e: any) => {
@@ -505,7 +509,10 @@ export default memo(function MarkdownEditor({
   }, []);
 
   return (
-    <div className={`w-full flex flex-col ${className}`} style={{ height: height || "100%" }}>
+    <div
+      className={`w-full flex flex-col ${className}`}
+      style={{ height: height || "100%" }}
+    >
       {showToolbar && (
         <div
           className="flex items-center gap-0.5 px-2 py-1.5 border-b shrink-0 flex-wrap"
@@ -811,14 +818,25 @@ export default memo(function MarkdownEditor({
         >
           <div
             className="relative w-full max-w-2xl max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col"
-            style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--border)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--border)" }}>
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+              style={{ borderColor: "var(--border)" }}
+            >
               <div className="flex items-center gap-2">
                 <BookOpen size={18} style={{ color: "var(--accent)" }} />
-                <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>CodeHike Annotations</h2>
+                <h2
+                  className="text-sm font-bold"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  CodeHike Annotations
+                </h2>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -973,7 +991,19 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
                   style={{ color: "var(--accent)" }}
                   title="Copy all examples"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
                   Copy All
                 </button>
                 <button
@@ -987,234 +1017,605 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
             </div>
 
             {/* Content */}
-            <div className="overflow-y-auto px-5 py-4 space-y-5 text-xs" style={{ color: "var(--text-primary)" }}>
-
+            <div
+              className="overflow-y-auto px-5 py-4 space-y-5 text-xs"
+              style={{ color: "var(--text-primary)" }}
+            >
               {/* ── Getting Started ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Getting Started</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Getting Started
+                </h3>
                 <p className="mb-2" style={{ color: "var(--text-secondary)" }}>
-                  Wrap your code in a <code className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)", color: "var(--accent)" }}>{'```codehike'}</code> fence. Add annotations as <code className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>// !name</code> comments on their own line or after code.
+                  Wrap your code in a{" "}
+                  <code
+                    className="px-1.5 py-0.5 rounded text-[11px] font-mono"
+                    style={{
+                      background: "var(--bg-secondary)",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {"```codehike"}
+                  </code>{" "}
+                  fence. Add annotations as{" "}
+                  <code
+                    className="px-1.5 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    // !name
+                  </code>{" "}
+                  comments on their own line or after code.
                 </p>
-                <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                <div
+                  className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                  style={{ background: "var(--bg-secondary)" }}
+                >
                   <button
-                    onClick={() => navigator.clipboard.writeText('```codehike\n// !focus\nconst x = "hello";\n// !mark(green)\nconsole.log(x);\n```')}
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        '```codehike\n// !focus\nconst x = "hello";\n// !mark(green)\nconsole.log(x);\n```',
+                      )
+                    }
                     className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                     style={{ color: "var(--text-muted)" }}
                     title="Copy"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
                   </button>
-                  <div>{'```codehike'}</div>
+                  <div>{"```codehike"}</div>
                   <div style={{ color: "var(--text-muted)" }}>// !focus</div>
                   <div>const x = "hello";</div>
-                  <div style={{ color: "var(--text-muted)" }}>// !mark(green)</div>
+                  <div style={{ color: "var(--text-muted)" }}>
+                    // !mark(green)
+                  </div>
                   <div>console.log(x);</div>
-                  <div>{'```'}</div>
+                  <div>{"```"}</div>
                 </div>
               </section>
 
               {/* ── Live Examples ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Live Examples</h3>
-                <p className="mb-3" style={{ color: "var(--text-secondary)" }}>Copy-paste these into a <code className="px-1 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>{'```codehike'}</code> block to see them in action.</p>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Live Examples
+                </h3>
+                <p className="mb-3" style={{ color: "var(--text-secondary)" }}>
+                  Copy-paste these into a{" "}
+                  <code
+                    className="px-1 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    {"```codehike"}
+                  </code>{" "}
+                  block to see them in action.
+                </p>
 
                 {/* Example 1: Line Styles */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Line Styles</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Line Styles
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\n// !border(red)\nconst server = "prod";\n// !mark(green)\nconst status = "healthy";\n// !bg(yellow)\nconst warning = "check logs";\n// !focus\nconst critical = "pay attention";\n// !highlight\nconst important = "note this";\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```codehike\n// !border(red)\nconst server = "prod";\n// !mark(green)\nconst status = "healthy";\n// !bg(yellow)\nconst warning = "check logs";\n// !focus\nconst critical = "pay attention";\n// !highlight\nconst important = "note this";\n```',
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !border(red)</div>
+                    <div>{"```codehike"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !border(red)
+                    </div>
                     <div>const server = "prod";</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !mark(green)</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !mark(green)
+                    </div>
                     <div>const status = "healthy";</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !bg(yellow)</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !bg(yellow)
+                    </div>
                     <div>const warning = "check logs";</div>
                     <div style={{ color: "var(--text-muted)" }}>// !focus</div>
                     <div>const critical = "pay attention";</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !highlight</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !highlight
+                    </div>
                     <div>const important = "note this";</div>
-                    <div>{'```'}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 2: Diff */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Diff Annotations</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Diff Annotations
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\nfunction greet(name) {\n  // !remove\n  console.log("Hello " + name);\n  // !add\n  return `Hello ${name}`;\n}\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```codehike\nfunction greet(name) {\n  // !remove\n  console.log("Hello " + name);\n  // !add\n  return `Hello ${name}`;\n}\n```',
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div>function greet(name) {'{'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>  // !remove</div>
-                    <div>  console.log("Hello " + name);</div>
-                    <div style={{ color: "var(--text-muted)" }}>  // !add</div>
-                    <div>  return `Hello {'${name}'}`;</div>
-                    <div>{'}'}</div>
-                    <div>{'```'}</div>
+                    <div>{"```codehike"}</div>
+                    <div>function greet(name) {"{"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      {" "}
+                      // !remove
+                    </div>
+                    <div> console.log("Hello " + name);</div>
+                    <div style={{ color: "var(--text-muted)" }}> // !add</div>
+                    <div> return `Hello {"${name}"}`;</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 3: ClassName with Regex */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>ClassName &amp; Regex Targeting</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    ClassName &amp; Regex Targeting
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\nfunction lorem(ipsum, dolor = 1) {\n  // !classname line-through\n  const sit = ipsum == null ? 0 : ipsum.sit\n  dolor = sit - amet(dolor)\n  // !classname[/sit/] bg-red-700 rounded-lg px-1\n  return sit ? consectetur(ipsum) : []\n}\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          "```codehike\nfunction lorem(ipsum, dolor = 1) {\n  // !classname line-through\n  const sit = ipsum == null ? 0 : ipsum.sit\n  dolor = sit - amet(dolor)\n  // !classname[/sit/] bg-red-700 rounded-lg px-1\n  return sit ? consectetur(ipsum) : []\n}\n```",
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div>function lorem(ipsum, dolor = 1) {'{'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>  // !classname line-through</div>
-                    <div>  const sit = ipsum == null ? 0 : ipsum.sit</div>
-                    <div>  dolor = sit - amet(dolor)</div>
-                    <div style={{ color: "var(--text-muted)" }}>  // !classname{'[/sit/]'} bg-red-700 rounded-lg px-1</div>
-                    <div>  return sit ? consectetur(ipsum) : []</div>
-                    <div>{'}'}</div>
-                    <div>{'```'}</div>
+                    <div>{"```codehike"}</div>
+                    <div>function lorem(ipsum, dolor = 1) {"{"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      {" "}
+                      // !classname line-through
+                    </div>
+                    <div> const sit = ipsum == null ? 0 : ipsum.sit</div>
+                    <div> dolor = sit - amet(dolor)</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      {" "}
+                      // !classname{"[/sit/]"} bg-red-700 rounded-lg px-1
+                    </div>
+                    <div> return sit ? consectetur(ipsum) : []</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 4: Inline Annotations */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Inline Annotations (Tooltip, Callout, Link, Footnote)</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Inline Annotations (Tooltip, Callout, Link, Footnote)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\nimport { useState } from "react" // !tooltip/useState/(React state hook)\n\n// !callout(This function fetches user data)\nasync function getUser(id) {\n  const res = await fetch(`/api/users/${id}`) // !link(https://jsonplaceholder.typicode.com)\n  return res.json() // !footnote(Returns a Promise with user object)\n}\n\nconst [count, setCount] = useState(0) // !label[0:5](state variable)\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```codehike\nimport { useState } from "react" // !tooltip/useState/(React state hook)\n\n// !callout(This function fetches user data)\nasync function getUser(id) {\n  const res = await fetch(`/api/users/${id}`) // !link(https://jsonplaceholder.typicode.com)\n  return res.json() // !footnote(Returns a Promise with user object)\n}\n\nconst [count, setCount] = useState(0) // !label[6:23](state variable)\n```',
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div>import {'{'} useState {'}'} from "react" <span style={{ color: "var(--text-muted)" }}>// !tooltip/useState/(React state hook)</span></div>
+                    <div>{"```codehike"}</div>
+                    <div>
+                      import {"{"} useState {"}"} from "react"{" "}
+                      <span style={{ color: "var(--text-muted)" }}>
+                        // !tooltip/useState/(React state hook)
+                      </span>
+                    </div>
                     <div></div>
-                    <div style={{ color: "var(--text-muted)" }}>// !callout(This function fetches user data)</div>
-                    <div>async function getUser(id) {'{'}</div>
-                    <div>  const res = await fetch(`/api/users/${'${id}'}`) <span style={{ color: "var(--text-muted)" }}>// !link(https://jsonplaceholder.typicode.com)</span></div>
-                    <div>  return res.json() <span style={{ color: "var(--text-muted)" }}>// !footnote(Returns a Promise with user object)</span></div>
-                    <div>{'}'}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !callout(This function fetches user data)
+                    </div>
+                    <div>async function getUser(id) {"{"}</div>
+                    <div>
+                      {" "}
+                      const res = await fetch(`/api/users/${"${id}"}`){" "}
+                      <span style={{ color: "var(--text-muted)" }}>
+                        // !link(https://jsonplaceholder.typicode.com)
+                      </span>
+                    </div>
+                    <div>
+                      {" "}
+                      return res.json(){" "}
+                      <span style={{ color: "var(--text-muted)" }}>
+                        // !footnote(Returns a Promise with user object)
+                      </span>
+                    </div>
+                    <div>{"}"}</div>
                     <div></div>
-                    <div>const [count, setCount] = useState(0) <span style={{ color: "var(--text-muted)" }}>// !label{'[0:5]'}(state variable)</span></div>
-                    <div>{'```'}</div>
+                    <div>
+                      const [count, setCount] = useState(0){" "}
+                      <span style={{ color: "var(--text-muted)" }}>
+                        // !label{"[6:23]"}(state variable)
+                      </span>
+                    </div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 5: Fold/Collapse */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Fold / Collapse</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Fold / Collapse
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\n// !fold(start)\nfunction processData(data) {\n  const step1 = validate(data)\n  const step2 = transform(step1)\n  const step3 = optimize(step2)\n  return step3\n}\n// !fold(end)\n\nprocessData(rawInput)\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          "```codehike\n// !fold(start)\nfunction processData(data) {\n  const step1 = validate(data)\n  const step2 = transform(step1)\n  const step3 = optimize(step2)\n  return step3\n}\n// !fold(end)\n\nprocessData(rawInput)\n```",
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !fold(start)</div>
-                    <div>function processData(data) {'{'}</div>
-                    <div>  const step1 = validate(data)</div>
-                    <div>  const step2 = transform(step1)</div>
-                    <div>  const step3 = optimize(step2)</div>
-                    <div>  return step3</div>
-                    <div>{'}'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !fold(end)</div>
+                    <div>{"```codehike"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !fold(start)
+                    </div>
+                    <div>function processData(data) {"{"}</div>
+                    <div> const step1 = validate(data)</div>
+                    <div> const step2 = transform(step1)</div>
+                    <div> const step3 = optimize(step2)</div>
+                    <div> return step3</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !fold(end)
+                    </div>
                     <div></div>
                     <div>processData(rawInput)</div>
-                    <div>{'```'}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 6: Slideshow */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Slideshow</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Slideshow
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike slideshow\n// Step 1: Setup\nconst config = { host: "localhost", port: 3000 }\n// ---\n// Step 2: Connect\nconst conn = connect(config)\n// ---\n// Step 3: Fetch\nconst data = await conn.fetch("/api")\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```codehike slideshow\n// Step 1: Setup\nconst config = { host: "localhost", port: 3000 }\n// ---\n// Step 2: Connect\nconst conn = connect(config)\n// ---\n// Step 3: Fetch\nconst data = await conn.fetch("/api")\n```',
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike slideshow'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>// Step 1: Setup</div>
-                    <div>const config = {'{'} host: "localhost", port: 3000 {'}'}</div>
+                    <div>{"```codehike slideshow"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // Step 1: Setup
+                    </div>
+                    <div>
+                      const config = {"{"} host: "localhost", port: 3000 {"}"}
+                    </div>
                     <div style={{ color: "var(--text-muted)" }}>// ---</div>
-                    <div style={{ color: "var(--text-muted)" }}>// Step 2: Connect</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // Step 2: Connect
+                    </div>
                     <div>const conn = connect(config)</div>
                     <div style={{ color: "var(--text-muted)" }}>// ---</div>
-                    <div style={{ color: "var(--text-muted)" }}>// Step 3: Fetch</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // Step 3: Fetch
+                    </div>
                     <div>const data = await conn.fetch("/api")</div>
-                    <div>{'```'}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
 
                 {/* Example 7: Style & Border Range */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Style, Border Range &amp; Mixed</p>
-                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Style, Border Range &amp; Mixed
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
                     <button
-                      onClick={() => navigator.clipboard.writeText('```codehike\n// !border(start)\n// !bg(purple)\nconst API_KEY = "sk-123"\nconst API_URL = "https://api.example.com"\n// !border(end)\n\n// !style(color: #22c55e; font-weight: bold)\nconst success = true\n\nfunction connect() {\n  // !callout[10:25](connection string)\n  return fetch(API_URL)\n}\n```')}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```codehike\n// !border(start)\n// !bg(purple)\nconst API_KEY = "sk-123"\nconst API_URL = "https://api.example.com"\n// !border(end)\n\n// !style(color: #22c55e; font-weight: bold)\nconst success = true\n\nfunction connect() {\n  // !callout[10:25](connection string)\n  return fetch(API_URL)\n}\n```',
+                        )
+                      }
                       className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
                       style={{ color: "var(--text-muted)" }}
                       title="Copy"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     </button>
-                    <div>{'```codehike'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !border(start)</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !bg(purple)</div>
+                    <div>{"```codehike"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !border(start)
+                    </div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !bg(purple)
+                    </div>
                     <div>const API_KEY = "sk-123"</div>
                     <div>const API_URL = "https://api.example.com"</div>
-                    <div style={{ color: "var(--text-muted)" }}>// !border(end)</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !border(end)
+                    </div>
                     <div></div>
-                    <div style={{ color: "var(--text-muted)" }}>// !style(color: #22c55e; font-weight: bold)</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      // !style(color: #22c55e; font-weight: bold)
+                    </div>
                     <div>const success = true</div>
                     <div></div>
-                    <div>function connect() {'{'}</div>
-                    <div style={{ color: "var(--text-muted)" }}>  // !callout{'[10:25]'}(connection string)</div>
-                    <div>  return fetch(API_URL)</div>
-                    <div>{'}'}</div>
-                    <div>{'```'}</div>
+                    <div>function connect() {"{"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>
+                      {" "}
+                      // !callout{"[10:25]"}(connection string)
+                    </div>
+                    <div> return fetch(API_URL)</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
                   </div>
                 </div>
               </section>
 
               {/* ── Line Styles ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Line Styles</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Line Styles
+                </h3>
                 <div className="space-y-1.5">
                   {[
-                    ["// !border", "// !border(blue)", "Colored border box around line(s)"],
-                    ["// !mark", "// !mark(green)", "Background color + left border accent"],
-                    ["// !bg", "// !bg(yellow)", "Background color only (no left border)"],
+                    [
+                      "// !border",
+                      "// !border(blue)",
+                      "Colored border box around line(s)",
+                    ],
+                    [
+                      "// !mark",
+                      "// !mark(green)",
+                      "Background color + left border accent",
+                    ],
+                    [
+                      "// !bg",
+                      "// !bg(yellow)",
+                      "Background color only (no left border)",
+                    ],
                     ["// !focus", "", "Yellow border + glow, dims other lines"],
-                    ["// !highlight", "", "Same as focus — yellow border + dim"],
+                    [
+                      "// !highlight",
+                      "",
+                      "Same as focus — yellow border + dim",
+                    ],
                   ].map(([simple, color, desc]) => (
-                    <div key={simple} className="flex items-start gap-3 p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
-                      <code className="shrink-0 font-mono text-[11px]">{simple}</code>
-                      {color && <code className="shrink-0 font-mono text-[11px] opacity-60">{color}</code>}
+                    <div
+                      key={simple}
+                      className="flex items-start gap-3 p-2 rounded"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <code className="shrink-0 font-mono text-[11px]">
+                        {simple}
+                      </code>
+                      {color && (
+                        <code className="shrink-0 font-mono text-[11px] opacity-60">
+                          {color}
+                        </code>
+                      )}
                       <span className="opacity-60">{desc}</span>
                     </div>
                   ))}
@@ -1223,16 +1624,30 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
 
               {/* ── Diff ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Diff Annotations</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Diff Annotations
+                </h3>
                 <div className="space-y-1.5">
                   {[
                     ["// !add", "Green left border + green tinted background"],
-                    ["// !remove", "Red left border + red background + strikethrough"],
+                    [
+                      "// !remove",
+                      "Red left border + red background + strikethrough",
+                    ],
                     ["// !diff(+)", "Same as !add"],
                     ["// !diff(-)", "Same as !remove"],
                   ].map(([syntax, desc]) => (
-                    <div key={syntax} className="flex items-start gap-3 p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
-                      <code className="shrink-0 font-mono text-[11px]">{syntax}</code>
+                    <div
+                      key={syntax}
+                      className="flex items-start gap-3 p-2 rounded"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <code className="shrink-0 font-mono text-[11px]">
+                        {syntax}
+                      </code>
                       <span className="opacity-60">{desc}</span>
                     </div>
                   ))}
@@ -1241,16 +1656,33 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
 
               {/* ── Ranges ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Multi-Line Ranges</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Multi-Line Ranges
+                </h3>
                 <div className="space-y-1.5">
                   {[
-                    ["// !name(start) ... // !name(end)", "Explicit range delimiters"],
-                    ["// !fold ... // !fold(end)", "Collapse lines with fold chevron"],
+                    [
+                      "// !name(start) ... // !name(end)",
+                      "Explicit range delimiters",
+                    ],
+                    [
+                      "// !fold ... // !fold(end)",
+                      "Collapse lines with fold chevron",
+                    ],
                     ["// !collapse ... // !collapse(end)", "Same as fold"],
                     ["// !wrap", "Enables word wrapping on the block"],
                   ].map(([syntax, desc]) => (
-                    <div key={syntax} className="flex items-start gap-3 p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
-                      <code className="shrink-0 font-mono text-[11px]">{syntax}</code>
+                    <div
+                      key={syntax}
+                      className="flex items-start gap-3 p-2 rounded"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <code className="shrink-0 font-mono text-[11px]">
+                        {syntax}
+                      </code>
                       <span className="opacity-60">{desc}</span>
                     </div>
                   ))}
@@ -1259,19 +1691,33 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
 
               {/* ── Inline Annotations ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Inline Annotations</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Inline Annotations
+                </h3>
                 <div className="space-y-1.5">
                   {[
                     ["// !callout(text)", "Inline pill/tag next to text"],
                     ["// !tooltip(text)", "Hover popup with arrow pointer"],
                     ["// !link(url)", "Clickable underline link"],
-                    ["// !footnote(text)", "Superscript [n] marker + hover popup"],
+                    [
+                      "// !footnote(text)",
+                      "Superscript [n] marker + hover popup",
+                    ],
                     ["// !label(text)", "Floating pill above text"],
                     ["// !style(css)", "Apply inline CSS to the text"],
                     ["// !classname(cls)", "Apply CSS class to the text"],
                   ].map(([syntax, desc]) => (
-                    <div key={syntax} className="flex items-start gap-3 p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
-                      <code className="shrink-0 font-mono text-[11px]">{syntax}</code>
+                    <div
+                      key={syntax}
+                      className="flex items-start gap-3 p-2 rounded"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <code className="shrink-0 font-mono text-[11px]">
+                        {syntax}
+                      </code>
                       <span className="opacity-60">{desc}</span>
                     </div>
                   ))}
@@ -1280,19 +1726,53 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
 
               {/* ── Regex Targeting ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Regex Targeting</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Regex Targeting
+                </h3>
                 <p className="mb-2" style={{ color: "var(--text-secondary)" }}>
-                  Target specific text matching a regex. Use <code className="px-1 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>/regex/</code> or <code className="px-1 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>{'[/regex/]'}</code> syntax.
+                  Target specific text matching a regex. Use{" "}
+                  <code
+                    className="px-1 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    /regex/
+                  </code>{" "}
+                  or{" "}
+                  <code
+                    className="px-1 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    {"[/regex/]"}
+                  </code>{" "}
+                  syntax.
                 </p>
                 <div className="space-y-1.5">
                   {[
-                    ["// !tooltip/useState/(React hook)", "Tooltip on 'useState' text"],
-                    ["// !callout[10:20](highlight this)", "Column range callout"],
+                    [
+                      "// !tooltip/useState/(React hook)",
+                      "Tooltip on 'useState' text",
+                    ],
+                    [
+                      "// !callout[10:20](highlight this)",
+                      "Column range callout",
+                    ],
                     ["// !mark[5:15]", "Mark columns 5-15"],
-                    ["// !classname[/sit/] bg-red-700", "Highlight 'sit' with CSS class"],
+                    [
+                      "// !classname[/sit/] bg-red-700",
+                      "Highlight 'sit' with CSS class",
+                    ],
                   ].map(([syntax, desc]) => (
-                    <div key={syntax} className="flex items-start gap-3 p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
-                      <code className="shrink-0 font-mono text-[11px]">{syntax}</code>
+                    <div
+                      key={syntax}
+                      className="flex items-start gap-3 p-2 rounded"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      <code className="shrink-0 font-mono text-[11px]">
+                        {syntax}
+                      </code>
                       <span className="opacity-60">{desc}</span>
                     </div>
                   ))}
@@ -1301,22 +1781,60 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
 
               {/* ── Colors ── */}
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--accent)" }}>Colors</h3>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Colors
+                </h3>
                 <p className="mb-2" style={{ color: "var(--text-secondary)" }}>
                   Use named colors or any CSS color value.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {["red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose", "white", "gray"].map((c) => (
-                    <span key={c} className="px-2 py-0.5 rounded text-[10px] font-mono" style={{ background: "var(--bg-secondary)" }}>{c}</span>
+                  {[
+                    "red",
+                    "orange",
+                    "amber",
+                    "yellow",
+                    "lime",
+                    "green",
+                    "emerald",
+                    "teal",
+                    "cyan",
+                    "sky",
+                    "blue",
+                    "indigo",
+                    "violet",
+                    "purple",
+                    "fuchsia",
+                    "pink",
+                    "rose",
+                    "white",
+                    "gray",
+                  ].map((c) => (
+                    <span
+                      key={c}
+                      className="px-2 py-0.5 rounded text-[10px] font-mono"
+                      style={{ background: "var(--bg-secondary)" }}
+                    >
+                      {c}
+                    </span>
                   ))}
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono opacity-60" style={{ background: "var(--bg-secondary)" }}>#ff0000, rgb(...)</span>
+                  <span
+                    className="px-2 py-0.5 rounded text-[10px] font-mono opacity-60"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    #ff0000, rgb(...)
+                  </span>
                 </div>
               </section>
-
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t shrink-0" style={{ borderColor: "var(--border)" }}>
+            <div
+              className="px-5 py-3 border-t shrink-0"
+              style={{ borderColor: "var(--border)" }}
+            >
               <button
                 onClick={() => setChModalOpen(false)}
                 className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
@@ -1350,13 +1868,15 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            ...(hideLineNumbers ? {
-              lineNumbers: "off",
-              glyphMargin: false,
-              folding: false,
-              lineDecorationsWidth: 0,
-              lineNumbersMinChars: 0
-            } : {})
+            ...(hideLineNumbers
+              ? {
+                  lineNumbers: "off",
+                  glyphMargin: false,
+                  folding: false,
+                  lineDecorationsWidth: 0,
+                  lineNumbersMinChars: 0,
+                }
+              : {}),
           }}
         />
       </div>
