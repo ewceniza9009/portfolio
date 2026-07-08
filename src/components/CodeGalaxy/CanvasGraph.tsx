@@ -262,21 +262,37 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   mug.position.set(5, 0.9, 2);
   wsGroup.add(mug);
 
-  // Mug steam
-  const steamTex = createGlowTexture(200, 200, 220, 32, false);
-  for (let i = 0; i < 3; i++) {
-    const steam = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: steamTex,
-        transparent: true,
-        opacity: 0.08,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
+  // Mug smoke wisps — swirling rising steam
+  const smokeCount = 16;
+  const smokeSprites: THREE.Sprite[] = [];
+  for (let i = 0; i < smokeCount; i++) {
+    const steamTex = createGlowTexture(220, 220, 230, 32);
+    const steamMat = new THREE.SpriteMaterial({
+      map: steamTex,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
+    const steam = new THREE.Sprite(steamMat);
+    steam.position.set(
+      5 + (Math.random() - 0.5) * 0.2,
+      1.4,
+      2 + (Math.random() - 0.5) * 0.2,
     );
-    steam.scale.set(0.6, 0.6, 1);
-    steam.position.set(5 + (Math.random() - 0.5) * 0.5, 1.8 + i * 0.6, 2);
+    steam.scale.set(0.3, 0.3, 1);
+    steam.userData = {
+      life: Math.random() * 4, // start at random point in cycle
+      maxLife: 3 + Math.random() * 2,
+      swirlSpeed: 1.2 + Math.random() * 0.8,
+      swirlPhase: Math.random() * Math.PI * 2,
+      riseSpeed: 0.4 + Math.random() * 0.3,
+      driftX: (Math.random() - 0.5) * 1.2,
+      driftZ: (Math.random() - 0.5) * 0.8,
+      startX: 5,
+      startZ: 2,
+    };
     wsGroup.add(steam);
+    smokeSprites.push(steam);
   }
 
   // --- SEAT / CHAIR ---
@@ -289,12 +305,12 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   const seat = new THREE.Mesh(seatGeo, seatMat);
   // Place chair at y = -3.5 (halfway between floor at -8 and desk at 0)
   // Push it back to z = 7 so it's behind the front edge of the desk (z = 5)
-  seat.position.set(0, -3.5, 7);
+  seat.position.set(1, -3.5, 7);
   wsGroup.add(seat);
 
   const backGeo = new THREE.BoxGeometry(4, 5, 0.5);
   const back = new THREE.Mesh(backGeo, seatMat.clone());
-  back.position.set(0, -1.0, 9);
+  back.position.set(1, -1.0, 9);
   wsGroup.add(back);
 
   parentGroup.add(wsGroup);
@@ -307,6 +323,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     orbs,
     WORKSTATION_POS,
     wsGroup,
+    smokeSprites,
   };
 }
 
@@ -1047,50 +1064,17 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           // Scale proportionally to fit the chair
           model.scale.set(4, 4, 4);
           // Position the programmer so hands are at desk level
-          model.position.set(0, -5.5, 6);
+          model.position.set(1, -5.5, 6);
           model.rotation.y = Math.PI;
           workstation.wsGroup.add(model);
-          model.updateMatrixWorld(true);
 
-          const bbox = new THREE.Box3().setFromObject(model);
-          const modelHeight = bbox.max.y - bbox.min.y;
-
-          const forceMat = (color: number) => {
-            const m = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
-            return m;
-          };
-
-          model.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-              const meshBBox = new THREE.Box3().setFromObject(child);
-              const meshCenterY = (meshBBox.min.y + meshBBox.max.y) / 2;
-              const relativeY = (meshCenterY - bbox.min.y) / modelHeight;
-
-              // Pure position-based: model sits facing us, Y=bottom(shoes) to Y=top(hair)
-              if (relativeY > 0.88) {
-                child.material = forceMat(0x000000); // hair
-              } else if (relativeY > 0.72) {
-                child.material = forceMat(0xc68642); // face/skin
-              } else if (relativeY > 0.35) {
-                child.material = forceMat(0x2a2a5e); // shirt
-              } else if (relativeY > 0.08) {
-                child.material = forceMat(0x222222); // pants
-              } else {
-                child.material = forceMat(0x111111); // shoes
-              }
-              child.material.needsUpdate = true;
-            }
-          });
-
-          // === Add procedural hair ===
-          const headY = bbox.max.y;
-          const headCenterX = (bbox.min.x + bbox.max.x) / 2;
-          const headCenterZ = (bbox.min.z + bbox.max.z) / 2;
-          const hairGeo = new THREE.SphereGeometry(0.28, 12, 8);
-          hairGeo.scale(1.0, 0.45, 1.1); // Flatten into a hair-cap shape
-          const hair = new THREE.Mesh(hairGeo, forceMat(0x000000));
-          hair.position.set(headCenterX, headY - 0.02, headCenterZ);
-          model.add(hair);
+          // === Programmer glow — just a soft light, no visible sprites/orbs ===
+          const glowLight = new THREE.PointLight(0xa8c0ff, 2.5, 30, 1.5);
+          glowLight.position.set(1, 0, 6);
+          workstation.wsGroup.add(glowLight);
+          const glowLight2 = new THREE.PointLight(0xffffff, 1.2, 20, 1.5);
+          glowLight2.position.set(1, 4, 6);
+          workstation.wsGroup.add(glowLight2);
 
           // === Add invisible hitbox sphere for reliable click/hover detection ===
           const hitboxGeo = new THREE.SphereGeometry(2.5, 8, 6);
@@ -1504,6 +1488,40 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         // Update GLB animation mixer
         if ((c as any).mixer) {
           (c as any).mixer.update(delta);
+        }
+
+        // Animate swirling smoke from coffee mug
+        const smokeSprites = (workstation as any)?.smokeSprites as THREE.Sprite[] | undefined;
+        if (smokeSprites) {
+          smokeSprites.forEach((spr) => {
+            const ud = spr.userData;
+            ud.life += delta;
+            if (ud.life > ud.maxLife) {
+              // Reset particle
+              ud.life = 0;
+              spr.position.x = ud.startX + (Math.random() - 0.5) * 0.3;
+              spr.position.z = ud.startZ + (Math.random() - 0.5) * 0.3;
+              spr.position.y = 1.4;
+              spr.scale.set(0.3, 0.3, 1);
+            }
+            const lifeRatio = ud.life / ud.maxLife;
+            // Swirling motion: rise + sinusoidal X/Z drift
+            const swirlAngle = ud.life * ud.swirlSpeed + ud.swirlPhase;
+            spr.position.x = ud.startX + Math.sin(swirlAngle) * ud.driftX * lifeRatio;
+            spr.position.z = ud.startZ + Math.cos(swirlAngle) * ud.driftZ * lifeRatio;
+            spr.position.y = 1.4 + ud.life * ud.riseSpeed * 1.5;
+            // Scale grows as it rises
+            const scale = 0.3 + lifeRatio * 1.4;
+            spr.scale.set(scale, scale, 1);
+            // Fade in then out
+            const opacity =
+              lifeRatio < 0.2
+                ? lifeRatio / 0.2 * 0.5
+                : lifeRatio > 0.7
+                ? (1 - (lifeRatio - 0.7) / 0.3) * 0.5
+                : 0.5;
+            (spr.material as THREE.SpriteMaterial).opacity = opacity;
+          });
         }
 
         for (const [, p] of c.planetSprites) {
