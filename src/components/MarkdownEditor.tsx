@@ -868,7 +868,7 @@ function lorem(ipsum, dolor = 1) {
 }
 \`\`\`
 
-## Inline Annotations (Tooltip, Callout, Link, Footnote)
+## Inline Annotations (Tooltip, Callout, Link, Footnote, Label)
 \`\`\`codehike
 import { useState } from "react" // !tooltip/useState/(React state hook)
 
@@ -878,7 +878,7 @@ async function getUser(id) {
   return res.json() // !footnote(Returns a Promise with user object)
 }
 
-const [count, setCount] = useState(0) // !label[0:5](state variable)
+const [count, setCount] = useState(0) // !label[6:23](state variable)
 \`\`\`
 
 ## Fold / Collapse

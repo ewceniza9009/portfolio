@@ -384,88 +384,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
     return () => { cancelled = true }
   }, [cleanLines, lang, theme])
 
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
 
-    function removePortals() {
-      document.querySelectorAll('.ch-portal-popup').forEach(p => p.remove())
-    }
-
-    function renderLabelPortals() {
-      document.querySelectorAll('.ch-portal-popup.ch-label-portal').forEach(p => p.remove())
-      el!.querySelectorAll('.ch-label-wrapper').forEach(wrapper => {
-        const pill = wrapper.querySelector('.ch-label-pill')
-        if (!pill) return
-        const rect = wrapper.getBoundingClientRect()
-        const clone = pill.cloneNode(true) as HTMLElement
-        clone.style.cssText = `
-          position:fixed; z-index:999999; pointer-events:none;
-          left:${rect.left + rect.width / 2}px;
-          top:${rect.top - 4}px;
-          transform:translate(-50%,-100%);
-          opacity:1 !important;
-          font-size:9px; padding:1px 6px; border-radius:4px;
-          white-space:nowrap; line-height:1.4;
-        `
-        clone.className = 'ch-portal-popup ch-label-portal'
-        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1'
-        clone.style.background = accent
-        clone.style.color = '#fff'
-        document.body.appendChild(clone)
-      })
-    }
-
-    function onEnter(e: MouseEvent) {
-      const trigger = (e.target as HTMLElement).closest('.ch-tooltip-trigger, .ch-footnote-trigger')
-      if (!trigger) return
-      const popup = trigger.querySelector('.ch-tooltip-popup, .ch-footnote-popup')
-      if (!popup) return
-      document.querySelectorAll('.ch-portal-popup:not(.ch-label-portal)').forEach(p => p.remove())
-      const rect = trigger.getBoundingClientRect()
-      const clone = popup.cloneNode(true) as HTMLElement
-      clone.style.cssText = `
-        position:fixed; z-index:999999; pointer-events:none;
-        left:${rect.left + rect.width / 2}px;
-        top:${rect.top - 8}px;
-        transform:translate(-50%,-100%);
-        opacity:1 !important;
-        padding:8px 12px; border-radius:6px; font-size:11px;
-        max-width:280px; width:max-content; white-space:normal;
-        backdrop-filter:blur(12px); box-shadow:0 8px 24px rgba(0,0,0,0.4);
-      `
-      clone.className = 'ch-portal-popup'
-      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1'
-      clone.style.background = accent
-      clone.style.color = '#fff'
-      document.body.appendChild(clone)
-    }
-
-    function onLeave(e: MouseEvent) {
-      const trigger = (e.target as HTMLElement).closest('.ch-tooltip-trigger, .ch-footnote-trigger')
-      if (!trigger) return
-      document.querySelectorAll('.ch-portal-popup:not(.ch-label-portal)').forEach(p => p.remove())
-    }
-
-    const onScroll = () => renderLabelPortals()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
-
-    const ro = new MutationObserver(() => renderLabelPortals())
-    ro.observe(el, { childList: true, subtree: true })
-    renderLabelPortals()
-
-    el.addEventListener('mouseenter', onEnter, true)
-    el.addEventListener('mouseleave', onLeave, true)
-    return () => {
-      el.removeEventListener('mouseenter', onEnter, true)
-      el.removeEventListener('mouseleave', onLeave, true)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-      ro.disconnect()
-      removePortals()
-    }
-  }, [highlightedLines])
 
   const handleCopy = useCallback(async () => {
     try {
@@ -526,13 +445,13 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         .ch-dot:nth-child(3) { animation-delay: 1s; }
 
         @keyframes ch-line-reveal {
-          0% { opacity: 0; transform: translateY(6px); clip-path: inset(0 100% 0 0); }
-          40% { clip-path: inset(0 0% 0 0); }
-          100% { opacity: 1; transform: translateY(0); clip-path: inset(0 0% 0 0); }
+          0% { opacity: 0; transform: translateY(6px); clip-path: inset(-50px 100% -50px -50px); }
+          40% { clip-path: inset(-50px -50px -50px -50px); }
+          100% { opacity: 1; transform: none; clip-path: none; }
         }
         @keyframes ch-line-dim-reveal {
           0% { opacity: 0; transform: translateY(4px); }
-          100% { opacity: 0.3; transform: translateY(0); }
+          100% { opacity: 0.3; transform: none; }
         }
         .ch-line {
           padding: 2px 20px 2px 16px;
@@ -665,22 +584,67 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           display: inline-block;
         }
         .ch-tooltip-popup {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%) scale(0.92);
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 500;
+          white-space: nowrap;
+          z-index: 50;
           opacity: 0 !important;
           pointer-events: none;
+          transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .ch-tooltip-arrow { display: none; }
+        .ch-tooltip-trigger:hover .ch-tooltip-popup {
+          opacity: 1 !important;
+          transform: translateX(-50%) scale(1);
+        }
+        .ch-tooltip-arrow {
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 4px solid transparent;
+        }
 
         /* Footnote */
         .ch-footnote-trigger {
           position: relative;
           cursor: help;
           border-bottom: 1px dashed currentColor;
+          display: inline-block;
         }
         .ch-footnote-popup {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%) scale(0.92);
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 500;
+          white-space: nowrap;
+          z-index: 50;
           opacity: 0 !important;
           pointer-events: none;
+          transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .ch-footnote-popup::after { display: none; }
+        .ch-footnote-trigger:hover .ch-footnote-popup {
+          opacity: 1 !important;
+          transform: translateX(-50%) scale(1);
+        }
+        .ch-footnote-popup::after {
+          content: "";
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 4px solid transparent;
+          border-top-color: inherit;
+        }
 
         /* Callout (Always visible, inline next to token) */
         .ch-callout-inline {
@@ -746,11 +710,20 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         /* Label */
         .ch-label-wrapper {
           position: relative;
-          display: inline;
+          display: inline-block;
         }
         .ch-label-pill {
-          opacity: 0 !important;
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translate3d(-50%, -4px, 0);
+          opacity: 1 !important;
           pointer-events: none;
+          font-size: 9px; padding: 1px 6px; border-radius: 4px;
+          white-space: nowrap; line-height: 1.4;
+          z-index: 20;
+          color: #fff !important;
+          background: var(--accent) !important;
         }
 
         @keyframes ch-accent-sweep {
@@ -884,60 +857,42 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   && a.inlineEnd === undefined
                 )
                 lineAnns.forEach(a => {
-                  // Apply once to whole visible text (strip tags, wrap, reinsert)
-                  const parts = lineHtml.split(/(<[^>]+>)/g)
-                  // Collect visible text
-                  const visibleParts: { idx: number; text: string }[] = []
-                  for (let p = 0; p < parts.length; p++) {
-                    if (!parts[p].startsWith('<')) visibleParts.push({ idx: p, text: parts[p] })
-                  }
-                  if (visibleParts.length === 0) return
-                  let whole = visibleParts.map(v => v.text).join('')
-                  if (!whole.trim()) return
-
-                  let wrapped: string
+                  let wrapped = lineHtml
                   if (a.type === 'tooltip') {
-                    const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
-                    const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-                    const color = isDark ? '#e6edf3' : '#1f2328'
-                    const arrowColor = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
-                    wrapped = `<span class="ch-tooltip-trigger">${whole}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                    const bg = 'var(--accent)'
+                    const border = 'transparent'
+                    const color = '#ffffff'
+                    const arrowColor = 'var(--accent)'
+                    const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                    wrapped = `<span class="ch-tooltip-trigger">${lineHtml}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
                   } else if (a.type === 'footnote') {
                     footnoteCounter++
                     const num = footnoteCounter
                     footnotes.push({ num, text: a.text || '' })
-                    const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
-                    const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-                    const color = isDark ? '#e6edf3' : '#1f2328'
-                    wrapped = `<span class="ch-footnote-trigger">${whole}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35);border-bottom-color:${bg}">${a.text || ''}</span></span>`
+                    const bg = 'var(--accent)'
+                    const border = 'transparent'
+                    const color = '#ffffff'
+                    const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                    wrapped = `<span class="ch-footnote-trigger">${lineHtml}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow};border-bottom-color:${bg}">${a.text || ''}</span></span>`
                   } else if (a.type === 'link') {
                     const url = a.text || '#'
-                    wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${whole}</a>`
+                    wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${lineHtml}</a>`
                   } else if (a.type === 'callout') {
-                    const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
-                    const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                    const color = isDark ? '#e6edf3' : '#1f2328'
-                    wrapped = `<span class="ch-callout-target">${whole}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
+                    const bg = 'var(--accent)'
+                    const border = 'transparent'
+                    const color = '#ffffff'
+                    wrapped = `<span class="ch-callout-target">${lineHtml}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
                   } else if (a.type === 'label') {
                     const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                     const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                    wrapped = `<span class="ch-label-wrapper">${whole}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                    wrapped = `<span class="ch-label-wrapper">${lineHtml}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
                   } else if (a.type === 'style') {
-                    wrapped = `<span style="${a.text || ''}">${whole}</span>`
+                    wrapped = `<span style="${a.text || ''}">${lineHtml}</span>`
                   } else {
                     // classname
-                    wrapped = `<span class="${a.color || ''}">${whole}</span>`
+                    wrapped = `<span class="${a.color || ''}">${lineHtml}</span>`
                   }
-
-                  // Replace visible parts with the wrapped whole, keep HTML tags intact
-                  // Strategy: replace the first visible part with wrapped, empty the rest
-                  if (visibleParts.length > 0) {
-                    parts[visibleParts[0].idx] = wrapped
-                    for (let v = 1; v < visibleParts.length; v++) {
-                      parts[visibleParts[v].idx] = ''
-                    }
-                  }
-                  lineHtml = parts.join('')
+                  lineHtml = wrapped
                 })
 
                 // Inline annotations with regex match a token in the line and wrap it
@@ -946,15 +901,16 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   if (a.regex) {
                     let wrapper: (m: string) => string
                     if (a.type === 'callout' || a.type === 'tooltip') {
-                      const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
-                      const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                      const color = isDark ? '#e6edf3' : '#1f2328'
-                      const arrowColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                      const bg = 'var(--accent)'
+                      const border = 'transparent'
+                      const color = '#ffffff'
+                      const arrowColor = 'var(--accent)'
                       const isCallout = a.type === 'callout'
                       if (isCallout) {
                         wrapper = (m) => `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${m}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
                       } else {
-                        wrapper = (m) => `<span class="ch-tooltip-trigger">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.3)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                        const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                        wrapper = (m) => `<span class="ch-tooltip-trigger">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
                       }
                     } else if (a.type === 'link') {
                       const url = a.text || '#'
@@ -963,10 +919,11 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       footnoteCounter++
                       const num = footnoteCounter
                       footnotes.push({ num, text: a.text || '' })
-                      const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
-                      const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-                      const color = isDark ? '#e6edf3' : '#1f2328'
-                      wrapper = (m) => `<span class="ch-footnote-trigger">${m}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}</span></span>`
+                      const bg = 'var(--accent)'
+                      const border = 'transparent'
+                      const color = '#ffffff'
+                      const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                      wrapper = (m) => `<span class="ch-footnote-trigger">${m}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                       const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
@@ -987,63 +944,81 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   }
                 })
 
-                // Inline annotations with column range (no regex): wrap the column range
                 const colAnns = anns.filter(a => ['callout', 'tooltip', 'link', 'footnote', 'label', 'style', 'classname', 'mark', 'highlight'].includes(a.type) && a.inlineStart !== undefined && a.inlineEnd !== undefined && !a.regex)
                 colAnns.forEach(a => {
-                  // Column-range wrapping is complex with HTML; use a simple wrapper around the visible text
-                  // Extract visible text from lineHtml (strip tags), then apply range, then re-insert
                   const parts = lineHtml.split(/(<[^>]+>)/g)
                   let visiblePos = 0
+                  const overlaps: { p: number, start: number, end: number, len: number }[] = []
                   for (let p = 0; p < parts.length; p++) {
                     if (!parts[p].startsWith('<')) {
                       const segLen = parts[p].length
                       const segStart = visiblePos
                       const segEnd = visiblePos + segLen
                       if (segEnd > (a.inlineStart ?? 0) && segStart < (a.inlineEnd ?? 0) + 1) {
-                        const localStart = Math.max(0, (a.inlineStart ?? 0) - segStart)
-                        const localEnd = Math.min(segLen, (a.inlineEnd ?? 0) - segStart + 1)
-                        const before = parts[p].slice(0, localStart)
-                        const target = parts[p].slice(localStart, localEnd)
-                        const after = parts[p].slice(localEnd)
-                        let wrapped = target
-                        if (a.type === 'mark' || a.type === 'highlight') {
-                          wrapped = `<span style="background:color-mix(in srgb, ${getLineColor(a.color)} 25%, transparent);border-radius:3px;padding:0 2px">${target}</span>`
-                        } else if (a.type === 'callout') {
-                          const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
-                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                          const color = isDark ? '#e6edf3' : '#1f2328'
-                          wrapped = `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${target}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
-                        } else if (a.type === 'tooltip') {
-                          const bg = isDark ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)'
-                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                          const color = isDark ? '#e6edf3' : '#1f2328'
-                          const arrowColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                          wrapped = `<span class="ch-tooltip-trigger">${target}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.3)">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
-                        } else if (a.type === 'link') {
-                          const url = a.text || '#'
-                          wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${target}</a>`
-                        } else if (a.type === 'footnote') {
-                          footnoteCounter++
-                          const num = footnoteCounter
-                          footnotes.push({ num, text: a.text || '' })
-                          const bg = isDark ? 'rgba(22,27,34,0.98)' : 'rgba(255,255,255,0.98)'
-                          const border = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-                          const color = isDark ? '#e6edf3' : '#1f2328'
-                          wrapped = `<span class="ch-footnote-trigger">${target}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px rgba(0,0,0,0.35)">${a.text || ''}</span></span>`
-                        } else if (a.type === 'label') {
-                          const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
-                          const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                          wrapped = `<span class="ch-label-wrapper">${target}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
-                        } else if (a.type === 'style') {
-                          wrapped = `<span style="${a.text || ''}">${target}</span>`
-                        } else if (a.type === 'classname') {
-                          wrapped = `<span class="${a.color || ''}">${target}</span>`
-                        }
-                        parts[p] = before + wrapped + after
+                        overlaps.push({ p, start: segStart, end: segEnd, len: segLen })
                       }
                       visiblePos = segEnd
                     }
                   }
+
+                  overlaps.forEach((overlap, idx) => {
+                    const isLast = idx === overlaps.length - 1
+                    const { p, start: segStart, len: segLen } = overlap
+                    const localStart = Math.max(0, (a.inlineStart ?? 0) - segStart)
+                    const localEnd = Math.min(segLen, (a.inlineEnd ?? 0) - segStart + 1)
+                    const before = parts[p].slice(0, localStart)
+                    const target = parts[p].slice(localStart, localEnd)
+                    const after = parts[p].slice(localEnd)
+                    
+                    let wrapped = target
+                    if (a.type === 'mark' || a.type === 'highlight') {
+                      wrapped = `<span style="background:color-mix(in srgb, ${getLineColor(a.color)} 25%, transparent);border-radius:3px;padding:0 2px">${target}</span>`
+                    } else if (a.type === 'callout') {
+                      const bg = 'var(--accent)'
+                      const border = 'transparent'
+                      const color = '#ffffff'
+                      wrapped = `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${target}</span>`
+                      if (isLast) {
+                        wrapped += `<span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                      }
+                    } else if (a.type === 'tooltip') {
+                      const bg = 'var(--accent)'
+                      const border = 'transparent'
+                      const color = '#ffffff'
+                      const arrowColor = 'var(--accent)'
+                      const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                      wrapped = `<span class="ch-tooltip-trigger">${target}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                    } else if (a.type === 'link') {
+                      const url = a.text || '#'
+                      wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${target}</a>`
+                    } else if (a.type === 'footnote') {
+                      const bg = 'var(--accent)'
+                      const border = 'transparent'
+                      const color = '#ffffff'
+                      if (isLast) {
+                        footnoteCounter++
+                        const num = footnoteCounter
+                        footnotes.push({ num, text: a.text || '' })
+                        const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
+                        wrapped = `<span class="ch-footnote-trigger">${target}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
+                      } else {
+                        wrapped = `<span class="ch-footnote-trigger">${target}</span>`
+                      }
+                    } else if (a.type === 'label') {
+                      const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
+                      const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                      if (isLast) {
+                        wrapped = `<span class="ch-label-wrapper">${target}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                      } else {
+                        wrapped = `<span class="ch-label-target">${target}</span>`
+                      }
+                    } else if (a.type === 'style') {
+                      wrapped = `<span style="${a.text || ''}">${target}</span>`
+                    } else if (a.type === 'classname') {
+                      wrapped = `<span class="${a.color || ''}">${target}</span>`
+                    }
+                    parts[p] = before + wrapped + after
+                  })
                   lineHtml = parts.join('')
                 })
               }
