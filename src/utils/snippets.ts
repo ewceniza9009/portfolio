@@ -82,6 +82,17 @@ export const CODEHIKE_SNIPPET = buildSnippet([
   '```',
 ])
 
+export const CH_FULL_BLOCK_SNIPPET = buildSnippet([
+  '```codehike',
+  '// !focus',
+  'const greeting = "Hello, Code Hike!";',
+  '// !mark(green)',
+  'console.log(greeting);',
+  '// !callout(This prints to console)',
+  'alert(greeting);',
+  '```',
+])
+
 export const REMOTION_SNIPPET = buildSnippet([
   '```remotion',
   '{',

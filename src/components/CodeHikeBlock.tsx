@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { AccentKey } from '../data/accents'
 
@@ -334,6 +334,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
   const [revealed, setRevealed] = useState(false)
   const [linesRevealed, setLinesRevealed] = useState(false)
   const [unfoldedRanges, setUnfoldedRanges] = useState<string[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const isDark = theme === 'dark'
   const shikiTheme = isDark ? 'github-dark' : 'github-light'
@@ -383,6 +384,89 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
     return () => { cancelled = true }
   }, [cleanLines, lang, theme])
 
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    function removePortals() {
+      document.querySelectorAll('.ch-portal-popup').forEach(p => p.remove())
+    }
+
+    function renderLabelPortals() {
+      document.querySelectorAll('.ch-portal-popup.ch-label-portal').forEach(p => p.remove())
+      el!.querySelectorAll('.ch-label-wrapper').forEach(wrapper => {
+        const pill = wrapper.querySelector('.ch-label-pill')
+        if (!pill) return
+        const rect = wrapper.getBoundingClientRect()
+        const clone = pill.cloneNode(true) as HTMLElement
+        clone.style.cssText = `
+          position:fixed; z-index:999999; pointer-events:none;
+          left:${rect.left + rect.width / 2}px;
+          top:${rect.top - 4}px;
+          transform:translate(-50%,-100%);
+          opacity:1 !important;
+          font-size:9px; padding:1px 6px; border-radius:4px;
+          white-space:nowrap; line-height:1.4;
+        `
+        clone.className = 'ch-portal-popup ch-label-portal'
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1'
+        clone.style.background = accent
+        clone.style.color = '#fff'
+        document.body.appendChild(clone)
+      })
+    }
+
+    function onEnter(e: MouseEvent) {
+      const trigger = (e.target as HTMLElement).closest('.ch-tooltip-trigger, .ch-footnote-trigger')
+      if (!trigger) return
+      const popup = trigger.querySelector('.ch-tooltip-popup, .ch-footnote-popup')
+      if (!popup) return
+      document.querySelectorAll('.ch-portal-popup:not(.ch-label-portal)').forEach(p => p.remove())
+      const rect = trigger.getBoundingClientRect()
+      const clone = popup.cloneNode(true) as HTMLElement
+      clone.style.cssText = `
+        position:fixed; z-index:999999; pointer-events:none;
+        left:${rect.left + rect.width / 2}px;
+        top:${rect.top - 8}px;
+        transform:translate(-50%,-100%);
+        opacity:1 !important;
+        padding:8px 12px; border-radius:6px; font-size:11px;
+        max-width:280px; width:max-content; white-space:normal;
+        backdrop-filter:blur(12px); box-shadow:0 8px 24px rgba(0,0,0,0.4);
+      `
+      clone.className = 'ch-portal-popup'
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1'
+      clone.style.background = accent
+      clone.style.color = '#fff'
+      document.body.appendChild(clone)
+    }
+
+    function onLeave(e: MouseEvent) {
+      const trigger = (e.target as HTMLElement).closest('.ch-tooltip-trigger, .ch-footnote-trigger')
+      if (!trigger) return
+      document.querySelectorAll('.ch-portal-popup:not(.ch-label-portal)').forEach(p => p.remove())
+    }
+
+    const onScroll = () => renderLabelPortals()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+
+    const ro = new MutationObserver(() => renderLabelPortals())
+    ro.observe(el, { childList: true, subtree: true })
+    renderLabelPortals()
+
+    el.addEventListener('mouseenter', onEnter, true)
+    el.addEventListener('mouseleave', onLeave, true)
+    return () => {
+      el.removeEventListener('mouseenter', onEnter, true)
+      el.removeEventListener('mouseleave', onLeave, true)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      ro.disconnect()
+      removePortals()
+    }
+  }, [highlightedLines])
+
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(cleanLines.join('\n'))
@@ -400,6 +484,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
 
   return (
     <div
+      ref={containerRef}
       className="relative group my-6 rounded-2xl select-text ch-container"
       style={{
         background: isDark ? '#0d1117' : '#ffffff',
@@ -580,40 +665,10 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           display: inline-block;
         }
         .ch-tooltip-popup {
-          position: absolute;
-          bottom: calc(100% + 10px);
-          left: 50%;
-          transform: translateX(-50%) translateY(4px);
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 11px;
-          font-family: inherit;
-          max-width: 280px;
-          width: max-content;
+          opacity: 0 !important;
           pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.18s ease, transform 0.18s ease;
-          z-index: 100;
-          backdrop-filter: blur(12px);
-          white-space: normal;
-          background: var(--accent);
-          color: #fff;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
-        .ch-tooltip-trigger:hover .ch-tooltip-popup {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
-        }
-        .ch-tooltip-arrow {
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 0;
-          height: 0;
-          border: 6px solid transparent;
-          border-top-color: var(--accent);
-        }
+        .ch-tooltip-arrow { display: none; }
 
         /* Footnote */
         .ch-footnote-trigger {
@@ -622,39 +677,10 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           border-bottom: 1px dashed currentColor;
         }
         .ch-footnote-popup {
-          position: absolute;
-          bottom: calc(100% + 10px);
-          left: 50%;
-          transform: translateX(-50%) translateY(4px);
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 11px;
-          font-family: inherit;
-          max-width: 280px;
-          width: max-content;
+          opacity: 0 !important;
           pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.18s ease, transform 0.18s ease;
-          z-index: 100;
-          backdrop-filter: blur(12px);
-          white-space: normal;
-          background: var(--accent);
-          color: #fff;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
-        .ch-footnote-trigger:hover .ch-footnote-popup {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
-        }
-        .ch-footnote-popup::after {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 6px solid transparent;
-          border-top-color: var(--accent);
-        }
+        .ch-footnote-popup::after { display: none; }
 
         /* Callout (Always visible, inline next to token) */
         .ch-callout-inline {
@@ -668,6 +694,8 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           white-space: nowrap;
           box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           vertical-align: middle;
+          position: relative;
+          z-index: 10;
         }
 
 
@@ -721,17 +749,8 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           display: inline;
         }
         .ch-label-pill {
-          position: absolute;
-          bottom: calc(100% + 2px);
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 9px;
-          padding: 1px 6px;
-          border-radius: 4px;
-          white-space: nowrap;
+          opacity: 0 !important;
           pointer-events: none;
-          line-height: 1.4;
-          font-family: inherit;
         }
 
         @keyframes ch-accent-sweep {
