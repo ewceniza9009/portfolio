@@ -991,6 +991,46 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       scene.add(star1);
       scene.add(star2);
 
+      const createNebulaBackgroundLayer = () => {
+        const group = new THREE.Group();
+        const colors = [
+          { r: 255, g: 100, b: 200 },
+          { r: 100, g: 150, b: 255 },
+          { r: 150, g: 100, b: 255 },
+          { r: 255, g: 150, b: 100 },
+        ];
+        
+        for (let i = 0; i < 15; i++) {
+          const col = colors[Math.floor(Math.random() * colors.length)];
+          const tex = createGlowTexture(col.r, col.g, col.b, 256, false);
+          const sprite = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+              map: tex,
+              transparent: true,
+              opacity: 0.15 + Math.random() * 0.1,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            })
+          );
+          
+          const angle1 = Math.random() * Math.PI * 2;
+          const angle2 = (Math.random() - 0.5) * Math.PI;
+          const radius = 800 + Math.random() * 400;
+          
+          sprite.position.x = Math.cos(angle1) * Math.cos(angle2) * radius;
+          sprite.position.y = Math.sin(angle2) * radius;
+          sprite.position.z = Math.sin(angle1) * Math.cos(angle2) * radius;
+          
+          const scale = 500 + Math.random() * 800;
+          sprite.scale.set(scale, scale, 1);
+          group.add(sprite);
+        }
+        return group;
+      };
+
+      const nebulaBackgroundLayer = createNebulaBackgroundLayer();
+      scene.add(nebulaBackgroundLayer);
+
       const createSpiralGalaxyLayer = () => {
         const group = new THREE.Group();
 
@@ -1567,6 +1607,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           if (sceneRef.current) {
             (sceneRef.current as any).mixer = mixer;
             (sceneRef.current as any).programmerHitbox = hitbox;
+            (sceneRef.current as any).nebulaBackground = nebulaBackgroundLayer;
+            (sceneRef.current as any).constellationGlows = constellationGlows;
             sceneRef.current.programmerModel = model;
           }
         },
@@ -1590,6 +1632,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const godNodesList = allNodesSorted.slice(0, 5);
       const godNodeIds = new Set(godNodesList.map((n) => n.id));
       const godNodesMap = new Map<string, THREE.Sprite>();
+      const constellationGlows: THREE.Sprite[] = [];
       const PENTAGON_R = 15;
 
       for (let i = 0; i < godNodesList.length; i++) {
@@ -1636,6 +1679,28 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         };
         scene.add(sprite);
         godNodesMap.set(n.id, sprite);
+
+        // Community Constellation Glow
+        const constellationTex = createGlowTexture(
+          Math.round(col.r * 255),
+          Math.round(col.g * 255),
+          Math.round(col.b * 255),
+          256,
+          false
+        );
+        const constellationSprite = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: constellationTex,
+            transparent: true,
+            opacity: 0.05,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          })
+        );
+        constellationSprite.scale.set(150, 150, 1);
+        constellationSprite.position.copy(sprite.position);
+        scene.add(constellationSprite);
+        constellationGlows.push(constellationSprite);
       }
 
       // Spaceship orbiting the programmer workstation
@@ -1986,6 +2051,22 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           blackHoleGroup.position.y = 30 + Math.sin(elapsed * 0.015) * 3;
         }
 
+        // Slowly rotate the ambient nebula background to make it feel alive
+        if (sceneRef.current) {
+           const bg = (sceneRef.current as any).nebulaBackground as THREE.Group;
+           if (bg) {
+             bg.rotation.y = elapsed * 0.005;
+             bg.rotation.z = elapsed * 0.002;
+           }
+
+           const glows = (sceneRef.current as any).constellationGlows as THREE.Sprite[];
+           if (glows) {
+             glows.forEach((glow, i) => {
+               glow.material.opacity = 0.08 + Math.sin(elapsed * 1.2 + i) * 0.03;
+             });
+           }
+        }
+
         const smokeSprites = (workstation as any)?.smokeSprites as
           | THREE.Sprite[]
           | undefined;
@@ -2089,15 +2170,28 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             m.position.y =
               pSprite.position.y + Math.sin(a + ud.phaseY) * (ud.r * ud.incl);
 
-            if (
-              ud.node.id === selectedRef.current ||
-              ud.node.id === hoveredRef.current
-            ) {
-              m.material.opacity = 0.3;
-              m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
+            const dist = c.camera.position.distanceTo(pSprite.position);
+            let lodMultiplier = 1.0;
+            const FADE_START = 80;
+            const FADE_END = 150;
+            if (dist > FADE_START) {
+              lodMultiplier = 1.0 - Math.min(1.0, (dist - FADE_START) / (FADE_END - FADE_START));
+            }
+
+            if (lodMultiplier <= 0 && ud.node.id !== selectedRef.current && ud.node.id !== hoveredRef.current) {
+              m.visible = false;
             } else {
-              m.material.opacity = selectedRef.current ? 0.05 : 0.08;
-              m.scale.set(ud.baseSize, ud.baseSize, 1);
+              m.visible = true;
+              if (
+                ud.node.id === selectedRef.current ||
+                ud.node.id === hoveredRef.current
+              ) {
+                m.material.opacity = 0.3; // Full opacity if specifically selected/hovered
+                m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
+              } else {
+                m.material.opacity = (selectedRef.current ? 0.05 : 0.08) * lodMultiplier;
+                m.scale.set(ud.baseSize, ud.baseSize, 1);
+              }
             }
           }
         }
