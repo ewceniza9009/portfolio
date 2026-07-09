@@ -297,6 +297,66 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   });
 
   // ============================================================
+  // TYPING-REACTIVE DATA CABLE
+  // ============================================================
+  const cableCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 4.5, 0), // Desk / keyboard
+    new THREE.Vector3(3, 4, 3),   // edge of desk
+    new THREE.Vector3(5, 0, 4),   // Floor
+    new THREE.Vector3(8, 0, 7),
+    new THREE.Vector3(15, 0, 10), // Off into space
+  ]);
+  const pulseParticles = new THREE.Group();
+  for (let i = 0; i < 8; i++) {
+    const pTex = createGlowTexture(0, 255, 255, 64, true);
+    const pSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: pTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    pSprite.scale.set(1.5, 1.5, 1);
+    pulseParticles.add(pSprite);
+  }
+  wsGroup.add(pulseParticles);
+  (wsGroup as any).pulseCurve = cableCurve;
+  (wsGroup as any).pulseParticles = pulseParticles;
+
+  // ============================================================
+  // THE META HOLOGRAM (Mini Code Galaxy)
+  // ============================================================
+  const metaBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.6, 0.2, 16),
+    new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 })
+  );
+  metaBase.position.set(4, 0.5, -2);
+  wsGroup.add(metaBase);
+  
+  const metaGalaxy = new THREE.Group();
+  const mgCount = 500;
+  const mgGeo = new THREE.BufferGeometry();
+  const mgPos = new Float32Array(mgCount * 3);
+  for(let i=0; i<mgCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.pow(Math.random(), 2.0) * 2.0;
+    mgPos[i*3] = Math.cos(angle) * r;
+    mgPos[i*3+1] = (Math.random() - 0.5) * 0.5 * (1 - r/2);
+    mgPos[i*3+2] = Math.sin(angle) * r;
+  }
+  mgGeo.setAttribute("position", new THREE.BufferAttribute(mgPos, 3));
+  const mgMat = new THREE.PointsMaterial({
+    color: 0x00ffff,
+    size: 0.1,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const mgPoints = new THREE.Points(mgGeo, mgMat);
+  metaGalaxy.add(mgPoints);
+  metaGalaxy.position.set(4, 1.5, -2);
+  metaGalaxy.rotation.x = Math.PI * 0.1;
+  wsGroup.add(metaGalaxy);
+  (wsGroup as any).metaGalaxy = metaGalaxy;
+
+  // ============================================================
   // COFFEE MUG
   // ============================================================
 
@@ -312,6 +372,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   mug.position.set(5, 0.9, 2);
   mug.castShadow = true;
   mug.receiveShadow = true;
+  mug.userData = { isCoffeeMug: true }; // Flag for interaction
   wsGroup.add(mug);
 
   // ============================================================
@@ -682,7 +743,6 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     bookData,
     phoneScreen,
     phoneTex,
-    phoneCanvas,
     phoneCtx,
     drawPhoneFrame,
   };
@@ -1703,49 +1763,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         constellationGlows.push(constellationSprite);
       }
 
-      // Spaceship orbiting the programmer workstation
-      const shipGroup = new THREE.Group();
-      const shipBody = new THREE.Mesh(
-        new THREE.ConeGeometry(0.6, 2.5, 4),
-        new THREE.MeshBasicMaterial({
-          color: 0x88ccff,
-          transparent: true,
-          opacity: 0.35,
-        }),
-      );
-      shipBody.rotation.x = Math.PI / 2;
-      shipGroup.add(shipBody);
-
-      const shipGlow = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: createGlowTexture(100, 180, 255, 64, true),
-          transparent: true,
-          opacity: 0.25,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      );
-      shipGlow.scale.set(4, 4, 1);
-      shipGroup.add(shipGlow);
-
-      const shipTrail = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: createGlowTexture(60, 140, 255, 64, true),
-          transparent: true,
-          opacity: 0.15,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      );
-      shipTrail.scale.set(2, 6, 1);
-      shipTrail.position.z = 1.5;
-      shipGroup.add(shipTrail);
-
-      shipGroup.position.set(
-        workstation.WORKSTATION_POS.x + 15,
-        workstation.WORKSTATION_POS.y + 5,
-        workstation.WORKSTATION_POS.z,
-      );
+      // ============================================================
+      // THE SCANNING DRONE (Removed per user request)
+      // ============================================================
+      const shipGroup = new THREE.Group(); 
       scene.add(shipGroup);
 
       // Data Particles
@@ -1973,20 +1994,32 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.starLayers[1].rotation.y = elapsed * 0.012;
         c.starLayers[1].rotation.x = Math.sin(elapsed * 0.005) * 0.08;
 
-        const shipAngle = elapsed * 0.5;
-        const shipR = 15 + Math.sin(elapsed * 0.3) * 3;
-        const wp = c.workstation?.WORKSTATION_POS;
-        if (wp) {
-          c.shipGroup.position.x = wp.x + Math.cos(shipAngle) * shipR;
-          c.shipGroup.position.z = wp.z + Math.sin(shipAngle) * shipR;
-          c.shipGroup.position.y = wp.y + 5 + Math.sin(elapsed * 0.7) * 3;
-        } else {
-          c.shipGroup.position.x = Math.cos(shipAngle) * shipR;
-          c.shipGroup.position.z = Math.sin(shipAngle) * shipR;
-          c.shipGroup.position.y = Math.sin(elapsed * 0.7) * 2;
+        const overclocked = (c as any).isOverclocked;
+        const timeScale = overclocked ? 3.0 : 1.0;
+        const scaledElapsed = elapsed * timeScale;
+        
+        const wp = c.workstation?.WORKSTATION_POS || new THREE.Vector3();
+        
+        // Drone removed
+
+        // Data Cable pulse
+        if (c.workstation && (c.workstation as any).pulseCurve) {
+           const curve = (c.workstation as any).pulseCurve;
+           const particles = (c.workstation as any).pulseParticles as THREE.Group;
+           particles.children.forEach((p, i) => {
+             const t = (scaledElapsed * 0.6 + i * 0.125) % 1.0;
+             const pos = curve.getPointAt(t);
+             const sprite = p as THREE.Sprite;
+             sprite.position.copy(pos);
+             sprite.material.opacity = overclocked ? 0.8 : 0.4;
+             (sprite.material as any).color.setHex(overclocked ? 0xff3300 : 0x00ffff);
+           });
         }
-        c.shipGroup.rotation.y = -shipAngle + Math.PI / 2;
-        c.shipGroup.rotation.z = Math.sin(elapsed * 0.4) * 0.15;
+        
+        // Meta Galaxy spin
+        if (c.workstation && (c.workstation as any).metaGalaxy) {
+           (c.workstation as any).metaGalaxy.rotation.y = scaledElapsed * 0.5;
+        }
 
         if (c.workstation) {
           c.workstation.holoRing.rotation.z = elapsed * 0.3;
@@ -2027,7 +2060,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
 
         if ((c as any).mixer) {
-          (c as any).mixer.update(delta);
+          (c as any).mixer.update(delta * (overclocked ? 3.0 : 1.0));
         }
 
         // GARGANTUA BLACK HOLE ANIMATION
@@ -2087,24 +2120,31 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               ud.startX + Math.sin(swirlAngle) * ud.driftX * lifeRatio;
             spr.position.z =
               ud.startZ + Math.cos(swirlAngle) * ud.driftZ * lifeRatio;
-            spr.position.y = 1.4 + ud.life * ud.riseSpeed * 1.5;
+            
+            const riseFactor = overclocked ? 3.0 : 1.5;
+            spr.position.y = 1.4 + ud.life * ud.riseSpeed * riseFactor;
+            
             const scale = 0.3 + lifeRatio * 1.4;
             spr.scale.set(scale, scale, 1);
+            
             const opacity =
               lifeRatio < 0.2
                 ? (lifeRatio / 0.2) * 0.5
                 : lifeRatio > 0.7
                   ? (1 - (lifeRatio - 0.7) / 0.3) * 0.5
                   : 0.5;
-            (spr.material as THREE.SpriteMaterial).opacity = opacity;
+            
+            const mat = spr.material as THREE.SpriteMaterial;
+            mat.opacity = opacity;
+            mat.color.setHex(overclocked ? 0xff5522 : 0xcccccc);
           });
         }
 
         // Phone YouTube screen animation
-        const phoneCtx = (workstation as any)?.phoneCtx as CanvasRenderingContext2D | undefined;
-        const phoneTex = (workstation as any)?.phoneTex as THREE.CanvasTexture | undefined;
+        const phoneCtx = (c.workstation as any)?.phoneCtx as CanvasRenderingContext2D | undefined;
+        const phoneTex = (c.workstation as any)?.phoneTex as THREE.CanvasTexture | undefined;
         if (phoneCtx && phoneTex) {
-          const pData = workstation as any;
+          const pData = c.workstation as any;
           if (!pData.lastPhoneUpdate || elapsed - pData.lastPhoneUpdate > 0.033) {
             // Clear only the screen area (inside bezel)
             phoneCtx.clearRect(8, 8, 112, 236);
@@ -2475,12 +2515,25 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const c = sceneRef.current;
         if (!c) return;
 
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        // Check for Coffee Mug Overclock Mode
+        if (c.workstation && c.workstation.wsGroup) {
+          const wsHits = raycaster.intersectObject(c.workstation.wsGroup, true);
+          if (wsHits.length > 0) {
+            const clickedMug = wsHits.find(h => h.object.userData?.isCoffeeMug);
+            if (clickedMug) {
+               (c as any).isOverclocked = !(c as any).isOverclocked;
+               return; // Skip normal zoom if clicked mug
+            }
+          }
+        }
+
         const hitbox = (c as any)?.programmerHitbox as THREE.Mesh | null;
         if (hitbox) {
-          const rect = container.getBoundingClientRect();
-          mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-          mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-          raycaster.setFromCamera(mouse, camera);
           const hits = raycaster.intersectObject(hitbox, false);
           if (hits.length > 0) {
             const targetPos = hitbox.position.clone();
