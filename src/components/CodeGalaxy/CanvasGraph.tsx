@@ -724,7 +724,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       godNodes: Map<string, THREE.Sprite>;
       planetSprites: Map<string, THREE.Sprite>;
       moonSprites: THREE.Sprite[];
+      allSprites: THREE.Sprite[];
       lineSegments: THREE.LineSegments;
+      hoverLine: THREE.Line;
       packetPoints: THREE.Points;
       starLayers: THREE.Points[];
       shipGroup: THREE.Group;
@@ -737,6 +739,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
     const selectedRef = useRef(selectedId);
     const hoveredRef = useRef(hoveredId);
+    const hoveredLinkIdx = useRef(-1);
     const isCanvasClickRef = useRef(false);
     useEffect(() => {
       selectedRef.current = selectedId;
@@ -1785,6 +1788,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const lineGeo = new THREE.BufferGeometry();
       const linePos = new Float32Array(links.length * 6);
       lineGeo.setAttribute("position", new THREE.BufferAttribute(linePos, 3));
+      lineGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1000000);
       const lineMat = new THREE.LineBasicMaterial({
         color: 0x4488ff,
         transparent: true,
@@ -1795,6 +1799,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const lineSegments = new THREE.LineSegments(lineGeo, lineMat);
       lineSegments.frustumCulled = false;
       scene.add(lineSegments);
+
+      const hGeo = new THREE.BufferGeometry();
+      const hPos = new Float32Array(6);
+      hGeo.setAttribute("position", new THREE.BufferAttribute(hPos, 3));
+      const hMat = new THREE.LineBasicMaterial({ color: 0xffaa44, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+      const hoverLine = new THREE.Line(hGeo, hMat);
+      hoverLine.visible = false;
+      scene.add(hoverLine);
 
       const packetGeo = new THREE.BufferGeometry();
       const packetPos = new Float32Array(links.length * 3 * 3);
@@ -1824,6 +1836,12 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         nodeIdToSprite.set(p.userData.node.id, p);
       for (const m of moonSprites) nodeIdToSprite.set(m.userData.node.id, m);
 
+      const allSpritesCache = [
+        ...Array.from(godNodesMap.values()),
+        ...Array.from(planetSprites.values()),
+        ...moonSprites,
+      ];
+
       sceneRef.current = {
         scene,
         camera,
@@ -1834,7 +1852,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         godNodes: godNodesMap,
         planetSprites,
         moonSprites,
+        allSprites: allSpritesCache,
         lineSegments,
+        hoverLine,
         packetPoints,
         starLayers,
         shipGroup,
@@ -1923,7 +1943,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
           drawFn(elapsed);
           tex.needsUpdate = true;
-          tex.rotation = elapsed * 0.0005;
 
           const engulfPulse = 1 + Math.sin(elapsed * 0.02) * 0.03;
           sprite.scale.set(600 * engulfPulse, 600 * engulfPulse, 1);
@@ -2052,6 +2071,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         let lineIdx = 0;
         let packetIdx = 0;
 
+        c.hoverLine.visible = false;
         c.links.forEach((link) => {
           const isSelected = !!selectedRef.current;
           const isConnected =
@@ -2084,6 +2104,13 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                 sy + (ty - sy) * ease,
                 sz + (tz - sz) * ease,
               );
+            }
+            if (hoveredLinkIdx.current === lineIdx) {
+              const hp = c.hoverLine.geometry.attributes.position.array as Float32Array;
+              hp[0] = sx; hp[1] = sy; hp[2] = sz;
+              hp[3] = tx; hp[4] = ty; hp[5] = tz;
+              c.hoverLine.geometry.attributes.position.needsUpdate = true;
+              c.hoverLine.visible = true;
             }
           } else {
             lp.setXYZ(lineIdx * 2, 0, 0, 0);
@@ -2143,11 +2170,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
-        const gods = Array.from(c.godNodes.values());
-        const planets = Array.from(c.planetSprites.values());
-        const allSprites = [...gods, ...planets, ...c.moonSprites];
-
-        const hits = raycaster.intersectObjects(allSprites, false);
+        const hits = raycaster.intersectObjects(c.allSprites, false);
         for (const hit of hits) {
           if (hit.point && hit.object) {
             const dist = hit.point.distanceTo(hit.object.position);
@@ -2160,18 +2183,23 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         return null;
       };
 
-      const getIntersectedLink = (e: MouseEvent | PointerEvent) => {
+      const getIntersectedLinkInfo = (e: MouseEvent | PointerEvent) => {
         const c = sceneRef.current;
         if (!c || !container || !selectedRef.current || !c.links) return null;
         const rect = container.getBoundingClientRect();
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
-        raycaster.params.Line = { threshold: 4.0 };
+        raycaster.params.Line = { threshold: 6.0 };
         const hits = raycaster.intersectObject(c.lineSegments, false);
+        
+        let bestHitInfo = null;
+        let minRayDist = Infinity;
+
         if (hits.length > 0) {
           for (const hit of hits) {
             if (hit.index !== undefined) {
+              const rayDist = hit.distanceToRay !== undefined ? hit.distanceToRay : hit.distance;
               const linkIdx = Math.floor(hit.index / 2);
               const link = c.links[linkIdx];
               if (link) {
@@ -2179,15 +2207,22 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                   link.source === selectedRef.current ||
                   link.target === selectedRef.current
                 ) {
-                  return link.source === selectedRef.current
-                    ? link.target
-                    : link.source;
+                  if (rayDist < minRayDist) {
+                    minRayDist = rayDist;
+                    bestHitInfo = {
+                      targetId:
+                        link.source === selectedRef.current
+                          ? link.target
+                          : link.source,
+                      index: linkIdx,
+                    };
+                  }
                 }
               }
             }
           }
         }
-        return null;
+        return bestHitInfo;
       };
 
       const rideToNode = (targetId: string) => {
@@ -2207,31 +2242,56 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         const startPos = getNodePos(selectedRef.current).clone();
         const targetPos = getNodePos(targetId).clone();
+        const currentCamPos = c.camera.position.clone();
+        const currentTarget = c.controls.target.clone();
+
         const dir = targetPos.clone().sub(startPos).normalize();
-
         const up = new THREE.Vector3(0, 1, 0);
-        const right = dir.clone().cross(up).normalize();
-        const offset = up.clone().multiplyScalar(4).add(right.clone().multiplyScalar(2));
+        const right = dir.clone().cross(up);
+        if (right.lengthSq() < 0.001) right.set(1, 0, 0);
+        right.normalize();
 
-        const startCam = startPos.clone().add(offset);
-        const endCam = targetPos.clone().sub(dir.clone().multiplyScalar(20)).add(offset);
-        const startTarget = c.controls.target.clone();
+        const offsetVec = up.clone().multiplyScalar(4).add(right.clone().multiplyScalar(3));
+
+        const p0 = currentCamPos;
+        const p1 = startPos.clone().add(offsetVec);
+        const p2 = targetPos.clone().sub(dir.clone().multiplyScalar(10)).add(offsetVec);
+        const p3 = targetPos.clone().add(new THREE.Vector3(15, 10, 15));
+
+        const curve = new THREE.CatmullRomCurve3([p0, p1, p2, p3]);
+        curve.curveType = "centripetal";
 
         let progress = 0;
-        const speed = 4.0;
+        const speed = 1.0; 
 
         const anim = () => {
-          progress += 0.012 * speed;
+          progress += 0.015 * speed;
           if (progress >= 1) {
+            c.camera.position.copy(p3);
+            c.controls.target.copy(targetPos);
+            c.camera.fov = 45;
+            c.camera.updateProjectionMatrix();
+
             isCanvasClickRef.current = true;
             onSelect(targetId);
-            setTimeout(() => { isCanvasClickRef.current = false; }, 100);
-            flyToNode(targetId);
+            setTimeout(() => {
+              isCanvasClickRef.current = false;
+            }, 100);
             return;
           }
-          const t = (1 - Math.cos(progress * Math.PI)) / 2;
-          c.camera.position.lerpVectors(startCam, endCam, t);
-          c.controls.target.lerpVectors(startTarget, targetPos, t);
+
+          const t = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+          const nextPos = curve.getPointAt(t);
+          c.camera.position.copy(nextPos);
+
+          const targetT = Math.min(1.0, t * 1.5);
+          c.controls.target.lerpVectors(currentTarget, targetPos, targetT);
+
+          const warpFactor = Math.sin(t * Math.PI);
+          c.camera.fov = 45 + warpFactor * 50; 
+          c.camera.updateProjectionMatrix();
+
           requestAnimationFrame(anim);
         };
         anim();
@@ -2266,9 +2326,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               return;
             }
           }
-          const hitLinkId = getIntersectedLink(e);
-          if (hitLinkId) {
-            rideToNode(hitLinkId);
+          const hitLinkInfo = getIntersectedLinkInfo(e);
+          if (hitLinkInfo) {
+            rideToNode(hitLinkInfo.targetId);
           } else {
             isCanvasClickRef.current = true;
             onSelect(null);
@@ -2317,15 +2377,18 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       };
 
       const handlePointerMove = (e: PointerEvent) => {
+        let cursorSet = false;
         const hitNode = getIntersectedNode(e);
         if (hitNode) {
           if (hoveredRef.current !== hitNode.id) {
             onHover(hitNode.id);
             onTooltip({ x: e.clientX, y: e.clientY, node: hitNode });
-            document.body.style.cursor = "pointer";
           } else {
             onTooltip({ x: e.clientX, y: e.clientY, node: hitNode });
           }
+          document.body.style.cursor = "pointer";
+          hoveredLinkIdx.current = -1;
+          cursorSet = true;
         } else {
           const c = sceneRef.current;
           const hitbox = (c as any)?.programmerHitbox as THREE.Mesh | null;
@@ -2345,14 +2408,30 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                 } as GraphNode,
               });
               document.body.style.cursor = "pointer";
+              hoveredLinkIdx.current = -1;
               return;
             }
           }
+          
+          const hitLinkInfo = getIntersectedLinkInfo(e);
+          if (hitLinkInfo) {
+            if (hoveredLinkIdx.current !== hitLinkInfo.index) {
+              hoveredLinkIdx.current = hitLinkInfo.index;
+            }
+            document.body.style.cursor = "pointer";
+            cursorSet = true;
+          } else {
+            hoveredLinkIdx.current = -1;
+          }
+
           if (hoveredRef.current) {
             onHover(null);
             onTooltip(null);
-            document.body.style.cursor = "default";
           }
+        }
+
+        if (!cursorSet) {
+          document.body.style.cursor = "default";
         }
       };
 
