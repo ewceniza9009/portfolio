@@ -1,4 +1,4 @@
-import { useRef, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -737,10 +737,41 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       dataParticles: THREE.Points | null;
     } | null>(null);
 
-    const selectedRef = useRef(selectedId);
-    const hoveredRef = useRef(hoveredId);
-    const hoveredLinkIdx = useRef(-1);
     const isCanvasClickRef = useRef(false);
+    const hoveredRef = useRef<string | null>(null);
+    const selectedRef = useRef<string | null>(null);
+    const hoveredLinkIdx = useRef<number>(-1);
+
+    const [interactionMode, setInteractionMode] = useState<"rotate" | "pan">("rotate");
+
+    useEffect(() => {
+      if (sceneRef.current && sceneRef.current.controls) {
+        sceneRef.current.controls.mouseButtons.LEFT =
+          interactionMode === "pan" ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+      }
+    }, [interactionMode]);
+
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement
+        )
+          return;
+
+        if (e.key === "r" || e.key === "R") {
+          setInteractionMode("rotate");
+        } else if (e.key === "p" || e.key === "P") {
+          setInteractionMode("pan");
+        } else if (e.key === " " || e.key === "m" || e.key === "M") {
+          setInteractionMode((prev) => (prev === "rotate" ? "pan" : "rotate"));
+          if (e.key === " ") e.preventDefault();
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
     useEffect(() => {
       selectedRef.current = selectedId;
     }, [selectedId]);
@@ -2442,10 +2473,19 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
       };
 
+      const handlePointerLeave = () => {
+        hoveredRef.current = null;
+        onHover(null);
+        onTooltip(null);
+        document.body.style.cursor = "default";
+        hoveredLinkIdx.current = -1;
+      };
+
       container.addEventListener("pointerdown", handlePointerDown);
       container.addEventListener("pointerup", handlePointerUp);
       container.addEventListener("dblclick", handleDblClick);
       container.addEventListener("pointermove", handlePointerMove);
+      container.addEventListener("pointerleave", handlePointerLeave);
 
       const handleResize = () => {
         const c = sceneRef.current;
@@ -2457,6 +2497,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.renderer.setSize(nw, nh);
         c.composer.setSize(nw, nh);
       };
+
+
+
       window.addEventListener("resize", handleResize);
 
       return () => {
@@ -2464,6 +2507,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         container.removeEventListener("pointerup", handlePointerUp);
         container.removeEventListener("dblclick", handleDblClick);
         container.removeEventListener("pointermove", handlePointerMove);
+        container.removeEventListener("pointerleave", handlePointerLeave);
         cancelAnimationFrame(sceneRef.current?.animFrame || 0);
         window.removeEventListener("resize", handleResize);
         if (sceneRef.current?.programmerModel) {
@@ -2492,11 +2536,38 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
     }, [nodes?.length > 0 ? true : false]);
 
     return (
-      <div
-        ref={containerRef}
-        className="w-full h-full"
-        style={{ touchAction: "none" }}
-      />
+      <div className="relative w-full h-full">
+        <div
+          ref={containerRef}
+          className="w-full h-full"
+          style={{ touchAction: "none" }}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+        
+        {/* Interaction Mode Toggle */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 bg-[#1a1020]/80 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
+          <button
+            onClick={() => setInteractionMode("rotate")}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              interactionMode === "rotate"
+                ? "bg-white/20 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                : "text-white/50 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            🔄 Rotate (R)
+          </button>
+          <button
+            onClick={() => setInteractionMode("pan")}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              interactionMode === "pan"
+                ? "bg-white/20 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                : "text-white/50 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            ✋ Pan (P)
+          </button>
+        </div>
+      </div>
     );
   },
 );
