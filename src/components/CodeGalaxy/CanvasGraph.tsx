@@ -346,7 +346,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     }
   }
 
-  // Add a glowing base under keyboard
+  // Glowing base under keyboard
   const keyboardGlowTex = createGlowTexture(100, 200, 255, 128, false);
   const keyboardGlow = new THREE.Sprite(
     new THREE.SpriteMaterial({
@@ -1000,52 +1000,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
     ref,
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
-
-    // Add this near the top of CanvasGraph component
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Add keyboard listener
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        // Ignore if typing in input fields
-        if (
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement
-        ) {
-          return;
-        }
-
-        // Notify scene about typing
-        if (sceneRef.current) {
-          (sceneRef.current as any).typingActivity = true;
-          (sceneRef.current as any).lastTypingTime = Date.now();
-
-          // Trigger a random key light
-          triggerKeyboardLight(sceneRef.current);
-        }
-
-        // Clear timeout
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-
-        // Stop after 2 seconds of no typing
-        typingTimeoutRef.current = setTimeout(() => {
-          if (sceneRef.current) {
-            (sceneRef.current as any).typingActivity = false;
-          }
-        }, 2000);
-      };
-
-      window.addEventListener("keydown", handleKeyDown);
-
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-      };
-    }, []);
 
     // Function to trigger keyboard lights
     const triggerKeyboardLight = (c: any) => {
