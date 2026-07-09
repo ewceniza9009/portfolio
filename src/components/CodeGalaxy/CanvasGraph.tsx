@@ -1247,15 +1247,15 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         lctx.shadowBlur = 10;
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         lctx.fillStyle = "rgba(210, 155, 80, 0.25)";
-        lctx.fillText("PILLARS OF CREATION", 384, 90);
+        lctx.fillText("CREATION PILLARS", 384, 90);
         lctx.shadowBlur = 0;
 
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         lctx.strokeStyle = "rgba(8, 4, 1, 0.20)";
         lctx.lineWidth = 1;
-        lctx.strokeText("PILLARS OF CREATION", 384, 90);
+        lctx.strokeText("CREATION PILLARS", 384, 90);
         lctx.fillStyle = "rgba(220, 175, 95, 0.22)";
-        lctx.fillText("PILLARS OF CREATION", 384, 90);
+        lctx.fillText("CREATION PILLARS", 384, 90);
 
         const labelTex = new THREE.CanvasTexture(labelCanvas);
         labelTex.minFilter = THREE.LinearFilter;
