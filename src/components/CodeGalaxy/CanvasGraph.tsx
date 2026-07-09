@@ -1,4 +1,10 @@
-import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from "react";
+import {
+  useRef,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -297,64 +303,279 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   });
 
   // ============================================================
-  // TYPING-REACTIVE DATA CABLE
+  // REACTIVE KEYBOARD LED LIGHTS
   // ============================================================
-  const cableCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 4.5, 0), // Desk / keyboard
-    new THREE.Vector3(3, 4, 3),   // edge of desk
-    new THREE.Vector3(5, 0, 4),   // Floor
-    new THREE.Vector3(8, 0, 7),
-    new THREE.Vector3(15, 0, 10), // Off into space
-  ]);
-  const pulseParticles = new THREE.Group();
-  for (let i = 0; i < 8; i++) {
-    const pTex = createGlowTexture(0, 255, 255, 64, true);
-    const pSprite = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: pTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })
-    );
-    pSprite.scale.set(1.5, 1.5, 1);
-    pulseParticles.add(pSprite);
+  const keyboardLights = new THREE.Group();
+
+  // Create individual key lights (3 rows x 10 columns)
+  const keyColors = [0x00ff88, 0x00ccff, 0xff66aa, 0xffcc00, 0x99ff33];
+  const keyRows = 3;
+  const keyCols = 10;
+  const keySpacing = 0.4;
+
+  for (let row = 0; row < keyRows; row++) {
+    for (let col = 0; col < keyCols; col++) {
+      const keyLight = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: createGlowTexture(0, 255, 136, 32, true),
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      );
+
+      // Position on the keyboard
+      const x = -1.5 + col * keySpacing;
+      const z = 2 + row * keySpacing;
+      keyLight.position.set(x, 0.6, z);
+      keyLight.scale.set(0.15, 0.15, 1);
+
+      // Store animation data
+      keyLight.userData = {
+        row,
+        col,
+        baseColor: keyColors[(row * keyCols + col) % keyColors.length],
+        pulseIntensity: 0,
+        pulseDecay: 2.0 + Math.random() * 1.5,
+        phase: Math.random() * Math.PI * 2,
+        isActive: false,
+      };
+
+      keyboardLights.add(keyLight);
+    }
   }
-  wsGroup.add(pulseParticles);
-  (wsGroup as any).pulseCurve = cableCurve;
-  (wsGroup as any).pulseParticles = pulseParticles;
+
+  // Add a glowing base under keyboard
+  const keyboardGlowTex = createGlowTexture(100, 200, 255, 128, false);
+  const keyboardGlow = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: keyboardGlowTex,
+      transparent: true,
+      opacity: 0.05,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  keyboardGlow.scale.set(6, 2, 1);
+  keyboardGlow.position.set(1, 0.3, 3);
+  keyboardLights.add(keyboardGlow);
+
+  wsGroup.add(keyboardLights);
+
+  // Store for animation
+  (wsGroup as any).keyboardLights = keyboardLights;
+  (wsGroup as any).keyboardLightKeys = keyboardLights.children.filter(
+    (child) => child.userData && child.userData.row !== undefined,
+  );
 
   // ============================================================
-  // THE META HOLOGRAM (Mini Code Galaxy)
+  // THE META HOLOGRAM (Mini Code Galaxy) - PURPLE & DIMMER
   // ============================================================
-  const metaBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.6, 0.2, 16),
-    new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 })
-  );
-  metaBase.position.set(4, 0.5, -2);
-  wsGroup.add(metaBase);
-  
-  const metaGalaxy = new THREE.Group();
-  const mgCount = 500;
-  const mgGeo = new THREE.BufferGeometry();
-  const mgPos = new Float32Array(mgCount * 3);
-  for(let i=0; i<mgCount; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const r = Math.pow(Math.random(), 2.0) * 2.0;
-    mgPos[i*3] = Math.cos(angle) * r;
-    mgPos[i*3+1] = (Math.random() - 0.5) * 0.5 * (1 - r/2);
-    mgPos[i*3+2] = Math.sin(angle) * r;
+  // Use existing metaBase or create it if it doesn't exist
+  let metaBase = wsGroup.getObjectByName("metaBase") as THREE.Mesh;
+  if (!metaBase) {
+    metaBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.6, 0.2, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0x1a0a2a,
+        metalness: 0.9,
+        roughness: 0.2,
+        emissive: 0x2a1a3a,
+        emissiveIntensity: 0.3,
+      }),
+    );
+    metaBase.name = "metaBase";
+    metaBase.position.set(4, 0.5, -2);
+    wsGroup.add(metaBase);
   }
-  mgGeo.setAttribute("position", new THREE.BufferAttribute(mgPos, 3));
-  const mgMat = new THREE.PointsMaterial({
-    color: 0x00ffff,
-    size: 0.1,
+
+  // Remove old galaxy if it exists
+  const oldGalaxy = wsGroup.getObjectByName("metaGalaxy");
+  if (oldGalaxy) {
+    wsGroup.remove(oldGalaxy);
+  }
+
+  const metaGalaxy = new THREE.Group();
+  metaGalaxy.name = "metaGalaxy";
+
+  // 1. Spiral Galaxy Core (dense center) - PURPLE
+  const coreCount = 800;
+  const coreGeo = new THREE.BufferGeometry();
+  const corePos = new Float32Array(coreCount * 3);
+  const coreColors = new Float32Array(coreCount * 3);
+  const coreSizes = new Float32Array(coreCount);
+
+  for (let i = 0; i < coreCount; i++) {
+    const radius = Math.pow(Math.random(), 1.5) * 0.8;
+    const angle = Math.random() * Math.PI * 2;
+    const height = (Math.random() - 0.5) * 0.3 * (1 - radius / 0.8);
+
+    corePos[i * 3] = Math.cos(angle) * radius;
+    corePos[i * 3 + 1] = height;
+    corePos[i * 3 + 2] = Math.sin(angle) * radius;
+
+    const brightness = 1 - radius / 0.8;
+    // Purple tones
+    coreColors[i * 3] = (0.6 * brightness + 0.3) * 0.6; // Dimmer red
+    coreColors[i * 3 + 1] = (0.2 * brightness + 0.1) * 0.6; // Dimmer green
+    coreColors[i * 3 + 2] = (0.8 * brightness + 0.4) * 0.6; // Dimmer blue
+
+    coreSizes[i] = 0.02 + Math.random() * 0.04; // Smaller
+  }
+
+  coreGeo.setAttribute("position", new THREE.BufferAttribute(corePos, 3));
+  coreGeo.setAttribute("color", new THREE.BufferAttribute(coreColors, 3));
+  coreGeo.setAttribute("size", new THREE.BufferAttribute(coreSizes, 1));
+
+  const coreMat = new THREE.PointsMaterial({
+    size: 0.04, // Smaller
+    vertexColors: true,
     transparent: true,
-    opacity: 0.6,
+    opacity: 0.5, // Dimmer
     blending: THREE.AdditiveBlending,
-    depthWrite: false
+    depthWrite: false,
+    sizeAttenuation: true,
   });
-  const mgPoints = new THREE.Points(mgGeo, mgMat);
-  metaGalaxy.add(mgPoints);
+  const corePoints = new THREE.Points(coreGeo, coreMat);
+  metaGalaxy.add(corePoints);
+
+  // 2. Spiral Arms - PURPLE
+  const armCount = 2000;
+  const armGeo2 = new THREE.BufferGeometry();
+  const armPos2 = new Float32Array(armCount * 3);
+  const armColors2 = new Float32Array(armCount * 3);
+  const armSizes2 = new Float32Array(armCount);
+
+  // Purple color palette (dimmer)
+  const armColorsPalette = [
+    new THREE.Color(0x4a1a6b), // Dark purple
+    new THREE.Color(0x6d28d9), // Purple
+    new THREE.Color(0x7c3aed), // Violet
+    new THREE.Color(0x5b21b6), // Deep purple
+    new THREE.Color(0x8b5cf6), // Light purple
+    new THREE.Color(0x3b1a4a), // Very dark purple
+  ];
+
+  for (let i = 0; i < armCount; i++) {
+    const arm = Math.floor(Math.random() * 3);
+    const armOffset = (arm / 3) * Math.PI * 2;
+    const radius = 0.3 + Math.pow(Math.random(), 0.7) * 2.2;
+    const spiralAngle = radius * 3.0 + armOffset;
+    const scatter = (0.3 + radius * 0.1) * (Math.random() - 0.5);
+    const heightScatter = (0.1 + radius * 0.05) * (Math.random() - 0.5);
+
+    armPos2[i * 3] = Math.cos(spiralAngle + scatter) * radius;
+    armPos2[i * 3 + 1] = heightScatter;
+    armPos2[i * 3 + 2] = Math.sin(spiralAngle + scatter) * radius;
+
+    const colorIndex = Math.floor(Math.random() * armColorsPalette.length);
+    const col = armColorsPalette[colorIndex];
+    const brightness = 0.3 + (1 - radius / 2.5) * 0.4; // Dimmer
+    armColors2[i * 3] = col.r * brightness * 0.7; // Dimmer
+    armColors2[i * 3 + 1] = col.g * brightness * 0.7;
+    armColors2[i * 3 + 2] = col.b * brightness * 0.7;
+
+    armSizes2[i] = 0.015 + (1 - radius / 2.5) * 0.05 + Math.random() * 0.015; // Smaller
+  }
+
+  armGeo2.setAttribute("position", new THREE.BufferAttribute(armPos2, 3));
+  armGeo2.setAttribute("color", new THREE.BufferAttribute(armColors2, 3));
+  armGeo2.setAttribute("size", new THREE.BufferAttribute(armSizes2, 1));
+
+  const armMat2 = new THREE.PointsMaterial({
+    size: 0.04, // Smaller
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.4, // Dimmer
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const armPoints = new THREE.Points(armGeo2, armMat2);
+  metaGalaxy.add(armPoints);
+
+  // 3. Outer Halo Stars - PURPLE & DIMMER
+  const haloCount = 600;
+  const haloGeo = new THREE.BufferGeometry();
+  const haloPos = new Float32Array(haloCount * 3);
+  const haloColors = new Float32Array(haloCount * 3);
+
+  for (let i = 0; i < haloCount; i++) {
+    const radius = 1.8 + Math.random() * 1.5;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+
+    haloPos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+    haloPos[i * 3 + 1] = radius * Math.cos(phi) * 0.4;
+    haloPos[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+
+    const brightness = 0.1 + Math.random() * 0.15; // Dimmer
+    haloColors[i * 3] = 0.5 * brightness; // Purple-ish
+    haloColors[i * 3 + 1] = 0.2 * brightness;
+    haloColors[i * 3 + 2] = 0.6 * brightness;
+  }
+
+  haloGeo.setAttribute("position", new THREE.BufferAttribute(haloPos, 3));
+  haloGeo.setAttribute("color", new THREE.BufferAttribute(haloColors, 3));
+
+  const haloMat = new THREE.PointsMaterial({
+    size: 0.025, // Smaller
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.15, // Dimmer
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const haloPoints = new THREE.Points(haloGeo, haloMat);
+  metaGalaxy.add(haloPoints);
+
+  // 4. Glowing Galaxy Core (Sprite) - PURPLE & DIMMER
+  const coreGlowTex = createGlowTexture(100, 50, 200, 128, true); // Purple
+  const coreGlow = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: coreGlowTex,
+      transparent: true,
+      opacity: 0.2, // Dimmer
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  coreGlow.scale.set(0.8, 0.8, 1); // Smaller
+  coreGlow.position.set(0, 0, 0);
+  metaGalaxy.add(coreGlow);
+
+  // 5. Outer Glow Ring - PURPLE & DIMMER
+  const glowRingTex = createGlowTexture(80, 40, 160, 256, false); // Purple
+  const glowRing = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: glowRingTex,
+      transparent: true,
+      opacity: 0.08, // Dimmer
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  glowRing.scale.set(4, 4, 1); // Smaller
+  glowRing.position.set(0, 0, 0);
+  metaGalaxy.add(glowRing);
+
+  // Position the galaxy
   metaGalaxy.position.set(4, 1.5, -2);
-  metaGalaxy.rotation.x = Math.PI * 0.1;
+  metaGalaxy.rotation.x = Math.PI * 0.15;
+  metaGalaxy.rotation.z = Math.PI * 0.05;
+
   wsGroup.add(metaGalaxy);
   (wsGroup as any).metaGalaxy = metaGalaxy;
+  (wsGroup as any).metaGalaxyData = {
+    corePoints,
+    armPoints,
+    haloPoints,
+    coreGlow,
+    glowRing,
+    armColorsPalette,
+  };
 
   // ============================================================
   // COFFEE MUG
@@ -388,7 +609,10 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     roughness: 0.4,
     metalness: 0.6,
   });
-  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.08), phoneBodyMat);
+  const phoneBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6, 1.1, 0.08),
+    phoneBodyMat,
+  );
   phoneBody.position.set(6, 1.2, 2.5);
   phoneBody.castShadow = true;
   wsGroup.add(phoneBody);
@@ -399,7 +623,10 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     emissive: new THREE.Color(0x4488ff),
     emissiveIntensity: 0.3,
   });
-  const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.85), phoneScreenMat);
+  const phoneScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.5, 0.85),
+    phoneScreenMat,
+  );
   phoneScreen.position.set(6, 1.2, 2.542);
   wsGroup.add(phoneScreen);
 
@@ -774,6 +1001,82 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
 
+    // Add this near the top of CanvasGraph component
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Add keyboard listener
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        // Ignore if typing in input fields
+        if (
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement
+        ) {
+          return;
+        }
+
+        // Notify scene about typing
+        if (sceneRef.current) {
+          (sceneRef.current as any).typingActivity = true;
+          (sceneRef.current as any).lastTypingTime = Date.now();
+
+          // Trigger a random key light
+          triggerKeyboardLight(sceneRef.current);
+        }
+
+        // Clear timeout
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+
+        // Stop after 2 seconds of no typing
+        typingTimeoutRef.current = setTimeout(() => {
+          if (sceneRef.current) {
+            (sceneRef.current as any).typingActivity = false;
+          }
+        }, 2000);
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    // Function to trigger keyboard lights
+    const triggerKeyboardLight = (c: any) => {
+      if (!c || !c.workstation) return;
+
+      const keyboardLights = (c.workstation.wsGroup as any).keyboardLights;
+      const keys = (c.workstation.wsGroup as any).keyboardLightKeys;
+
+      if (!keys || keys.length === 0) return;
+
+      // Random number of keys to light up (1-5)
+      const numKeys = 1 + Math.floor(Math.random() * 4);
+
+      for (let i = 0; i < numKeys; i++) {
+        const keyIndex = Math.floor(Math.random() * keys.length);
+        const key = keys[keyIndex];
+        if (key && key.userData) {
+          key.userData.pulseIntensity = 1.0;
+          key.userData.isActive = true;
+        }
+      }
+
+      // Subtle glow pulse on the keyboard base
+      const glow = keyboardLights?.children?.find(
+        (child: any) => child instanceof THREE.Sprite && child.scale.x > 5,
+      );
+      if (glow) {
+        glow.material.opacity = 0.15;
+      }
+    };
+
     const sceneRef = useRef<{
       scene: THREE.Scene;
       camera: THREE.PerspectiveCamera;
@@ -802,7 +1105,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
     const selectedRef = useRef<string | null>(null);
     const hoveredLinkIdx = useRef<number>(-1);
 
-    const [interactionMode, setInteractionMode] = useState<"rotate" | "pan">("rotate");
+    const [interactionMode, setInteractionMode] = useState<"rotate" | "pan">(
+      "rotate",
+    );
 
     useEffect(() => {
       if (sceneRef.current && sceneRef.current.controls) {
@@ -816,20 +1121,35 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         if (
           e.target instanceof HTMLInputElement ||
           e.target instanceof HTMLTextAreaElement
-        )
+        ) {
           return;
+        }
 
-        if (e.key === "r" || e.key === "R") {
-          setInteractionMode("rotate");
-        } else if (e.key === "p" || e.key === "P") {
-          setInteractionMode("pan");
-        } else if (e.key === " " || e.key === "m" || e.key === "M") {
-          setInteractionMode((prev) => (prev === "rotate" ? "pan" : "rotate"));
-          if (e.key === " ") e.preventDefault();
+        if (sceneRef.current) {
+          (sceneRef.current as any).typingActivity = true;
+          (sceneRef.current as any).lastTypingTime = Date.now();
+          triggerKeyboardLight(sceneRef.current);
+        }
+
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+          if (sceneRef.current) {
+            (sceneRef.current as any).typingActivity = false;
+          }
+        }, 2000);
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
         }
       };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
 
     useEffect(() => {
@@ -1059,7 +1379,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           { r: 150, g: 100, b: 255 },
           { r: 255, g: 150, b: 100 },
         ];
-        
+
         for (let i = 0; i < 15; i++) {
           const col = colors[Math.floor(Math.random() * colors.length)];
           const tex = createGlowTexture(col.r, col.g, col.b, 256, false);
@@ -1070,17 +1390,17 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               opacity: 0.15 + Math.random() * 0.1,
               blending: THREE.AdditiveBlending,
               depthWrite: false,
-            })
+            }),
           );
-          
+
           const angle1 = Math.random() * Math.PI * 2;
           const angle2 = (Math.random() - 0.5) * Math.PI;
           const radius = 800 + Math.random() * 400;
-          
+
           sprite.position.x = Math.cos(angle1) * Math.cos(angle2) * radius;
           sprite.position.y = Math.sin(angle2) * radius;
           sprite.position.z = Math.sin(angle1) * Math.cos(angle2) * radius;
-          
+
           const scale = 500 + Math.random() * 800;
           sprite.scale.set(scale, scale, 1);
           group.add(sprite);
@@ -1100,9 +1420,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const col = new Float32Array(pCount * 3);
 
         const colors = [
-          new THREE.Color("#ffbb77"),
-          new THREE.Color("#77aaff"),
-          new THREE.Color("#ffccff"),
+          new THREE.Color("#e8f4ff"), // whitest blue
+          new THREE.Color("#c8e0ff"), // soft blue
+          new THREE.Color("#f0f8ff"), // near-white
         ];
 
         for (let i = 0; i < pCount; i++) {
@@ -1140,7 +1460,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }),
         );
 
-        const bulgeTex = createGlowTexture(255, 220, 180, 256, false);
+        const bulgeTex = createGlowTexture(220, 235, 255, 256, false);
         const bulge = new THREE.Sprite(
           new THREE.SpriteMaterial({
             map: bulgeTex,
@@ -1636,6 +1956,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       );
       const gltfLoader = new GLTFLoader();
       gltfLoader.setDRACOLoader(dracoLoader);
+      // Replace the GLTF loader callback section with this:
+
       gltfLoader.load(
         "/man_typing.glb",
         (gltf) => {
@@ -1644,8 +1966,153 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           model.scale.set(4, 4, 4);
           model.position.set(1, -5.5, 6);
           model.rotation.y = Math.PI;
+
+          // ============================================================
+          // TRANSCENDENT BEING - ETHEREAL HOLOGRAPHIC FORM
+          // ============================================================
+
+          // Colors: deep mystical purple with subtle energy
+          const PRIMARY = new THREE.Color(0x6d28d9);
+          const ENERGY = new THREE.Color(0x7c3aed);
+
+          // 1. Transform the model with holographic/ethereal materials
+          model.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              if (Array.isArray(child.material)) {
+                child.material = child.material.map((m) => {
+                  const mat = (m as THREE.MeshStandardMaterial).clone();
+
+                  // Make it look like a hologram - slightly transparent
+                  mat.transparent = true;
+                  mat.opacity = 0.85;
+
+                  // Color tint - deep purple
+                  if (mat.color) mat.color.lerp(PRIMARY, 0.6);
+
+                  // Subtle emissive - not bright, just a gentle inner glow
+                  mat.emissive = ENERGY;
+                  mat.emissiveIntensity = 0.08; // Very subtle!
+
+                  // Make it a bit metallic/shiny for ethereal look
+                  mat.metalness = 0.4;
+                  mat.roughness = 0.3;
+
+                  mat.needsUpdate = true;
+                  return mat;
+                });
+              } else {
+                const mat = (
+                  child.material as THREE.MeshStandardMaterial
+                ).clone();
+                mat.transparent = true;
+                mat.opacity = 0.85;
+                if (mat.color) mat.color.lerp(PRIMARY, 0.6);
+                mat.emissive = ENERGY;
+                mat.emissiveIntensity = 0.08;
+                mat.metalness = 0.4;
+                mat.roughness = 0.3;
+                mat.needsUpdate = true;
+                child.material = mat;
+              }
+            }
+          });
+
+          // 2. Subtle Aura (like a faint energy field around the being)
+          const auraGroup = new THREE.Group();
+
+          // Very faint outer glow - not blinding!
+          const auraTex = createGlowTexture(100, 50, 200, 128, false);
+          const aura = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+              map: auraTex,
+              transparent: true,
+              opacity: 0.08, // Very subtle
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          aura.scale.set(10, 10, 1);
+          aura.position.set(0, 3, 0);
+          auraGroup.add(aura);
+
+          // 3. Energy particles (like floating dust, not bright)
+          const particleCount = 80;
+          const particleGeo = new THREE.BufferGeometry();
+          const particlePos = new Float32Array(particleCount * 3);
+          for (let i = 0; i < particleCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const radius = 3 + Math.random() * 4;
+
+            particlePos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            particlePos[i * 3 + 1] = radius * Math.cos(phi) + 3;
+            particlePos[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+          }
+          particleGeo.setAttribute(
+            "position",
+            new THREE.BufferAttribute(particlePos, 3),
+          );
+
+          const particleTex = createGlowTexture(150, 100, 255, 16, true);
+          const particleMat = new THREE.PointsMaterial({
+            size: 0.15,
+            map: particleTex,
+            transparent: true,
+            opacity: 0.3, // Very subtle
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            color: 0x8b5cf6,
+          });
+
+          const particles = new THREE.Points(particleGeo, particleMat);
+          particles.position.copy(model.position);
+          particles.position.y += 3;
+          scene.add(particles);
+
+          // 4. One simple ring
+          const RING_RADIUS = 0.3;
+          const RING_THICKNESS = 0.03;
+          const RING_OPACITY = 0.5;
+          // ===========================
+
+          const ringGeo = new THREE.TorusGeometry(
+            RING_RADIUS,
+            RING_THICKNESS,
+            8,
+            48,
+          );
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x7c3aed,
+            transparent: true,
+            opacity: RING_OPACITY,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+          const ring = new THREE.Mesh(ringGeo, ringMat);
+          ring.position.set(0, 3, 0); // Height of the ring
+          ring.rotation.x = Math.PI / 3;
+          model.add(ring);
+
+          model.add(auraGroup);
+
+          // Store for animation
+          (model as any).transcendentData = {
+            aura,
+            particles,
+            ring,
+          };
+
           workstation.wsGroup.add(model);
 
+          // Store references
+          if (sceneRef.current) {
+            (sceneRef.current as any).transcendentParticles = particles;
+            (sceneRef.current as any).transcendentModel = model;
+          }
+
+          // ============================================================
+          // HITBOX - For click detection
+          // ============================================================
           const hitboxGeo = new THREE.SphereGeometry(2.5, 8, 6);
           const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
           const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
@@ -1657,6 +2124,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           hitbox.userData = { isProgrammerHitbox: true };
           scene.add(hitbox);
 
+          // ============================================================
+          // ANIMATION MIXER
+          // ============================================================
           const mixer = new THREE.AnimationMixer(model);
           if (gltf.animations.length > 0) {
             const clip = gltf.animations[0];
@@ -1746,7 +2216,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           Math.round(col.g * 255),
           Math.round(col.b * 255),
           256,
-          false
+          false,
         );
         const constellationSprite = new THREE.Sprite(
           new THREE.SpriteMaterial({
@@ -1755,7 +2225,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             opacity: 0.05,
             blending: THREE.AdditiveBlending,
             depthWrite: false,
-          })
+          }),
         );
         constellationSprite.scale.set(150, 150, 1);
         constellationSprite.position.copy(sprite.position);
@@ -1766,7 +2236,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       // ============================================================
       // THE SCANNING DRONE (Removed per user request)
       // ============================================================
-      const shipGroup = new THREE.Group(); 
+      const shipGroup = new THREE.Group();
       scene.add(shipGroup);
 
       // Data Particles
@@ -1905,7 +2375,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const lineGeo = new THREE.BufferGeometry();
       const linePos = new Float32Array(links.length * 6);
       lineGeo.setAttribute("position", new THREE.BufferAttribute(linePos, 3));
-      lineGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1000000);
+      lineGeo.boundingSphere = new THREE.Sphere(
+        new THREE.Vector3(0, 0, 0),
+        1000000,
+      );
       const lineMat = new THREE.LineBasicMaterial({
         color: 0x4488ff,
         transparent: true,
@@ -1920,7 +2393,13 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const hGeo = new THREE.BufferGeometry();
       const hPos = new Float32Array(6);
       hGeo.setAttribute("position", new THREE.BufferAttribute(hPos, 3));
-      const hMat = new THREE.LineBasicMaterial({ color: 0xffaa44, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+      const hMat = new THREE.LineBasicMaterial({
+        color: 0xffaa44,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
       const hoverLine = new THREE.Line(hGeo, hMat);
       hoverLine.visible = false;
       scene.add(hoverLine);
@@ -1997,28 +2476,110 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const overclocked = (c as any).isOverclocked;
         const timeScale = overclocked ? 3.0 : 1.0;
         const scaledElapsed = elapsed * timeScale;
-        
-        const wp = c.workstation?.WORKSTATION_POS || new THREE.Vector3();
-        
-        // Drone removed
 
-        // Data Cable pulse
-        if (c.workstation && (c.workstation as any).pulseCurve) {
-           const curve = (c.workstation as any).pulseCurve;
-           const particles = (c.workstation as any).pulseParticles as THREE.Group;
-           particles.children.forEach((p, i) => {
-             const t = (scaledElapsed * 0.6 + i * 0.125) % 1.0;
-             const pos = curve.getPointAt(t);
-             const sprite = p as THREE.Sprite;
-             sprite.position.copy(pos);
-             sprite.material.opacity = overclocked ? 0.8 : 0.4;
-             (sprite.material as any).color.setHex(overclocked ? 0xff3300 : 0x00ffff);
-           });
+        const wp = c.workstation?.WORKSTATION_POS || new THREE.Vector3();
+
+        // ============================================================
+        // REACTIVE KEYBOARD LIGHTS ANIMATION
+        // ============================================================
+        const keyboardLights = (c.workstation?.wsGroup as any)?.keyboardLights;
+        const keys = (c.workstation?.wsGroup as any)?.keyboardLightKeys;
+
+        if (keyboardLights && keys) {
+          const isTyping = (c as any).typingActivity || false;
+          const time = elapsed;
+
+          // Animate each key
+          keys.forEach((key: THREE.Sprite) => {
+            const ud = key.userData;
+
+            // Decay the pulse intensity
+            if (ud.pulseIntensity > 0) {
+              ud.pulseIntensity -= 0.015 * ud.pulseDecay;
+              if (ud.pulseIntensity < 0) ud.pulseIntensity = 0;
+            }
+
+            // Calculate pulse effect
+            const intensity = ud.pulseIntensity;
+            const basePulse = isTyping ? 0.1 : 0;
+            const totalIntensity = Math.max(intensity, basePulse);
+
+            // Set opacity and color
+            if (totalIntensity > 0.01) {
+              key.material.opacity = totalIntensity * 0.8;
+              const color = new THREE.Color(ud.baseColor);
+              key.material.color = color;
+              key.scale.set(
+                0.15 + totalIntensity * 0.15,
+                0.15 + totalIntensity * 0.15,
+                1,
+              );
+            } else {
+              key.material.opacity = 0;
+              key.scale.set(0.15, 0.15, 1);
+              ud.isActive = false;
+            }
+
+            // Store wave state
+            if (!(c as any).keyboardWave) {
+              (c as any).keyboardWave = {
+                active: false,
+                position: 0,
+                speed: 0,
+              };
+            }
+
+            const wave = (c as any).keyboardWave;
+
+            // When typing, trigger wave
+            if (isTyping && !wave.active) {
+              wave.active = true;
+              wave.position = 0;
+              wave.speed = 0.3;
+            }
+
+            if (wave.active) {
+              wave.position += wave.speed;
+
+              // Light up keys in a wave pattern
+              keys.forEach((key: THREE.Sprite) => {
+                const col = key.userData.col;
+                const row = key.userData.row;
+                const keyPos = (col + row * 0.5) / 10;
+                const dist = Math.abs(keyPos - wave.position);
+
+                if (dist < 0.3) {
+                  const intensity = 1 - dist / 0.3;
+                  key.userData.pulseIntensity = Math.max(
+                    key.userData.pulseIntensity,
+                    intensity * 0.8,
+                  );
+                }
+              });
+
+              if (wave.position > 1.5) {
+                wave.active = false;
+              }
+            }
+          });
+
+          // Pulse the keyboard base glow
+          const glow = keyboardLights.children.find(
+            (child: any) => child instanceof THREE.Sprite && child.scale.x > 5,
+          );
+          if (glow) {
+            if (isTyping) {
+              glow.material.opacity = 0.08 + Math.sin(time * 8) * 0.05;
+            } else {
+              glow.material.opacity *= 0.99;
+              if (glow.material.opacity < 0.02) glow.material.opacity = 0.02;
+            }
+          }
         }
-        
+
         // Meta Galaxy spin
         if (c.workstation && (c.workstation as any).metaGalaxy) {
-           (c.workstation as any).metaGalaxy.rotation.y = scaledElapsed * 0.5;
+          (c.workstation as any).metaGalaxy.rotation.y = scaledElapsed * 0.5;
         }
 
         if (c.workstation) {
@@ -2086,18 +2647,19 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         // Slowly rotate the ambient nebula background to make it feel alive
         if (sceneRef.current) {
-           const bg = (sceneRef.current as any).nebulaBackground as THREE.Group;
-           if (bg) {
-             bg.rotation.y = elapsed * 0.005;
-             bg.rotation.z = elapsed * 0.002;
-           }
+          const bg = (sceneRef.current as any).nebulaBackground as THREE.Group;
+          if (bg) {
+            bg.rotation.y = elapsed * 0.005;
+            bg.rotation.z = elapsed * 0.002;
+          }
 
-           const glows = (sceneRef.current as any).constellationGlows as THREE.Sprite[];
-           if (glows) {
-             glows.forEach((glow, i) => {
-               glow.material.opacity = 0.08 + Math.sin(elapsed * 1.2 + i) * 0.03;
-             });
-           }
+          const glows = (sceneRef.current as any)
+            .constellationGlows as THREE.Sprite[];
+          if (glows) {
+            glows.forEach((glow, i) => {
+              glow.material.opacity = 0.08 + Math.sin(elapsed * 1.2 + i) * 0.03;
+            });
+          }
         }
 
         const smokeSprites = (workstation as any)?.smokeSprites as
@@ -2120,20 +2682,20 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               ud.startX + Math.sin(swirlAngle) * ud.driftX * lifeRatio;
             spr.position.z =
               ud.startZ + Math.cos(swirlAngle) * ud.driftZ * lifeRatio;
-            
+
             const riseFactor = overclocked ? 3.0 : 1.5;
             spr.position.y = 1.4 + ud.life * ud.riseSpeed * riseFactor;
-            
+
             const scale = 0.3 + lifeRatio * 1.4;
             spr.scale.set(scale, scale, 1);
-            
+
             const opacity =
               lifeRatio < 0.2
                 ? (lifeRatio / 0.2) * 0.5
                 : lifeRatio > 0.7
                   ? (1 - (lifeRatio - 0.7) / 0.3) * 0.5
                   : 0.5;
-            
+
             const mat = spr.material as THREE.SpriteMaterial;
             mat.opacity = opacity;
             mat.color.setHex(overclocked ? 0xff5522 : 0xcccccc);
@@ -2141,16 +2703,28 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
 
         // Phone YouTube screen animation
-        const phoneCtx = (c.workstation as any)?.phoneCtx as CanvasRenderingContext2D | undefined;
-        const phoneTex = (c.workstation as any)?.phoneTex as THREE.CanvasTexture | undefined;
+        const phoneCtx = (c.workstation as any)?.phoneCtx as
+          | CanvasRenderingContext2D
+          | undefined;
+        const phoneTex = (c.workstation as any)?.phoneTex as
+          | THREE.CanvasTexture
+          | undefined;
         if (phoneCtx && phoneTex) {
           const pData = c.workstation as any;
-          if (!pData.lastPhoneUpdate || elapsed - pData.lastPhoneUpdate > 0.033) {
-            // Clear only the screen area (inside bezel)
+          if (
+            !pData.lastPhoneUpdate ||
+            elapsed - pData.lastPhoneUpdate > 0.033
+          ) {
             phoneCtx.clearRect(8, 8, 112, 236);
             const sy = (elapsed * 80) % 256;
-            // Video content bars
-            const colors = ["#ff6b6b", "#48dbfb", "#ff9ff3", "#feca57", "#54a0ff", "#5f27cd"];
+            const colors = [
+              "#ff6b6b",
+              "#48dbfb",
+              "#ff9ff3",
+              "#feca57",
+              "#54a0ff",
+              "#5f27cd",
+            ];
             for (let i = 0; i < 12; i++) {
               const y = ((i * 22 + sy) % 256) - 22;
               const bw = 40 + Math.sin(elapsed * 2 + i * 0.7) * 20;
@@ -2162,23 +2736,71 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               phoneCtx.fill();
             }
             phoneCtx.globalAlpha = 1;
-            // Red YouTube progress bar at bottom
             phoneCtx.fillStyle = "#ff0000";
             phoneCtx.beginPath();
-            phoneCtx.roundRect(10, 220, 30 + Math.sin(elapsed * 0.5) * 20 + 50, 4, 2);
+            phoneCtx.roundRect(
+              10,
+              220,
+              30 + Math.sin(elapsed * 0.5) * 20 + 50,
+              4,
+              2,
+            );
             phoneCtx.fill();
             phoneCtx.fillStyle = "#fff";
             phoneCtx.font = "7px sans-serif";
             phoneCtx.fillText("▶ playing", 14, 212);
-            // Subtle screen glow pulse
             if (pData.phoneScreen) {
-              pData.phoneScreen.material.emissiveIntensity = 0.2 + Math.sin(elapsed * 1.5) * 0.1;
+              pData.phoneScreen.material.emissiveIntensity =
+                0.2 + Math.sin(elapsed * 1.5) * 0.1;
             }
             phoneTex.needsUpdate = true;
             pData.lastPhoneUpdate = elapsed;
           }
         }
 
+        // ============================================================
+        // TRANSCENDENT BEING - SUBTLE ANIMATION
+        // ============================================================
+        const tModel = (c as any).transcendentModel as THREE.Group | null;
+        if (tModel) {
+          const td = (tModel as any).transcendentData;
+          if (td) {
+            // Very subtle aura pulse - almost imperceptible
+            const pulse = 1 + Math.sin(elapsed * 0.3) * 0.03;
+            td.aura.scale.set(10 * pulse, 10 * pulse, 1);
+            td.aura.material.opacity = 0.07 + Math.sin(elapsed * 0.2) * 0.02;
+
+            // Ring slowly rotates
+            td.ring.rotation.z = elapsed * 0.1;
+            td.ring.rotation.x = Math.PI / 3 + Math.sin(elapsed * 0.05) * 0.1;
+          }
+        }
+
+        // Floating particles - slow drift
+        const tParticles = (c as any)
+          .transcendentParticles as THREE.Points | null;
+        if (tParticles) {
+          const pos = tParticles.geometry.attributes.position
+            .array as Float32Array;
+          for (let i = 0; i < pos.length / 3; i++) {
+            // Very slow orbital drift
+            const x = pos[i * 3];
+            const z = pos[i * 3 + 2];
+            const angle = Math.atan2(z, x);
+            const radius = Math.sqrt(x * x + z * z);
+            const newAngle = angle + elapsed * 0.01;
+            pos[i * 3] = radius * Math.cos(newAngle);
+            pos[i * 3 + 2] = radius * Math.sin(newAngle);
+            // Gentle up/down float
+            pos[i * 3 + 1] += Math.sin(elapsed * 0.02 + i) * 0.001;
+          }
+          tParticles.geometry.attributes.position.needsUpdate = true;
+          if (tParticles.material instanceof THREE.PointsMaterial) {
+            tParticles.material.opacity = 0.25 + Math.sin(elapsed * 0.1) * 0.05;
+          }
+        }
+
+        // Planet and moon animations
         for (const [, p] of c.planetSprites) {
           const ud = p.userData;
           const speed = 0.0002;
@@ -2215,10 +2837,16 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             const FADE_START = 80;
             const FADE_END = 150;
             if (dist > FADE_START) {
-              lodMultiplier = 1.0 - Math.min(1.0, (dist - FADE_START) / (FADE_END - FADE_START));
+              lodMultiplier =
+                1.0 -
+                Math.min(1.0, (dist - FADE_START) / (FADE_END - FADE_START));
             }
 
-            if (lodMultiplier <= 0 && ud.node.id !== selectedRef.current && ud.node.id !== hoveredRef.current) {
+            if (
+              lodMultiplier <= 0 &&
+              ud.node.id !== selectedRef.current &&
+              ud.node.id !== hoveredRef.current
+            ) {
               m.visible = false;
             } else {
               m.visible = true;
@@ -2226,16 +2854,18 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                 ud.node.id === selectedRef.current ||
                 ud.node.id === hoveredRef.current
               ) {
-                m.material.opacity = 0.3; // Full opacity if specifically selected/hovered
+                m.material.opacity = 0.3;
                 m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
               } else {
-                m.material.opacity = (selectedRef.current ? 0.05 : 0.08) * lodMultiplier;
+                m.material.opacity =
+                  (selectedRef.current ? 0.05 : 0.08) * lodMultiplier;
                 m.scale.set(ud.baseSize, ud.baseSize, 1);
               }
             }
           }
         }
 
+        // Lines and packets
         const lp = c.lineSegments.geometry.attributes
           .position as THREE.BufferAttribute;
         const pp = c.packetPoints.geometry.attributes
@@ -2278,9 +2908,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               );
             }
             if (hoveredLinkIdx.current === lineIdx) {
-              const hp = c.hoverLine.geometry.attributes.position.array as Float32Array;
-              hp[0] = sx; hp[1] = sy; hp[2] = sz;
-              hp[3] = tx; hp[4] = ty; hp[5] = tz;
+              const hp = c.hoverLine.geometry.attributes.position
+                .array as Float32Array;
+              hp[0] = sx;
+              hp[1] = sy;
+              hp[2] = sz;
+              hp[3] = tx;
+              hp[4] = ty;
+              hp[5] = tz;
               c.hoverLine.geometry.attributes.position.needsUpdate = true;
               c.hoverLine.visible = true;
             }
@@ -2320,6 +2955,47 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               (bookData.titleIndex + 1) % bookData.bookTitles.length;
             bookData.updateCover(bookData.titleIndex);
             bookData.coverTex.needsUpdate = true;
+          }
+        }
+
+        // Meta Galaxy spin
+        if (c.workstation && (c.workstation as any).metaGalaxy) {
+          const galaxy = (c.workstation as any).metaGalaxy;
+          const data = (c.workstation as any).metaGalaxyData;
+
+          // Slow rotation of the entire galaxy
+          galaxy.rotation.y = scaledElapsed * 0.15;
+
+          // Subtle wobble
+          galaxy.rotation.x =
+            Math.PI * 0.15 + Math.sin(scaledElapsed * 0.05) * 0.05;
+          galaxy.rotation.z =
+            Math.PI * 0.05 + Math.cos(scaledElapsed * 0.07) * 0.03;
+
+          if (data) {
+            // Pulse the core glow
+            const corePulse = 1 + Math.sin(scaledElapsed * 0.8) * 0.1;
+            data.coreGlow.scale.set(1.2 * corePulse, 1.2 * corePulse, 1);
+            data.coreGlow.material.opacity =
+              0.35 + Math.sin(scaledElapsed * 0.6) * 0.1;
+
+            // Pulse the outer glow ring
+            const ringPulse = 1 + Math.sin(scaledElapsed * 0.4 + 0.5) * 0.05;
+            data.glowRing.scale.set(5 * ringPulse, 5 * ringPulse, 1);
+            data.glowRing.material.opacity =
+              0.12 + Math.sin(scaledElapsed * 0.5 + 1) * 0.05;
+
+            // Animate individual stars in the spiral arms (subtle twinkling)
+            data.armPoints.rotation.y = Math.sin(scaledElapsed * 0.02) * 0.1;
+            data.armPoints.rotation.x =
+              Math.sin(scaledElapsed * 0.015 + 0.5) * 0.05;
+
+            // Core stars rotate at different speed
+            data.corePoints.rotation.y = Math.sin(scaledElapsed * 0.03) * 0.2;
+
+            // Halo stars drift slowly
+            data.haloPoints.rotation.y = scaledElapsed * 0.01;
+            data.haloPoints.rotation.x = Math.sin(scaledElapsed * 0.005) * 0.1;
           }
         }
 
@@ -2364,14 +3040,17 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         raycaster.setFromCamera(mouse, camera);
         raycaster.params.Line = { threshold: 6.0 };
         const hits = raycaster.intersectObject(c.lineSegments, false);
-        
+
         let bestHitInfo = null;
         let minRayDist = Infinity;
 
         if (hits.length > 0) {
           for (const hit of hits) {
             if (hit.index !== undefined) {
-              const rayDist = hit.distanceToRay !== undefined ? hit.distanceToRay : hit.distance;
+              const rayDist =
+                hit.distanceToRay !== undefined
+                  ? hit.distanceToRay
+                  : hit.distance;
               const linkIdx = Math.floor(hit.index / 2);
               const link = c.links[linkIdx];
               if (link) {
@@ -2423,18 +3102,24 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         if (right.lengthSq() < 0.001) right.set(1, 0, 0);
         right.normalize();
 
-        const offsetVec = up.clone().multiplyScalar(4).add(right.clone().multiplyScalar(3));
+        const offsetVec = up
+          .clone()
+          .multiplyScalar(4)
+          .add(right.clone().multiplyScalar(3));
 
         const p0 = currentCamPos;
         const p1 = startPos.clone().add(offsetVec);
-        const p2 = targetPos.clone().sub(dir.clone().multiplyScalar(10)).add(offsetVec);
+        const p2 = targetPos
+          .clone()
+          .sub(dir.clone().multiplyScalar(10))
+          .add(offsetVec);
         const p3 = targetPos.clone().add(new THREE.Vector3(15, 10, 15));
 
         const curve = new THREE.CatmullRomCurve3([p0, p1, p2, p3]);
         curve.curveType = "centripetal";
 
         let progress = 0;
-        const speed = 1.0; 
+        const speed = 1.0;
 
         const anim = () => {
           progress += 0.015 * speed;
@@ -2452,7 +3137,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             return;
           }
 
-          const t = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+          const t =
+            progress < 0.5
+              ? 2 * progress * progress
+              : -1 + (4 - 2 * progress) * progress;
 
           const nextPos = curve.getPointAt(t);
           c.camera.position.copy(nextPos);
@@ -2461,7 +3149,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           c.controls.target.lerpVectors(currentTarget, targetPos, targetT);
 
           const warpFactor = Math.sin(t * Math.PI);
-          c.camera.fov = 45 + warpFactor * 50; 
+          c.camera.fov = 45 + warpFactor * 50;
           c.camera.updateProjectionMatrix();
 
           requestAnimationFrame(anim);
@@ -2524,10 +3212,12 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         if (c.workstation && c.workstation.wsGroup) {
           const wsHits = raycaster.intersectObject(c.workstation.wsGroup, true);
           if (wsHits.length > 0) {
-            const clickedMug = wsHits.find(h => h.object.userData?.isCoffeeMug);
+            const clickedMug = wsHits.find(
+              (h) => h.object.userData?.isCoffeeMug,
+            );
             if (clickedMug) {
-               (c as any).isOverclocked = !(c as any).isOverclocked;
-               return; // Skip normal zoom if clicked mug
+              (c as any).isOverclocked = !(c as any).isOverclocked;
+              return; // Skip normal zoom if clicked mug
             }
           }
         }
@@ -2597,7 +3287,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               return;
             }
           }
-          
+
           const hitLinkInfo = getIntersectedLinkInfo(e);
           if (hitLinkInfo) {
             if (hoveredLinkIdx.current !== hitLinkInfo.index) {
@@ -2645,8 +3335,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.composer.setSize(nw, nh);
       };
 
-
-
       window.addEventListener("resize", handleResize);
 
       return () => {
@@ -2690,7 +3378,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           style={{ touchAction: "none" }}
           onContextMenu={(e) => e.preventDefault()}
         />
-        
+
         {/* Interaction Mode Toggle */}
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 bg-[#1a1020]/80 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
           <button
