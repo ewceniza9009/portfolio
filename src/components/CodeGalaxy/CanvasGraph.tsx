@@ -324,16 +324,103 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
 
   // Book titles - SHORTER versions that fit on the cover
   const bookTitles = [
-    { title: "Relativity", author: "Einstein", year: "1915" },
-    { title: "GoF & SOLID", author: "Gamma et al.", year: "1994" },
-    { title: "Art of Programming", author: "D. Knuth", year: "1968" },
+    // 5 Programming Books
+    {
+      title: "The Pragmatic Programmer",
+      author: "Thomas & Hunt",
+      year: "1999",
+    },
     { title: "Clean Code", author: "R. Martin", year: "2008" },
-    { title: "Design Patterns", author: "C. Alexander", year: "1977" },
-    { title: "Pragmatic Programmer", author: "Thomas & Hunt", year: "1999" },
     { title: "SICP", author: "Abelson & Sussman", year: "1985" },
-    { title: "C Programming", author: "Kernighan & Ritchie", year: "1978" },
-    { title: "Algorithms", author: "Cormen et al.", year: "1990" },
-    { title: "Mythical Man-Month", author: "F. Brooks", year: "1975" },
+    {
+      title: "Design Patterns (GoF)",
+      author: "Gamma, Helm, Johnson, Vlissides",
+      year: "1994",
+    },
+    {
+      title: "Introduction to Algorithms",
+      author: "Cormen et al.",
+      year: "1990",
+    },
+
+    // 3 System Design Books
+    {
+      title: "Designing Data-Intensive Applications",
+      author: "M. Kleppmann",
+      year: "2017",
+    },
+    { title: "System Design Interview", author: "Alex Xu", year: "2020" },
+    { title: "Clean Architecture", author: "R. Martin", year: "2017" },
+
+    // 2 Psychology Books
+    {
+      title: "Psychology of Computer Programming",
+      author: "G. Weinberg",
+      year: "1971",
+    },
+    { title: "The Mythical Man-Month", author: "F. Brooks", year: "1975" },
+
+    // 4 Whatever Books
+    {
+      title: "Software Engineering at Google",
+      author: "T. Winters et al.",
+      year: "2020",
+    },
+    { title: "Refactoring", author: "M. Fowler", year: "1999" },
+    {
+      title: "Working Effectively with Legacy Code",
+      author: "M. Feathers",
+      year: "2004",
+    },
+    { title: "Domain-Driven Design", author: "E. Evans", year: "2003" },
+
+    // 6 Science Books (Physics)
+    { title: "Relativity", author: "Einstein", year: "1915" },
+    {
+      title: "Surely You're Joking, Mr. Feynman!",
+      author: "R. Feynman",
+      year: "1985",
+    },
+    { title: "The Elegant Universe", author: "B. Greene", year: "1999" },
+    {
+      title: "Quantum Mechanics: The Theoretical Minimum",
+      author: "Susskind & Friedman",
+      year: "2014",
+    },
+    { title: "A Brief History of Time", author: "S. Hawking", year: "1988" },
+    { title: "The Fabric of the Cosmos", author: "B. Greene", year: "2004" },
+
+    // 2 Science Fiction Books
+    { title: "Dune", author: "F. Herbert", year: "1965" },
+    { title: "1984", author: "G. Orwell", year: "1949" },
+
+    // 3 AI Books
+    { title: "Deep Learning", author: "Goodfellow et al.", year: "2016" },
+    {
+      title: "Neural Networks and Deep Learning",
+      author: "M. Nielsen",
+      year: "2015",
+    },
+    { title: "The Coming Wave", author: "M. Suleyman", year: "2023" },
+
+    // 2 IT Books
+    {
+      title: "Computer Networks: A Systems Approach",
+      author: "Peterson & Davie",
+      year: "1996",
+    },
+    {
+      title: "Site Reliability Engineering",
+      author: "Beyer et al.",
+      year: "2016",
+    },
+
+    // SOLID Principles Book
+    {
+      title: "Agile Principles, Patterns, and Practices in C#",
+      author: "R. Martin",
+      year: "2006",
+    },
   ];
 
   // Create canvas with text wrapping
