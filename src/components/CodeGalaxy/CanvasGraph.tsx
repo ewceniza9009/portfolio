@@ -315,6 +315,49 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   wsGroup.add(mug);
 
   // ============================================================
+  // CELLPHONE - WATCHING YOUTUBE
+  // ============================================================
+  const phoneCanvas = document.createElement("canvas");
+  phoneCanvas.width = 128;
+  phoneCanvas.height = 256;
+  const phoneCtx = phoneCanvas.getContext("2d")!;
+
+  const phoneBodyMat = new THREE.MeshStandardMaterial({
+    color: 0x222222,
+    roughness: 0.4,
+    metalness: 0.6,
+  });
+  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.08), phoneBodyMat);
+  phoneBody.position.set(6, 1.2, 2.5);
+  phoneBody.castShadow = true;
+  wsGroup.add(phoneBody);
+
+  const phoneTex = new THREE.CanvasTexture(phoneCanvas);
+  const phoneScreenMat = new THREE.MeshStandardMaterial({
+    map: phoneTex,
+    emissive: new THREE.Color(0x4488ff),
+    emissiveIntensity: 0.3,
+  });
+  const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.85), phoneScreenMat);
+  phoneScreen.position.set(6, 1.2, 2.54);
+  wsGroup.add(phoneScreen);
+
+  // Draw static phone frame (bezel) on canvas once
+  function drawPhoneFrame() {
+    phoneCtx.fillStyle = "#000";
+    phoneCtx.fillRect(0, 0, 128, 256);
+    phoneCtx.fillStyle = "#111";
+    phoneCtx.beginPath();
+    phoneCtx.roundRect(4, 4, 120, 248, 12);
+    phoneCtx.fill();
+    // notch
+    phoneCtx.fillStyle = "#000";
+    phoneCtx.beginPath();
+    phoneCtx.roundRect(48, 0, 32, 20);
+    phoneCtx.fill();
+  }
+  drawPhoneFrame();
+  phoneTex.needsUpdate = true;
   // BOOK - WITH SHORTER TITLES AND TEXT WRAPPING
   // ============================================================
 
@@ -637,6 +680,11 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     lampLight,
     lightPool,
     bookData,
+    phoneScreen,
+    phoneTex,
+    phoneCanvas,
+    phoneCtx,
+    drawPhoneFrame,
   };
 }
 
@@ -1916,6 +1964,41 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                   : 0.5;
             (spr.material as THREE.SpriteMaterial).opacity = opacity;
           });
+        }
+
+        // Phone YouTube screen animation
+        const phoneCtx = (workstation as any)?.phoneCtx as CanvasRenderingContext2D | undefined;
+        const phoneTex = (workstation as any)?.phoneTex as THREE.CanvasTexture | undefined;
+        if (phoneCtx && phoneTex) {
+          // Clear only the screen area (inside bezel)
+          phoneCtx.clearRect(8, 8, 112, 236);
+          const sy = (elapsed * 80) % 256;
+          // Video content bars
+          const colors = ["#ff6b6b", "#48dbfb", "#ff9ff3", "#feca57", "#54a0ff", "#5f27cd"];
+          for (let i = 0; i < 12; i++) {
+            const y = ((i * 22 + sy) % 256) - 22;
+            const bw = 40 + Math.sin(elapsed * 2 + i * 0.7) * 20;
+            const bx = 64 - bw / 2 + Math.sin(elapsed * 1.3 + i * 0.5) * 10;
+            phoneCtx.fillStyle = colors[i % colors.length];
+            phoneCtx.globalAlpha = 0.6 + Math.sin(elapsed * 3 + i) * 0.2;
+            phoneCtx.beginPath();
+            phoneCtx.roundRect(bx, y, bw, 16, 4);
+            phoneCtx.fill();
+          }
+          phoneCtx.globalAlpha = 1;
+          // Red YouTube progress bar at bottom
+          phoneCtx.fillStyle = "#ff0000";
+          phoneCtx.beginPath();
+          phoneCtx.roundRect(10, 220, 30 + Math.sin(elapsed * 0.5) * 20 + 50, 4, 2);
+          phoneCtx.fill();
+          phoneCtx.fillStyle = "#fff";
+          phoneCtx.font = "7px sans-serif";
+          phoneCtx.fillText("▶ playing", 14, 212);
+          // Subtle screen glow pulse
+          if ((workstation as any)?.phoneScreen) {
+            (workstation as any).phoneScreen.material.emissiveIntensity = 0.2 + Math.sin(elapsed * 1.5) * 0.1;
+          }
+          phoneTex.needsUpdate = true;
         }
 
         for (const [, p] of c.planetSprites) {
