@@ -339,7 +339,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     emissiveIntensity: 0.3,
   });
   const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.85), phoneScreenMat);
-  phoneScreen.position.set(6, 1.2, 2.54);
+  phoneScreen.position.set(6, 1.2, 2.542);
   wsGroup.add(phoneScreen);
 
   // Draw static phone frame (bezel) on canvas once
@@ -1941,8 +1941,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           const drawFn = bhData.drawFunction;
           const sprite = bhData.sprite;
 
-          drawFn(elapsed);
-          tex.needsUpdate = true;
+          if (!bhData.lastUpdate || elapsed - bhData.lastUpdate > 0.033) {
+            drawFn(elapsed);
+            tex.needsUpdate = true;
+            bhData.lastUpdate = elapsed;
+          }
 
           const engulfPulse = 1 + Math.sin(elapsed * 0.02) * 0.03;
           sprite.scale.set(600 * engulfPulse, 600 * engulfPulse, 1);
@@ -1989,35 +1992,39 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const phoneCtx = (workstation as any)?.phoneCtx as CanvasRenderingContext2D | undefined;
         const phoneTex = (workstation as any)?.phoneTex as THREE.CanvasTexture | undefined;
         if (phoneCtx && phoneTex) {
-          // Clear only the screen area (inside bezel)
-          phoneCtx.clearRect(8, 8, 112, 236);
-          const sy = (elapsed * 80) % 256;
-          // Video content bars
-          const colors = ["#ff6b6b", "#48dbfb", "#ff9ff3", "#feca57", "#54a0ff", "#5f27cd"];
-          for (let i = 0; i < 12; i++) {
-            const y = ((i * 22 + sy) % 256) - 22;
-            const bw = 40 + Math.sin(elapsed * 2 + i * 0.7) * 20;
-            const bx = 64 - bw / 2 + Math.sin(elapsed * 1.3 + i * 0.5) * 10;
-            phoneCtx.fillStyle = colors[i % colors.length];
-            phoneCtx.globalAlpha = 0.6 + Math.sin(elapsed * 3 + i) * 0.2;
+          const pData = workstation as any;
+          if (!pData.lastPhoneUpdate || elapsed - pData.lastPhoneUpdate > 0.033) {
+            // Clear only the screen area (inside bezel)
+            phoneCtx.clearRect(8, 8, 112, 236);
+            const sy = (elapsed * 80) % 256;
+            // Video content bars
+            const colors = ["#ff6b6b", "#48dbfb", "#ff9ff3", "#feca57", "#54a0ff", "#5f27cd"];
+            for (let i = 0; i < 12; i++) {
+              const y = ((i * 22 + sy) % 256) - 22;
+              const bw = 40 + Math.sin(elapsed * 2 + i * 0.7) * 20;
+              const bx = 64 - bw / 2 + Math.sin(elapsed * 1.3 + i * 0.5) * 10;
+              phoneCtx.fillStyle = colors[i % colors.length];
+              phoneCtx.globalAlpha = 0.6 + Math.sin(elapsed * 3 + i) * 0.2;
+              phoneCtx.beginPath();
+              phoneCtx.roundRect(bx, y, bw, 16, 4);
+              phoneCtx.fill();
+            }
+            phoneCtx.globalAlpha = 1;
+            // Red YouTube progress bar at bottom
+            phoneCtx.fillStyle = "#ff0000";
             phoneCtx.beginPath();
-            phoneCtx.roundRect(bx, y, bw, 16, 4);
+            phoneCtx.roundRect(10, 220, 30 + Math.sin(elapsed * 0.5) * 20 + 50, 4, 2);
             phoneCtx.fill();
+            phoneCtx.fillStyle = "#fff";
+            phoneCtx.font = "7px sans-serif";
+            phoneCtx.fillText("▶ playing", 14, 212);
+            // Subtle screen glow pulse
+            if (pData.phoneScreen) {
+              pData.phoneScreen.material.emissiveIntensity = 0.2 + Math.sin(elapsed * 1.5) * 0.1;
+            }
+            phoneTex.needsUpdate = true;
+            pData.lastPhoneUpdate = elapsed;
           }
-          phoneCtx.globalAlpha = 1;
-          // Red YouTube progress bar at bottom
-          phoneCtx.fillStyle = "#ff0000";
-          phoneCtx.beginPath();
-          phoneCtx.roundRect(10, 220, 30 + Math.sin(elapsed * 0.5) * 20 + 50, 4, 2);
-          phoneCtx.fill();
-          phoneCtx.fillStyle = "#fff";
-          phoneCtx.font = "7px sans-serif";
-          phoneCtx.fillText("▶ playing", 14, 212);
-          // Subtle screen glow pulse
-          if ((workstation as any)?.phoneScreen) {
-            (workstation as any).phoneScreen.material.emissiveIntensity = 0.2 + Math.sin(elapsed * 1.5) * 0.1;
-          }
-          phoneTex.needsUpdate = true;
         }
 
         for (const [, p] of c.planetSprites) {
