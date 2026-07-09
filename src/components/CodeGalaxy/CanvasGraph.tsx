@@ -2429,7 +2429,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.starLayers[1].rotation.x = Math.sin(elapsed * 0.005) * 0.08;
 
         const overclocked = (c as any).isOverclocked;
-        const timeScale = overclocked ? 3.0 : 1.0;
+        const timeScale = overclocked ? 1.5 : 0.5;
         const scaledElapsed = elapsed * timeScale;
 
         const wp = c.workstation?.WORKSTATION_POS || new THREE.Vector3();
@@ -2532,6 +2532,29 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
         }
 
+        if ((c as any).mixer) {
+          (c as any).mixer.update(delta * (overclocked ? 3.0 : 1.0));
+          const now = Date.now() / 1000;
+          if (!(c as any).lastAnimTrigger) {
+            (c as any).lastAnimTrigger = now;
+          }
+
+          // Trigger every 0.4 seconds (typing speed)
+          if (now - (c as any).lastAnimTrigger > 0.4) {
+            triggerKeyboardLight(c);
+            (c as any).typingActivity = true;
+            (c as any).lastAnimTrigger = now;
+
+            // Reset typing activity after a moment
+            clearTimeout((c as any).animTimeout);
+            (c as any).animTimeout = setTimeout(() => {
+              if (c) {
+                (c as any).typingActivity = false;
+              }
+            }, 300);
+          }
+        }
+
         // Meta Galaxy spin
         if (c.workstation && (c.workstation as any).metaGalaxy) {
           (c.workstation as any).metaGalaxy.rotation.y = scaledElapsed * 0.5;
@@ -2577,6 +2600,25 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         if ((c as any).mixer) {
           (c as any).mixer.update(delta * (overclocked ? 3.0 : 1.0));
+
+          // Trigger keyboard lights while typing animation plays
+          const now = Date.now();
+          if (!(c as any).lastKeyPressTime) {
+            (c as any).lastKeyPressTime = now;
+          }
+
+          if (now - (c as any).lastKeyPressTime > 600) {
+            triggerKeyboardLight(c);
+            (c as any).typingActivity = true;
+            (c as any).lastKeyPressTime = now;
+
+            clearTimeout((c as any).typingTimeout);
+            (c as any).typingTimeout = setTimeout(() => {
+              if (c) {
+                (c as any).typingActivity = false;
+              }
+            }, 100);
+          }
         }
 
         // GARGANTUA BLACK HOLE ANIMATION
