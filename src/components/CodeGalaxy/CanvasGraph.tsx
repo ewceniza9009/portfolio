@@ -1357,7 +1357,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         bhCtx.fillStyle = lensGrad;
         bhCtx.fillRect(0, 0, 2048, 2048);
 
-        const tiltAngle = 0.05 + Math.sin(time * 0.02) * 0.01;
+        const tiltAngle = 0;
         bhCtx.save();
         bhCtx.translate(cx, cy);
         bhCtx.rotate(tiltAngle);
