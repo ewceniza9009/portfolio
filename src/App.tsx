@@ -161,7 +161,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
 
   const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
   const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
-  const memoizedFloatingControl = useMemo(() => <FloatingControl />, [])
   const memoizedFooter = useMemo(() => <Footer onScrollTo={scrollTo} />, [scrollTo])
   const memoizedBackToTop = useMemo(() => <BackToTop />, [])
   const memoizedResumeModal = useMemo(() => <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />, [isResumeOpen, handleCloseResume])
@@ -199,7 +198,6 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
           {memoizedContactSection}
         </main>
         {memoizedProjectModal}
-        {memoizedFloatingControl}
         {memoizedFooter}
         {memoizedBackToTop}
         {memoizedResumeModal}
@@ -546,6 +544,7 @@ export default function App() {
       </Routes>
       </Suspense>
     </>
+    <FloatingControl />
     {isOffline && (
       <div className="fixed bottom-4 right-4 z-[9999] bg-red-500/90 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
         <div className="w-2 h-2 rounded-full bg-white animate-pulse" />

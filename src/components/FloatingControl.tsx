@@ -1367,78 +1367,65 @@ export default function FloatingControl() {
   const menuContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Music player — plays all tracks from /audios on loop, on by default ──
-  const PLAYLIST = [
-    "/audios/bwy-sv-lofi1.mp3",
-    "/audios/bwy-sv-lofi2.mp3",
-    "/audios/home.mp3",
-    "/audios/luke-jzz1.mkv",
-    "/audios/ss-alxhtcs1.MP3",
+  const PLAYLIST: { src: string; gain: number }[] = [
+    { src: "/audios/bwy-sv-lofi1.mp3", gain: 1.6 },
+    { src: "/audios/bwy-sv-lofi2.mp3", gain: 1.6 },
+    { src: "/audios/home.mp3", gain: 0.55 },
+    { src: "/audios/luke-jzz1.mkv", gain: 1.0 },
+    { src: "/audios/ss-alxhtcs1.MP3", gain: 0.5 },
+    { src: "/audios/atlasaudio-sad-lofi-516966.mp3", gain: 1.0 },
+    { src: "/audios/leberch-lofi-516620.mp3", gain: 1.0 },
+    { src: "/audios/lofi_music_library-coffee-lofi-lofi-music-chill-ambient-458900.mp3", gain: 1.0 },
+    { src: "/audios/lofi-beat-beta1.mp3", gain: 1.0 },
+    { src: "/audios/mirostar-lofi-beats-531504.mp3", gain: 1.0 },
+    { src: "/audios/ornave-lofi-open-window-553420.mp3", gain: 1.0 },
+    { src: "/audios/prettyjohn1-lofi-lofi-music-533423.mp3", gain: 1.0 },
+    { src: "/audios/pulsebox-lofi-production-522875.mp3", gain: 1.0 },
   ];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [trackIndex, setTrackIndex] = useState(0);
   const [musicOn, setMusicOn] = useState(true);
+  const [volume, setVolume] = useState(0.55);
 
-  // Init audio element once
+  // Autoplay on first user interaction (browsers block autoplay without gesture)
   useEffect(() => {
-    const audio = new Audio(PLAYLIST[0]);
-    audio.loop = false;
-    audio.volume = 0.55;
-    audio.preload = "auto";
-    audioRef.current = audio;
-    // Autoplay on first user gesture (browsers block pure autoplay)
-    const startPlayback = () => {
-      audio.play().catch(() => {
-        /* autoplay blocked — wait for user interaction */
-      });
-      window.removeEventListener("pointerdown", startPlayback);
-      window.removeEventListener("keydown", startPlayback);
-      window.removeEventListener("touchstart", startPlayback);
+    const tryPlay = () => {
+      const a = audioRef.current;
+      if (a && musicOn) a.play().catch(() => {});
     };
-    window.addEventListener("pointerdown", startPlayback, { once: false });
-    window.addEventListener("keydown", startPlayback, { once: false });
-    window.addEventListener("touchstart", startPlayback, { once: false });
-    // Try immediate autoplay anyway (some browsers allow it)
-    audio.play().catch(() => {});
+    window.addEventListener("pointerdown", tryPlay, { once: true });
+    window.addEventListener("keydown", tryPlay, { once: true });
+    window.addEventListener("touchstart", tryPlay, { once: true });
     return () => {
-      audio.pause();
-      audio.src = "";
-      window.removeEventListener("pointerdown", startPlayback);
-      window.removeEventListener("keydown", startPlayback);
-      window.removeEventListener("touchstart", startPlayback);
+      window.removeEventListener("pointerdown", tryPlay);
+      window.removeEventListener("keydown", tryPlay);
+      window.removeEventListener("touchstart", tryPlay);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // When track changes, swap src
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.src = PLAYLIST[trackIndex];
-    if (musicOn) audio.play().catch(() => {});
-  }, [trackIndex, musicOn]);
-
-  // Play/pause based on musicOn
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (musicOn) audio.play().catch(() => {});
-    else audio.pause();
   }, [musicOn]);
 
-  // Advance to next track when one ends → loops through playlist
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const onEnded = () => {
-      setTrackIndex((i) => (i + 1) % PLAYLIST.length);
-    };
-    audio.addEventListener("ended", onEnded);
-    return () => audio.removeEventListener("ended", onEnded);
+  const toggleMusic = useCallback(() => {
+    setMusicOn((p) => {
+      const a = audioRef.current;
+      if (!a) return !p;
+      if (p) { a.pause(); } else { a.play().catch(() => {}); }
+      return !p;
+    });
   }, []);
 
-  const toggleMusic = useCallback(() => {
-    setMusicOn((p) => !p);
+  const nextTrack = useCallback(() => {
+    setTrackIndex((i) => (i + 1) % PLAYLIST.length);
   }, []);
+
+  const prevTrack = useCallback(() => {
+    setTrackIndex((i) => (i - 1 + PLAYLIST.length) % PLAYLIST.length);
+  }, []);
+
+  const onVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value);
+    setVolume(v);
+    const a = audioRef.current;
+    if (a) a.volume = v * PLAYLIST[trackIndex].gain;
+  }, [trackIndex]);
 
   useEffect(() => {
     document.body.dataset.fabActive = mode === "menu" ? "true" : "false";
@@ -1476,21 +1463,83 @@ export default function FloatingControl() {
     });
   }, []);
 
-  if (!isHomePage) return null;
-
-  const handleFabClick = () => {
-    if (mode === "menu") setMode(null);
-    else setMode("menu");
-  };
-
   const handleClose = () => {
     setMode(null);
     setPendingChatPrompt(null);
     setPendingCodebaseContext(null);
   };
 
+  const handleFabClick = () => {
+    if (mode === "menu") setMode(null);
+    else setMode("menu");
+  };
+
+  if (!isHomePage) {
+    return (
+      <>
+        <audio key={trackIndex} ref={audioRef} src={PLAYLIST[trackIndex].src} autoPlay={musicOn} loop={false} preload="auto" onEnded={nextTrack} onLoadedData={() => { const a = audioRef.current; if (a) a.volume = volume * PLAYLIST[trackIndex].gain; }} />
+        <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-3">
+          <motion.button onClick={() => setMode("chat")} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
+            style={{ background: "var(--bg-card)", borderColor: "var(--accent)", color: "var(--accent)", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)" }}
+          ><MessageCircle size={14} /> AI Chat</motion.button>
+          <div className="relative group">
+            <motion.button onClick={handleFabClick} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
+              style={{ background: "var(--bg-card)", borderColor: "var(--accent)", color: "var(--accent)", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)" }}
+            ><Sparkles size={13} /> Launch</motion.button>
+            <div className={`absolute bottom-full mb-3 right-0 opacity-0 ${mode !== "menu" ? "group-hover:opacity-100" : ""} transition-opacity duration-200 pointer-events-none hidden sm:block`}>
+              <div className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-secondary)" }}
+              >Terminal &middot; Contact &middot; Cursor &middot; Graph</div>
+            </div>
+          </div>
+        </div>
+        <AnimatePresence>
+          {mode === "menu" && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
+            >
+              <button onClick={() => setMode("codegalaxy")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{ background: "color-mix(in srgb, var(--bg-card) 80%, transparent)", borderColor: "color-mix(in srgb, var(--border) 150%, transparent)", color: "var(--text-secondary)" }}
+              ><Network size={14} /> Code Galaxy</button>
+              <button onClick={() => setMode("terminal")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{ background: "color-mix(in srgb, var(--bg-card) 80%, transparent)", borderColor: "color-mix(in srgb, var(--border) 150%, transparent)", color: "var(--text-secondary)" }}
+              ><Terminal size={14} /> Terminal</button>
+              <button onClick={() => setMode("contact")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{ background: "color-mix(in srgb, var(--bg-card) 80%, transparent)", borderColor: "color-mix(in srgb, var(--border) 150%, transparent)", color: "var(--text-secondary)" }}
+              ><Phone size={14} /> Contact</button>
+              <button onClick={toggleCursor}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{ background: "color-mix(in srgb, var(--bg-card) 80%, transparent)", borderColor: cursorOn ? "var(--accent)" : "color-mix(in srgb, var(--border) 150%, transparent)", color: cursorOn ? "var(--accent)" : "var(--text-muted)" }}
+              ><MousePointer2 size={14} /> Cursor</button>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border backdrop-blur-xl"
+                style={{ background: "color-mix(in srgb, var(--bg-card) 80%, transparent)", borderColor: musicOn ? "var(--accent)" : "color-mix(in srgb, var(--border) 150%, transparent)", color: musicOn ? "var(--accent)" : "var(--text-muted)" }}
+              >
+                {musicOn ? <><Music size={14} /><span className="inline-flex gap-0.5 items-end"><span className="w-0.5 bg-current rounded-full" style={{height:"6px",animation:"musicBar 0.6s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"10px",animation:"musicBar 0.9s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"8px",animation:"musicBar 0.7s ease-in-out infinite alternate"}}/></span></> : <VolumeX size={14} />}
+                <span className="mx-1 text-[10px] opacity-70">{(trackIndex + 1)+"/"+(PLAYLIST.length)}</span>
+                <button onClick={(e) => {e.stopPropagation(); prevTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏮</span></button>
+                <button onClick={(e) => {e.stopPropagation(); toggleMusic();}} className="hover:brightness-125 p-0.5">{musicOn ? <span className="text-[13px]">⏸</span> : <span className="text-[13px]">▶</span>}</button>
+                <button onClick={(e) => {e.stopPropagation(); nextTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏭</span></button>
+                <input type="range" min="0" max="1" step="0.05" value={volume} onChange={onVolumeChange} onClick={(e) => e.stopPropagation()}
+                  className="w-16 h-1 cursor-pointer accent-current" style={{background:"color-mix(in srgb, var(--accent) 40%, transparent)"}} />
+              </div>
+              <style>{`@keyframes musicBar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }`}</style>
+              <div className="absolute -top-1 right-6 w-6 h-0.5 rounded-full" style={{ background: "linear-gradient(90deg, var(--accent), transparent)" }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
   return (
-    <div ref={menuContainerRef}>
+    <>
+      <audio key={trackIndex} ref={audioRef} src={PLAYLIST[trackIndex].src} autoPlay={musicOn} loop={false} preload="auto" onEnded={nextTrack} onLoadedData={() => { const a = audioRef.current; if (a) a.volume = volume * PLAYLIST[trackIndex].gain; }} />
+      <div ref={menuContainerRef}>
       {/* FAB Button */}
       {(!mode || mode === "menu") && (
         <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-3">
@@ -1608,33 +1657,22 @@ export default function FloatingControl() {
             >
               <MousePointer2 size={14} /> Cursor
             </button>
-            <button
-              onClick={toggleMusic}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border backdrop-blur-xl"
               style={{
-                background:
-                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor: musicOn
-                  ? "var(--accent)"
-                  : "color-mix(in srgb, var(--border) 150%, transparent)",
+                background: "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                borderColor: musicOn ? "var(--accent)" : "color-mix(in srgb, var(--border) 150%, transparent)",
                 color: musicOn ? "var(--accent)" : "var(--text-muted)",
               }}
             >
-              {musicOn ? (
-                <>
-                  <Music size={14} /> Music On
-                  <span className="inline-flex gap-0.5 items-end ml-1">
-                    <span className="w-0.5 bg-current rounded-full" style={{ height: "6px", animation: "musicBar 0.6s ease-in-out infinite alternate" }} />
-                    <span className="w-0.5 bg-current rounded-full" style={{ height: "10px", animation: "musicBar 0.9s ease-in-out infinite alternate" }} />
-                    <span className="w-0.5 bg-current rounded-full" style={{ height: "8px", animation: "musicBar 0.7s ease-in-out infinite alternate" }} />
-                  </span>
-                </>
-              ) : (
-                <>
-                  <VolumeX size={14} /> Music Off
-                </>
-              )}
-            </button>
+              {musicOn ? <><Music size={14} /><span className="inline-flex gap-0.5 items-end"><span className="w-0.5 bg-current rounded-full" style={{height:"6px",animation:"musicBar 0.6s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"10px",animation:"musicBar 0.9s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"8px",animation:"musicBar 0.7s ease-in-out infinite alternate"}}/></span></> : <VolumeX size={14} />}
+              <span className="mx-1 text-[10px] opacity-70">{(trackIndex + 1)+"/"+(PLAYLIST.length)}</span>
+              <button onClick={(e) => {e.stopPropagation(); prevTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏮</span></button>
+              <button onClick={(e) => {e.stopPropagation(); toggleMusic();}} className="hover:brightness-125 p-0.5">{musicOn ? <span className="text-[13px]">⏸</span> : <span className="text-[13px]">▶</span>}</button>
+              <button onClick={(e) => {e.stopPropagation(); nextTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏭</span></button>
+              <input type="range" min="0" max="1" step="0.05" value={volume} onChange={onVolumeChange} onClick={(e) => e.stopPropagation()}
+                className="w-16 h-1 cursor-pointer accent-current"
+                style={{background:"color-mix(in srgb, var(--accent) 40%, transparent)"}} />
+            </div>
             <style>{`@keyframes musicBar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }`}</style>
             <div
               className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
@@ -1682,6 +1720,7 @@ export default function FloatingControl() {
         {mode === "contact" && <ContactPanel onClose={handleClose} />}
       </AnimatePresence>
     </div>
+    </>
   );
 }
 
