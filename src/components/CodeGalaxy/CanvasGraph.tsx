@@ -2124,33 +2124,25 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         const startPos = getNodePos(selectedRef.current).clone();
         const targetPos = getNodePos(targetId).clone();
-
         const dir = targetPos.clone().sub(startPos).normalize();
 
         const up = new THREE.Vector3(0, 1, 0);
         const right = dir.clone().cross(up).normalize();
-        const offset = up
-          .clone()
-          .multiplyScalar(4)
-          .add(right.clone().multiplyScalar(2));
+        const offset = up.clone().multiplyScalar(4).add(right.clone().multiplyScalar(2));
 
         const startCam = startPos.clone().add(offset);
-        const endCam = targetPos
-          .clone()
-          .sub(dir.clone().multiplyScalar(20))
-          .add(offset);
-
+        const endCam = targetPos.clone().sub(dir.clone().multiplyScalar(20)).add(offset);
         const startTarget = c.controls.target.clone();
 
         let progress = 0;
+        const speed = 4.0;
+
         const anim = () => {
-          progress += 0.012;
+          progress += 0.012 * speed;
           if (progress >= 1) {
             isCanvasClickRef.current = true;
             onSelect(targetId);
-            setTimeout(() => {
-              isCanvasClickRef.current = false;
-            }, 100);
+            setTimeout(() => { isCanvasClickRef.current = false; }, 100);
             flyToNode(targetId);
             return;
           }

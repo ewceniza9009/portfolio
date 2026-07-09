@@ -230,7 +230,7 @@ export function CodeGalaxyWindow({
         </div>
         <div className="flex items-center gap-1.5">
           <div className="text-[11px] font-medium whitespace-nowrap hidden md:block" style={{ color: "var(--text-secondary)" }}>
-            Click node→focus <span className="inline-block w-2 h-2 rounded-full mx-2 align-middle" style={{background:"var(--accent)",boxShadow:"0 0 6px var(--accent)"}} /> Dbl-click→fly <span className="inline-block w-2 h-2 rounded-full mx-2 align-middle" style={{background:"var(--accent)",boxShadow:"0 0 6px var(--accent)"}} /> Click programmer
+            Click node→focus <span className="inline-block w-2 h-2 rounded-full mx-2 align-middle" style={{background:"var(--accent)",boxShadow:"0 0 6px var(--accent)"}} /> Dbl-click→fly <span className="inline-block w-2 h-2 rounded-full mx-2 align-middle" style={{background:"var(--accent)",boxShadow:"0 0 6px var(--accent)"}} /> Click connector→ride <span className="inline-block w-2 h-2 rounded-full mx-2 align-middle" style={{background:"var(--accent)",boxShadow:"0 0 6px var(--accent)"}} /> Click programmer
           </div>
           <div className="w-px h-5 hidden md:block" style={{ background: "var(--border)" }} />
           <button
