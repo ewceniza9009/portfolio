@@ -1561,7 +1561,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       scene.add(backLight);
 
       const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 9000);
-      camera.position.set(0, 0, 250);
+      camera.position.set(0, 0, 400);
 
       const renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -1584,9 +1584,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       // since the bloom pass shades every pixel of its render targets.
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(Math.floor(width / 2), Math.floor(height / 2)),
-        1.2,
+        0.85,
         0.8,
-        0.2,
+        0.25,
       );
       const composer = new EffectComposer(renderer);
       composer.addPass(renderScene);
@@ -2517,20 +2517,19 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const hubNode = localMembers[0];
         const moonMembers = localMembers.slice(1);
 
-        const pTex = createGlowTexture(
+        const pTex = createNodeTexture(
           Math.round(col.r * 255),
           Math.round(col.g * 255),
           Math.round(col.b * 255),
           128,
-          true,
         );
         const pSprite = new THREE.Sprite(
           new THREE.SpriteMaterial({
             map: pTex,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            blending: THREE.NormalBlending,
             depthWrite: false,
-            opacity: 0.12,
+            opacity: 0.7,
           }),
         );
         const pSize =
@@ -2560,25 +2559,24 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         scene.add(pSprite);
         planetSprites.set(`community_${cid}`, pSprite);
 
-        const mTex = createGlowTexture(
+        const mTex = createNodeTexture(
           Math.round(col.r * 255),
           Math.round(col.g * 255),
           Math.round(col.b * 255),
           64,
-          false,
         );
         moonMembers.forEach((n, mIdx) => {
           const ma = mIdx * GOLDEN_ANGLE;
-          const mr = 4.0 + Math.pow(mIdx, 0.6) * 1.8;
+          const mr = 5.5 + Math.pow(mIdx, 0.6) * 1.8;
 
           const mSize = 3.0 + Math.pow(n.degree, 0.5) * 1.5;
           const mSprite = new THREE.Sprite(
             new THREE.SpriteMaterial({
               map: mTex,
               transparent: true,
-              blending: THREE.AdditiveBlending,
+              blending: THREE.NormalBlending,
               depthWrite: false,
-              opacity: 0.08,
+              opacity: 0.6,
             }),
           );
           mSprite.scale.set(mSize, mSize, 1);
@@ -3090,10 +3088,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             ud.node.id === selectedRef.current ||
             ud.node.id === hoveredRef.current
           ) {
-            p.material.opacity = 0.25;
+            p.material.opacity = 0.9;
             p.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
           } else {
-            p.material.opacity = selectedRef.current ? 0.08 : 0.12;
+            p.material.opacity = selectedRef.current ? 0.35 : 0.55;
             p.scale.set(ud.baseSize, ud.baseSize, 1);
           }
         }
@@ -3107,7 +3105,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
           const pSprite = ud.planet;
           if (pSprite) {
-            const mSpeed = 0.0005 + (1 / ud.r) * 0.005;
+            const mSpeed = 0.00003 + (1 / ud.r) * 0.0003;
             const a = ud.angle + elapsed * mSpeed;
             m.position.x = pSprite.position.x + Math.cos(a) * ud.r;
             m.position.z = pSprite.position.z + Math.sin(a) * ud.r;
@@ -3136,11 +3134,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
                 ud.node.id === selectedRef.current ||
                 ud.node.id === hoveredRef.current
               ) {
-                m.material.opacity = 0.3;
+                m.material.opacity = 0.85;
                 m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
               } else {
                 m.material.opacity =
-                  (selectedRef.current ? 0.05 : 0.08) * lodMultiplier;
+                  (selectedRef.current ? 0.3 : 0.5) * lodMultiplier;
                 m.scale.set(ud.baseSize, ud.baseSize, 1);
               }
             }
