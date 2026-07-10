@@ -1712,7 +1712,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const height = container.clientHeight || window.innerHeight || 800;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020205, 0.003);
+      scene.fog = new THREE.FogExp2(0x020205, 0.0015);
 
       // Faint, slowly drifting galaxy backdrop.
       // A large inward-facing sphere (fog disabled, drawn first) so it is
@@ -2178,6 +2178,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       };
 
       const nebulaGroup = createNebulaLayer();
+      nebulaGroup.traverse((o) => {
+        const m = (o as any).material;
+        if (m) m.fog = false;
+      });
       scene.add(nebulaGroup);
 
       // ============================================================
@@ -2337,6 +2341,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           map: bhTexture,
           transparent: true,
           depthWrite: false,
+          fog: false,
           opacity: 0.65,
           blending: THREE.AdditiveBlending,
         }),
