@@ -230,13 +230,15 @@ export function FilterBar({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'rgba(200,180,255,0.6)' }}>Communities</div>
-            <button
-              onClick={(e) => { e.stopPropagation(); onSelectAllCommunities(); }}
-              className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
-              style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
-            >
-              {selectedCommunities.size > 0 ? 'Show all' : 'Clear'}
-            </button>
+            {selectedCommunities.size > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSelectAllCommunities(); }}
+                className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
+                style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+              >
+                Clear
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-1">
             {communities.map(c => {
@@ -274,13 +276,15 @@ export function FilterBar({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'rgba(200,180,255,0.6)' }}>Files</div>
-            <button
-              onClick={(e) => { e.stopPropagation(); onSelectAllFiles(); }}
-              className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
-              style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
-            >
-              {selectedFiles.size > 0 ? 'Show all' : 'Clear'}
-            </button>
+            {selectedFiles.size > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSelectAllFiles(); }}
+                className="px-2 py-1 rounded text-[10px] font-semibold transition-all hover:brightness-125"
+                style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+              >
+                Clear
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-1">
             {files.map(f => {

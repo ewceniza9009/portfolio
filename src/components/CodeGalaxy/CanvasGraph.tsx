@@ -996,7 +996,17 @@ export interface CanvasGraphHandle {
 
 export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
   function CanvasGraph(
-    { nodes, links, selectedId, onSelect, hoveredId, onHover, onTooltip },
+    {
+      nodes,
+      links,
+      selectedId,
+      onSelect,
+      hoveredId,
+      onHover,
+      onTooltip,
+      visibleNodes,
+      visibleLinks,
+    },
     ref,
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -1059,6 +1069,15 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
     const hoveredRef = useRef<string | null>(null);
     const selectedRef = useRef<string | null>(null);
     const hoveredLinkIdx = useRef<number>(-1);
+
+    const visibleNodesRef = useRef<Set<string>>(visibleNodes);
+    const visibleLinksRef = useRef<GraphLink[]>(visibleLinks || []);
+    useEffect(() => {
+      visibleNodesRef.current = visibleNodes;
+    }, [visibleNodes]);
+    useEffect(() => {
+      visibleLinksRef.current = visibleLinks || [];
+    }, [visibleLinks]);
 
     const [interactionMode, setInteractionMode] = useState<"rotate" | "pan">(
       "rotate",
@@ -2800,6 +2819,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         // Planet and moon animations
         for (const [, p] of c.planetSprites) {
           const ud = p.userData;
+          const isFiltered = visibleNodesRef.current.has(ud.node.id);
+          p.visible = isFiltered;
+          if (!isFiltered) continue;
           const speed = 0.0002;
           const newAngle = ud.startAngle + elapsed * speed;
           p.position.x = Math.cos(newAngle) * ud.orbitR;
@@ -2820,6 +2842,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         for (const m of c.moonSprites) {
           const ud = m.userData;
+          const isFiltered = visibleNodesRef.current.has(ud.node.id);
+          if (!isFiltered) {
+            m.visible = false;
+            continue;
+          }
           const pSprite = c.planetSprites.get(`community_${ud.cid}`);
           if (pSprite) {
             const mSpeed = 0.0005 + (1 / ud.r) * 0.005;
@@ -2873,8 +2900,12 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.hoverLine.visible = false;
         c.links.forEach((link) => {
           const isSelected = !!selectedRef.current;
+          const isLinkVisible =
+            visibleNodesRef.current.has(link.source) &&
+            visibleNodesRef.current.has(link.target);
           const isConnected =
             isSelected &&
+            isLinkVisible &&
             (link.source === selectedRef.current ||
               link.target === selectedRef.current);
 
@@ -2931,6 +2962,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         for (const [id, sprite] of c.godNodes) {
           const ud = sprite.userData;
+          const isFiltered = visibleNodesRef.current.has(id);
+          sprite.visible = isFiltered;
+          if (!isFiltered) continue;
           if (id === selectedRef.current) {
             sprite.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
             sprite.material.opacity = 0.35;
@@ -3018,10 +3052,12 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const hits = raycaster.intersectObjects(c.allSprites, false);
         for (const hit of hits) {
           if (hit.point && hit.object) {
+            const node = hit.object.userData.node as GraphNode;
+            if (node && !visibleNodesRef.current.has(node.id)) continue;
             const dist = hit.point.distanceTo(hit.object.position);
             const normalizedDist = dist / hit.object.scale.x;
             if (normalizedDist <= 0.2) {
-              return hit.object.userData.node as GraphNode;
+              return node;
             }
           }
         }
