@@ -34,6 +34,18 @@ const COLOR_MAP: Record<string, string> = {
   rose: '#f43f5e', white: '#ffffff', gray: '#6b7280', grey: '#6b7280',
 }
 
+// Give each token span a staggered settle so code "animates itself" between
+// steps (token-transition feel). Caps the per-line cascade so long lines don't lag.
+function addTokenSettle(lineHtml: string, baseDelayMs: number): string {
+  if (!lineHtml) return lineHtml
+  let idx = 0
+  return lineHtml.replace(/<span style="([^"]*)">/g, (_m, style: string) => {
+    const delay = Math.min(baseDelayMs + idx * 12, baseDelayMs + 240)
+    idx++
+    return `<span style="${style}; animation: ch-token-settle 0.45s cubic-bezier(0.16,1,0.3,1) both; animation-delay: ${delay}ms">`
+  })
+}
+
 interface Annotation {
   name: string
   query: string
@@ -254,23 +266,24 @@ function SlideshowBlock({ code, lang, meta, theme = 'dark' }: CodeHikeBlockProps
     return <CodeHikeBlockInner code={code} lang={lang} meta={cleanMeta} theme={theme} />
   }
 
-  const animName = direction === 'right' ? 'ch-slide-in-right' : 'ch-slide-in-left'
+  const animName = direction === 'right' ? 'ch-step-resolve-right' : 'ch-step-resolve-left'
 
   return (
     <div className="relative my-6">
       <style>{`
-        @keyframes ch-slide-in-right {
-          0% { opacity: 0; transform: translateX(24px); }
-          100% { opacity: 1; transform: translateX(0); }
+        @keyframes ch-step-resolve-right {
+          0% { opacity: 0; filter: blur(8px); transform: translateX(34px) scale(0.985); }
+          100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
         }
-        @keyframes ch-slide-in-left {
-          0% { opacity: 0; transform: translateX(-24px); }
-          100% { opacity: 1; transform: translateX(0); }
+        @keyframes ch-step-resolve-left {
+          0% { opacity: 0; filter: blur(8px); transform: translateX(-34px) scale(0.985); }
+          100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
         }
         .ch-slideshow-step {
-          animation-duration: 0.3s;
+          animation-duration: 0.5s;
           animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
           animation-fill-mode: both;
+          will-change: opacity, transform, filter;
         }
       `}</style>
       <div key={animKey} className="ch-slideshow-step" style={{ animationName: animName }}>
@@ -460,6 +473,24 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           position: relative;
           z-index: 1;
           overflow: visible;
+          transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, color 0.3s ease;
+        }
+        /* Smoothly ease annotation highlights in/out (token-transition feel) */
+        .ch-line-focused,
+        .ch-line-mark,
+        .ch-line-bg,
+        .ch-line-border-single,
+        .ch-line-border-first,
+        .ch-line-border-mid,
+        .ch-line-border-last,
+        .ch-line-diff-add,
+        .ch-line-diff-remove {
+          transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        @keyframes ch-token-settle {
+          0% { opacity: 0.35; filter: blur(1.5px); transform: translateY(3px); }
+          100% { opacity: 1; filter: blur(0); transform: translateY(0); }
         }
         .ch-line:hover {
           z-index: 100;
@@ -1022,6 +1053,9 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   lineHtml = parts.join('')
                 })
               }
+
+              // Apply token settle animation for staggered token entrance (cascading per line)
+              lineHtml = addTokenSettle(lineHtml, i * 10)
 
               const isFocused = anns?.some(a => a.type === 'focus' || a.type === 'highlight')
               const isDimmed = hasFocus && !isFocused

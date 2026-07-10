@@ -525,7 +525,7 @@ export function CodeGalaxyWindow({
               top: linkTip.y + 14,
               background: "rgba(12,12,30,0.92)",
               borderColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
-              color: "var(--text-primary)",
+              color: "#f5f5f5",
             }}
           >
             {linkTip.text}
