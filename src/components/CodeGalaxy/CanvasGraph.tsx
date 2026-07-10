@@ -2692,12 +2692,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         dataParticles,
       };
 
+      let frameCount = 0;
       const animate = () => {
         const c = sceneRef.current;
         if (!c) return;
         const elapsed = clock.getElapsedTime();
         const delta = elapsed - lastElapsed;
         lastElapsed = elapsed;
+        frameCount++;
 
         c.starLayers[0].rotation.y = elapsed * 0.008;
         c.starLayers[0].rotation.x = Math.sin(elapsed * 0.003) * 0.05;
@@ -2722,6 +2724,8 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           const isTyping = (c as any).typingActivity || false;
           const time = elapsed;
 
+          // Only update key visuals every 3rd frame to cut cost
+          if (frameCount % 3 === 0) {
           // Animate each key
           keys.forEach((key: THREE.Sprite) => {
             const ud = key.userData;
@@ -2807,6 +2811,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               if (glow.material.opacity < 0.02) glow.material.opacity = 0.02;
             }
           }
+          } // end frameCount % 3 === 0
         }
 
         if ((c as any).mixer) {
@@ -2849,7 +2854,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           });
         }
 
-        if (c.dataParticles) {
+        if (c.dataParticles && frameCount % 2 === 0) {
           const pos = c.dataParticles.geometry.attributes
             .position as THREE.BufferAttribute;
           for (let i = 0; i < pos.count; i++) {
@@ -2927,7 +2932,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
           const glows = (sceneRef.current as any)
             .constellationGlows as THREE.Sprite[];
-          if (glows) {
+          if (glows && frameCount % 4 === 0) {
             glows.forEach((glow, i) => {
               glow.material.opacity = 0.08 + Math.sin(elapsed * 1.2 + i) * 0.03;
             });
@@ -2937,7 +2942,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const smokeSprites = (workstation as any)?.smokeSprites as
           | THREE.Sprite[]
           | undefined;
-        if (smokeSprites) {
+        if (smokeSprites && frameCount % 2 === 0) {
           smokeSprites.forEach((spr) => {
             const ud = spr.userData;
             ud.life += delta;
@@ -3051,7 +3056,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         // Floating particles - slow drift
         const tParticles = (c as any)
           .transcendentParticles as THREE.Points | null;
-        if (tParticles) {
+        if (tParticles && frameCount % 3 === 0) {
           const pos = tParticles.geometry.attributes.position
             .array as Float32Array;
           for (let i = 0; i < pos.length / 3; i++) {
@@ -3154,6 +3159,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         let packetIdx = 0;
 
         c.hoverLine.visible = false;
+        const hasSelection = !!selectedRef.current;
+        // Only iterate links when something is selected — otherwise all are hidden
+        if (hasSelection) {
         c.links.forEach((link) => {
           const isSelected = !!selectedRef.current;
           const isLinkVisible =
@@ -3209,6 +3217,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
           lineIdx++;
         });
+        } else {
+          // No selection — zero out line buffer in one pass
+          lp.array.fill(0);
+          pp.array.fill(0);
+        }
         lp.needsUpdate = true;
 
         while (packetIdx < pp.count) {
