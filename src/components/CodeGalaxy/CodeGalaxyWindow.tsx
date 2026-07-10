@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Network, X, RotateCw } from "lucide-react";
 import { useGraphData } from "./useGraphData";
@@ -7,6 +7,7 @@ import { CanvasGraph, type CanvasGraphHandle } from "./CanvasGraph";
 import { SidePanel } from "./SidePanel";
 import { FilterBar } from "./FilterBar";
 import type { GraphNode } from "./constants";
+import { COMMUNITY_PALETTE } from "./constants";
 import { buildCodebaseContext } from "./buildCodebaseContext";
 
 interface CodeGalaxyWindowProps {
@@ -141,6 +142,107 @@ export function CodeGalaxyWindow({
     setSelectedFiles(new Set());
   }, []);
 
+  // ── First-visit tutorial overlay ──
+  const [showTutorial, setShowTutorial] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("cg_tutorial_seen") !== "1";
+    } catch {
+      return false;
+    }
+  });
+  const dismissTutorial = useCallback(() => {
+    setShowTutorial(false);
+    try {
+      sessionStorage.setItem("cg_tutorial_seen", "1");
+    } catch {}
+  }, []);
+
+  // ── Navigation history (breadcrumb) ──
+  const [navHistory, setNavHistory] = useState<string[]>([]);
+  useEffect(() => {
+    if (!selectedId) {
+      setNavHistory([]);
+      return;
+    }
+    setNavHistory((prev) => {
+      const last = prev[prev.length - 1];
+      if (last === selectedId) return prev;
+      const existing = prev.indexOf(selectedId);
+      if (existing >= 0) return prev.slice(0, existing + 1);
+      return [...prev, selectedId];
+    });
+  }, [selectedId]);
+
+  // ── Search matches across the whole graph (for in-scene highlight) ──
+  const searchMatchIds = useMemo<Set<string> | null>(() => {
+    if (!searchQuery.trim() || !data.payload) return null;
+    const q = searchQuery.toLowerCase();
+    const set = new Set<string>();
+    for (const n of data.payload.nodes) {
+      if (
+        n.label.toLowerCase().includes(q) ||
+        n.source_file.toLowerCase().includes(q)
+      )
+        set.add(n.id);
+    }
+    return set;
+  }, [searchQuery, data.payload]);
+
+  // ── Link hover tooltip + right-click context menu ──
+  const [linkTip, setLinkTip] = useState<{
+    x: number;
+    y: number;
+    text: string;
+  } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number;
+    y: number;
+    node: GraphNode;
+  } | null>(null);
+
+  const handleContextFocus = useCallback(
+    (id: string) => {
+      setCtxMenu(null);
+      setSelectedId(id);
+    },
+    [],
+  );
+  const handleContextCommunity = useCallback((node: GraphNode) => {
+    setCtxMenu(null);
+    setSelectedCommunities(new Set([node.community]));
+  }, []);
+  const handleContextAskAI = useCallback(
+    (node: GraphNode) => {
+      setCtxMenu(null);
+      if (!onOpenChat || !data.payload) return;
+      const links = data.linksByNode?.get(node.id) || [];
+      const neighbors = links
+        .map((l) => {
+          const otherId = l.source === node.id ? l.target : l.source;
+          return data.nodesById?.get(otherId);
+        })
+        .filter((n): n is GraphNode => !!n);
+      handleAskAI(node, neighbors);
+    },
+    [onOpenChat, data.payload, data.linksByNode, data.nodesById, handleAskAI],
+  );
+  const handleContextCopy = useCallback((node: GraphNode) => {
+    setCtxMenu(null);
+    try {
+      navigator.clipboard?.writeText(node.id);
+    } catch {}
+  }, []);
+
+  // Dismiss the context menu with Escape.
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCtxMenu(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ctxMenu]);
+
   // Loading/error states
   if (data.loading) {
     return (
@@ -267,7 +369,43 @@ export function CodeGalaxyWindow({
           visibleLinks={visibleLinks}
           tooltip={tooltip}
           onTooltip={setTooltip}
+          searchMatchIds={searchMatchIds}
+          onLinkTooltip={setLinkTip}
+          onNodeContextMenu={(x, y, node) => setCtxMenu({ x, y, node })}
         />
+
+        {/* Breadcrumb trail */}
+        {navHistory.length > 0 && (
+          <div className="absolute top-3 left-3 z-40 flex items-center gap-1 flex-wrap max-w-[60%]">
+            {navHistory.map((id, i) => {
+              const n = data.nodesById?.get(id);
+              if (!n) return null;
+              return (
+                <span key={id} className="flex items-center gap-1">
+                  {i > 0 && (
+                    <span style={{ color: "var(--text-muted)" }}>›</span>
+                  )}
+                  <button
+                    onClick={() => setSelectedId(id)}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors hover:brightness-125"
+                    style={{
+                      background:
+                        i === navHistory.length - 1
+                          ? "color-mix(in srgb, var(--accent) 25%, transparent)"
+                          : "rgba(255,255,255,0.04)",
+                      color:
+                        i === navHistory.length - 1
+                          ? "var(--accent)"
+                          : "var(--text-secondary)",
+                    }}
+                  >
+                    {n.label}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {/* Side panel */}
         {selectedNode && (
@@ -377,7 +515,235 @@ export function CodeGalaxyWindow({
           edgeCount={data.payload?.links.length || 0}
           communityCount={data.communities.length}
         />
+
+        {/* Link relation tooltip */}
+        {linkTip && (
+          <div
+            className="fixed z-[200] pointer-events-none rounded-lg border px-2.5 py-1.5 text-[11px] font-medium backdrop-blur-xl shadow-xl whitespace-nowrap"
+            style={{
+              left: linkTip.x + 14,
+              top: linkTip.y + 14,
+              background: "rgba(12,12,30,0.92)",
+              borderColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {linkTip.text}
+          </div>
+        )}
+
+        {/* Right-click context menu */}
+        {ctxMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-[190]"
+              onClick={() => setCtxMenu(null)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setCtxMenu(null);
+              }}
+            />
+            <div
+              className="fixed z-[200] rounded-xl border backdrop-blur-xl shadow-2xl py-1.5 text-xs overflow-hidden"
+              style={{
+                left: Math.min(ctxMenu.x, window.innerWidth - 180),
+                top: Math.min(ctxMenu.y, window.innerHeight - 180),
+                background: "rgba(12,12,30,0.96)",
+                borderColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
+                color: "var(--text-primary)",
+                minWidth: "160px",
+              }}
+            >
+              <button
+                onClick={() => handleContextFocus(ctxMenu.node.id)}
+                className="w-full text-left px-3 py-1.5 hover:bg-white/10 transition-colors"
+              >
+                Focus this node
+              </button>
+              <button
+                onClick={() => handleContextAskAI(ctxMenu.node)}
+                className="w-full text-left px-3 py-1.5 hover:bg-white/10 transition-colors"
+              >
+                Ask AI about this
+              </button>
+              <button
+                onClick={() => handleContextCommunity(ctxMenu.node)}
+                className="w-full text-left px-3 py-1.5 hover:bg-white/10 transition-colors"
+              >
+                Show only this cluster
+              </button>
+              <button
+                onClick={() => handleContextCopy(ctxMenu.node)}
+                className="w-full text-left px-3 py-1.5 hover:bg-white/10 transition-colors"
+              >
+                Copy node id
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Minimap */}
+        <MiniMap
+          visibleNodes={visibleNodes}
+          getNodePositions={() => graphRef.current?.getNodePositions() ?? null}
+          getViewState={() => graphRef.current?.getViewState() ?? null}
+        />
+
+        {/* First-visit tutorial overlay */}
+        {showTutorial && (
+          <div
+            className="absolute inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={dismissTutorial}
+          >
+            <div
+              className="max-w-sm w-[90%] rounded-2xl border p-6 shadow-2xl"
+              style={{
+                background: "var(--bg-card)",
+                borderColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-base font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+                Welcome to the Code Galaxy
+              </div>
+              <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                Your codebase as a living solar system. A few ways to explore:
+              </p>
+              <ul className="space-y-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+                <li>• <b>Click</b> a node to focus and see its connections.</li>
+                <li>• <b>Double-click</b> to fly the camera to a node (empty space resets the view).</li>
+                <li>• <b>Click a glowing connector</b> to ride along the relationship.</li>
+                <li>• <b>Hover</b> a node to preview its neighbours; <b>right-click</b> for quick actions.</li>
+                <li>• <b>Search</b> (press /) highlights matches in the galaxy.</li>
+                <li>• Keys: <b>Esc</b> deselect, <b>R</b> reset, <b>F</b> focus, <b>←/→</b> step through neighbours.</li>
+              </ul>
+              <button
+                onClick={dismissTutorial}
+                className="mt-5 w-full py-2 rounded-lg text-xs font-bold transition-all hover:brightness-110 active:scale-95"
+                style={{
+                  background: "var(--accent)",
+                  color: "var(--bg-primary)",
+                }}
+              >
+                Start exploring
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
+  );
+}
+
+/* ── Minimap: a small 2D orientation map of the galaxy ── */
+function MiniMap({
+  visibleNodes,
+  getNodePositions,
+  getViewState,
+}: {
+  visibleNodes: Set<string>;
+  getNodePositions: () => {
+    id: string;
+    x: number;
+    y: number;
+    z: number;
+    community: number;
+  }[] | null;
+  getViewState: () => {
+    camX: number;
+    camY: number;
+    camZ: number;
+    tgtX: number;
+    tgtY: number;
+    tgtZ: number;
+  } | null;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let raf = 0;
+    let last = 0;
+    const draw = (t: number) => {
+      // Throttle to ~10fps.
+      if (t - last > 100) {
+        last = t;
+        const pts = getNodePositions();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (pts && pts.length > 0) {
+          let minX = Infinity,
+            maxX = -Infinity,
+            minZ = Infinity,
+            maxZ = -Infinity;
+          for (const p of pts) {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minZ = Math.min(minZ, p.z);
+            maxZ = Math.max(maxZ, p.z);
+          }
+          const pad = 14;
+          const w = canvas.width - pad * 2;
+          const h = canvas.height - pad * 2;
+          const spanX = Math.max(1, maxX - minX);
+          const spanZ = Math.max(1, maxZ - minZ);
+          const project = (x: number, z: number) => ({
+            px: pad + ((x - minX) / spanX) * w,
+            py: pad + ((z - minZ) / spanZ) * h,
+          });
+          for (const p of pts) {
+            const { px, py } = project(p.x, p.z);
+            const col = COMMUNITY_PALETTE[p.community % COMMUNITY_PALETTE.length];
+            const visible = visibleNodes.has(p.id);
+            ctx.beginPath();
+            ctx.arc(px, py, visible ? 1.6 : 0.8, 0, Math.PI * 2);
+            ctx.fillStyle = visible ? col : "rgba(120,120,140,0.4)";
+            ctx.fill();
+          }
+          const vs = getViewState();
+          if (vs) {
+            const cam = project(vs.camX, vs.camZ);
+            const tgt = project(vs.tgtX, vs.tgtZ);
+            ctx.strokeStyle = "rgba(167,139,250,0.7)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cam.px, cam.py);
+            ctx.lineTo(tgt.px, tgt.py);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cam.px, cam.py, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = "#fff";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tgt.px, tgt.py, 3, 0, Math.PI * 2);
+            ctx.strokeStyle = "#a78bfa";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [visibleNodes, getNodePositions, getViewState]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={160}
+      height={110}
+      className="absolute top-3 right-3 z-40 rounded-lg border shadow-xl"
+      style={{
+        background: "rgba(8,8,20,0.85)",
+        borderColor: "color-mix(in srgb, var(--accent) 30%, transparent)",
+      }}
+      title="Galaxy minimap"
+    />
   );
 }

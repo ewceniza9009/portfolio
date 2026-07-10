@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, X, BarChart3, FileCode2, Network, ChevronDown, ChevronUp } from 'lucide-react';
-import { COMMUNITY_PALETTE } from './constants';
+import { COMMUNITY_PALETTE, RELATION_COLORS, RELATION_LABELS } from './constants';
 import type { GraphNode } from './constants';
 
 interface FilterBarProps {
@@ -212,6 +212,15 @@ export function FilterBar({
                 <span style={{ color: 'rgba(200,200,220,0.4)' }} className="w-3">{i + 1}</span>
                 <span className="font-medium truncate">{h.label}</span>
                 <span style={{ color: 'rgba(200,200,220,0.4)' }} className="ml-auto">{h.degree} edges</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-[10px] uppercase tracking-wider font-semibold mb-1 mt-3" style={{ color: 'rgba(200,180,255,0.6)' }}>Link Relations</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            {Object.keys(RELATION_LABELS).map((rel) => (
+              <div key={rel} className="flex items-center gap-1.5 text-[10px]" style={{ color: '#bbb' }}>
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: RELATION_COLORS[rel] || '#666' }} />
+                {RELATION_LABELS[rel]}
               </div>
             ))}
           </div>

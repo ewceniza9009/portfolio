@@ -55,6 +55,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import type { GraphNode, GraphLink } from "./constants";
+import { RELATION_LABELS } from "./constants";
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * SECTION 1 · CONSTANTS & PALETTE
@@ -70,6 +71,21 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 // Reused to avoid per-frame allocation in the animation loop.
 const ZERO_VECTOR = new THREE.Vector3();
+
+// Reused colour temps for the community-tint effect (no per-frame allocs).
+const _WHITE_AMBIENT = new THREE.Color(0xffffff);
+const _tintTarget = new THREE.Color();
+const _communityColorCache = new Map<number, THREE.Color>();
+const getCommunityColor = (idx: number): THREE.Color => {
+  const key = ((idx % COMMUNITY_PALETTE.length) + COMMUNITY_PALETTE.length) %
+    COMMUNITY_PALETTE.length;
+  let col = _communityColorCache.get(key);
+  if (!col) {
+    col = new THREE.Color(COMMUNITY_PALETTE[key]);
+    _communityColorCache.set(key, col);
+  }
+  return col;
+};
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * SECTION 2 · TEXTURE FACTORIES
@@ -140,6 +156,26 @@ function createNodeTexture(
   ctx.strokeStyle = "rgba(255,255,255,0.55)";
   ctx.lineWidth = Math.max(1, size * 0.025);
   ctx.stroke();
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Thin outline ring (transparent centre, bright rim) used for the selection
+// highlight. Unlike a filled glow sprite it never washes out the screen when
+// the camera is close — only the rim is drawn.
+function createRingTexture(size = 128): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const h = size / 2;
+  const grad = ctx.createRadialGradient(h, h, 0, h, h, h);
+  grad.addColorStop(0, "rgba(255,255,255,0)");
+  grad.addColorStop(0.74, "rgba(255,255,255,0)");
+  grad.addColorStop(0.9, "rgba(255,255,255,0.35)");
+  grad.addColorStop(0.95, "rgba(255,255,255,0.5)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -1294,10 +1330,34 @@ interface CanvasGraphProps {
   visibleLinks: GraphLink[];
   tooltip: { x: number; y: number; node: GraphNode } | null;
   onTooltip: (t: { x: number; y: number; node: GraphNode } | null) => void;
+  searchMatchIds?: Set<string> | null;
+  onLinkTooltip?: (
+    info: { x: number; y: number; text: string } | null,
+  ) => void;
+  onNodeContextMenu?: (
+    x: number,
+    y: number,
+    node: GraphNode,
+  ) => void;
 }
 
 export interface CanvasGraphHandle {
   resetView: () => void;
+  getViewState: () => {
+    camX: number;
+    camY: number;
+    camZ: number;
+    tgtX: number;
+    tgtY: number;
+    tgtZ: number;
+  } | null;
+  getNodePositions: () => {
+    id: string;
+    x: number;
+    y: number;
+    z: number;
+    community: number;
+  }[] | null;
 }
 
 export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
@@ -1312,6 +1372,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       onTooltip,
       visibleNodes,
       visibleLinks,
+      searchMatchIds,
+      onLinkTooltip,
+      onNodeContextMenu,
     },
     ref,
   ) {
@@ -1369,6 +1432,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       programmerModel: THREE.Group | null;
       workstation: ReturnType<typeof createProgrammerWorkstation> | null;
       dataParticles: THREE.Points | null;
+      neighborMap: Map<string, Set<string>>;
+      ringSprite: THREE.Sprite;
+      shakeState: { t: number; dur: number };
+      ambientLight: THREE.AmbientLight;
     } | null>(null);
 
     const isCanvasClickRef = useRef(false);
@@ -1384,6 +1451,13 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
     useEffect(() => {
       visibleLinksRef.current = visibleLinks || [];
     }, [visibleLinks]);
+
+    const searchMatchRef = useRef<Set<string> | null>(searchMatchIds || null);
+    useEffect(() => {
+      searchMatchRef.current = searchMatchIds || null;
+    }, [searchMatchIds]);
+
+    const mountTimeRef = useRef<number>(Date.now());
 
     const [interactionMode, setInteractionMode] = useState<"rotate" | "pan">(
       "rotate",
@@ -1403,6 +1477,55 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           e.target instanceof HTMLTextAreaElement
         ) {
           return;
+        }
+
+        // ── Navigation shortcuts ──
+        if (e.key === "Escape") {
+          onSelect(null);
+          return;
+        }
+        if (e.key === "r" || e.key === "R") {
+          apiRef.current?.resetView();
+          return;
+        }
+        const c = sceneRef.current;
+        if (c && selectedRef.current) {
+          if (e.key === "f" || e.key === "F") {
+            flyToNode(selectedRef.current);
+            return;
+          }
+          // Arrow keys cycle through neighbors of the selected node
+          if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+            const neighbors = (c.links || [])
+              .filter(
+                (l) =>
+                  l.source === selectedRef.current ||
+                  l.target === selectedRef.current,
+              )
+              .map((l) =>
+                l.source === selectedRef.current ? l.target : l.source,
+              );
+            if (neighbors.length > 0) {
+              const curIdx = neighbors.indexOf(
+                hoveredRef.current || selectedRef.current,
+              );
+              let nextIdx: number;
+              if (e.key === "ArrowRight") {
+                nextIdx =
+                  curIdx < 0
+                    ? 0
+                    : (curIdx + 1) % neighbors.length;
+              } else {
+                nextIdx =
+                  curIdx < 0
+                    ? neighbors.length - 1
+                    : (curIdx - 1 + neighbors.length) % neighbors.length;
+              }
+              e.preventDefault();
+              onSelect(neighbors[nextIdx]);
+              return;
+            }
+          }
         }
 
         if (sceneRef.current) {
@@ -1439,34 +1562,80 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       hoveredRef.current = hoveredId;
     }, [hoveredId]);
 
-    useImperativeHandle(ref, () => ({
-      resetView: () => {
+    const apiRef = useRef<CanvasGraphHandle | null>(null);
+
+    useImperativeHandle(ref, () => {
+      const api: CanvasGraphHandle = {
+        resetView: () => {
+          const c = sceneRef.current;
+          if (!c) return;
+          const startPos = c.camera.position.clone();
+          const endPos = new THREE.Vector3(0, 0, 180);
+          const startTarget = c.controls.target.clone();
+          const endTarget = new THREE.Vector3(0, 0, 0);
+          let progress = 0;
+          const anim = () => {
+            progress += 0.03;
+            if (progress >= 1) {
+              c.camera.position.copy(endPos);
+              c.controls.target.copy(endTarget);
+              return;
+            }
+            const t = easeInOut(progress);
+            c.camera.position.lerpVectors(startPos, endPos, t);
+            c.controls.target.lerpVectors(startTarget, endTarget, t);
+            requestAnimationFrame(anim);
+          };
+          anim();
+        },
+      getViewState: () => {
         const c = sceneRef.current;
-        if (!c) return;
-        const startPos = c.camera.position.clone();
-        const endPos = new THREE.Vector3(0, 0, 180);
-        const startTarget = c.controls.target.clone();
-        const endTarget = new THREE.Vector3(0, 0, 0);
-        let progress = 0;
-        const anim = () => {
-          progress += 0.03;
-          if (progress >= 1) {
-            c.camera.position.copy(endPos);
-            c.controls.target.copy(endTarget);
-            return;
-          }
-          const t = easeInOut(progress);
-          c.camera.position.lerpVectors(startPos, endPos, t);
-          c.controls.target.lerpVectors(startTarget, endTarget, t);
-          requestAnimationFrame(anim);
+        if (!c) return null;
+        return {
+          camX: c.camera.position.x,
+          camY: c.camera.position.y,
+          camZ: c.camera.position.z,
+          tgtX: c.controls.target.x,
+          tgtY: c.controls.target.y,
+          tgtZ: c.controls.target.z,
         };
-        anim();
       },
-    }));
+      getNodePositions: () => {
+        const c = sceneRef.current;
+        if (!c) return null;
+        const out: {
+          id: string;
+          x: number;
+          y: number;
+          z: number;
+          community: number;
+        }[] = [];
+        for (const s of c.allSprites) {
+          const node = s.userData.node as GraphNode | undefined;
+          if (!node) continue;
+          out.push({
+            id: node.id,
+            x: s.position.x,
+            y: s.position.y,
+            z: s.position.z,
+            community: node.community,
+          });
+        }
+        return out;
+      },
+      };
+      apiRef.current = api;
+      return api;
+    });
 
     const flyToNode = (id: string | null) => {
       const c = sceneRef.current;
       if (!c) return;
+
+      if (c.shakeState) {
+        c.shakeState.t = 0;
+        c.shakeState.dur = 0.35;
+      }
 
       let targetPos = new THREE.Vector3(0, 0, 0);
       let targetCam = new THREE.Vector3(0, 0, 250);
@@ -2676,6 +2845,37 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         ...moonSprites,
       ];
 
+      // Neighbour lookup for hover-preview highlights (built once).
+      const neighborMap = new Map<string, Set<string>>();
+      for (const l of links) {
+        if (!neighborMap.has(l.source))
+          neighborMap.set(l.source, new Set());
+        if (!neighborMap.has(l.target))
+          neighborMap.set(l.target, new Set());
+        neighborMap.get(l.source)!.add(l.target);
+        neighborMap.get(l.target)!.add(l.source);
+      }
+
+      // Selection ring sprite (one, reused) — drawn around the focused node.
+      const ringTex = createRingTexture(128);
+      const ringSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: ringTex,
+          transparent: true,
+          blending: THREE.NormalBlending,
+          depthWrite: false,
+          depthTest: false,
+          opacity: 0,
+        }),
+      );
+      ringSprite.scale.set(1, 1, 1);
+      ringSprite.visible = false;
+      ringSprite.renderOrder = 5;
+      scene.add(ringSprite);
+
+      // Camera-shake impulse state for warp/fly transitions.
+      const shakeState = { t: 0, dur: 0 };
+
       sceneRef.current = {
         scene,
         camera,
@@ -2697,6 +2897,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         programmerModel: null,
         workstation,
         dataParticles,
+        neighborMap,
+        ringSprite,
+        shakeState,
+        ambientLight,
       };
 
       let frameCount = 0;
@@ -3085,6 +3289,35 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
 
         // Planet and moon animations
+        // Shared highlight helper: neighbour-preview + search-match boosts.
+        const sinceMount = Date.now() - mountTimeRef.current;
+        const loadPulse =
+          sinceMount < 3500 ? Math.sin(sinceMount * 0.006) * 0.5 + 0.5 : 0;
+        const hoveredNeighbors = hoveredRef.current
+          ? c.neighborMap.get(hoveredRef.current) || null
+          : null;
+        const searchMatches = searchMatchRef.current;
+        const boost = (id: string) => {
+          let extraOp = 0;
+          let scaleMul = 1;
+          if (
+            hoveredRef.current &&
+            id !== hoveredRef.current &&
+            hoveredNeighbors?.has(id)
+          ) {
+            extraOp = Math.max(extraOp, 0.35);
+            scaleMul = Math.max(scaleMul, 1.25);
+          }
+          if (searchMatches && searchMatches.has(id)) {
+            extraOp = Math.max(
+              extraOp,
+              0.15 + 0.3 * (Math.sin(elapsed * 4) * 0.5 + 0.5),
+            );
+            scaleMul = Math.max(scaleMul, 1.15);
+          }
+          return { extraOp, scaleMul };
+        };
+
         for (const [, p] of c.planetSprites) {
           const ud = p.userData;
           const isFiltered = visibleNodesRef.current.has(ud.node.id);
@@ -3096,16 +3329,22 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           p.position.z = Math.sin(newAngle) * ud.orbitR;
           p.position.y = Math.sin(newAngle + ud.phaseY) * (ud.orbitR * ud.incl);
 
+          let baseOpacity = selectedRef.current ? 0.35 : 0.55;
+          let baseScaleMul = 1;
           if (
             ud.node.id === selectedRef.current ||
             ud.node.id === hoveredRef.current
           ) {
-            p.material.opacity = 0.9;
-            p.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
-          } else {
-            p.material.opacity = selectedRef.current ? 0.35 : 0.55;
-            p.scale.set(ud.baseSize, ud.baseSize, 1);
+            baseOpacity = 0.9;
+            baseScaleMul = 1.2;
           }
+          const b = boost(ud.node.id);
+          p.material.opacity = Math.min(1, baseOpacity + b.extraOp);
+          p.scale.set(
+            ud.baseSize * baseScaleMul * b.scaleMul,
+            ud.baseSize * baseScaleMul * b.scaleMul,
+            1,
+          );
         }
 
         for (const m of c.moonSprites) {
@@ -3142,17 +3381,23 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
               m.visible = false;
             } else {
               m.visible = true;
+              let baseOpacity =
+                (selectedRef.current ? 0.3 : 0.5) * lodMultiplier;
+              let baseScaleMul = 1;
               if (
                 ud.node.id === selectedRef.current ||
                 ud.node.id === hoveredRef.current
               ) {
-                m.material.opacity = 0.85;
-                m.scale.set(ud.baseSize * 1.5, ud.baseSize * 1.5, 1);
-              } else {
-                m.material.opacity =
-                  (selectedRef.current ? 0.3 : 0.5) * lodMultiplier;
-                m.scale.set(ud.baseSize, ud.baseSize, 1);
+                baseOpacity = 0.85;
+                baseScaleMul = 1.5;
               }
+              const b = boost(ud.node.id);
+              m.material.opacity = Math.min(1, baseOpacity + b.extraOp);
+              m.scale.set(
+                ud.baseSize * baseScaleMul * b.scaleMul,
+                ud.baseSize * baseScaleMul * b.scaleMul,
+                1,
+              );
             }
           }
         }
@@ -3241,15 +3486,68 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           const isFiltered = visibleNodesRef.current.has(id);
           sprite.visible = isFiltered;
           if (!isFiltered) continue;
+          let baseOpacity = selectedRef.current ? 0.1 : 0.2;
+          let baseScaleMul = 1;
           if (id === selectedRef.current) {
-            sprite.scale.set(ud.baseSize * 1.2, ud.baseSize * 1.2, 1);
-            sprite.material.opacity = 0.35;
+            baseScaleMul = 1.2;
+            baseOpacity = 0.35;
           } else if (id === hoveredRef.current) {
-            sprite.scale.set(ud.baseSize * 1.1, ud.baseSize * 1.1, 1);
-            sprite.material.opacity = 0.35;
+            baseScaleMul = 1.1;
+            baseOpacity = 0.35;
+          } else if (loadPulse > 0) {
+            // Gentle attention pulse for the first few seconds after load.
+            baseOpacity = 0.2 + loadPulse * 0.6;
+          }
+          const b = boost(id);
+          sprite.material.opacity = Math.min(1, baseOpacity + b.extraOp);
+          sprite.scale.set(
+            ud.baseSize * baseScaleMul * b.scaleMul,
+            ud.baseSize * baseScaleMul * b.scaleMul,
+            1,
+          );
+        }
+
+        // Selection ring: follow the focused node (or hide when none).
+        {
+          const selId = selectedRef.current;
+          const ringSprite = c.ringSprite;
+          if (selId) {
+            const target =
+              c.godNodes.get(selId) ||
+              c.moonSprites.find((m) => m.userData.node.id === selId) ||
+              Array.from(c.planetSprites.values()).find(
+                (p) => p.userData.node.id === selId,
+              );
+            if (target) {
+              ringSprite.visible = true;
+              ringSprite.position.copy(target.position);
+              const pulse = 1 + Math.sin(elapsed * 3) * 0.06;
+              // Outline ring: kept modest so it frames the node instead of
+              // filling the viewport when the camera is close.
+              const baseR = Math.min(
+                (target.scale.x || 10) * 1.8 * pulse,
+                80,
+              );
+              ringSprite.scale.set(baseR, baseR, 1);
+              const comm = target.userData.node.community;
+              if (typeof comm === "number") {
+                ringSprite.material.color
+                  .copy(getCommunityColor(comm))
+                  .multiplyScalar(0.7);
+              }
+              ringSprite.material.opacity = Math.min(
+                0.3,
+                ringSprite.material.opacity + (0.3 - ringSprite.material.opacity) * 0.1,
+              );
+            } else {
+              ringSprite.visible = false;
+            }
           } else {
-            sprite.scale.set(ud.baseSize, ud.baseSize, 1);
-            sprite.material.opacity = selectedRef.current ? 0.1 : 0.2;
+            ringSprite.material.opacity = Math.max(
+              0,
+              ringSprite.material.opacity - 0.05,
+            );
+            if (ringSprite.material.opacity <= 0.01) ringSprite.visible = false;
           }
         }
 
@@ -3306,8 +3604,44 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           }
         }
 
+        // Community-tinted ambient glow on focus: lerp the ambient light
+        // gently toward the selected node's cluster colour, back to white
+        // when nothing is selected. Subtle (0.2 mix) so it never washes out.
+        {
+          const selId = selectedRef.current;
+          _tintTarget.copy(_WHITE_AMBIENT);
+          if (selId) {
+            const sp = nodeIdToSprite.get(selId);
+            const comm = sp?.userData.node.community;
+            if (typeof comm === "number") {
+              _tintTarget.lerp(getCommunityColor(comm), 0.14);
+            }
+          }
+          c.ambientLight.color.lerp(_tintTarget, 0.05);
+        }
+
         controls.update();
+
+        // Camera shake impulse (warp/fly transitions).
+        let shakeOffset: THREE.Vector3 | null = null;
+        if (c.shakeState.dur > 0) {
+          c.shakeState.t += 1 / 60;
+          if (c.shakeState.t >= c.shakeState.dur) {
+            c.shakeState.dur = 0;
+          } else {
+            const mag = (1 - c.shakeState.t / c.shakeState.dur) * 4;
+            shakeOffset = new THREE.Vector3(
+              (Math.random() - 0.5) * mag,
+              (Math.random() - 0.5) * mag,
+              (Math.random() - 0.5) * mag,
+            );
+            c.camera.position.add(shakeOffset);
+          }
+        }
+
         composer.render();
+
+        if (shakeOffset) c.camera.position.sub(shakeOffset);
         c.animFrame = requestAnimationFrame(animate);
       };
       if (sceneRef.current)
@@ -3385,11 +3719,16 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         return bestHitInfo;
       };
 
-      const rideToNode = (targetId: string) => {
-        const c = sceneRef.current;
-        if (!c || !selectedRef.current) return;
+    const rideToNode = (targetId: string) => {
+      const c = sceneRef.current;
+      if (!c || !selectedRef.current) return;
 
-        const getNodePos = (id: string) => {
+      if (c.shakeState) {
+        c.shakeState.t = 0;
+        c.shakeState.dur = 0.3;
+      }
+
+      const getNodePos = (id: string) => {
           if (c.godNodes.has(id)) return c.godNodes.get(id)!.position;
           const moon = c.moonSprites.find((m) => m.userData.node.id === id);
           if (moon) return moon.position;
@@ -3557,7 +3896,11 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             return;
           }
         }
-        flyToNode(selectedRef.current);
+        if (selectedRef.current) {
+          flyToNode(selectedRef.current);
+        } else {
+          apiRef.current?.resetView();
+        }
       };
 
       const handlePointerMove = (e: PointerEvent) => {
@@ -3570,6 +3913,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           } else {
             onTooltip({ x: e.clientX, y: e.clientY, node: hitNode });
           }
+          if (onLinkTooltip) onLinkTooltip(null);
           document.body.style.cursor = "pointer";
           hoveredLinkIdx.current = -1;
           cursorSet = true;
@@ -3602,10 +3946,30 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             if (hoveredLinkIdx.current !== hitLinkInfo.index) {
               hoveredLinkIdx.current = hitLinkInfo.index;
             }
+            const link = c?.links[hitLinkInfo.index];
+            const otherNode =
+              c &&
+              (c.godNodes.get(hitLinkInfo.targetId) ||
+                c.moonSprites.find(
+                  (m) => m.userData.node.id === hitLinkInfo.targetId,
+                ) ||
+                Array.from(c.planetSprites.values()).find(
+                  (p) => p.userData.node.id === hitLinkInfo.targetId,
+                ));
+            const relLabel = link
+              ? RELATION_LABELS[link.relation] || link.relation
+              : "connects to";
+            const otherLabel = otherNode?.userData.node.label || hitLinkInfo.targetId;
+            onLinkTooltip?.({
+              x: e.clientX,
+              y: e.clientY,
+              text: `${relLabel} → ${otherLabel}`,
+            });
             document.body.style.cursor = "pointer";
             cursorSet = true;
           } else {
             hoveredLinkIdx.current = -1;
+            if (onLinkTooltip) onLinkTooltip(null);
           }
 
           if (hoveredRef.current) {
@@ -3627,11 +3991,20 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         hoveredLinkIdx.current = -1;
       };
 
+      const handleContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+        const hitNode = getIntersectedNode(e);
+        if (hitNode && onNodeContextMenu) {
+          onNodeContextMenu(e.clientX, e.clientY, hitNode);
+        }
+      };
+
       container.addEventListener("pointerdown", handlePointerDown);
       container.addEventListener("pointerup", handlePointerUp);
       container.addEventListener("dblclick", handleDblClick);
       container.addEventListener("pointermove", handlePointerMove);
       container.addEventListener("pointerleave", handlePointerLeave);
+      container.addEventListener("contextmenu", handleContextMenu);
 
       const handleResize = () => {
         const c = sceneRef.current;
@@ -3652,6 +4025,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         container.removeEventListener("dblclick", handleDblClick);
         container.removeEventListener("pointermove", handlePointerMove);
         container.removeEventListener("pointerleave", handlePointerLeave);
+        container.removeEventListener("contextmenu", handleContextMenu);
         cancelAnimationFrame(sceneRef.current?.animFrame || 0);
         window.removeEventListener("resize", handleResize);
         if (sceneRef.current?.programmerModel) {
