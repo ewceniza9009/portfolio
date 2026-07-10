@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "vercel": "vercel dev",
+    "generate:codegalaxy": "node generate-codegalaxy.mjs",
     "copy-graph-data": "node copy-graph-data.mjs",
     "sitemap": "node generate-sitemap.mjs",
-    "prebuild": "node generate-sitemap.mjs && npm run copy-graph-data",
-    "predev": "node generate-sitemap.mjs && npm run copy-graph-data",
+    "prebuild": "node generate-sitemap.mjs && npm run generate:codegalaxy && npm run copy-graph-data",
+    "predev": "node generate-sitemap.mjs && npm run generate:codegalaxy && npm run copy-graph-data",
     "build": "tsc -b && node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview"
   },
