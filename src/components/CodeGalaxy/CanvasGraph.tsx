@@ -161,19 +161,24 @@ function createSpaceBackgroundTexture(): THREE.CanvasTexture {
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, w, h);
 
-  // Faint nebula clouds
+  // Soft nebula clouds — visible colour washes. Kept gentle (alpha well
+  // under the bloom threshold) so they don't read as the "dirty" bright
+  // dots from earlier; they're meant to be subtle, not glare.
   const nebulaColors = [
-    "rgba(80,40,120,0.10)",
-    "rgba(40,60,140,0.10)",
-    "rgba(120,50,90,0.08)",
-    "rgba(30,90,120,0.08)",
+    [120, 60, 180],
+    [60, 90, 200],
+    [180, 80, 140],
+    [50, 140, 180],
+    [160, 100, 220],
   ];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 20; i++) {
     const cx = Math.random() * w;
     const cy = Math.random() * h;
-    const r = 120 + Math.random() * 260;
+    const r = 160 + Math.random() * 360;
+    const [cr, cg, cb] = nebulaColors[i % nebulaColors.length];
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, nebulaColors[i % nebulaColors.length]);
+    g.addColorStop(0, `rgba(${cr},${cg},${cb},0.28)`);
+    g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.10)`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
