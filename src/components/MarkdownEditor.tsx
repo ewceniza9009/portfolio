@@ -33,6 +33,7 @@ import {
   CHART_SNIPPET,
   CODEHIKE_SNIPPET,
   REMOTION_SNIPPET,
+  CODE_MORPH_SNIPPET,
 } from "../utils/snippets";
 
 interface MarkdownEditorProps {
@@ -150,6 +151,7 @@ function registerCompletionProvider(
           chart: CHART_SNIPPET,
           codehike: CODEHIKE_SNIPPET,
           remotion: REMOTION_SNIPPET,
+          "code-morph": CODE_MORPH_SNIPPET,
         };
 
         for (const [key, snippet] of Object.entries(markdownSnippets)) {
@@ -296,6 +298,7 @@ export default memo(function MarkdownEditor({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chModalOpen, setChModalOpen] = useState(false);
+  const [cmModalOpen, setCmModalOpen] = useState(false);
   const [previewWidgets, setPreviewWidgets] = useState<
     {
       id: string;
@@ -793,6 +796,36 @@ export default memo(function MarkdownEditor({
                   </svg>
                   Remotion Video
                 </button>
+                <div
+                  className="my-1 border-t"
+                  style={{ borderColor: "var(--border)" }}
+                />
+                <button
+                  onClick={() => {
+                    insertSnippet(CODE_MORPH_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="16 3 21 3 21 8" />
+                    <line x1="4" y1="20" x2="21" y2="3" />
+                    <polyline points="21 16 21 21 16 21" />
+                    <line x1="15" y1="15" x2="21" y2="21" />
+                    <line x1="4" y1="4" x2="9" y2="9" />
+                  </svg>
+                  Code Morph
+                </button>
               </div>
             )}
           </div>
@@ -805,6 +838,16 @@ export default memo(function MarkdownEditor({
           >
             <BookOpen size={14} />
             <span className="hidden sm:inline">CH</span>
+          </button>
+          {/* Code Morph Instructions Button */}
+          <button
+            onClick={() => setCmModalOpen(true)}
+            title="Code Morph Guide"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
+            style={{ color: "var(--accent)" }}
+          >
+            <BookOpen size={14} />
+            <span className="hidden sm:inline">CM</span>
           </button>
         </div>
       )}
@@ -1838,7 +1881,483 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
               <button
                 onClick={() => setChModalOpen(false)}
                 className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={{ background: "var(--accent)", color: "#fff" }}
+                style={{ background: "var(--accent)", color: document.documentElement.getAttribute('data-theme') === 'light' ? '#fff' : '#000' }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {cmModalOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={() => setCmModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col"
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--border)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <div className="flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 3 21 3 21 8" />
+                  <line x1="4" y1="20" x2="21" y2="3" />
+                  <polyline points="21 16 21 21 16 21" />
+                  <line x1="15" y1="15" x2="21" y2="21" />
+                  <line x1="4" y1="4" x2="9" y2="9" />
+                </svg>
+                <h2
+                  className="text-sm font-bold"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  Code Morph Guide
+                </h2>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    const all = `# Code Morph Examples
+
+## Basic Refactor (JS)
+\`\`\`code-morph
+function greet(name) {
+  return "Hello, " + name;
+}
+---
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+\`\`\`
+
+## TypeScript Type Migration
+\`\`\`code-morph
+function getData(id) {
+  return fetch("/api/" + id).then(r => r.json());
+}
+---
+async function getData(id: string): Promise<Data> {
+  const res = await fetch(\`/api/\${id}\`);
+  return res.json();
+}
+\`\`\`
+
+## CSS to Tailwind
+\`\`\`code-morph
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+---
+<div className="bg-white rounded-lg p-4 shadow-md">
+\`\`\`
+
+## Python Refactor
+\`\`\`code-morph
+def process(data):
+    result = []
+    for item in data:
+        result.append(item * 2)
+    return result
+---
+def process(data):
+    return [item * 2 for item in data]
+\`\`\``;
+                    navigator.clipboard.writeText(all);
+                  }}
+                  className="px-2.5 py-1 rounded text-[10px] font-bold hover:bg-white/10 transition-colors flex items-center gap-1"
+                  style={{ color: "var(--accent)" }}
+                  title="Copy all examples"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copy All
+                </button>
+                <button
+                  onClick={() => setCmModalOpen(false)}
+                  className="p-1 rounded hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div
+              className="overflow-y-auto px-5 py-4 space-y-5 text-xs"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {/* ── Getting Started ── */}
+              <section>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Getting Started
+                </h3>
+                <p className="mb-2" style={{ color: "var(--text-secondary)" }}>
+                  Wrap your code in a{" "}
+                  <code
+                    className="px-1.5 py-0.5 rounded text-[11px] font-mono"
+                    style={{
+                      background: "var(--bg-secondary)",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {"```code-morph"}
+                  </code>{" "}
+                  fence. Use <code className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>---</code> on its own line to separate the "before" (top) and "after" (bottom) code. Click the Play button to morph between them.
+                </p>
+                <div
+                  className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                  style={{ background: "var(--bg-secondary)" }}
+                >
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        '```code-morph\nconst name = "World";\nconsole.log(name);\n---\nconst greeting = "Hello, World!";\nconsole.log(greeting);\n```',
+                      )
+                    }
+                    className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Copy"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                  <div>{"```code-morph"}</div>
+                  <div>const name = "World";</div>
+                  <div>console.log(name);</div>
+                  <div style={{ color: "var(--text-muted)" }}>---</div>
+                  <div>const greeting = "Hello, World!";</div>
+                  <div>console.log(greeting);</div>
+                  <div>{"```"}</div>
+                </div>
+              </section>
+
+              {/* ── Animation Modes ── */}
+              <section className="mb-5">
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Animation Modes
+                </h3>
+                <p className="mb-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+                  Append a mode after <code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>code-morph</code> in the fence opener. Modes with a HyperFrames badge match the real code-animation engine:
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>morph</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Key-based FLIP glide <span className="italic">(default, HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph morph"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>diff</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Line-level LCS diff, collapse/expand <span className="italic">(HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph diff"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>flight</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Line blocks fly in staggered <span className="italic">(HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph flight"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>typewriter</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Per-character reveal + gliding caret <span className="italic">(HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph typewriter"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>highlight</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Highlight middle line, dim others <span className="italic">(HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph highlight"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>scroll</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Scroll to center line + highlight <span className="italic">(HyperFrames)</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph scroll"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>fade</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Cross-fade with slight vertical offset</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph fade"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>flip</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>3D card flip with perspective</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph flip"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-4">
+                  <p className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Examples:</p>
+
+                  {/* Morph */}
+                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                    <button onClick={() => navigator.clipboard.writeText('```code-morph morph\nlet x = 1;\nlet y = 2;\n---\nconst x = 1;\nconst y = 2;\n```')} className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]" style={{ color: "var(--text-muted)" }} title="Copy">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                    </button>
+                    <div className="text-[10px] text-gray-500 mb-1">morph — key-based FLIP (tokens glide)</div>
+                    <div>{"```code-morph morph"}</div>
+                    <div>let x = 1;</div>
+                    <div>let y = 2;</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>const x = 1;</div>
+                    <div>const y = 2;</div>
+                    <div>{"```"}</div>
+                  </div>
+
+                  {/* Diff */}
+                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                    <button onClick={() => navigator.clipboard.writeText('```code-morph diff\nconst a = 1;\nconst b = 2;\n---\nconst a = 1;\nconst c = 3;\n```')} className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]" style={{ color: "var(--text-muted)" }} title="Copy">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                    </button>
+                    <div className="text-[10px] text-gray-500 mb-1">diff — line-level LCS, red lines collapse, green lines expand</div>
+                    <div>{"```code-morph diff"}</div>
+                    <div>const a = 1;</div>
+                    <div>const b = 2;</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>const a = 1;</div>
+                    <div>const c = 3;</div>
+                    <div>{"```"}</div>
+                  </div>
+
+                  {/* Flight */}
+                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                    <button onClick={() => navigator.clipboard.writeText('```code-morph flight\nconsole.log("a");\n---\nconsole.log("a");\nconsole.log("b");\n```')} className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]" style={{ color: "var(--text-muted)" }} title="Copy">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                    </button>
+                    <div className="text-[10px] text-gray-500 mb-1">flight — line blocks fly in from left with stagger</div>
+                    <div>{"```code-morph flight"}</div>
+                    <div>console.log("a");</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>console.log("a");</div>
+                    <div>console.log("b");</div>
+                    <div>{"```"}</div>
+                  </div>
+
+                  {/* Typewriter */}
+                  <div className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed" style={{ background: "var(--bg-secondary)" }}>
+                    <button onClick={() => navigator.clipboard.writeText('```code-morph typewriter\nHello World\n---\nHello Folks\n```')} className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]" style={{ color: "var(--text-muted)" }} title="Copy">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                    </button>
+                    <div className="text-[10px] text-gray-500 mb-1">typewriter — per-character reveal + gliding caret</div>
+                    <div>{"```code-morph typewriter"}</div>
+                    <div>Hello World</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>Hello Folks</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+              </section>
+
+              {/* ── Live Examples ── */}
+              <section>
+                <h3
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Live Examples
+                </h3>
+                <p className="mb-3" style={{ color: "var(--text-secondary)" }}>
+                  Copy-paste these into a{" "}
+                  <code
+                    className="px-1 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    {"```code-morph"}
+                  </code>{" "}
+                  block to show code transformations.
+                </p>
+
+                {/* Example 1: JS Refactor (morph) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    JavaScript Refactor (morph)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph morph\nfunction greet(name) {\n  return "Hello, " + name;\n}\n---\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\n```',
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph morph"}</div>
+                    <div>function greet(name) {"{"}</div>
+                    <div>{"  return \"Hello, \" + name;"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>function greet(name) {"{"}</div>
+                    <div>{"  return `Hello, ${name}!`;"}</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 2: TypeScript Migration (fade) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    TypeScript Migration
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          "```code-morph fade\nfunction getData(id) {\n  return fetch(\"/api/\" + id).then(r => r.json());\n}\n---\nasync function getData(id: string): Promise<Data> {\n  const res = await fetch(`/api/${id}`);\n  return res.json();\n}\n```",
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph fade"}</div>
+                    <div>function getData(id) {"{"}</div>
+                    <div>{"  return fetch(\"/api/\" + id).then(r => r.json());"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>async function getData(id: string): {"Promise<Data> {"}</div>
+                    <div>{"  const res = await fetch(`/api/${id}`);"}</div>
+                    <div>{"  return res.json();"}</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 3: CSS to Tailwind (flip) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    CSS to Tailwind
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph flip\n.card {\n  background: white;\n  border-radius: 8px;\n  padding: 16px;\n  box-shadow: 0 2px 8px rgba(0,0,0,0.1);\n}\n---\n<div className="bg-white rounded-lg p-4 shadow-md">\n  {/* content */}\n</div>\n```',
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph flip"}</div>
+                    <div>.card {"{"}</div>
+                    <div>{"  background: white;"}</div>
+                    <div>{"  border-radius: 8px;"}</div>
+                    <div>{"  padding: 16px;"}</div>
+                    <div>{"  box-shadow: 0 2px 8px rgba(0,0,0,0.1);"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>{"<div className=\"bg-white rounded-lg p-4 shadow-md\">"}</div>
+                    <div>{"  {/* content */}"}</div>
+                    <div>{"</div>"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 4: Python Refactor (diff) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Python Refactor (diff mode)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph diff\ndef process(data):\n    result = []\n    for item in data:\n        result.append(item * 2)\n    return result\n---\ndef process(data):\n    return [item * 2 for item in data]\n```',
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph diff"}</div>
+                    <div>def process(data):</div>
+                    <div>{"    result = []"}</div>
+                    <div>{"    for item in data:"}</div>
+                    <div>{"        result.append(item * 2)"}</div>
+                    <div>{"    return result"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>def process(data):</div>
+                    <div>{"    return [item * 2 for item in data]"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Footer */}
+            <div
+              className="px-5 py-3 border-t shrink-0"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <button
+                onClick={() => setCmModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: "var(--accent)", color: document.documentElement.getAttribute('data-theme') === 'light' ? '#fff' : '#000' }}
               >
                 Got it
               </button>

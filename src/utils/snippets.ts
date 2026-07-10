@@ -103,3 +103,15 @@ export const REMOTION_SNIPPET = buildSnippet([
   '}',
   '```',
 ])
+
+export const CODE_MORPH_SNIPPET = buildSnippet([
+  '```code-morph',
+  'function greet(name) {',
+  '  return "Hello, " + name;',
+  '}',
+  '---',
+  'function greet(name) {',
+  '  return `Hello, ${name}!`;',
+  '}',
+  '```',
+])

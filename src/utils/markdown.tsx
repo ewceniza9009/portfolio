@@ -7,6 +7,7 @@ import InteractiveBlock from '../components/InteractiveBlock'
 import ChartBlock from '../components/ChartBlock'
 import CodeHikeBlock from '../components/CodeHikeBlock'
 import RemotionBlock from '../components/RemotionBlock'
+import CodeMorphBlock from '../components/CodeMorphBlock'
 import { slugifyHeading } from './slugify'
 
 function detectLang(code: string): string {
@@ -810,6 +811,9 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<CodeHikeBlock key={keyIndex++} code={codeText} lang={detectLang(codeText)} meta={meta} theme={theme} accent={accent} />)
         } else if (codeLang.toLowerCase() === 'remotion') {
           result.push(<RemotionBlock key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
+        } else if (codeLang.toLowerCase().startsWith('code-morph') || codeLang.toLowerCase().startsWith('codemorph')) {
+          const meta = codeLang.replace(/code-?morph/i, '').trim()
+          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(
