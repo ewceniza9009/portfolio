@@ -390,11 +390,14 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     roughness: 0.3,
     metalness: 0.6,
   });
+  // Group the laptop so base/screen/glow move as one unit.
+  const laptopGroup = new THREE.Group();
+
   const laptopBase = new THREE.Mesh(laptopBaseGeo, laptopBaseMat);
   laptopBase.position.set(1, 0.45, 3);
   laptopBase.castShadow = true;
   laptopBase.receiveShadow = true;
-  wsGroup.add(laptopBase);
+  laptopGroup.add(laptopBase);
 
   const laptopScreenGeo = new THREE.PlaneGeometry(5.5, 3.5);
   const laptopScreenMat = new THREE.MeshStandardMaterial({
@@ -408,7 +411,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   const laptopScreen = new THREE.Mesh(laptopScreenGeo, laptopScreenMat);
   laptopScreen.position.set(1, 2.4, 1);
   laptopScreen.rotation.x = -0.15;
-  wsGroup.add(laptopScreen);
+  laptopGroup.add(laptopScreen);
 
   const screenGlowTex = createGlowTexture(0, 170, 255, 256, false);
   const screenGlow = new THREE.Sprite(
@@ -422,7 +425,13 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   );
   screenGlow.scale.set(12, 8, 1);
   screenGlow.position.set(1, 2.5, -0.5);
-  wsGroup.add(screenGlow);
+  laptopGroup.add(screenGlow);
+
+  // Nudge the whole laptop forward (away from the seated programmer at
+  // local z ≈ 6) by a small amount so it no longer crowds them, while the
+  // screen code-lines and keyboard lights travel with it.
+  laptopGroup.position.set(0, 0, -0.6);
+  wsGroup.add(laptopGroup);
 
   const codeLineColors = [0x00ff88, 0xffaa00, 0x00ccff, 0xff66aa, 0xaaff00];
   for (let i = 0; i < 8; i++) {
@@ -438,7 +447,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
     });
     const line = new THREE.Mesh(lineGeo, lineMat);
     line.position.set(-0.5 + Math.random() * 3, 1.0 + i * 0.35, 1.05);
-    wsGroup.add(line);
+    laptopGroup.add(line);
   }
 
   const armGeo = new THREE.CylinderGeometry(0.15, 0.15, 8, 6);
@@ -646,7 +655,7 @@ function createProgrammerWorkstation(parentGroup: THREE.Group) {
   keyboardGlow.position.set(1, 0.3, 3);
   keyboardLights.add(keyboardGlow);
 
-  wsGroup.add(keyboardLights);
+  laptopGroup.add(keyboardLights);
 
   // Store for animation
   (wsGroup as any).keyboardLights = keyboardLights;
@@ -1955,15 +1964,15 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         lctx.shadowBlur = 10;
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         lctx.fillStyle = "rgba(210, 155, 80, 0.25)";
-        lctx.fillText("CREATION PILLARS", 384, 90);
+        //lctx.fillText("CREATION PILLARS", 384, 90);
         lctx.shadowBlur = 0;
 
         lctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         lctx.strokeStyle = "rgba(8, 4, 1, 0.20)";
         lctx.lineWidth = 1;
-        lctx.strokeText("CREATION PILLARS", 384, 90);
+        //lctx.strokeText("CREATION PILLARS", 384, 90);
         lctx.fillStyle = "rgba(220, 175, 95, 0.22)";
-        lctx.fillText("CREATION PILLARS", 384, 90);
+        //lctx.fillText("CREATION PILLARS", 384, 90);
 
         const labelTex = new THREE.CanvasTexture(labelCanvas);
         labelTex.minFilter = THREE.LinearFilter;
