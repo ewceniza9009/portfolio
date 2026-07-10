@@ -1,3 +1,45 @@
+/**
+ * CanvasGraph — a WebGL "code galaxy" renderer built on three.js.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * ARCHITECTURE (read this first)
+ * ─────────────────────────────────────────────────────────────────────────
+ * This component renders the graph as a 3D scene:
+ *
+ *   • Nodes  → THREE.Sprite "orbs". The 5 highest-degree nodes are "god nodes"
+ *              (central hubs). Every other node belongs to a community and is
+ *              rendered as either a "planet" (the community's hub) or a "moon"
+ *              (a member orbiting that planet).
+ *   • Links  → a single THREE.LineSegments buffer. Only links touching the
+ *              currently-selected node are drawn (plus travelling "packet"
+ *              sprites along them), keeping the wireframe calm.
+ *   • Scene  → additive star layers, a faint nebula, a slowly drifting
+ *              background galaxy sphere, a "programmer" workstation diorama,
+ *              and a black-hole sprite.
+ *
+ * DATA FLOW
+ *   React (CodeGalaxyWindow) ──props──▶ CanvasGraph
+ *     nodes / links / layout / selection / hover / visibleNodes / visibleLinks
+ *   CanvasGraph builds the three.js scene ONCE in a useEffect keyed on
+ *   `nodes.length > 0`. Per-frame work happens in `animate()` (the rAF loop).
+ *
+ * RENDER PIPELINE
+ *   EffectComposer → RenderPass(scene) → UnrealBloomPass → screen.
+ *   Bloom runs at HALF resolution and devicePixelRatio is capped at 1 to stay
+ *   fill-rate friendly (see PERFORMANCE NOTES below).
+ *
+ * FILTERING
+ *   `visibleNodes` / `visibleLinks` (Set/array from the parent) are mirrored
+ *   into refs (`visibleNodesRef`) so the animation loop can read them without
+ *   re-subscribing. Sprites simply toggle `.visible` / opacity each frame.
+ *
+ * PERFORMANCE NOTES
+ *   • Pixel ratio capped at 1; bloom at ½ res.
+ *   • Black-hole canvas is 1024² (redrawn periodically, not per frame).
+ *   • No per-frame `new` allocations in `animate()` (reused temp objects).
+ *   • The scene-setup effect runs once; see cleanup at the bottom.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
 import {
   useRef,
   useEffect,
@@ -14,6 +56,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import type { GraphNode, GraphLink } from "./constants";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SECTION 1 · CONSTANTS & PALETTE
+ * Shared, module-level values. The community palette is indexed by
+ * `node.community % palette.length` so every community gets a stable colour.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 const COMMUNITY_PALETTE = [
   0xff3366, 0x33ccff, 0x99ff33, 0xffcc00, 0xcc33ff, 0x00ffcc, 0xff6600,
   0x6666ff, 0xff99cc, 0x3399ff,
@@ -24,6 +71,17 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 // Reused to avoid per-frame allocation in the animation loop.
 const ZERO_VECTOR = new THREE.Vector3();
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SECTION 2 · TEXTURE FACTORIES
+ * All visuals are procedurally drawn to <canvas> and wrapped in a
+ * THREE.CanvasTexture — no external image assets required.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Radial glow sprite (used for stars, halos, the black-hole lens, packets…).
+ * `isPlanet` switches to a tighter "solid core + soft falloff" profile that
+ * reads more like a lit body than a fuzzy light.
+ */
 function createGlowTexture(
   r: number,
   g: number,
@@ -2437,6 +2495,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             baseSize: mSize,
             incl: mIncl,
             phaseY: mPhaseY,
+            // Cache the parent planet so the per-frame moon loop avoids a
+            // `community_${cid}` string concat + Map lookup for every moon.
+            planet: pSprite,
           };
           scene.add(mSprite);
           moonSprites.push(mSprite);
@@ -2945,7 +3006,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             m.visible = false;
             continue;
           }
-          const pSprite = c.planetSprites.get(`community_${ud.cid}`);
+          const pSprite = ud.planet;
           if (pSprite) {
             const mSpeed = 0.0005 + (1 / ud.r) * 0.005;
             const a = ud.angle + elapsed * mSpeed;
