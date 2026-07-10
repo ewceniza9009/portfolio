@@ -585,6 +585,7 @@ export function CodeGalaxyWindow({
         {/* Minimap */}
         <MiniMap
           visibleNodes={visibleNodes}
+          shifted={!!selectedNode}
           getNodePositions={() => graphRef.current?.getNodePositions() ?? null}
           getViewState={() => graphRef.current?.getViewState() ?? null}
         />
@@ -640,6 +641,7 @@ function MiniMap({
   visibleNodes,
   getNodePositions,
   getViewState,
+  shifted,
 }: {
   visibleNodes: Set<string>;
   getNodePositions: () => {
@@ -657,6 +659,7 @@ function MiniMap({
     tgtY: number;
     tgtZ: number;
   } | null;
+  shifted?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -738,8 +741,9 @@ function MiniMap({
       ref={canvasRef}
       width={160}
       height={110}
-      className="absolute top-3 right-3 z-40 rounded-lg border shadow-xl"
+      className="absolute top-3 z-40 rounded-lg border shadow-xl"
       style={{
+        right: shifted ? 252 : 12,
         background: "rgba(8,8,20,0.85)",
         borderColor: "color-mix(in srgb, var(--accent) 30%, transparent)",
       }}
