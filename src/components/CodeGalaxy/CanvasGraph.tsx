@@ -143,18 +143,18 @@ function createNodeTexture(
   const ctx = canvas.getContext("2d")!;
   const h = size / 2;
   const grad = ctx.createRadialGradient(h, h, 0, h, h, h);
-  grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
-  grad.addColorStop(0.22, `rgba(${r},${g},${b},1)`);
-  grad.addColorStop(0.4, `rgba(${r},${g},${b},0.55)`);
-  grad.addColorStop(0.7, `rgba(${r},${g},${b},0.12)`);
+  grad.addColorStop(0, `rgba(${r},${g},${b},0.85)`);
+  grad.addColorStop(0.22, `rgba(${r},${g},${b},0.85)`);
+  grad.addColorStop(0.4, `rgba(${r},${g},${b},0.45)`);
+  grad.addColorStop(0.7, `rgba(${r},${g},${b},0.1)`);
   grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
-  // Crisp bright rim to separate the node from stars/dust
+  // Soft rim to separate the node from stars/dust (kept dim to avoid glare)
   ctx.beginPath();
   ctx.arc(h, h, size * 0.22, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,0.55)";
-  ctx.lineWidth = Math.max(1, size * 0.025);
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.lineWidth = Math.max(1, size * 0.02);
   ctx.stroke();
   return new THREE.CanvasTexture(canvas);
 }
@@ -1760,9 +1760,9 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       // since the bloom pass shades every pixel of its render targets.
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(Math.floor(width / 2), Math.floor(height / 2)),
-        0.85,
-        0.8,
-        0.25,
+        0.45,
+        0.7,
+        0.4,
       );
       const composer = new EffectComposer(renderer);
       composer.addPass(renderScene);
