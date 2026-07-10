@@ -240,6 +240,97 @@ function createSpaceBackgroundTexture(): THREE.CanvasTexture {
     ctx.fill();
   }
 
+  // Fine star dust — many tiny, very faint specks for depth
+  for (let i = 0; i < 4000; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const a = 0.04 + Math.random() * 0.12;
+    ctx.fillStyle = `rgba(200,210,255,${a})`;
+    ctx.fillRect(x, y, 1, 1);
+  }
+
+  // Asteroid flecks — small, dim, irregular grey rocks
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const s = 1 + Math.random() * 2.5;
+    const shade = 80 + Math.floor(Math.random() * 70);
+    const a = 0.15 + Math.random() * 0.2;
+    ctx.fillStyle = `rgba(${shade},${shade},${shade},${a})`;
+    ctx.beginPath();
+    ctx.ellipse(
+      x,
+      y,
+      s,
+      s * (0.6 + Math.random() * 0.6),
+      Math.random() * Math.PI,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  // Draw a streak (comet / meteor): bright head fading to a faint tail.
+  const drawStreak = (
+    x: number,
+    y: number,
+    len: number,
+    angle: number,
+    headColor: string,
+    tailColor: string,
+  ) => {
+    const ex = x + Math.cos(angle) * len;
+    const ey = y + Math.sin(angle) * len;
+    const grad = ctx.createLinearGradient(x, y, ex, ey);
+    grad.addColorStop(0, headColor);
+    grad.addColorStop(1, tailColor);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    const hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 3);
+    hg.addColorStop(0, tailColor);
+    hg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = hg;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  // Comets — longer, icy-blue streaks
+  for (let i = 0; i < 5; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const len = 60 + Math.random() * 120;
+    const angle = Math.PI + (Math.random() - 0.5) * 0.6;
+    drawStreak(
+      x,
+      y,
+      len,
+      angle,
+      "rgba(120,160,255,0)",
+      `rgba(${180 + Math.floor(Math.random() * 60)},210,255,0.8)`,
+    );
+  }
+
+  // Meteors — short, faint white streaks
+  for (let i = 0; i < 14; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const len = 20 + Math.random() * 50;
+    const angle = Math.PI * 1.25 + (Math.random() - 0.5) * 0.8;
+    drawStreak(
+      x,
+      y,
+      len,
+      angle,
+      "rgba(255,255,255,0)",
+      `rgba(255,255,255,${0.4 + Math.random() * 0.4})`,
+    );
+  }
+
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -1545,20 +1636,16 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         );
       };
       const starLayers: THREE.Points[] = [];
+      // Finer background star field only. The old bright size-2.5 "large white
+      // dots" layer (star2) was removed — with bloom it bloomed into a dirty
+      // haze across the background and washed out the view.
       const star1 = createStarLayer(6000, 1.0, 0.5, 900, 350, [
         "#ffffff",
         "#ffcc88",
         "#99ccff",
       ]);
-      const star2 = createStarLayer(500, 2.5, 0.8, 700, 500, [
-        "#ffffff",
-        "#ffaa44",
-        "#44aaff",
-        "#ffddaa",
-      ]);
-      starLayers.push(star1, star2);
+      starLayers.push(star1);
       scene.add(star1);
-      scene.add(star2);
 
       const createNebulaBackgroundLayer = () => {
         const group = new THREE.Group();
@@ -2602,8 +2689,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
         c.starLayers[0].rotation.y = elapsed * 0.008;
         c.starLayers[0].rotation.x = Math.sin(elapsed * 0.003) * 0.05;
-        c.starLayers[1].rotation.y = elapsed * 0.012;
-        c.starLayers[1].rotation.x = Math.sin(elapsed * 0.005) * 0.08;
 
         // Slowly drift the background galaxy sphere
         bgSphere.rotation.y = elapsed * 0.006;
