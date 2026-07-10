@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react'
 import { apiFetch } from '../../utils/api'
+import { queryClient } from '../../lib/queryClient'
 import MarkdownEditor from '../MarkdownEditor'
 
 export default function AwardsTab() {
@@ -37,6 +38,7 @@ export default function AwardsTab() {
       }
       setEditingId(null)
       fetchData()
+      queryClient.invalidateQueries({ queryKey: ['awards'] })
     } catch { alert('Failed to save') }
   }
 
@@ -44,6 +46,7 @@ export default function AwardsTab() {
     if (!confirm('Delete this award?')) return
     await apiFetch(`/api/awards/${id}`, { method: 'DELETE' })
     fetchData()
+    queryClient.invalidateQueries({ queryKey: ['awards'] })
   }
 
   const handleDragStart = (index: number) => setDragIndex(index)
@@ -61,6 +64,7 @@ export default function AwardsTab() {
         method: 'PUT',
         body: JSON.stringify({ items: reordered.map((item, i) => ({ id: item.id, display_order: i })) })
       })
+      queryClient.invalidateQueries({ queryKey: ['awards'] })
     } catch { alert('Failed to reorder') }
   }
 

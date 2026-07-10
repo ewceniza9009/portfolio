@@ -1381,6 +1381,15 @@ export default function FloatingControl() {
     { src: "/audios/ornave-lofi-open-window-553420.mp3", gain: 1.0 },
     { src: "/audios/prettyjohn1-lofi-lofi-music-533423.mp3", gain: 1.0 },
     { src: "/audios/pulsebox-lofi-production-522875.mp3", gain: 1.0 },
+    { src: "/audios/Hazelwood - At Ease (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/Lukrembo - Bake A Pie (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/Lukrembo - Donut (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/Lukrembo - Rose (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/massobeats - city (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/massobeats - honey jam (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/Moavii - Adventure (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/Moavii - Summertide (freetouse.com).mp3", gain: 1.0 },
+    { src: "/audios/StockTune-Sunset Beachfront Chillout_1783664206.mp3", gain: 1.0 },
   ];
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [trackIndex, setTrackIndex] = useState(0);

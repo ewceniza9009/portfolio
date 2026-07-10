@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { queryClient } from "../lib/queryClient";
 import { parseMarkdown, MermaidRenderer } from "../utils/markdown";
 import Interactive3DBlock from "./Interactive3DBlock";
 import InteractiveBlock from "./InteractiveBlock";
@@ -506,6 +507,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
   const handlePaypalSave = async () => {
     await saveSettings({ paypal_donate_url: paypalDonateUrl.trim() });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setPaypalSaved(true);
     setTimeout(() => setPaypalSaved(false), 1500);
     try {
@@ -515,12 +517,14 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
   const handleDevtoModelSave = async () => {
     await saveSettings({ default_ai_model: defaultAiModel });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setDefaultAiModelSaved(true);
     setTimeout(() => setDefaultAiModelSaved(false), 1500);
   };
 
   const handleProviderSave = async () => {
     await saveSettings({ ai_provider: aiProvider });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setAiProviderSaved(true);
     setTimeout(() => setAiProviderSaved(false), 1500);
   };
@@ -629,6 +633,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
 
   const handleFeaturedSave = async () => {
     await saveSettings({ featured_blog_slug: featuredSlug.trim() });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setFeaturedSaved(true);
     setTimeout(() => setFeaturedSaved(false), 1500);
   };
@@ -663,6 +668,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       n8n_devto_api_key: n8nDevtoKey.trim(),
       n8n_webhook_url: n8nWebhookUrl.trim(),
     });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setN8nSaved(true);
     setTimeout(() => setN8nSaved(false), 1500);
   };
@@ -746,6 +752,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       devto_api_key: devtoApiKey.trim(),
       devto_username: devtoUsername.trim(),
     });
+    queryClient.invalidateQueries({ queryKey: ['settings'] });
     setDevtoSaved(true);
     setTimeout(() => setDevtoSaved(false), 1500);
   };
@@ -1431,6 +1438,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
         await res.json();
         setIsNewBlog(false);
         await fetchBlogs();
+        queryClient.invalidateQueries({ queryKey: ['blogs'] });
         // Select the newly created blog by matching its slug
         const resBlogs = await api("/api/admin/blogs");
         const allBlogs = await resBlogs.json();
@@ -1447,6 +1455,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
           return;
         }
         await fetchBlogs();
+        queryClient.invalidateQueries({ queryKey: ['blogs'] });
+        queryClient.invalidateQueries({ queryKey: ['blog', blogSlug] });
         // Update selected blog reference
         setSelectedBlog((prev) => (prev ? { ...prev, ...blogData } : null));
       }
@@ -1474,6 +1484,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       if (res.ok) {
         setSelectedBlog(null);
         await fetchBlogs();
+        queryClient.invalidateQueries({ queryKey: ['blogs'] });
       }
     } catch (err) {
       console.error(err);
