@@ -176,14 +176,18 @@ function createSpaceBackgroundTexture(): THREE.CanvasTexture {
     const cy = Math.random() * h;
     const r = 160 + Math.random() * 360;
     const [cr, cg, cb] = nebulaColors[i % nebulaColors.length];
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, `rgba(${cr},${cg},${cb},0.28)`);
-    g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.10)`);
-    g.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    // Draw nebula at position + 3 wrapped copies so edges blend seamlessly
+    const offsets = [0, w, -w];
+    for (const ox of offsets) {
+      const g = ctx.createRadialGradient(cx + ox, cy, 0, cx + ox, cy, r);
+      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.28)`);
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.10)`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx + ox, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Faint galaxies (elliptical smudges)
@@ -199,19 +203,22 @@ function createSpaceBackgroundTexture(): THREE.CanvasTexture {
     const cy = Math.random() * h * 0.9;
     const r = 40 + Math.random() * 90;
     const col = galColors[i % galColors.length];
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},0.5)`);
-    g.addColorStop(0.4, `rgba(${col[0]},${col[1]},${col[2]},0.18)`);
-    g.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(Math.random() * Math.PI);
-    ctx.scale(1, 0.5 + Math.random() * 0.4);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    const offsets = [0, w, -w];
+    for (const ox of offsets) {
+      const g = ctx.createRadialGradient(cx + ox, cy, 0, cx + ox, cy, r);
+      g.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},0.5)`);
+      g.addColorStop(0.4, `rgba(${col[0]},${col[1]},${col[2]},0.18)`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.save();
+      ctx.translate(cx + ox, cy);
+      ctx.rotate(Math.random() * Math.PI);
+      ctx.scale(1, 0.5 + Math.random() * 0.4);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // Background stars
