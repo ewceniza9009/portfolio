@@ -51,6 +51,139 @@ function createGlowTexture(
   return new THREE.CanvasTexture(canvas);
 }
 
+// Solid color-cored orb with a crisp rim + soft halo.
+// Uses NormalBlending at render time so it reads as a distinct object
+// in the starfield instead of additively blowing out into glare.
+function createNodeTexture(
+  r: number,
+  g: number,
+  b: number,
+  size = 128,
+): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const h = size / 2;
+  const grad = ctx.createRadialGradient(h, h, 0, h, h, h);
+  grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+  grad.addColorStop(0.22, `rgba(${r},${g},${b},1)`);
+  grad.addColorStop(0.4, `rgba(${r},${g},${b},0.55)`);
+  grad.addColorStop(0.7, `rgba(${r},${g},${b},0.12)`);
+  grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  // Crisp bright rim to separate the node from stars/dust
+  ctx.beginPath();
+  ctx.arc(h, h, size * 0.22, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = Math.max(1, size * 0.025);
+  ctx.stroke();
+  return new THREE.CanvasTexture(canvas);
+}
+
+// One-time generated starfield + faint galaxies backdrop.
+// Used as scene.background so it is always visible (even when zoomed
+// all the way out past the fog) at essentially zero per-frame cost.
+function createSpaceBackgroundTexture(): THREE.CanvasTexture {
+  const w = 2048;
+  const h = 1024;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#04030a");
+  base.addColorStop(0.5, "#020207");
+  base.addColorStop(1, "#04030a");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+
+  // Faint nebula clouds
+  const nebulaColors = [
+    "rgba(80,40,120,0.10)",
+    "rgba(40,60,140,0.10)",
+    "rgba(120,50,90,0.08)",
+    "rgba(30,90,120,0.08)",
+  ];
+  for (let i = 0; i < 14; i++) {
+    const cx = Math.random() * w;
+    const cy = Math.random() * h;
+    const r = 120 + Math.random() * 260;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, nebulaColors[i % nebulaColors.length]);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Faint galaxies (elliptical smudges)
+  const galColors = [
+    [150, 120, 255],
+    [120, 170, 255],
+    [255, 150, 200],
+    [140, 255, 220],
+    [200, 160, 255],
+  ];
+  for (let i = 0; i < 10; i++) {
+    const cx = Math.random() * w;
+    const cy = Math.random() * h * 0.9;
+    const r = 40 + Math.random() * 90;
+    const col = galColors[i % galColors.length];
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},0.5)`);
+    g.addColorStop(0.4, `rgba(${col[0]},${col[1]},${col[2]},0.18)`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.random() * Math.PI);
+    ctx.scale(1, 0.5 + Math.random() * 0.4);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Background stars
+  for (let i = 0; i < 2600; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const s = Math.random() * 1.4;
+    const a = 0.3 + Math.random() * 0.7;
+    const tint = Math.random();
+    const col =
+      tint < 0.7
+        ? `rgba(255,255,255,${a})`
+        : tint < 0.85
+          ? `rgba(180,200,255,${a})`
+          : `rgba(255,210,180,${a})`;
+    ctx.fillStyle = col;
+    ctx.fillRect(x, y, s, s);
+  }
+
+  // A few brighter stars with a soft glow
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const r = 1 + Math.random() * 2;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+    g.addColorStop(0, "rgba(255,255,255,0.9)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function easeInOut(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
@@ -1234,6 +1367,24 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(0x020205, 0.003);
 
+      // Faint, slowly drifting galaxy backdrop.
+      // A large inward-facing sphere (fog disabled, drawn first) so it is
+      // always visible behind the graph — even at max zoom-out — and can be
+      // rotated each frame for gentle motion. Negligible per-frame cost.
+      const bgTex = createSpaceBackgroundTexture();
+      const bgSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(4000, 32, 32),
+        new THREE.MeshBasicMaterial({
+          map: bgTex,
+          side: THREE.BackSide,
+          fog: false,
+          depthWrite: false,
+          depthTest: false,
+        }),
+      );
+      bgSphere.renderOrder = -1;
+      scene.add(bgSphere);
+
       const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
       scene.add(ambientLight);
       const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -1243,7 +1394,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       backLight.position.set(-10, 10, -20);
       scene.add(backLight);
 
-      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 4000);
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 9000);
       camera.position.set(0, 0, 250);
 
       const renderer = new THREE.WebGLRenderer({
@@ -1252,7 +1403,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         powerPreference: "high-performance",
       });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       container.appendChild(renderer.domElement);
 
       const controls = new OrbitControls(camera, renderer.domElement);
@@ -1260,10 +1411,13 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       controls.dampingFactor = 0.05;
       controls.autoRotate = false;
       controls.target.set(0, 0, 0);
+      controls.maxDistance = 3500;
 
       const renderScene = new RenderPass(scene, camera);
+      // Half-resolution bloom: visually near-identical but far cheaper,
+      // since the bloom pass shades every pixel of its render targets.
       const bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(width, height),
+        new THREE.Vector2(Math.floor(width / 2), Math.floor(height / 2)),
         1.2,
         0.8,
         0.2,
@@ -1384,76 +1538,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
 
       const nebulaBackgroundLayer = createNebulaBackgroundLayer();
       scene.add(nebulaBackgroundLayer);
-
-      const createSpiralGalaxyLayer = () => {
-        const group = new THREE.Group();
-
-        const pCount = 10000;
-        const geo = new THREE.BufferGeometry();
-        const pos = new Float32Array(pCount * 3);
-        const col = new Float32Array(pCount * 3);
-
-        const colors = [
-          new THREE.Color("#e8f4ff"), // whitest blue
-          new THREE.Color("#c8e0ff"), // soft blue
-          new THREE.Color("#f0f8ff"), // near-white
-        ];
-
-        for (let i = 0; i < pCount; i++) {
-          const arm = i % 3;
-          const r = Math.pow(Math.random(), 2.0) * 700;
-          const angle = r * 0.015 + (arm * Math.PI * 2) / 3;
-
-          const disp = (700 - r) * 0.15 * (Math.random() - 0.5);
-          const y = (Math.random() - 0.5) * (30 - r * 0.03);
-
-          pos[i * 3] = Math.cos(angle + disp) * r;
-          pos[i * 3 + 1] = y;
-          pos[i * 3 + 2] = Math.sin(angle + disp) * r;
-
-          const color = colors[arm];
-          col[i * 3] = color.r * (0.7 + Math.random() * 0.5);
-          col[i * 3 + 1] = color.g * (0.7 + Math.random() * 0.5);
-          col[i * 3 + 2] = color.b * (0.7 + Math.random() * 0.5);
-        }
-
-        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-
-        const tex = createGlowTexture(255, 255, 255, 32, false);
-        const points = new THREE.Points(
-          geo,
-          new THREE.PointsMaterial({
-            size: 3.5,
-            map: tex,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.5,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-          }),
-        );
-
-        const bulgeTex = createGlowTexture(220, 235, 255, 256, false);
-        const bulge = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: bulgeTex,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-          }),
-        );
-        bulge.scale.set(250, 120, 1);
-
-        group.add(points);
-        group.add(bulge);
-
-        group.position.set(-500, 250, -1100);
-        group.rotation.x = 0.6;
-        group.rotation.z = -0.2;
-        return group;
-      };
 
       const createNebulaLayer = () => {
         const group = new THREE.Group();
@@ -1920,7 +2004,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       blackHoleGroup.position.set(0, 30, -300);
       scene.add(blackHoleGroup);
 
-      scene.add(createSpiralGalaxyLayer());
       const workstation = createProgrammerWorkstation(nebulaGroup);
 
       // Load the GLB programmer model
@@ -2137,27 +2220,26 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const godNodeIds = new Set(godNodesList.map((n) => n.id));
       const godNodesMap = new Map<string, THREE.Sprite>();
       const constellationGlows: THREE.Sprite[] = [];
-      const PENTAGON_R = 15;
+      const GOD_R = 50;
 
       for (let i = 0; i < godNodesList.length; i++) {
         const n = godNodesList[i];
         const col = new THREE.Color(
           COMMUNITY_PALETTE[n.community % COMMUNITY_PALETTE.length],
         );
-        const tex = createGlowTexture(
+        const tex = createNodeTexture(
           Math.round(col.r * 255),
           Math.round(col.g * 255),
           Math.round(col.b * 255),
           128,
-          true,
         );
         const sprite = new THREE.Sprite(
           new THREE.SpriteMaterial({
             map: tex,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            blending: THREE.NormalBlending,
             depthWrite: false,
-            opacity: 0.2,
+            opacity: 0.85,
           }),
         );
         const gSize = 8.0 + Math.pow(n.degree, 0.6) * 2.0;
@@ -2166,12 +2248,19 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         if (i === 0) {
           sprite.position.set(0, 0, 0);
         } else {
-          const angle = ((i - 1) / 4) * Math.PI * 2;
-          const godY = (Math.random() - 0.5) * PENTAGON_R * 1.5;
+          // 3D Fibonacci-sphere distribution: spreads the top hubs through
+          // volume instead of a flat circle, so they never collapse into a
+          // straight line when viewed edge-on and have room between them.
+          const total = godNodesList.length;
+          const t = i / (total - 1);
+          const phi = Math.PI * (3 - Math.sqrt(5));
+          const y = 1 - 2 * t;
+          const r = Math.sqrt(Math.max(0, 1 - y * y));
+          const theta = phi * i;
           sprite.position.set(
-            Math.cos(angle) * PENTAGON_R,
-            godY,
-            Math.sin(angle) * PENTAGON_R,
+            Math.cos(theta) * r * GOD_R,
+            y * GOD_R,
+            Math.sin(theta) * r * GOD_R,
           );
         }
 
@@ -2447,6 +2536,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         c.starLayers[1].rotation.y = elapsed * 0.012;
         c.starLayers[1].rotation.x = Math.sin(elapsed * 0.005) * 0.08;
 
+        // Slowly drift the background galaxy sphere
+        bgSphere.rotation.y = elapsed * 0.006;
+        bgSphere.rotation.x = Math.sin(elapsed * 0.02) * 0.02;
+
         const overclocked = (c as any).isOverclocked;
         const timeScale = overclocked ? 1.5 : 0.5;
         const scaledElapsed = elapsed * timeScale;
@@ -2647,7 +2740,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           const drawFn = bhData.drawFunction;
           const sprite = bhData.sprite;
 
-          if (!bhData.lastUpdate || elapsed - bhData.lastUpdate > 0.033) {
+          if (!bhData.lastUpdate || elapsed - bhData.lastUpdate > 0.05) {
             drawFn(elapsed);
             tex.needsUpdate = true;
             bhData.lastUpdate = elapsed;
