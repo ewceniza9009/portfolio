@@ -2711,8 +2711,6 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
 
         if ((c as any).mixer) {
-          (c as any).mixer.update(delta * (overclocked ? 3.0 : 1.0));
-
           // Trigger keyboard lights while typing animation plays
           const now = Date.now();
           if (!(c as any).lastKeyPressTime) {
