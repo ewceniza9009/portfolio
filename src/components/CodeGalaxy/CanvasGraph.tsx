@@ -47,6 +47,7 @@ import {
   forwardRef,
   useState,
 } from "react";
+import { RotateCw, Hand } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -1486,6 +1487,10 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         }
         if (e.key === "r" || e.key === "R") {
           apiRef.current?.resetView();
+          return;
+        }
+        if (e.key === "p" || e.key === "P") {
+          setInteractionMode((prev) => (prev === "pan" ? "rotate" : "pan"));
           return;
         }
         const c = sceneRef.current;
@@ -4062,27 +4067,68 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
           onContextMenu={(e) => e.preventDefault()}
         />
 
-        {/* Interaction Mode Toggle */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 bg-[#1a1020]/80 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
+        {/* Interaction Mode Toggle — sleek segmented control */}
+        <div
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-0.5 p-1 rounded-full border shadow-xl select-none"
+          style={{
+            background: "rgba(12,12,30,0.72)",
+            borderColor: "color-mix(in srgb, var(--accent) 25%, transparent)",
+            backdropFilter: "blur(12px)",
+          }}
+          role="group"
+          aria-label="Camera interaction mode"
+        >
           <button
             onClick={() => setInteractionMode("rotate")}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            title="Left-drag rotates the galaxy (key: drag)"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95"
+            style={
               interactionMode === "rotate"
-                ? "bg-white/20 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                : "text-white/50 hover:text-white/80 hover:bg-white/5"
-            }`}
+                ? {
+                    background:
+                      "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)",
+                    color: "var(--bg-primary)",
+                    boxShadow: "0 2px 10px color-mix(in srgb, var(--accent) 40%, transparent)",
+                  }
+                : { color: "var(--text-secondary)" }
+            }
+            onMouseEnter={(e) => {
+              if (interactionMode !== "rotate")
+                e.currentTarget.style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              if (interactionMode !== "rotate")
+                e.currentTarget.style.color = "var(--text-secondary)";
+            }}
           >
-            🔄 Rotate (R)
+            <RotateCw size={14} />
+            Rotate
           </button>
           <button
             onClick={() => setInteractionMode("pan")}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            title="Left-drag pans the view (key: P)"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95"
+            style={
               interactionMode === "pan"
-                ? "bg-white/20 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                : "text-white/50 hover:text-white/80 hover:bg-white/5"
-            }`}
+                ? {
+                    background:
+                      "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, var(--accent-secondary)) 100%)",
+                    color: "var(--bg-primary)",
+                    boxShadow: "0 2px 10px color-mix(in srgb, var(--accent) 40%, transparent)",
+                  }
+                : { color: "var(--text-secondary)" }
+            }
+            onMouseEnter={(e) => {
+              if (interactionMode !== "pan")
+                e.currentTarget.style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              if (interactionMode !== "pan")
+                e.currentTarget.style.color = "var(--text-secondary)";
+            }}
           >
-            ✋ Pan (P)
+            <Hand size={14} />
+            Pan
           </button>
         </div>
       </div>
