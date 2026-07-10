@@ -21,6 +21,9 @@ const COMMUNITY_PALETTE = [
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
+// Reused to avoid per-frame allocation in the animation loop.
+const ZERO_VECTOR = new THREE.Vector3();
+
 function createGlowTexture(
   r: number,
   g: number,
@@ -1403,7 +1406,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         powerPreference: "high-performance",
       });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
       container.appendChild(renderer.domElement);
 
       const controls = new OrbitControls(camera, renderer.domElement);
@@ -1843,9 +1846,14 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
       const blackHoleGroup = new THREE.Group();
 
       const bhCanvas = document.createElement("canvas");
-      bhCanvas.width = 2048;
-      bhCanvas.height = 2048;
+      // Half the previous 2048 resolution: the redraw + GPU re-upload was a
+      // periodic stall that showed up as stutter during camera motion. The
+      // black hole is a soft glow, so the lower res is imperceptible.
+      bhCanvas.width = 1024;
+      bhCanvas.height = 1024;
       const bhCtx = bhCanvas.getContext("2d")!;
+      // Keep the existing 2048-based drawing coordinates intact.
+      bhCtx.scale(0.5, 0.5);
 
       function drawBlackHole(time: number) {
         const cx = 1024,
@@ -2544,7 +2552,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
         const timeScale = overclocked ? 1.5 : 0.5;
         const scaledElapsed = elapsed * timeScale;
 
-        const wp = c.workstation?.WORKSTATION_POS || new THREE.Vector3();
+        const wp = c.workstation?.WORKSTATION_POS ?? ZERO_VECTOR;
 
         // ============================================================
         // REACTIVE KEYBOARD LIGHTS ANIMATION
@@ -2574,8 +2582,7 @@ export const CanvasGraph = forwardRef<CanvasGraphHandle, CanvasGraphProps>(
             // Set opacity and color
             if (totalIntensity > 0.01) {
               key.material.opacity = totalIntensity * 0.8;
-              const color = new THREE.Color(ud.baseColor);
-              key.material.color = color;
+              key.material.color.set(ud.baseColor);
               key.scale.set(
                 0.15 + totalIntensity * 0.15,
                 0.15 + totalIntensity * 0.15,
