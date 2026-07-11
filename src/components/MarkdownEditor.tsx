@@ -1953,8 +1953,8 @@ Add \`slideshow\` to the code fence language. Separate steps with \`// ---\`.
                   onClick={() => {
                     const all = `# Code Morph Examples
 
-## Basic Refactor (JS)
-\`\`\`code-morph
+## JavaScript Refactor (morph)
+\`\`\`code-morph morph
 function greet(name) {
   return "Hello, " + name;
 }
@@ -1964,8 +1964,8 @@ function greet(name) {
 }
 \`\`\`
 
-## TypeScript Type Migration
-\`\`\`code-morph
+## TypeScript Migration (fade)
+\`\`\`code-morph fade
 function getData(id) {
   return fetch("/api/" + id).then(r => r.json());
 }
@@ -1976,8 +1976,8 @@ async function getData(id: string): Promise<Data> {
 }
 \`\`\`
 
-## CSS to Tailwind
-\`\`\`code-morph
+## CSS to Tailwind (flip)
+\`\`\`code-morph flip
 .card {
   background: white;
   border-radius: 8px;
@@ -1986,10 +1986,12 @@ async function getData(id: string): Promise<Data> {
 }
 ---
 <div className="bg-white rounded-lg p-4 shadow-md">
+  {/* content */}
+</div>
 \`\`\`
 
-## Python Refactor
-\`\`\`code-morph
+## Python Refactor (diff mode)
+\`\`\`code-morph diff
 def process(data):
     result = []
     for item in data:
@@ -1998,6 +2000,141 @@ def process(data):
 ---
 def process(data):
     return [item * 2 for item in data]
+\`\`\`
+
+## Cinematic Cross-fade (blur)
+\`\`\`code-morph blur
+// old implementation
+function slowRender() {
+  for(let i=0; i<1e6; i++) {}
+}
+---
+// cinematic fade to new
+function fastRender() {
+  requestAnimationFrame(draw);
+}
+\`\`\`
+
+## Cyberpunk Glitch (glitch)
+\`\`\`code-morph glitch
+// SYSTEM INTRUSION DETECTED
+access_granted = false;
+system.lockdown();
+---
+// OVERRIDE SUCCESSFUL
+access_granted = true;
+system.bypass_security();
+\`\`\`
+
+## Digital Rain (matrix)
+\`\`\`code-morph matrix
+101010001010010111101
+000101110101011101010
+101010101000111100101
+---
+Wake up, Neo...
+The Matrix has you...
+Follow the white rabbit.
+\`\`\`
+
+## Scatter & Reform (explode)
+\`\`\`code-morph explode
+function transform(obj) {
+  let a = obj.a;
+  let b = obj.b;
+  return { a, b };
+}
+---
+function transform({ a, b }) {
+  return { a, b };
+}
+\`\`\`
+
+## Carousel Presentation (slide)
+\`\`\`code-morph slide
+// Step 1: Initialize
+const app = express();
+app.use(cors());
+---
+// Step 2: Add Routes
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+\`\`\`
+
+## Z-axis Depth (zoom)
+\`\`\`code-morph zoom
+<div className="layer-1">
+  <span>Background</span>
+</div>
+---
+<div className="layer-2">
+  <span>Foreground</span>
+</div>
+\`\`\`
+
+## Staggered Entry (flight)
+\`\`\`code-morph flight
+// Loading modules...
+import React from "react";
+---
+// Modules loaded.
+import React from "react";
+import { useState } from "react";
+import { useEffect } from "react";
+\`\`\`
+
+## Terminal Print (typewriter)
+\`\`\`code-morph typewriter
+> npm start
+Starting development server...
+---
+> npm start
+Starting development server...
+Compiled successfully!
+\`\`\`
+
+## Erase & Type (erase)
+\`\`\`code-morph erase
+function status() {
+  return "Loading";
+}
+---
+function status() {
+  return "Complete";
+}
+\`\`\`
+
+## Target Highlight (highlight:3)
+\`\`\`code-morph highlight:3
+// Watch line 3!
+const a = 1;
+const b = 2;
+return a + b;
+---
+// Watch line 3!
+const a = 1;
+const b = 2; // HIGHLIGHTED!
+return a + b;
+\`\`\`
+
+## Target Scroll (scroll:5)
+\`\`\`code-morph scroll:5
+1
+2
+3
+4
+5
+6
+7
+---
+1
+2
+3
+4
+5 <== SCROLLS HERE
+6
+7
 \`\`\``;
                     navigator.clipboard.writeText(all);
                   }}
@@ -2127,6 +2264,41 @@ def process(data):
                     <span className="font-bold" style={{ color: "var(--accent)" }}>flip</span>
                     <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>3D card flip with perspective</span>
                     <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph flip"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>blur</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Cinematic out-of-focus crossfade</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph blur"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>slide</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Carousel slide transition</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph slide"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>zoom</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Z-axis depth scaling</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph zoom"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>glitch</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Cyberpunk neon scramble</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph glitch"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>erase</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Realistic backspace and re-type</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph erase"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>matrix</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Digital rain character cascade</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph matrix"}</span>
+                  </div>
+                  <div className="p-2 rounded" style={{ background: "var(--bg-secondary)" }}>
+                    <span className="font-bold" style={{ color: "var(--accent)" }}>explode</span>
+                    <span className="block text-[10px]" style={{ color: "var(--text-muted)" }}>Tokens scatter outwards</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{"```code-morph explode"}</span>
                   </div>
                 </div>
 
