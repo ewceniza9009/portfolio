@@ -21,6 +21,7 @@ import {
 import { formatDate, slugify } from "../../utils/format";
 import type { Blog, Comment } from "../../types/blog";
 import MarkdownEditor from "../MarkdownEditor";
+import BlogTOC, { extractHeadings } from "../BlogTOC";
 import { loadPuter } from "../../utils/loadPuter";
 
 interface BlogsTabProps {
@@ -194,6 +195,10 @@ function BlogsTab({
   renderInlinePreview,
   api,
 }: BlogsTabProps) {
+  const tableOfContents = React.useMemo(() => {
+    return extractHeadings(blogContent || "");
+  }, [blogContent]);
+
   return (
     <>
       {/* Left Column: Blogs List */}
@@ -1243,25 +1248,30 @@ function BlogsTab({
                           </div>
 
                           {previewSubTab === "render" ? (
-                            <div className="prose max-w-none flex-1">
-                              <h1 className="text-3xl font-bold mb-4">
-                                {blogTitle || "Untitled Article"}
-                              </h1>
-                              <div
-                                className="flex items-center gap-4 text-xs opacity-60 mb-6 pb-4 border-b"
-                                style={{ borderColor: "var(--border)" }}
-                              >
-                                <span>Read time: {blogReadTime || "5 min read"}</span>
-                                {blogTags && <span>Tags: {blogTags}</span>}
-                              </div>
+                            <div className="flex items-start gap-8 flex-1">
+                              <div className="prose max-w-none flex-1 min-w-0">
+                                <h1 className="text-3xl font-bold mb-4">
+                                  {blogTitle || "Untitled Article"}
+                                </h1>
+                                <div
+                                  className="flex items-center gap-4 text-xs opacity-60 mb-6 pb-4 border-b"
+                                  style={{ borderColor: "var(--border)" }}
+                                >
+                                  <span>Read time: {blogReadTime || "5 min read"}</span>
+                                  {blogTags && <span>Tags: {blogTags}</span>}
+                                </div>
 
-                              {parsedBlogContent ? (
-                                parsedBlogContent
-                              ) : (
-                                <p className="italic text-center text-xs opacity-50 py-10">
-                                  No markdown content written yet.
-                                </p>
-                              )}
+                                {parsedBlogContent ? (
+                                  parsedBlogContent
+                                ) : (
+                                  <p className="italic text-center text-xs opacity-50 py-10">
+                                    No markdown content written yet.
+                                  </p>
+                                )}
+                              </div>
+                              <aside className="hidden lg:block w-64 shrink-0 sticky top-4">
+                                {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} alwaysOpen />}
+                              </aside>
                             </div>
                           ) : (
                             <div className="flex-1 flex flex-col gap-3">

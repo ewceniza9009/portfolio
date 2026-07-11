@@ -87,7 +87,8 @@ function ensureStyles() {
   style.innerHTML = `
     .cm-wrapper { position:relative;transition:height 0.35s ease-out;transform-origin:top; }
     .cm-tok { white-space: pre; display: inline; }
-    .cm-line { display: block; white-space: pre; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; }
+    .cm-line { display: block; white-space: pre; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
+    .cm-line:hover { opacity: 1 !important; }
     .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50;overflow:hidden; }
     .cm-dropdown button { display:flex;flex-direction:column;width:100%;text-align:left;padding:6px 10px;font-size:11px;border:none;background:none;cursor:pointer;color:var(--text-primary); }
     .cm-dropdown button:hover { background:rgba(255,255,255,0.08); }
@@ -436,8 +437,9 @@ function animFlight(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml
 
 function animTypewriter(m: AnimLayer, from: TokenRect[], _to: TokenRect[], toHtml: string, wrapper: HTMLElement) {
   // Render to HTML with per-character tokens
+  const unesc = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
   const toHtmlChar = toHtml.replace(/<span class="cm-tok"[^>]*>([^<]+)<\/span>/g, (_, txt) =>
-    [...txt].map(ch =>
+    [...unesc(txt)].map(ch =>
       ch === ' ' ? '<span class="cm-tok">&nbsp;</span>'
         : `<span class="cm-tok">${esc(ch)}</span>`
     ).join('')
@@ -530,7 +532,7 @@ function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targe
   const otherLines = Array.from(lines).filter((_, i) => i !== targetIdx)
   otherLines.forEach((el, i) => {
     m.anims.push((el as HTMLElement).animate(
-      [{ opacity: 1 }, { opacity: 0.35 }],
+      [{ opacity: 1 }, { opacity: 0.5 }],
       { duration: 400, easing: 'ease-out', fill: 'forwards', delay: i * 30 }
     ))
   })
@@ -578,7 +580,7 @@ function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetId
   const otherLines = Array.from(lines).filter((_, i) => i !== targetIdx)
   otherLines.forEach((el, i) => {
     m.anims.push((el as HTMLElement).animate(
-      [{ opacity: 1 }, { opacity: 0.35 }],
+      [{ opacity: 1 }, { opacity: 0.5 }],
       { duration: 350, easing: 'ease-out', fill: 'forwards', delay: 500 + i * 30 }
     ))
   })

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder, List } from 'lucide-react'
+import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
@@ -16,7 +16,7 @@ import { getGradient } from '../utils/gradients'
 import { formatDate } from '../utils/format'
 import { getApiUrl } from '../utils/api'
 import type { Blog } from '../types/blog'
-import { slugifyHeading } from '../utils/slugify'
+import BlogTOC, { extractHeadings } from './BlogTOC'
 
 const NOOP_SCROLL = () => {}
 
@@ -70,80 +70,6 @@ const BLOG_POST_STYLES = `
     scroll-margin-top: 100px;
   }
 `
-
-interface TocHeading {
-  id: string
-  text: string
-  level: number
-}
-
-function BlogTOC({ headings, alwaysOpen = false }: { headings: TocHeading[], alwaysOpen?: boolean }) {
-  const [open, setOpen] = useState(alwaysOpen)
-  if (!headings.length) return null
-  return (
-    <nav
-      aria-label="Table of contents"
-      className="mb-10 rounded-2xl border glass"
-      style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
-    >
-      {!alwaysOpen ? (
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
-          style={{ color: 'var(--text-secondary)' }}
-          aria-expanded={open}
-        >
-          <span className="flex items-center gap-2">
-            <List size={12} style={{ color: 'var(--accent)' }} />
-            On This Page
-          </span>
-          <span className="opacity-50">{open ? '−' : '+'}</span>
-        </button>
-      ) : (
-        <div
-          className="w-full flex items-center justify-between px-5 py-3 text-[10px] uppercase tracking-widest font-bold"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          <span className="flex items-center gap-2">
-            <List size={12} style={{ color: 'var(--accent)' }} />
-            On This Page
-          </span>
-        </div>
-      )}
-      <AnimatePresence initial={false}>
-        {(open || alwaysOpen) && (
-          <motion.ul
-            initial={alwaysOpen ? false : { height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={alwaysOpen ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden px-5 pb-3 space-y-1"
-          >
-            {headings.map((h) => (
-              <li
-                key={h.id}
-                style={{ paddingLeft: `${(h.level - 2) * 14}px` }}
-              >
-                <a
-                  href={`#${h.id}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const el = document.getElementById(h.id)
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }}
-                  className="block text-xs py-1 transition-colors hover:underline truncate"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {h.text}
-                </a>
-              </li>
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </nav>
-  )
-}
 
 interface BlogPostPageProps {
   theme: 'dark' | 'light'
@@ -271,23 +197,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   const parsedContent = useMemo(() => blog ? parseMarkdown(blog.content, theme, accent) : '', [blog, theme, accent])
 
   const tableOfContents = useMemo(() => {
-    if (!blog?.content) return []
-    const lines = blog.content.split('\n')
-    const headings: { id: string; text: string; level: number }[] = []
-    let inCodeBlock = false
-    const counter = new Map<string, number>()
-    for (const line of lines) {
-      if (line.startsWith('```')) { inCodeBlock = !inCodeBlock; continue }
-      if (inCodeBlock) continue
-      const m = line.match(/^(#{1,6})\s+(.+)$/)
-      if (!m) continue
-      const level = m[1].length
-      const text = m[2].replace(/[*_`~\[\]\(\)]/g, '').trim()
-      if (!text) continue
-      const id = slugifyHeading(m[2], counter)
-      headings.push({ id, text, level })
-    }
-    return headings.filter(h => h.level >= 2 && h.level <= 3).slice(0, 20)
+    return extractHeadings(blog?.content || '')
   }, [blog?.content])
 
   if (loading) {

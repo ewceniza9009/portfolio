@@ -464,7 +464,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         }
         @keyframes ch-line-dim-reveal {
           0% { opacity: 0; transform: translateY(4px); }
-          100% { opacity: 0.3; transform: none; }
+          100% { opacity: 0.45; transform: none; }
         }
         .ch-line {
           padding: 2px 20px 2px 16px;
@@ -494,6 +494,8 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         }
         .ch-line:hover {
           z-index: 100;
+          opacity: 1 !important;
+          transition: opacity 0.2s ease;
         }
         /* Ensure code block container doesn't clip tooltip/footnote popups */
         .ch-container { overflow: visible !important; }
