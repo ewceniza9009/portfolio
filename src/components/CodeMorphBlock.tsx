@@ -382,10 +382,7 @@ function animFlight(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml
   const n = Math.max(oldBlocks.length, newBlocks.length)
   const stackH = n * lineH + (n - 1) * GAP + 16
   
-  // Animate height if it changes
-  const initialH = wrapper.style.height || `${wrapper.scrollHeight}px`
-  wrapper.style.height = initialH
-  void wrapper.offsetHeight
+  // Instantly lock height to prevent resizing during animation
   wrapper.style.height = `${stackH}px`
   wrapper.style.position = 'relative'
 
@@ -686,8 +683,9 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
       void wrapper.offsetHeight
       const h2 = wrapper.scrollHeight
       
-      // 2. Lock height to max to prevent page scroll/layout shift during measurements
-      wrapper.style.height = `${Math.max(h1, h2)}px`
+      // 2. Lock height to max to prevent page scroll/layout shift during measurements and animation
+      const maxH = Math.max(h1, h2)
+      wrapper.style.height = `${maxH}px`
       
       const from = measureTokens(wrapper, fromHtml)
       const to = measureTokens(wrapper, toHtml)
@@ -696,12 +694,8 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
       wrapper.innerHTML = ''
       const m = buildAnimLayer(wrapper, [])
       
-      // 3. Set starting height for animation
-      if (animMode !== 'diff' && animMode !== 'flight') {
-        wrapper.style.height = `${h1}px`
-        void wrapper.offsetHeight // force reflow
-        wrapper.style.height = `${h2}px` // smoothly transition to h2
-      } else {
+      // 3. Keep height locked at maxH during animation for stability, except for flight/diff which handle their own layout
+      if (animMode === 'diff' || animMode === 'flight') {
         wrapper.style.height = ''
       }
 
