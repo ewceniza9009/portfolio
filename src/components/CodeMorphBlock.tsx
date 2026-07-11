@@ -2,16 +2,17 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
 
 const HIGH_KEY = '__cm_shiki'
-async function getHighlighter() {
-  if ((window as any)[HIGH_KEY]) return (window as any)[HIGH_KEY] as Promise<any>
-  const shiki = await import('shiki')
-  const init = shiki.createHighlighter({
-    themes: ['github-dark', 'github-light'],
-    langs: ['javascript', 'typescript', 'csharp', 'css', 'html', 'json', 'sql', 'python', 'bash', 'markdown', 'yaml', 'text'],
-  })
-  ;(window as any)[HIGH_KEY] = init
-  const h = await init
-  return h
+function getHighlighter() {
+  if (!(window as any)[HIGH_KEY]) {
+    (window as any)[HIGH_KEY] = (async () => {
+      const shiki = await import('shiki')
+      return shiki.createHighlighter({
+        themes: ['github-dark', 'github-light'],
+        langs: ['javascript', 'typescript', 'csharp', 'css', 'html', 'json', 'sql', 'python', 'bash', 'markdown', 'yaml', 'text'],
+      })
+    })()
+  }
+  return (window as any)[HIGH_KEY]
 }
 
 function detectLang(code: string): string {
@@ -792,7 +793,7 @@ const ANIM_FNS: Record<AnimMode, AnimFn> = {
 export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlockProps) {
   const parts = code.split(/^---$/m)
   const beforeCode = parts[0]?.trim() || ''
-  const afterCode = parts[1]?.trim() || ''
+  const afterCode = parts.length > 1 ? (parts[1]?.trim() || '') : beforeCode
   const lang = detectLang(beforeCode || afterCode)
   const validMode = (m: string): AnimMode => ANIM_MODES.some(a => a.key === m) ? m as AnimMode : 'morph'
   
