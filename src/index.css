@@ -736,5 +736,5 @@ button.gv-btn:hover { filter: brightness(1.2); }
 .monaco-hover,
 .monaco-editor .monaco-hover,
 .workbench-hover-container {
-  pointer-events: none !important;
+  display: none !important;
 }
