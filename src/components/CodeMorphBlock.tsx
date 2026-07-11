@@ -501,35 +501,39 @@ function animTypewriter(m: AnimLayer, from: TokenRect[], _to: TokenRect[], toHtm
   })
 }
 
-function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIdxRaw: number | null) {
+function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIndicesRaw: number[] | null) {
   wrapper.innerHTML = toHtml
   void wrapper.offsetHeight
 
   const lines = wrapper.querySelectorAll('.cm-line')
   if (!lines.length) return
 
-  // Default to middle line if not specified, bounded to array
-  let targetIdx = targetIdxRaw !== null ? targetIdxRaw - 1 : Math.floor(lines.length / 2)
-  targetIdx = Math.max(0, Math.min(targetIdx, lines.length - 1))
+  let targetIndices = targetIndicesRaw && targetIndicesRaw.length > 0 ? targetIndicesRaw.map(i => i - 1) : [Math.floor(lines.length / 2)]
+  targetIndices = targetIndices.map(idx => Math.max(0, Math.min(idx, lines.length - 1)))
   
-  const targetLine = lines[targetIdx] as HTMLElement
-  const lr = targetLine.getBoundingClientRect()
+  const targetLines = targetIndices.map(idx => lines[idx] as HTMLElement)
+  const rects = targetLines.map(l => l.getBoundingClientRect())
   const wr = wrapper.getBoundingClientRect()
+
+  const minTop = Math.min(...rects.map(r => r.top))
+  const maxBottom = Math.max(...rects.map(r => r.bottom))
+  const maxWidth = Math.max(...rects.map(r => r.width))
+  const minLeft = Math.min(...rects.map(r => r.left))
 
   // Highlight box
   const box = document.createElement('div')
   box.className = 'cm-highlight-box'
-  box.style.left = `${lr.left - wr.left - 8}px`
-  box.style.top = `${lr.top - wr.top - 2}px`
+  box.style.left = `${minLeft - wr.left - 8}px`
+  box.style.top = `${minTop - wr.top - 2}px`
   box.style.width = '0px'
-  box.style.height = `${lr.height + 4}px`
+  box.style.height = `${maxBottom - minTop + 4}px`
   box.style.opacity = '0'
   box.style.animation = 'cm-pulse 2.5s ease-in-out infinite alternate'
   box.style.animationDelay = '0.7s'
   wrapper.insertBefore(box, wrapper.firstChild)
 
   // Dim other lines
-  const otherLines = Array.from(lines).filter((_, i) => i !== targetIdx)
+  const otherLines = Array.from(lines).filter((_, i) => !targetIndices.includes(i))
   otherLines.forEach((el, i) => {
     m.anims.push((el as HTMLElement).animate(
       [{ opacity: 1 }, { opacity: 0.5 }],
@@ -539,45 +543,63 @@ function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targe
 
   // Expand highlight box
   m.anims.push(box.animate(
-    [{ width: '0px', opacity: '0' }, { width: `${lr.width + 18}px`, opacity: '1' }],
+    [{ width: '0px', opacity: '0' }, { width: `${maxWidth + 18}px`, opacity: '1' }],
     { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards', delay: 200 }
   ))
 }
 
-function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIdxRaw: number | null) {
+function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIndicesRaw: number[] | null) {
   wrapper.innerHTML = toHtml
   void wrapper.offsetHeight
 
   const lines = wrapper.querySelectorAll('.cm-line')
   if (!lines.length) return
 
-  // Default to middle line if not specified, bounded to array
-  let targetIdx = targetIdxRaw !== null ? targetIdxRaw - 1 : Math.floor(lines.length / 2)
-  targetIdx = Math.max(0, Math.min(targetIdx, lines.length - 1))
+  let targetIndices = targetIndicesRaw && targetIndicesRaw.length > 0 ? targetIndicesRaw.map(i => i - 1) : [Math.floor(lines.length / 2)]
+  targetIndices = targetIndices.map(idx => Math.max(0, Math.min(idx, lines.length - 1)))
   
-  const targetLine = lines[targetIdx] as HTMLElement
-  const lr = targetLine.getBoundingClientRect()
+  const targetLines = targetIndices.map(idx => lines[idx] as HTMLElement)
+  const rects = targetLines.map(l => l.getBoundingClientRect())
   const wr = wrapper.getBoundingClientRect()
   const surfRect = wrapper.parentElement?.getBoundingClientRect() || wr
 
-  // Center target line
-  const lineCenter = lr.top + lr.height / 2 - surfRect.top
-  const dy = surfRect.height * 0.4 - lineCenter
+  const minTop = Math.min(...rects.map(r => r.top))
+  const maxBottom = Math.max(...rects.map(r => r.bottom))
+  const maxWidth = Math.max(...rects.map(r => r.width))
+  const minLeft = Math.min(...rects.map(r => r.left))
+
+  // Center target block relative to wrapper
+  const blockCenter = minTop + (maxBottom - minTop) / 2 - wr.top
+  
+  // Calculate raw dy to center in the surface
+  let dy = surfRect.height / 2 - blockCenter
+  
+  // Bound dy to prevent scrolling out of bounds
+  const minDy = surfRect.height - wr.height
+  const maxDy = 0
+  
+  if (minDy >= 0) {
+    // Wrapper is smaller than surface, no need to scroll
+    dy = 0
+  } else {
+    // Clamp dy so it doesn't push wrapper too far down (blank top) or up (blank bottom)
+    dy = Math.max(minDy, Math.min(maxDy, dy))
+  }
 
   // Highlight box
   const box = document.createElement('div')
   box.className = 'cm-highlight-box'
-  box.style.left = `${targetLine.offsetLeft - 8}px`
-  box.style.top = `${targetLine.offsetTop - 2}px`
-  box.style.width = `${lr.width + 18}px`
-  box.style.height = `${lr.height + 4}px`
+  box.style.left = `${minLeft - wr.left - 8}px`
+  box.style.top = `${minTop - wr.top - 2}px`
+  box.style.width = `${maxWidth + 18}px`
+  box.style.height = `${maxBottom - minTop + 4}px`
   box.style.opacity = '0'
   box.style.animation = 'cm-pulse 2.5s ease-in-out infinite alternate'
   box.style.animationDelay = '0.85s'
   wrapper.insertBefore(box, wrapper.firstChild)
 
   // Dim others
-  const otherLines = Array.from(lines).filter((_, i) => i !== targetIdx)
+  const otherLines = Array.from(lines).filter((_, i) => !targetIndices.includes(i))
   otherLines.forEach((el, i) => {
     m.anims.push((el as HTMLElement).animate(
       [{ opacity: 1 }, { opacity: 0.5 }],
@@ -802,10 +824,22 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
   // Parse mode and potential target (e.g., highlight:3)
   const animParts = (initialAnim || 'morph').split(':')
   const baseModeStr = animParts[0].trim()
-  const parsedTarget = parseInt(animParts[1]?.trim() || '', 10)
+  const targetStr = animParts[1]?.trim() || ''
+  
+  let animTargetIndices: number[] | null = null
+  if (targetStr) {
+    if (targetStr.includes('-')) {
+      const [start, end] = targetStr.split('-').map(n => parseInt(n.trim(), 10))
+      if (!isNaN(start) && !isNaN(end) && end >= start) {
+        animTargetIndices = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+      }
+    } else {
+      const parsedTarget = parseInt(targetStr, 10)
+      if (!isNaN(parsedTarget)) animTargetIndices = [parsedTarget]
+    }
+  }
   
   const [animMode, setAnimMode] = useState<AnimMode>(validMode(baseModeStr))
-  const animTargetIdx = isNaN(parsedTarget) ? null : parsedTarget
   
   const [morphed, setMorphed] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -907,7 +941,7 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
       } else if (animMode === 'flight') {
         (fn as Function)(m, from, to, fromHtml, toHtml, wrapper)
       } else if (animMode === 'highlight' || animMode === 'scroll') {
-        (fn as Function)(m, toHtml, wrapper, animTargetIdx)
+        (fn as Function)(m, toHtml, wrapper, animTargetIndices)
       } else if (animMode === 'typewriter') {
         (fn as Function)(m, from, to, toHtml, wrapper)
       } else if (animMode === 'morph') {

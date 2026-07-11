@@ -21,7 +21,6 @@ import {
 import { formatDate, slugify } from "../../utils/format";
 import type { Blog, Comment } from "../../types/blog";
 import MarkdownEditor from "../MarkdownEditor";
-import BlogTOC, { extractHeadings } from "../BlogTOC";
 import { loadPuter } from "../../utils/loadPuter";
 
 interface BlogsTabProps {
@@ -195,10 +194,6 @@ function BlogsTab({
   renderInlinePreview,
   api,
 }: BlogsTabProps) {
-  const tableOfContents = React.useMemo(() => {
-    return extractHeadings(blogContent || "");
-  }, [blogContent]);
-
   return (
     <>
       {/* Left Column: Blogs List */}
@@ -1269,9 +1264,6 @@ function BlogsTab({
                                   </p>
                                 )}
                               </div>
-                              <aside className="hidden lg:block w-64 shrink-0 sticky top-4">
-                                {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} alwaysOpen />}
-                              </aside>
                             </div>
                           ) : (
                             <div className="flex-1 flex flex-col gap-3">
