@@ -1518,7 +1518,7 @@ export default function CodeMorphBlock({
         className="text-sm leading-relaxed overflow-x-auto overflow-y-hidden"
         style={{ fontVariantLigatures: "none" }}
       >
-        <div ref={stageRef} data-cm="stage" className="p-4" />
+        <div ref={stageRef} data-cm="stage" className="p-4 relative" />
       </div>
     </div>
   );
