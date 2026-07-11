@@ -422,7 +422,8 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
       className="relative group my-6 rounded-2xl select-text ch-container"
       style={{
         background: isDark ? '#0d1117' : '#ffffff',
-      }}
+        '--ch-text-inverted': isDark ? '#000000' : '#ffffff',
+      } as React.CSSProperties}
     >
       <style>{`
         @keyframes ch-container-in {
@@ -752,14 +753,14 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
         .ch-label-pill {
           position: absolute;
           bottom: 100%;
-          left: 50%;
-          transform: translate3d(-50%, -4px, 0);
+          left: 0;
+          transform: translate3d(0, -4px, 0);
           opacity: 1 !important;
           pointer-events: none;
           font-size: 9px; padding: 1px 6px; border-radius: 4px;
           white-space: nowrap; line-height: 1.4;
           z-index: 20;
-          color: #fff !important;
+          color: var(--bg-primary, #ffffff) !important;
           background: var(--accent) !important;
         }
 
@@ -913,7 +914,10 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                     const color = isDark ? '#000000' : '#ffffff'
                     const arrowColor = 'var(--accent)'
                     const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                    wrapped = `<span class="ch-tooltip-trigger">${lineHtml}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                    const match = lineHtml.match(/^(.*?)((\s|&nbsp;|<span class="ch-code-token"[^>]*>\s*<\/span>)*)$/)
+                    const trimmed = match ? match[1] : lineHtml
+                    const spaces = match ? match[2] : ''
+                    wrapped = `<span class="ch-tooltip-trigger">${trimmed}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>${spaces}`
                   } else if (a.type === 'footnote') {
                     footnoteCounter++
                     const num = footnoteCounter
@@ -922,7 +926,10 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                     const border = 'transparent'
                     const color = isDark ? '#000000' : '#ffffff'
                     const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                    wrapped = `<span class="ch-footnote-trigger" style="position:relative"><sup class="ch-footnote-sup">[${num}]</sup>${lineHtml}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow};border-bottom-color:${bg}">${a.text || ''}</span></span>`
+                    const match = lineHtml.match(/^(.*?)((\s|&nbsp;|<span class="ch-code-token"[^>]*>\s*<\/span>)*)$/)
+                    const trimmed = match ? match[1] : lineHtml
+                    const spaces = match ? match[2] : ''
+                    wrapped = `<span class="ch-footnote-trigger" style="position:relative">${trimmed}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow};border-bottom-color:${bg}">${a.text || ''}</span></span>${spaces}`
                   } else if (a.type === 'link') {
                     const url = a.text || '#'
                     wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${lineHtml}</a>`
@@ -930,13 +937,19 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                     const bg = 'var(--accent)'
                     const border = 'transparent'
                     const color = isDark ? '#000000' : '#ffffff'
-                    const indentMatch = (cleanLines[i] || '').match(/^\s+/)
-                    const indentStr = indentMatch ? indentMatch[0] : ''
-                    wrapped = `${lineHtml}\n${indentStr}<span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-top:4px;display:inline-block">${a.text || ''}</span>`
+                    let targetHtml = lineHtml;
+                    if (!cleanLines[i].trim() && cleanLines[i+1]) {
+                      const nextIndent = cleanLines[i+1].match(/^\s+/);
+                      if (nextIndent) targetHtml = nextIndent[0];
+                    }
+                    wrapped = `<span class="ch-callout-target">${targetHtml}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
                   } else if (a.type === 'label') {
                     const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                     const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                    wrapped = `<span class="ch-label-wrapper">${lineHtml}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                    const match = lineHtml.match(/^((?:\s|&nbsp;|<span class="ch-code-token"[^>]*>\s*<\/span>)*)(.*)$/)
+                    const leading = match ? match[1] : ''
+                    const code = match ? match[2] : lineHtml
+                    wrapped = `${leading}<span class="ch-label-wrapper">${code}<span class="ch-label-pill" style="left:0;transform:translate3d(0,-4px,0);background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
                   } else if (a.type === 'style') {
                     wrapped = `<span style="${a.text || ''}">${lineHtml}</span>`
                   } else {
@@ -974,12 +987,12 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                       const border = 'transparent'
                       const color = isDark ? '#000000' : '#ffffff'
                       const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                      wrapper = (m) => `<span class="ch-footnote-trigger" style="position:relative">${m}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
+                      wrapper = (m) => `<span class="ch-footnote-trigger" style="position:relative">${m}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                       const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
                       const color = 'var(--accent)'
-                      wrapper = (m) => `<span class="ch-label-wrapper">${m}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span></span>`
+                      wrapper = (m) => `<span class="ch-label-wrapper"><span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>${m}</span>`
                     } else if (a.type === 'style') {
                       wrapper = (m) => `<span style="${a.text || ''}">${m}</span>`
                     } else {
@@ -1014,6 +1027,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
 
                   overlaps.forEach((overlap, idx) => {
                     const isLast = idx === overlaps.length - 1
+                    const isFirst = idx === 0
                     const { p, start: segStart, len: segLen } = overlap
                     const localStart = Math.max(0, (a.inlineStart ?? 0) - segStart)
                     const localEnd = Math.min(segLen, (a.inlineEnd ?? 0) - segStart + 1)
@@ -1051,15 +1065,15 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                         const num = footnoteCounter
                         footnotes.push({ num, text: a.text || '' })
                         const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                        wrapped = `<span class="ch-footnote-trigger" style="position:relative">${target}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
+                        wrapped = `<span class="ch-footnote-trigger" style="position:relative">${target}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
                       } else {
                         wrapped = `<span class="ch-footnote-trigger" style="position:relative">${target}</span>`
                       }
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                       const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                      if (isLast) {
-                        wrapped = `<span class="ch-label-wrapper">${target}<span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span></span>`
+                      if (isFirst) {
+                        wrapped = `<span class="ch-label-wrapper"><span class="ch-label-pill" style="background:${bg};border:1px solid ${border};color:var(--accent)">${a.text || ''}</span>${target}</span>`
                       } else {
                         wrapped = `<span class="ch-label-target">${target}</span>`
                       }
