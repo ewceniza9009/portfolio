@@ -67,12 +67,17 @@ const ANIM_MODES: { key: AnimMode; label: string; desc: string }[] = [
   { key: 'scroll', label: 'Scroll', desc: 'Scroll to target line + highlight' },
 ]
 
-const STYLE_ID = 'cm-v6'
 function ensureStyles() {
-  if (document.getElementById(STYLE_ID)) return
-  const s = document.createElement('style')
-  s.id = STYLE_ID
-  s.textContent = `
+  if (typeof document === 'undefined') return
+  const styleId = 'cm-block-styles'
+  let style = document.getElementById(styleId) as HTMLStyleElement
+  if (!style) {
+    style = document.createElement('style')
+    style.id = styleId
+    document.head.appendChild(style)
+  }
+  style.innerHTML = `
+    .cm-wrapper { position:relative;transition:height 0.35s ease-out;transform-origin:top; }
     .cm-tok { white-space: pre; display: inline; }
     .cm-line { display: block; white-space: pre; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; }
     .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50;overflow:hidden; }
@@ -84,13 +89,12 @@ function ensureStyles() {
     .cm-dropdown button .dsc { font-size:9px;color:var(--text-muted);margin-top:1px; }
     .cm-diff-del { background:rgba(248,81,73,0.12); box-shadow:inset 3px 0 #f85149; }
     .cm-diff-add { background:rgba(63,185,80,0.12); box-shadow:inset 3px 0 #3fb950; }
-    .cm-diff-sign { display:inline-block;width:18px;user-select:none; }
+    .cm-diff-sign { display:inline-block;width:32px;padding-left:16px;user-select:none; }
     .cm-diff-del .cm-diff-sign { color:#f85149; }
     .cm-diff-add .cm-diff-sign { color:#3fb950; }
     .cm-highlight-box { position:absolute;background:rgba(88,166,255,0.16);border-left:3px solid #58a6ff;border-radius:6px;pointer-events:none; }
     .cm-caret { position:absolute;width:2px;background:#58a6ff;border-radius:1px;pointer-events:none; }
   `
-  document.head.appendChild(s)
 }
 
 function esc(s: string): string {
@@ -280,6 +284,7 @@ function animDiff(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: 
   wrapper.innerHTML = ''
   const delEls: HTMLElement[] = []
   const addEls: HTMLElement[] = []
+  const allEls: HTMLElement[] = []
   let fi = 0, ti = 0
 
   ops.forEach(op => {
@@ -287,7 +292,7 @@ function animDiff(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: 
     ln.className = 'cm-line' + (op.type === 'del' ? ' cm-diff-del' : op.type === 'add' ? ' cm-diff-add' : '')
     const sign = document.createElement('span')
     sign.className = 'cm-diff-sign'
-    sign.textContent = op.type === 'del' ? '\u2212 ' : op.type === 'add' ? '+' : '  '
+    sign.textContent = op.type === 'del' ? '- ' : op.type === 'add' ? '+ ' : '  '
     ln.appendChild(sign)
 
     let innerHtml = ''
@@ -299,6 +304,7 @@ function animDiff(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: 
     inner.innerHTML = innerHtml
     ln.appendChild(inner)
     wrapper.appendChild(ln)
+    allEls.push(ln)
     if (op.type === 'del') { delEls.push(ln); ln.style.overflow = 'hidden' }
     else if (op.type === 'add') { addEls.push(ln); ln.style.overflow = 'hidden' }
   })
@@ -309,20 +315,16 @@ function animDiff(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: 
   wrapper.innerHTML = ''
 
   // Re-render same + full-height del/add initially
-  const allEls = [...delEls, ...addEls]
   allEls.forEach(el => wrapper.appendChild(el))
   void wrapper.offsetHeight
 
-  const delH = delEls.map(el => el.scrollHeight || lineH)
   const addH = addEls.map(el => el.scrollHeight || lineH)
 
-  // Collapse del lines
+  // Fade in del lines (do not collapse height so they stay visible as a diff)
   delEls.forEach((el, i) => {
-    const h = delH[i]
-    el.style.height = `${h}px`
-    el.style.opacity = '1'
+    el.style.opacity = '0'
     m.anims.push(el.animate(
-      [{ height: `${h}px`, opacity: 1 }, { height: '0px', opacity: 0 }],
+      [{ opacity: 0 }, { opacity: 1 }],
       { duration: 300, easing: 'ease-in', fill: 'forwards', delay: i * 60 }
     ))
   })
@@ -647,8 +649,13 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
       await Promise.all(m.anims.map(a => a.finished.catch(() => {})))
       wrapper.style.position = ''
       wrapper.style.minHeight = ''
-      wrapper.innerHTML = toHtml
-      if (animMode === 'diff' || animMode === 'flight' || animMode === 'typewriter' || animMode === 'highlight' || animMode === 'scroll') {
+      
+      const keepStructure = ['diff', 'highlight', 'scroll'].includes(animMode)
+      if (!keepStructure) {
+        wrapper.innerHTML = toHtml
+      }
+
+      if (['diff', 'flight', 'typewriter', 'highlight', 'scroll'].includes(animMode)) {
         wrapper.querySelectorAll('.cm-tok').forEach((el) => { (el as HTMLElement).style.opacity = '1' })
       }
       if (forward) setMorphed(true); else setMorphed(false)

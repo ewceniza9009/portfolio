@@ -242,6 +242,9 @@ function registerCodeLensProvider(monaco: typeof import("monaco-editor")) {
                 "3d",
                 "chart",
                 "mermaid",
+                "code-morph",
+                "codehike",
+                "remotion"
               ].includes(type)
             ) {
               currentBlockType = type;
@@ -795,6 +798,28 @@ export default memo(function MarkdownEditor({
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
                   Remotion Video
+                </button>
+                <button
+                  onClick={() => {
+                    insertSnippet(CODE_MORPH_SNIPPET);
+                    setDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-white/10 transition-colors"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                  Code Morph
                 </button>
                 <div
                   className="my-1 border-t"
