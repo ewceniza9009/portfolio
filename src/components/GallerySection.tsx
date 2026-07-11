@@ -53,12 +53,14 @@ const GalleryTile = memo(function GalleryTile({
   image, 
   index, 
   currentPage, 
+  lightboxIndex,
   setLightboxIndex 
 }: { 
   image: GalleryImage; 
   index: number; 
   currentPage: number; 
-  setLightboxIndex: (idx: number) => void;
+  lightboxIndex: number | null;
+  setLightboxIndex: (idx: number | null) => void;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -72,9 +74,41 @@ const GalleryTile = memo(function GalleryTile({
   const isWide = hash % 5 === 0 && !isFeatured;
   const isTall = hash % 8 === 0 && !isFeatured && !isWide;
 
+  const isLightboxOpen = lightboxIndex !== null;
+  const globalIndex = index + (currentPage - 1) * IMAGES_PER_PAGE;
+  const isFocal = lightboxIndex === globalIndex;
+
+  let pushX = 0;
+  let pushY = 0;
+  let targetScale = 1;
+  let targetOpacity = 1;
+
+  if (isLightboxOpen && !isFocal) {
+    // Sibling Parallax Zoom Outward Push Logic
+    const focalIdxInPage = lightboxIndex % IMAGES_PER_PAGE;
+    const cols = 4; // approximate visual columns
+    const myCol = index % cols;
+    const myRow = Math.floor(index / cols);
+    const fCol = focalIdxInPage % cols;
+    const fRow = Math.floor(focalIdxInPage / cols);
+    
+    const dCol = myCol - fCol;
+    const dRow = myRow - fRow;
+    
+    const mag = Math.hypot(dCol, dRow) || 1;
+    const push = 120 + Math.random() * 80;
+    pushX = (dCol / mag) * push * (Math.abs(dCol) * 0.8 + 1);
+    pushY = (dRow / mag) * push * (Math.abs(dRow) * 0.8 + 1);
+    
+    targetScale = 0.65;
+    targetOpacity = 0;
+  }
+
   return (
-    <div
-      className={`relative rounded-xl overflow-hidden cursor-pointer clickable-item group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 hover:z-10 transition-all duration-500
+    <motion.div
+      animate={{ x: pushX, y: pushY, scale: targetScale, opacity: targetOpacity }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className={`relative rounded-xl overflow-hidden cursor-pointer clickable-item group border bg-[var(--bg-section)] shadow-md hover:shadow-xl hover:-translate-y-1 transition-colors duration-500
       ${isFeatured ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : ""}
       ${isWide ? "col-span-2 row-span-1" : ""}
       ${isTall ? "col-span-1 row-span-2" : ""}
@@ -83,6 +117,8 @@ const GalleryTile = memo(function GalleryTile({
       style={{
         borderColor: "var(--border)",
         boxShadow: "0 4px 15px -3px var(--accent-dim)",
+        zIndex: isFocal ? 50 : 1,
+        pointerEvents: isLightboxOpen ? "none" : "auto",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "transparent";
@@ -94,7 +130,7 @@ const GalleryTile = memo(function GalleryTile({
         e.currentTarget.style.boxShadow =
           "0 4px 15px -3px var(--accent-dim)";
       }}
-      onClick={() => setLightboxIndex(index + (currentPage - 1) * IMAGES_PER_PAGE)}
+      onClick={() => setLightboxIndex(globalIndex)}
     >
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
@@ -105,7 +141,8 @@ const GalleryTile = memo(function GalleryTile({
           <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Image unavailable</span>
         </div>
       ) : (
-        <img
+        <motion.img
+          layoutId={`gallery-img-${image.id}`}
           src={imgSrc}
           alt={image.alt}
           loading="lazy"
@@ -125,10 +162,10 @@ const GalleryTile = memo(function GalleryTile({
           }}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
-        <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 md:p-4 ${isFocal ? 'opacity-0' : ''}`}>
+        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out overflow-y-auto no-scrollbar max-h-full">
           <span
-            className="inline-block px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mb-2"
+            className="inline-block px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-2"
             style={{
               background: "var(--accent)",
               color: "var(--bg-primary)",
@@ -136,12 +173,12 @@ const GalleryTile = memo(function GalleryTile({
           >
             {image.project}
           </span>
-          <p className="text-white text-sm font-medium drop-shadow-lg leading-snug line-clamp-3">
+          <p className="text-white text-xs md:text-sm font-medium drop-shadow-lg leading-snug">
             {image.alt}
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 });
 
@@ -482,6 +519,7 @@ export default function GallerySection() {
                   image={image}
                   index={index}
                   currentPage={currentPage}
+                  lightboxIndex={lightboxIndex}
                   setLightboxIndex={setLightboxIndex}
                 />
               )) : <div className="col-span-full h-48 flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} /></div>}
@@ -719,22 +757,24 @@ export default function GallerySection() {
             </button>
 
             {/* Image */}
-            <motion.div
-              key={lightboxIndex}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+            <div
               className="w-full h-full p-4 md:p-16 flex flex-col items-center justify-center relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <motion.img
+                layoutId={`gallery-img-${currentLightboxImage.id}`}
                 src={currentLightboxImage.src}
                 alt={currentLightboxImage.alt}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain relative z-10"
                 style={{ filter: "drop-shadow(0 0 20px rgba(0,0,0,0.5))" }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black via-black/60 to-transparent flex justify-center pointer-events-none">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black via-black/60 to-transparent flex justify-center pointer-events-none z-20"
+              >
                 <p
                   className="text-lg md:text-xl text-white font-medium text-center max-w-4xl tracking-wide"
                   style={{
@@ -744,8 +784,8 @@ export default function GallerySection() {
                 >
                   {currentLightboxImage.alt}
                 </p>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
