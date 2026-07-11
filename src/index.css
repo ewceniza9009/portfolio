@@ -733,6 +733,7 @@ button.gv-btn:hover { filter: brightness(1.2); }
 
 /* --- FIX FOR MONACO EDITOR FIND WIDGET CLOSE BUTTON GLITCH --- */
 /* Disables pointer events on tooltips so they don't block clicks to the Find widget 'X' button */
+.monaco-hover,
 .monaco-editor .monaco-hover,
 .workbench-hover-container {
   pointer-events: none !important;
