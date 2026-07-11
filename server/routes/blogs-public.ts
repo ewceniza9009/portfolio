@@ -8,6 +8,7 @@ const router = Router()
 router.get('/api/blogs', async (_req, res) => {
   try {
     const result = await turso.execute('SELECT id, slug, title, summary, tags, category, published, likes, read_time, cover_image, created_at, updated_at FROM blogs WHERE published = 1 ORDER BY created_at DESC')
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
     res.json(result.rows)
   } catch (err) {
     console.error('Fetch blogs error:', err)
@@ -23,6 +24,7 @@ router.get('/api/blogs/:slug', async (req, res) => {
       args: [req.params.slug as string],
     })
     if (!result.rows.length) return res.status(404).json({ error: 'Blog post not found' })
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
     res.json(result.rows[0])
   } catch (err) {
     console.error('Fetch blog by slug error:', err)

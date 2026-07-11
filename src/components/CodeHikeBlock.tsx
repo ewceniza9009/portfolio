@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { AccentKey } from '../data/accents'
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 
 interface CodeHikeBlockProps {
   code: string
   lang: string
   meta?: string
-  theme?: 'dark' | 'light'
   accent?: AccentKey
 }
 
@@ -233,7 +233,8 @@ function parseAnnotations(code: string): ParsedAnnotations {
 }
 
 /* ── Slideshow wrapper ─────────────────────────────────────────── */
-function SlideshowBlock({ code, lang, meta, theme = 'dark' }: CodeHikeBlockProps) {
+function SlideshowBlock({ code, lang, meta }: CodeHikeBlockProps) {
+  const { theme } = useGlobalTheme()
   const steps = useMemo(() => {
     return code.split(/^\s*\/\/\s*---\s*$/m).map(s => s.trim()).filter(Boolean)
   }, [code])
@@ -263,7 +264,7 @@ function SlideshowBlock({ code, lang, meta, theme = 'dark' }: CodeHikeBlockProps
   }, [step])
 
   if (total <= 1) {
-    return <CodeHikeBlockInner code={code} lang={lang} meta={cleanMeta} theme={theme} />
+    return <CodeHikeBlockInner code={code} lang={lang} meta={cleanMeta} />
   }
 
   const animName = direction === 'right' ? 'ch-step-resolve-right' : 'ch-step-resolve-left'
@@ -287,7 +288,7 @@ function SlideshowBlock({ code, lang, meta, theme = 'dark' }: CodeHikeBlockProps
         }
       `}</style>
       <div key={animKey} className="ch-slideshow-step" style={{ animationName: animName }}>
-        <CodeHikeBlockInner code={steps[step]} lang={lang} meta={cleanMeta} theme={theme} />
+        <CodeHikeBlockInner code={steps[step]} lang={lang} meta={cleanMeta} />
       </div>
       {/* Navigation bar */}
       <div
@@ -341,7 +342,8 @@ export default function CodeHikeBlock(props: CodeHikeBlockProps) {
   return <CodeHikeBlockInner {...props} />
 }
 
-function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockProps) {
+function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
+  const { theme } = useGlobalTheme()
   const [copied, setCopied] = useState(false)
   const [highlightedLines, setHighlightedLines] = useState<string[]>([])
   const [revealed, setRevealed] = useState(false)
@@ -497,8 +499,8 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           opacity: 1 !important;
           transition: opacity 0.2s ease;
         }
-        /* Ensure code block container doesn't clip tooltip/footnote popups */
-        .ch-container { overflow: visible !important; }
+        /* Prevent page horizontal stretching while allowing scroll */
+        .ch-container { overflow-x: auto !important; overflow-y: hidden !important; }
 
         @keyframes ch-focus-border-in {
           0% { border-left-width: 0; opacity: 0; }
@@ -688,7 +690,10 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
           font-size: 10px;
           font-weight: bold;
           font-family: inherit;
-          white-space: nowrap;
+          white-space: normal;
+          word-break: break-word;
+          max-width: 250px;
+          line-height: 1.4;
           box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           vertical-align: middle;
           position: relative;
@@ -716,12 +721,11 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
         }
         .ch-footnote-sup {
           font-size: 9px;
-          vertical-align: super;
-          line-height: 0;
           color: var(--accent);
           font-weight: 700;
-          margin-left: 1px;
           cursor: default;
+          vertical-align: super;
+          margin-right: 2px;
         }
         .ch-footnote-list {
           border-top: 1px solid rgba(255,255,255,0.06);
@@ -829,7 +833,19 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
             const lines = highlightedLines.length > 0 ? (
             highlightedLines.map((lineHtmlStr, i) => {
               let lineHtml = lineHtmlStr
-              const anns = lineAnnotations.get(i)
+              const rawAnns = lineAnnotations.get(i)
+              const anns = !rawAnns ? undefined : rawAnns.map(a => {
+                if (['footnote', 'tooltip', 'callout', 'link', 'label'].includes(a.type) && !a.regex && a.inlineStart === undefined && a.inlineEnd === undefined) {
+                  const textLine = cleanLines[i] || ''
+                  const indent = textLine.search(/\S/)
+                  return {
+                    ...a,
+                    inlineStart: indent === -1 ? 0 : indent,
+                    inlineEnd: Math.max(0, textLine.length - 1)
+                  }
+                }
+                return a
+              })
               let cls = 'ch-line'
               let borderLeftColor = 'transparent'
               let bgColor: string | undefined
@@ -894,7 +910,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   if (a.type === 'tooltip') {
                     const bg = 'var(--accent)'
                     const border = 'transparent'
-                    const color = '#ffffff'
+                    const color = isDark ? '#000000' : '#ffffff'
                     const arrowColor = 'var(--accent)'
                     const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
                     wrapped = `<span class="ch-tooltip-trigger">${lineHtml}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
@@ -904,17 +920,19 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     footnotes.push({ num, text: a.text || '' })
                     const bg = 'var(--accent)'
                     const border = 'transparent'
-                    const color = '#ffffff'
+                    const color = isDark ? '#000000' : '#ffffff'
                     const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                    wrapped = `<span class="ch-footnote-trigger">${lineHtml}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow};border-bottom-color:${bg}">${a.text || ''}</span></span>`
+                    wrapped = `<span class="ch-footnote-trigger" style="position:relative"><sup class="ch-footnote-sup">[${num}]</sup>${lineHtml}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow};border-bottom-color:${bg}">${a.text || ''}</span></span>`
                   } else if (a.type === 'link') {
                     const url = a.text || '#'
                     wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${lineHtml}</a>`
                   } else if (a.type === 'callout') {
                     const bg = 'var(--accent)'
                     const border = 'transparent'
-                    const color = '#ffffff'
-                    wrapped = `<span class="ch-callout-target">${lineHtml}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
+                    const color = isDark ? '#000000' : '#ffffff'
+                    const indentMatch = (cleanLines[i] || '').match(/^\s+/)
+                    const indentStr = indentMatch ? indentMatch[0] : ''
+                    wrapped = `${lineHtml}\n${indentStr}<span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-top:4px;display:inline-block">${a.text || ''}</span>`
                   } else if (a.type === 'label') {
                     const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                     const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
@@ -936,14 +954,14 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     if (a.type === 'callout' || a.type === 'tooltip') {
                       const bg = 'var(--accent)'
                       const border = 'transparent'
-                      const color = '#ffffff'
+                      const color = isDark ? '#000000' : '#ffffff'
                       const arrowColor = 'var(--accent)'
                       const isCallout = a.type === 'callout'
                       if (isCallout) {
-                        wrapper = (m) => `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${m}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                        wrapper = (m) => `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${m}</span><span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
                       } else {
                         const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                        wrapper = (m) => `<span class="ch-tooltip-trigger">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                        wrapper = (m) => `<span class="ch-tooltip-trigger" style="position:relative">${m}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
                       }
                     } else if (a.type === 'link') {
                       const url = a.text || '#'
@@ -954,9 +972,9 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                       footnotes.push({ num, text: a.text || '' })
                       const bg = 'var(--accent)'
                       const border = 'transparent'
-                      const color = '#ffffff'
+                      const color = isDark ? '#000000' : '#ffffff'
                       const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                      wrapper = (m) => `<span class="ch-footnote-trigger">${m}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
+                      wrapper = (m) => `<span class="ch-footnote-trigger" style="position:relative">${m}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
                       const border = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
@@ -1009,33 +1027,33 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     } else if (a.type === 'callout') {
                       const bg = 'var(--accent)'
                       const border = 'transparent'
-                      const color = '#ffffff'
+                      const color = isDark ? '#000000' : '#ffffff'
                       wrapped = `<span class="ch-callout-target" style="border-bottom: 1px dashed rgba(255,255,255,0.4); cursor: help">${target}</span>`
                       if (isLast) {
-                        wrapped += `<span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color}">${a.text || ''}</span>`
+                        wrapped += `<span class="ch-callout-inline" style="background:${bg};border:1px solid ${border};color:${color};margin-left:8px">${a.text || ''}</span>`
                       }
                     } else if (a.type === 'tooltip') {
                       const bg = 'var(--accent)'
                       const border = 'transparent'
-                      const color = '#ffffff'
+                      const color = isDark ? '#000000' : '#ffffff'
                       const arrowColor = 'var(--accent)'
                       const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                      wrapped = `<span class="ch-tooltip-trigger">${target}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
+                      wrapped = `<span class="ch-tooltip-trigger" style="position:relative">${target}<span class="ch-tooltip-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}<span class="ch-tooltip-arrow" style="border-top-color:${arrowColor}"></span></span></span>`
                     } else if (a.type === 'link') {
                       const url = a.text || '#'
                       wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ch-link-token">${target}</a>`
                     } else if (a.type === 'footnote') {
                       const bg = 'var(--accent)'
                       const border = 'transparent'
-                      const color = '#ffffff'
+                      const color = isDark ? '#000000' : '#ffffff'
                       if (isLast) {
                         footnoteCounter++
                         const num = footnoteCounter
                         footnotes.push({ num, text: a.text || '' })
                         const shadow = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'
-                        wrapped = `<span class="ch-footnote-trigger">${target}<sup class="ch-footnote-sup">[${num}]</sup><span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
+                        wrapped = `<span class="ch-footnote-trigger" style="position:relative">${target}<span class="ch-footnote-popup" style="background:${bg};border:1px solid ${border};color:${color};box-shadow:0 4px 16px ${shadow}">${a.text || ''}</span></span>`
                       } else {
-                        wrapped = `<span class="ch-footnote-trigger">${target}</span>`
+                        wrapped = `<span class="ch-footnote-trigger" style="position:relative">${target}</span>`
                       }
                     } else if (a.type === 'label') {
                       const bg = isDark ? 'rgba(22,27,34,0.92)' : 'rgba(255,255,255,0.92)'
@@ -1082,6 +1100,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                     key={i}
                     className={cls}
                     style={{
+                      position: 'relative',
                       animation: linesRevealed
                         ? isDimmed
                           ? `ch-line-dim-reveal 0.3s ${0.05 + i * 0.02}s ease both`
@@ -1163,6 +1182,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
                   key={i}
                   className={cls}
                   style={{
+                    position: 'relative',
                     animation: linesRevealed
                       ? isDimmed
                         ? `ch-line-dim-reveal 0.3s ${0.05 + i * 0.02}s ease both`

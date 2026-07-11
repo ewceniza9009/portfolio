@@ -1,4 +1,5 @@
 import React from 'react';
+import { useGlobalTheme } from "../../hooks/useGlobalTheme";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,19 +13,13 @@ import {
   Sun,
   ShieldAlert,
   Briefcase,
-  Code,
   User,
-  Award
+  Award,
+  Code
 } from "lucide-react";
 import Logo from "../Logo";
 import { AccentDropdown } from "../Navbar";
-import type { AccentKey } from "../../data/accents";
-
 interface DashboardHeaderProps {
-  theme: "dark" | "light";
-  toggleTheme: () => void;
-  accent: AccentKey;
-  setAccent: (val: AccentKey) => void;
   refreshing: boolean;
   refreshData: () => void;
   handleLogout: () => void;
@@ -36,10 +31,6 @@ interface DashboardHeaderProps {
 }
 
 function DashboardHeader({
-  theme,
-  toggleTheme,
-  accent,
-  setAccent,
   refreshing,
   refreshData,
   handleLogout,
@@ -49,6 +40,7 @@ function DashboardHeader({
   setSelectedBlog,
   inboxCount,
 }: DashboardHeaderProps) {
+  const { theme, toggleTheme } = useGlobalTheme();
   return (
     <header
       className="border-b px-3 md:px-6 py-3 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between sticky top-0 z-30 glass shadow-sm gap-3"
@@ -80,7 +72,7 @@ function DashboardHeader({
           </span>
         </div>
         <div className="flex items-center gap-2 ml-auto md:hidden">
-          <AccentDropdown accent={accent} onChangeAccent={setAccent} theme={theme} />
+          <AccentDropdown />
           <button
             onClick={toggleTheme}
             className="w-8 h-8 rounded-full flex items-center justify-center border transition-all"
@@ -305,7 +297,7 @@ function DashboardHeader({
 
       {/* Header Right Actions (desktop) */}
       <div className="hidden md:flex items-center gap-3">
-        <AccentDropdown accent={accent} onChangeAccent={setAccent} theme={theme} />
+        <AccentDropdown />
         <button
           onClick={toggleTheme}
           className="w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95"

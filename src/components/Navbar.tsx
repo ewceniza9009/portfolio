@@ -23,16 +23,14 @@ const BLOG_BTN_DESKTOP_STYLE = (locationPathname: string) => ({
 
 const THEME_TOGGLE_STYLE = { borderColor: 'var(--border)', background: 'var(--bg-card)' } as const
 
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
+
 interface NavbarProps {
   activeSection: string
-  theme: 'dark' | 'light'
-  onToggleTheme: () => void
   onScrollTo: (id: string) => void
-  accent: AccentKey
-  onChangeAccent: (key: AccentKey) => void
 }
-
-export function AccentDropdown({ accent, onChangeAccent, theme }: { accent: AccentKey, onChangeAccent: (key: AccentKey) => void, theme: 'dark' | 'light' }) {
+export function AccentDropdown() {
+  const { theme, accent, setAccent: onChangeAccent } = useGlobalTheme()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -100,7 +98,8 @@ export function AccentDropdown({ accent, onChangeAccent, theme }: { accent: Acce
   )
 }
 
-export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo, accent, onChangeAccent }: NavbarProps) {
+export default function Navbar({ activeSection, onScrollTo }: NavbarProps) {
+  const { theme, toggleTheme: onToggleTheme, accent, setAccent: onChangeAccent } = useGlobalTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
@@ -195,7 +194,7 @@ export default function Navbar({ activeSection, theme, onToggleTheme, onScrollTo
 
             <div className="w-px h-6 mx-3" style={{ background: 'var(--border)' }} />
 
-            <AccentDropdown accent={accent} onChangeAccent={onChangeAccent} theme={theme} />
+            <AccentDropdown />
 
             <div className="w-px h-6 mx-3" style={{ background: 'var(--border)' }} />
 

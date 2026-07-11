@@ -2,19 +2,13 @@ import { motion, useInView } from "framer-motion";
 import { memo, useRef } from "react";
 import { Github, ExternalLink, Activity, Star } from "lucide-react";
 import { ACCENT_THEMES } from "../data/accents";
-import type { AccentKey } from "../data/accents";
+
+import { useGlobalTheme } from '../hooks/useGlobalTheme';
 
 const GITHUB_USERNAME = "ewceniza9009";
 
-interface GitHubSectionProps {
-  theme?: "dark" | "light";
-  accent?: AccentKey;
-}
-
-export default memo(function GitHubSection({
-  theme = "dark",
-  accent = "gold",
-}: GitHubSectionProps) {
+export default memo(function GitHubSection() {
+  const { theme, accent } = useGlobalTheme();
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 

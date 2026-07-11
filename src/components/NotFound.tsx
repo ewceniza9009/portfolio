@@ -2,18 +2,15 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, FileText } from 'lucide-react'
 import HeadTags from './HeadTags'
-import type { AccentKey } from '../data/accents'
 import { ACCENT_THEMES } from '../data/accents'
 import { useBlogs } from '../hooks/usePortfolioData'
 import { formatDate } from '../utils/format'
 import type { Blog } from '../types/blog'
 
-interface NotFoundProps {
-  theme: 'dark' | 'light'
-  accent: AccentKey
-}
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 
-export default function NotFound({ theme, accent }: NotFoundProps) {
+export default function NotFound() {
+  const { theme, accent } = useGlobalTheme()
   const isDark = theme === 'dark'
   const accentColor = ACCENT_THEMES[accent][isDark ? 'dark' : 'light'].accent
   const { data: blogs = [] } = useBlogs()

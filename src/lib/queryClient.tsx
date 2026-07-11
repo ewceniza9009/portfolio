@@ -32,7 +32,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           shouldDehydrateQuery: (query) => {
             if (query.state.status !== 'success') return false
             const key = query.queryKey[0] as string
-            const adminEditable = ['about', 'experience', 'skills', 'projects', 'awards', 'blogs']
+            const adminEditable = ['about', 'experience', 'skills', 'projects', 'awards']
             return !adminEditable.includes(key)
           },
         },

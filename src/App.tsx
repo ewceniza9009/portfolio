@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
-import { flushSync } from 'react-dom'
+
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import Navbar from './components/Navbar'
@@ -16,8 +16,8 @@ import BackToTop from './components/BackToTop'
 import TechLoader from './components/TechLoader'
 import GitHubSection from './components/GitHubSection'
 import FloatingControl from './components/FloatingControl'
-import { ACCENT_THEMES } from './data/accents'
-import type { AccentKey } from './data/accents'
+import { ACCENT_THEMES, type AccentKey } from './data/accents'
+import { useGlobalTheme } from './hooks/useGlobalTheme'
 import CursorFollower from './components/CursorFollower'
 import ResumeModal from './components/ResumeModal'
 import GallerySection from './components/GallerySection'
@@ -39,14 +39,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel'))
 const BlogsPage = lazy(() => import('./components/BlogsPage'))
 const BlogPostPage = lazy(() => import('./components/BlogPostPage'))
 
-interface PortfolioProps {
-  theme: 'dark' | 'light'
-  toggleTheme: (event?: React.MouseEvent) => void
-  accent: AccentKey
-  setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
-}
-
-function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
+function Portfolio() {
   const [activeSection, setActiveSection] = useState('hero')
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(() => {
@@ -156,11 +149,11 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
   ), [selectedProjectData, projectsData, skillsData, aboutData, experienceData, awardsData])
 
   const memoizedProjectModal = useMemo(() => (
-    <ProjectModal project={selectedProjectData} onClose={handleCloseProject} theme={theme} accent={accent} />
-  ), [selectedProjectData, handleCloseProject, theme, accent])
+    <ProjectModal project={selectedProjectData} onClose={handleCloseProject} />
+  ), [selectedProjectData, handleCloseProject])
 
-  const memoizedGitHubSection = useMemo(() => <GitHubSection theme={theme} accent={accent} />, [theme, accent])
-  const memoizedContactSection = useMemo(() => <ContactSection theme={theme} />, [theme])
+  const memoizedGitHubSection = useMemo(() => <GitHubSection />, [])
+  const memoizedContactSection = useMemo(() => <ContactSection />, [])
   const memoizedFooter = useMemo(() => <Footer onScrollTo={scrollTo} />, [scrollTo])
   const memoizedBackToTop = useMemo(() => <BackToTop />, [])
   const memoizedResumeModal = useMemo(() => <ResumeModal isOpen={isResumeOpen} onClose={handleCloseResume} />, [isResumeOpen, handleCloseResume])
@@ -186,11 +179,7 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
         {!selectedProject && <SectionCounter active={activeSection} total={9} />}
         <Navbar
           activeSection={activeSection}
-          theme={theme}
-          onToggleTheme={toggleTheme}
           onScrollTo={scrollTo}
-          accent={accent}
-          onChangeAccent={setAccent}
         />
         <main>
           {staticSections}
@@ -205,8 +194,55 @@ function Portfolio({ theme, toggleTheme, accent, setAccent }: PortfolioProps) {
     </>
   )
 }
+function GlobalCursorStyles() {
+  const { theme, accent } = useGlobalTheme()
+
+  useEffect(() => {
+    const root = document.documentElement
+    
+    // Set accent colors
+    const themeSet = ACCENT_THEMES[accent]?.[theme]
+    if (themeSet) {
+      root.style.setProperty('--accent', themeSet.accent)
+      root.style.setProperty('--accent-hover', themeSet.accentHover)
+      root.style.setProperty('--accent-dim', themeSet.accentDim)
+      root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
+      root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
+      root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
+    }
+
+    try {
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      const isDark = theme === 'dark'
+      
+      const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path fill="${isDark ? '#ffffff' : '#000000'}" stroke="${isDark ? '#000000' : '#ffffff'}" stroke-width="1.5" d="M10.15 8.11L24 16 10.15 23.89V8.11z" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" /></svg>`
+      const pointerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path fill="${accentColor}" stroke="${isDark ? '#ffffff' : '#000000'}" stroke-width="2" d="M14 6h4v8h8v4h-8v8h-4v-8H6v-4h8V6z" style="filter: drop-shadow(0 2px 6px ${accentColor}88);" /></svg>`
+
+      const base64Arrow = btoa(arrowSvg)
+      const base64Pointer = btoa(pointerSvg)
+
+      const applyCursors = () => {
+        if (getSafeItem('cursor_enabled') !== 'false') {
+          root.style.setProperty('--custom-cursor', `url('data:image/svg+xml;base64,${base64Arrow}') 8 8, auto`);
+          root.style.setProperty('--custom-pointer', `url('data:image/svg+xml;base64,${base64Pointer}') 10 10, pointer`);
+        } else {
+          root.style.setProperty('--custom-cursor', 'auto');
+          root.style.setProperty('--custom-pointer', 'pointer');
+        }
+      }
+      applyCursors()
+      window.addEventListener('cursor-state-changed', applyCursors)
+      return () => window.removeEventListener('cursor-state-changed', applyCursors)
+    } catch (e) {
+      console.warn("Custom hardware cursor generation failed:", e);
+    }
+  }, [theme, accent])
+
+  return null
+}
 
 export default function App() {
+  const { theme, accent, setTheme, setAccent, toggleTheme } = useGlobalTheme()
   const [isOffline, setIsOffline] = useState(false)
   const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
   const navigate = useNavigate()
@@ -228,40 +264,48 @@ export default function App() {
       window.removeEventListener('api-fetch-error', handleApiError)
     }
   }, [])
-
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+  useEffect(() => {
+    // Initialize theme
     if (typeof window !== 'undefined') {
-      const savedTheme = getSafeItem('theme') as 'dark' | 'light'
-      if (savedTheme) return savedTheme
-    }
-    const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false'
-    if (isThemeRotEnabled) {
-      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2')
-      const hour = new Date().getHours()
-      return Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light'
-    }
-    const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null
-    if (defaultTheme === 'light' || defaultTheme === 'dark') return defaultTheme
-    return 'dark'
-  })
+      let initialTheme: 'dark' | 'light' = 'dark';
+      const savedTheme = getSafeItem('theme') as 'dark' | 'light';
+      if (savedTheme) {
+        initialTheme = savedTheme;
+      } else {
+        const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false';
+        if (isThemeRotEnabled) {
+          const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2');
+          const hour = new Date().getHours();
+          initialTheme = Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light';
+        } else {
+          const defaultTheme = getSafeItem('default_theme') as 'dark' | 'light' | null;
+          if (defaultTheme === 'light' || defaultTheme === 'dark') initialTheme = defaultTheme;
+        }
+      }
+      document.documentElement.setAttribute('data-theme', initialTheme);
 
-  const [accent, setAccent] = useState<AccentKey>(() => {
-    if (typeof window !== 'undefined') {
-      const savedAccent = getSafeItem('accent') as AccentKey
-      if (savedAccent) return savedAccent
+      // Initialize accent
+      let initialAccent: AccentKey = 'gold';
+      const savedAccent = getSafeItem('accent') as AccentKey;
+      if (savedAccent) {
+        initialAccent = savedAccent;
+      } else {
+        const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true';
+        if (isAccentRotEnabled) {
+          const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2');
+          const hour = new Date().getHours();
+          const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[];
+          const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length;
+          initialAccent = accentKeys[accentIndex];
+        } else {
+          const defaultAccent = getSafeItem('default_accent') as AccentKey | null;
+          if (defaultAccent && defaultAccent in ACCENT_THEMES) initialAccent = defaultAccent;
+        }
+      }
+      document.documentElement.setAttribute('data-accent', initialAccent);
+      document.documentElement.style.setProperty('--accent', ACCENT_THEMES[initialAccent].dark.accent);
     }
-    const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true'
-    if (isAccentRotEnabled) {
-      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2')
-      const hour = new Date().getHours()
-      const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[]
-      const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length
-      return accentKeys[accentIndex]
-    }
-    const defaultAccent = getSafeItem('default_accent') as AccentKey | null
-    if (defaultAccent && defaultAccent in ACCENT_THEMES) return defaultAccent
-    return 'gold'
-  })
+  }, []);
 
   const location = useLocation()
 
@@ -386,102 +430,6 @@ export default function App() {
     return () => clearInterval(interval)
   }, [theme, accent])
 
-  const cursorCursors = useMemo(() => {
-    try {
-      const fillColor = theme === 'dark' ? '#000000' : '#ffffff';
-      const strokeColor = theme === 'dark' ? '#ffffff' : '#0d1117';
-
-      const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/></svg>`;
-      const pointerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="${strokeColor}" stroke-width="2"/><circle cx="10" cy="10" r="2.5" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1"/></svg>`;
-
-      const base64Arrow = btoa(arrowSvg);
-      const base64Pointer = btoa(pointerSvg);
-
-      return {
-        cursor: `url('data:image/svg+xml;base64,${base64Arrow}') 8 8, auto`,
-        pointer: `url('data:image/svg+xml;base64,${base64Pointer}') 10 10, pointer`,
-      }
-    } catch (e) {
-      console.warn("Custom hardware cursor generation failed:", e);
-      return null
-    }
-  }, [theme])
-
-  useEffect(() => {
-    const root = document.documentElement
-    const themeSet = ACCENT_THEMES[accent][theme]
-    
-    root.style.setProperty('--accent', themeSet.accent)
-    root.style.setProperty('--accent-hover', themeSet.accentHover)
-    root.style.setProperty('--accent-dim', themeSet.accentDim)
-    root.style.setProperty('--accent-secondary', themeSet.accentSecondary)
-    root.style.setProperty('--accent-secondary-hover', themeSet.accentSecondaryHover)
-    root.style.setProperty('--accent-secondary-dim', themeSet.accentSecondaryDim)
-    
-    root.setAttribute('data-accent', accent)
-    setSafeItem('accent', accent)
-
-    const applyCursors = () => {
-      if (cursorCursors && getSafeItem('cursor_enabled') !== 'false') {
-        root.style.setProperty('--custom-cursor', cursorCursors.cursor);
-        root.style.setProperty('--custom-pointer', cursorCursors.pointer);
-      } else {
-        root.style.setProperty('--custom-cursor', 'auto');
-        root.style.setProperty('--custom-pointer', 'pointer');
-      }
-    }
-    applyCursors()
-    window.addEventListener('cursor-state-changed', applyCursors)
-    return () => window.removeEventListener('cursor-state-changed', applyCursors)
-  }, [accent, theme, cursorCursors])
-
-  const toggleTheme = useCallback((event?: React.MouseEvent) => {
-    const isAppearanceTransition = (document as any).startViewTransition && 
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (!isAppearanceTransition) {
-      setTheme(prev => {
-        const next = prev === 'dark' ? 'light' : 'dark';
-        setSafeItem('theme', next);
-        return next;
-      });
-      return;
-    }
-
-    const x = event && typeof event.clientX === 'number' ? event.clientX : window.innerWidth / 2;
-    const y = event && typeof event.clientY === 'number' ? event.clientY : window.innerHeight / 2;
-    const endRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y)
-    );
-
-    const transition = (document as any).startViewTransition(() => {
-      flushSync(() => {
-        setTheme(prev => {
-          const next = prev === 'dark' ? 'light' : 'dark';
-          setSafeItem('theme', next);
-          return next;
-        });
-      });
-    });
-
-    transition.ready.then(() => {
-      const clipPath = [
-        `circle(0px at ${x}px ${y}px)`,
-        `circle(${endRadius}px at ${x}px ${y}px)`,
-      ];
-      document.documentElement.animate(
-        {
-          clipPath: clipPath,
-        },
-        {
-          duration: 400,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        }
-      );
-    });
-  }, [])
 
   const shortcutGroups = useMemo(() => [
     {
@@ -511,6 +459,7 @@ export default function App() {
 
   return (
     <>
+    <GlobalCursorStyles />
     <SearchPalette />
     <CheatsheetModal
       open={isCheatsheetOpen}
@@ -520,25 +469,17 @@ export default function App() {
     <>
       <Suspense fallback={null}>
         <Routes location={location}>
-        <Route path="/admin" element={<ErrorBoundary><AdminPanel theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-        <Route path="/blogs" element={<ErrorBoundary><BlogsPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
-        <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage theme={theme} toggleTheme={toggleTheme} accent={accent} setAccent={setAccent} /></ErrorBoundary>} />
+        <Route path="/admin" element={<ErrorBoundary><AdminPanel /></ErrorBoundary>} />
+        <Route path="/blogs" element={<ErrorBoundary><BlogsPage /></ErrorBoundary>} />
+        <Route path="/blogs/:slug" element={<ErrorBoundary><BlogPostPage /></ErrorBoundary>} />
         <Route path="/" element={
           <ErrorBoundary>
-            <Portfolio
-              theme={theme}
-              toggleTheme={toggleTheme}
-              accent={accent}
-              setAccent={setAccent}
-            />
+            <Portfolio />
           </ErrorBoundary>
         } />
         <Route path="*" element={
           <ErrorBoundary>
-            <NotFound
-              theme={theme}
-              accent={accent}
-            />
+            <NotFound />
           </ErrorBoundary>
         } />
       </Routes>

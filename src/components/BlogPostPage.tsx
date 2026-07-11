@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock, Heart, Share2, ArrowLeft, MessageSquare, Send, Check, Copy, Twitter, Linkedin, BookOpen, Sparkles, Tag, Folder } from 'lucide-react'
@@ -9,7 +9,6 @@ import CursorFollower from './CursorFollower'
 import { parseMarkdown } from '../utils/markdown'
 import PayPalDonate from './PayPalDonate'
 import HeadTags from './HeadTags'
-import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
 import { useBlog, useBlogComments, useSettings } from '../hooks/usePortfolioData'
 import { getGradient } from '../utils/gradients'
@@ -17,6 +16,7 @@ import { formatDate } from '../utils/format'
 import { getApiUrl } from '../utils/api'
 import type { Blog } from '../types/blog'
 import BlogTOC, { extractHeadings } from './BlogTOC'
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 
 const NOOP_SCROLL = () => {}
 
@@ -71,14 +71,8 @@ const BLOG_POST_STYLES = `
   }
 `
 
-interface BlogPostPageProps {
-  theme: 'dark' | 'light'
-  toggleTheme: () => void
-  accent: AccentKey
-  setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
-}
-
-export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: BlogPostPageProps) {
+export default function BlogPostPage() {
+  const { theme } = useGlobalTheme()
   const { slug } = useParams<{ slug: string }>()
   const { data: rawBlog, isLoading: blogLoading } = useBlog(slug || '')
   const blog = rawBlog as Blog | undefined
@@ -101,6 +95,22 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   const [authorEmail, setAuthorEmail] = useState('')
   const [commentContent, setCommentContent] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Comments deferral
+  const commentsRef = useRef<HTMLElement>(null)
+  const [commentsVisible, setCommentsVisible] = useState(false)
+
+  useEffect(() => {
+    if (!commentsRef.current) return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setCommentsVisible(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: '300px' }) // load when 300px away from viewport
+    observer.observe(commentsRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   // Scroll Progress Bar
   const { scrollYProgress } = useScroll()
@@ -194,7 +204,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
     }
   }
 
-  const parsedContent = useMemo(() => blog ? parseMarkdown(blog.content, theme, accent) : '', [blog, theme, accent])
+  const parsedContent = useMemo(() => blog ? parseMarkdown(blog.content) : '', [blog])
 
   const tableOfContents = useMemo(() => {
     return extractHeadings(blog?.content || '')
@@ -203,7 +213,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
-        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={NOOP_SCROLL} accent={accent} onChangeAccent={setAccent} />
+        <Navbar activeSection="blog" onScrollTo={NOOP_SCROLL} />
         <div className="flex-grow max-w-4xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 animate-pulse">
           {/* Back button skeleton */}
           <div className="mb-10 w-24 h-4 rounded bg-[var(--skeleton-bg)]" />
@@ -257,7 +267,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
   if (!blog) {
     return (
       <div className="min-h-screen flex flex-col justify-between" style={{ background: 'var(--bg-primary)' }}>
-        <Navbar activeSection="blog" theme={theme} onToggleTheme={toggleTheme} onScrollTo={NOOP_SCROLL} accent={accent} onChangeAccent={setAccent} />
+        <Navbar activeSection="blog" onScrollTo={NOOP_SCROLL} />
         <div className="flex-grow flex flex-col items-center justify-center space-y-4 px-6 text-center">
           <h2 className="text-2xl font-bold">Article Not Found</h2>
           <p className="text-sm text-secondary max-w-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
@@ -320,11 +330,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
 
         <Navbar
           activeSection="blog"
-          theme={theme}
-          onToggleTheme={toggleTheme}
           onScrollTo={NOOP_SCROLL}
-          accent={accent}
-          onChangeAccent={setAccent}
         />
 
         <main className="flex-grow max-w-6xl w-full mx-auto px-6 pt-28 pb-20 relative z-10 select-text flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
@@ -397,7 +403,7 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
                 src={blog.cover_image} 
                 alt={blog.title}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                fetchPriority="high"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.slug)} flex items-center justify-center relative p-6`}>
@@ -541,7 +547,9 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
           </div>
 
           {/* Comments Section */}
-          <section className="space-y-6 select-text">
+          <section ref={commentsRef} className="space-y-6 select-text min-h-[300px]">
+            {commentsVisible && (
+              <>
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
               <MessageSquare size={20} style={{ color: 'var(--accent)' }} />
               Comments ({comments.length})
@@ -642,6 +650,8 @@ export default function BlogPostPage({ theme, toggleTheme, accent, setAccent }: 
                 </div>
               )}
             </div>
+            </>
+            )}
           </section>
         </div>
 

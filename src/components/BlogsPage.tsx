@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, Heart, Search, ArrowRight, BookOpen, Tag, Sparkles, Folder, Layers, Code, Shield, Server, GraduationCap, Activity, Zap, Palette, Coffee, Lightbulb, Gamepad2, Briefcase, Filter, X } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { getApiUrl } from '../utils/api'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import HeadTags from './HeadTags'
-import type { AccentKey } from '../data/accents'
 import { useProfilePic } from '../utils/profilePic'
 import { useBlogs, useSettings } from '../hooks/usePortfolioData'
 import { getGradient } from '../utils/gradients'
@@ -16,13 +17,7 @@ import type { Blog } from '../types/blog'
 
 const NOOP_SCROLL = () => {}
 
-interface BlogsPageProps {
-  theme: 'dark' | 'light'
-  toggleTheme: () => void
-  accent: AccentKey
-  setAccent: React.Dispatch<React.SetStateAction<AccentKey>>
-}
-
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 const relativeDate = (dateStr: string) => {
   const now = Date.now()
   const then = new Date(dateStr).getTime()
@@ -149,7 +144,8 @@ const BLOG_PAGE_STYLES = `
   }
 `
 
-export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: BlogsPageProps) {
+export default function BlogsPage() {
+  const { theme } = useGlobalTheme()
   const { data: rawBlogs = [], isLoading: loading } = useBlogs()
   const blogs = rawBlogs as Blog[]
   const { data: settings } = useSettings()
@@ -159,6 +155,29 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
   const [filtersOpen, setFiltersOpen] = useState(false)
   const featuredSlug = useMemo(() => settings?.featured_blog_slug || '', [settings])
   const { url: profilePicUrl } = useProfilePic()
+  
+  const queryClient = useQueryClient()
+  const hoverTimers = useRef<Record<string, NodeJS.Timeout>>({})
+
+  const handleMouseEnter = (slug: string) => {
+    hoverTimers.current[slug] = setTimeout(() => {
+      queryClient.prefetchQuery({
+        queryKey: ['blog', slug],
+        queryFn: async () => {
+          const res = await fetch(getApiUrl(`/api/blogs/${slug}`))
+          return res.json()
+        },
+        staleTime: 5 * 60 * 1000
+      })
+    }, 150)
+  }
+
+  const handleMouseLeave = (slug: string) => {
+    if (hoverTimers.current[slug]) {
+      clearTimeout(hoverTimers.current[slug])
+      delete hoverTimers.current[slug]
+    }
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -245,11 +264,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
 
         <Navbar
           activeSection="blog"
-          theme={theme}
-          onToggleTheme={toggleTheme}
           onScrollTo={NOOP_SCROLL}
-          accent={accent}
-          onChangeAccent={setAccent}
         />
 
         <main className="flex-grow max-w-6xl w-full mx-auto px-6 pt-32 pb-24 relative z-10">
@@ -586,12 +601,12 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:h-[400px] relative z-10">
                     {/* Left: Featured Image Cover */}
                     <div className="md:col-span-7 h-64 md:h-full overflow-hidden relative border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--border)' }}>
-                      <Link to={`/blogs/${featuredBlog.slug}`} className="w-full h-full block">
+                      <Link to={`/blogs/${featuredBlog.slug}`} className="w-full h-full block" onMouseEnter={() => handleMouseEnter(featuredBlog.slug)} onMouseLeave={() => handleMouseLeave(featuredBlog.slug)}>
                         {featuredBlog.cover_image ? (
                           <img 
                             src={featuredBlog.cover_image} 
                             alt={featuredBlog.title}
-                            loading="lazy"
+                            fetchPriority="high"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                           />
                         ) : (
@@ -632,7 +647,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                         </div>
 
                         {/* Title */}
-                        <Link to={`/blogs/${featuredBlog.slug}`}>
+                        <Link to={`/blogs/${featuredBlog.slug}`} onMouseEnter={() => handleMouseEnter(featuredBlog.slug)} onMouseLeave={() => handleMouseLeave(featuredBlog.slug)}>
                           <h2 className="text-xl sm:text-2xl font-bold mb-3 transition-colors group-hover:text-[var(--accent)] line-clamp-3 leading-snug tracking-tight">
                             {featuredBlog.title}
                           </h2>
@@ -712,7 +727,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                           >
                             <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.02] transition-opacity z-0" />
                             {/* Card Image Banner */}
-                            <Link to={`/blogs/${blog.slug}`} className="relative h-44 w-full overflow-hidden block border-b" style={{ borderColor: 'var(--border)' }}>
+                            <Link to={`/blogs/${blog.slug}`} className="relative h-44 w-full overflow-hidden block border-b" style={{ borderColor: 'var(--border)' }} onMouseEnter={() => handleMouseEnter(blog.slug)} onMouseLeave={() => handleMouseLeave(blog.slug)}>
                               {blog.cover_image ? (
                                 <img 
                                   src={blog.cover_image} 
@@ -762,7 +777,7 @@ export default function BlogsPage({ theme, toggleTheme, accent, setAccent }: Blo
                                 </div>
 
                                 {/* Title */}
-                                <Link to={`/blogs/${blog.slug}`} className="relative z-10">
+                                <Link to={`/blogs/${blog.slug}`} className="relative z-10" onMouseEnter={() => handleMouseEnter(blog.slug)} onMouseLeave={() => handleMouseLeave(blog.slug)}>
                                   <h3 className="text-base font-bold mb-2.5 transition-colors group-hover:text-[var(--accent)] line-clamp-2 leading-snug tracking-tight">
                                     {blog.title}
                                   </h3>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { ACCENT_THEMES, AccentKey } from '../data/accents'
+import { ACCENT_THEMES } from '../data/accents'
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import Interactive3DBlock from '../components/Interactive3DBlock'
 import InteractiveBlock from '../components/InteractiveBlock'
@@ -57,14 +58,13 @@ const MERMAID_STYLES = `
 
 interface MermaidRendererProps {
   code: string
-  theme?: 'dark' | 'light'
-  accent?: AccentKey
 }
 
 // Module-level counter ensures globally unique IDs across all MermaidRenderer instances
 let _mermaidIdCounter = 0
 
-export function MermaidRenderer({ code, theme = 'dark', accent = 'gold' }: MermaidRendererProps) {
+export function MermaidRenderer({ code }: MermaidRendererProps) {
+  const { theme, accent } = useGlobalTheme()
   const [svgHtml, setSvgHtml] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)
@@ -766,7 +766,7 @@ function highlightCode(code: string, lang: string): string {
   return text
 }
 
-export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: AccentKey): React.ReactNode[] {
+export function parseMarkdown(md: string): React.ReactNode[] {
   if (!md) return []
 
   const result: React.ReactNode[] = []
@@ -799,7 +799,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
         // End of code block
         const codeText = codeLines.join('\n')
         if (codeLang.toLowerCase() === 'mermaid') {
-          result.push(<MermaidRenderer key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
+          result.push(<MermaidRenderer key={keyIndex++} code={codeText} />)
         } else if (codeLang.toLowerCase() === 'interactive-3d') {
           result.push(<Interactive3DBlock key={keyIndex++} html={codeText} />)
         } else if (codeLang.toLowerCase() === 'interactive') {
@@ -808,12 +808,12 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<ChartBlock key={keyIndex++} code={codeText} />)
         } else if (codeLang.toLowerCase().startsWith('codehike') || codeLang.toLowerCase().startsWith('code-hike')) {
           const meta = codeLang.replace(/code-?hike/i, '').trim()
-          result.push(<CodeHikeBlock key={keyIndex++} code={codeText} lang={detectLang(codeText)} meta={meta} theme={theme} accent={accent} />)
+          result.push(<CodeHikeBlock key={keyIndex++} code={codeText} lang={detectLang(codeText)} meta={meta} />)
         } else if (codeLang.toLowerCase() === 'remotion') {
-          result.push(<RemotionBlock key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
+          result.push(<RemotionBlock key={keyIndex++} code={codeText} />)
         } else if (codeLang.toLowerCase().startsWith('code-morph') || codeLang.toLowerCase().startsWith('codemorph')) {
           const meta = codeLang.replace(/code-?morph/i, '').trim()
-          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} theme={theme} />)
+          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(

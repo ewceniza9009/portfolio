@@ -4,6 +4,7 @@ import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide
 import { getSafeItem, setSafeItem } from '../utils/storage'
 import { getApiUrl } from '../utils/api'
 import MagneticWrapper from './MagneticWrapper'
+import { useGlobalTheme } from '../hooks/useGlobalTheme'
 
 function CopyToast({ message }: { message: string }) {
   return (
@@ -109,11 +110,8 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-interface ContactSectionProps {
-  theme?: 'dark' | 'light'
-}
-
-export default function ContactSection({ theme = 'dark' }: ContactSectionProps) {
+export default function ContactSection() {
+  const { theme } = useGlobalTheme()
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', _honeypot: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)

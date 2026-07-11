@@ -77,6 +77,7 @@ export function useBlogs() {
     queryKey: ['blogs'],
     queryFn: () => fetchJson<any[]>('/api/blogs'),
     select: (data) => Array.isArray(data) ? data : [],
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -85,6 +86,7 @@ export function useBlog(slug: string) {
     queryKey: ['blog', slug],
     queryFn: () => fetchJson<any>(`/api/blogs/${slug}`),
     enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -93,6 +95,7 @@ export function useBlogComments(blogId: string | number) {
     queryKey: ['blogComments', blogId],
     queryFn: () => fetchJson<any[]>(`/api/blogs/${blogId}/comments`),
     enabled: !!blogId,
+    staleTime: 2 * 60 * 1000,
   })
 }
 

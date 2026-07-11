@@ -4,7 +4,7 @@ import { parseMarkdown, MermaidRenderer } from "../utils/markdown";
 import Interactive3DBlock from "./Interactive3DBlock";
 import InteractiveBlock from "./InteractiveBlock";
 import ChartBlock from "./ChartBlock";
-import { ACCENT_THEMES, type AccentKey } from "../data/accents";
+import { ACCENT_THEMES } from "../data/accents";
 import { useMarkdownInsert } from "./MarkdownEditor";
 import {
   uploadProfilePic,
@@ -32,14 +32,10 @@ import AboutTab from "./admin/AboutTab";
 import ExperienceTab from "./admin/ExperienceTab";
 import AwardsTab from "./admin/AwardsTab";
 
-interface AdminPanelProps {
-  theme: "dark" | "light";
-  toggleTheme: (event?: React.MouseEvent) => void;
-  accent: AccentKey;
-  setAccent: (val: AccentKey) => void;
-}
+import { useGlobalTheme } from "../hooks/useGlobalTheme";
 
-function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) {
+function AdminPanel() {
+  const { theme, accent } = useGlobalTheme();
   const [token, setToken] = useState<string | null>(getSafeItem("admin_token"));
   const [password, setPassword] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -191,8 +187,8 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
   const [focusContentMode, setFocusContentMode] = useState(false);
   const { setEditor: setMonacoEditor } = useMarkdownInsert();
   const parsedBlogContent = useMemo(
-    () => (blogContent ? parseMarkdown(blogContent, theme, accent) : null),
-    [blogContent, theme, accent],
+    () => (blogContent ? parseMarkdown(blogContent) : null),
+    [blogContent],
   );
 
   // ── Zoom Modal State ──
@@ -261,7 +257,7 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       let content;
       switch (type) {
         case "mermaid":
-          content = <MermaidRenderer code={code} theme={theme} accent={accent} />;
+          content = <MermaidRenderer code={code} />;
           break;
         case "interactive-3d":
           content = <Interactive3DBlock html={code} />;
@@ -1662,10 +1658,6 @@ function AdminPanel({ theme, toggleTheme, accent, setAccent }: AdminPanelProps) 
       style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
     >
       <DashboardHeader
-        theme={theme}
-        toggleTheme={toggleTheme}
-        accent={accent}
-        setAccent={setAccent}
         refreshing={refreshing}
         refreshData={refreshData}
         handleLogout={handleLogout}

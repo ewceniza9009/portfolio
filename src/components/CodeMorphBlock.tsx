@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useGlobalTheme } from "../hooks/useGlobalTheme";
 import { Play, RotateCcw } from "lucide-react";
 
 const HIGH_KEY = "__cm_shiki";
@@ -76,7 +77,7 @@ interface AnimLayer {
 interface CodeMorphBlockProps {
   code: string;
   anim?: string;
-  theme?: "light" | "dark";
+  delay?: number;
 }
 
 export type AnimMode =
@@ -407,8 +408,8 @@ function lineDiff(a: string[], b: string[]): DiffOp[] {
   const dp: number[][] = Array.from({ length: n + 1 }, () =>
     new Array(m + 1).fill(0),
   );
-  for (let i = n - 1; i >= 0; i--)
-    for (let j = m - 1; j >= 0; j--)
+  for (const i of Array.from({ length: n }).map((_, i) => n - 1 - i))
+    for (const j of Array.from({ length: m }).map((_, i) => m - 1 - i))
       dp[i][j] =
         a[i] === b[j]
           ? dp[i + 1][j + 1] + 1
@@ -443,8 +444,6 @@ function animDiff(
   wrapper: HTMLElement,
   _cb: () => void,
 ) {
-  // We use the already-rendered content in wrapper to get lines
-  // Actually we reconstruct from html strings
   const fromLines = fromHtml.match(/<div class="cm-line">.*?<\/div>/g) || [];
   const toLines = toHtml.match(/<div class="cm-line">.*?<\/div>/g) || [];
   const lineText = (h: string) =>
@@ -513,13 +512,11 @@ function animDiff(
   wrapper.style.minHeight = `${totalHeight}px`;
   wrapper.innerHTML = "";
 
-  // Re-render same + full-height del/add initially
   allEls.forEach((el) => wrapper.appendChild(el));
   void wrapper.offsetHeight;
 
   const addH = addEls.map((el) => el.scrollHeight || lineH);
 
-  // Fade in del lines (do not collapse height so they stay visible as a diff)
   delEls.forEach((el, i) => {
     el.style.opacity = "0";
     m.anims.push(
@@ -532,7 +529,6 @@ function animDiff(
     );
   });
 
-  // Expand add lines
   addEls.forEach((el, i) => {
     const h = addH[i];
     el.style.height = "0px";
@@ -603,11 +599,9 @@ function animFlight(
   const n = Math.max(oldBlocks.length, newBlocks.length);
   const stackH = n * lineH + (n - 1) * GAP + 16;
 
-  // Instantly lock height to prevent resizing during animation
   wrapper.style.height = `${stackH}px`;
   wrapper.style.position = "relative";
 
-  // Position all blocks statically within relative wrapper before flying
   oldBlocks.forEach((blk, i) => {
     blk.style.top = `${i * (lineH + GAP) + 8}px`;
   });
@@ -617,7 +611,6 @@ function animFlight(
 
   const flyDist = maxW + 100;
 
-  // Fly out old from right
   oldBlocks.forEach((blk, i) => {
     m.anims.push(
       blk.animate(
@@ -635,7 +628,6 @@ function animFlight(
     );
   });
 
-  // Fly in new from left
   newBlocks.forEach((blk, i) => {
     m.anims.push(
       blk.animate(
@@ -661,7 +653,6 @@ function animTypewriter(
   toHtml: string,
   wrapper: HTMLElement,
 ) {
-  // Render to HTML with per-character tokens
   const unesc = (s: string) =>
     s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
   const toHtmlChar = toHtml.replace(
@@ -683,12 +674,10 @@ function animTypewriter(
     wrapper.querySelectorAll(".cm-tok"),
   ) as HTMLElement[];
 
-  // Hide all chars initially
   charEls.forEach((el) => {
     el.style.opacity = "0";
   });
 
-  // Create blinking caret
   const caret = document.createElement("div");
   caret.className = "cm-caret";
   caret.style.animation = "cm-blink 0.8s step-end infinite";
@@ -698,12 +687,10 @@ function animTypewriter(
   }
   m.layer.appendChild(caret);
 
-  // Reveal chars sequentially with human-like variable speed
   let currentDelay = 0;
   charEls.forEach((el, i) => {
     const isSpace = el.textContent === " " || el.textContent === "\u00A0";
     const isPunctuation = /[,.;(){}\[\]]/.test(el.textContent || "");
-    // Variable timing: spaces are fast, punctuation pauses slightly, others vary
     const baseDelay = isSpace
       ? 10
       : isPunctuation
@@ -720,7 +707,6 @@ function animTypewriter(
       }),
     );
 
-    // Animate caret to the right of the current char
     const r = el.getBoundingClientRect();
     const x = r.right - wr.left;
     const y = r.top - wr.top;
@@ -737,7 +723,6 @@ function animTypewriter(
     currentDelay += charDelay;
   });
 
-  // Fade out "from" content gracefully
   from.forEach((f) => {
     const fp = m.pos(f.rect);
     const el = m.add(
@@ -783,7 +768,6 @@ function animHighlight(
   const maxWidth = Math.max(...rects.map((r) => r.width));
   const minLeft = Math.min(...rects.map((r) => r.left));
 
-  // Highlight box
   const box = document.createElement("div");
   box.className = "cm-highlight-box";
   box.style.left = `${minLeft - wr.left - 8}px`;
@@ -795,7 +779,6 @@ function animHighlight(
   box.style.animationDelay = "0.7s";
   wrapper.insertBefore(box, wrapper.firstChild);
 
-  // Dim other lines
   const otherLines = Array.from(lines).filter(
     (_, i) => !targetIndices.includes(i),
   );
@@ -810,7 +793,6 @@ function animHighlight(
     );
   });
 
-  // Expand highlight box
   m.anims.push(
     box.animate(
       [
@@ -857,25 +839,19 @@ function animScroll(
   const maxWidth = Math.max(...rects.map((r) => r.width));
   const minLeft = Math.min(...rects.map((r) => r.left));
 
-  // Center target block relative to wrapper
   const blockCenter = minTop + (maxBottom - minTop) / 2 - wr.top;
 
-  // Calculate raw dy to center in the surface
   let dy = surfRect.height / 2 - blockCenter;
 
-  // Bound dy to prevent scrolling out of bounds
   const minDy = surfRect.height - wr.height;
   const maxDy = 0;
 
   if (minDy >= 0) {
-    // Wrapper is smaller than surface, no need to scroll
     dy = 0;
   } else {
-    // Clamp dy so it doesn't push wrapper too far down (blank top) or up (blank bottom)
     dy = Math.max(minDy, Math.min(maxDy, dy));
   }
 
-  // Highlight box
   const box = document.createElement("div");
   box.className = "cm-highlight-box";
   box.style.left = `${minLeft - wr.left - 8}px`;
@@ -887,7 +863,6 @@ function animScroll(
   box.style.animationDelay = "0.85s";
   wrapper.insertBefore(box, wrapper.firstChild);
 
-  // Dim others
   const otherLines = Array.from(lines).filter(
     (_, i) => !targetIndices.includes(i),
   );
@@ -902,7 +877,6 @@ function animScroll(
     );
   });
 
-  // Scroll wrapper
   m.anims.push(
     wrapper.animate(
       [{ transform: "translateY(0)" }, { transform: `translateY(${dy}px)` }],
@@ -914,7 +888,6 @@ function animScroll(
     ),
   );
 
-  // Show box
   m.anims.push(
     box.animate([{ opacity: "0" }, { opacity: "1" }], {
       duration: 300,
@@ -1243,10 +1216,10 @@ const ANIM_FNS: Record<AnimMode, AnimFn> = {
 
 export default function CodeMorphBlock({
   code,
-  anim: initialAnim,
-  theme: themeProp = "dark",
+  anim: initialAnim = "morph",
 }: CodeMorphBlockProps) {
-  const parts = code.split(/^---$/m);
+  const { theme: globalTheme } = useGlobalTheme();
+  const parts = code.split("---").map((p) => p.trim());
   const beforeCode = parts[0]?.trim() || "";
   const afterCode = parts.length > 1 ? parts[1]?.trim() || "" : beforeCode;
   const lang = detectLang(beforeCode || afterCode);
@@ -1287,7 +1260,7 @@ export default function CodeMorphBlock({
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const shikiTheme = themeProp === "light" ? "github-light" : "github-dark";
+  const shikiTheme = globalTheme === "light" ? "github-light" : "github-dark";
 
   useEffect(() => {
     ensureStyles();

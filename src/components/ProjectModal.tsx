@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, ExternalLink } from "lucide-react";
 import { TechIcon } from "./ProjectsSection";
 import { parseMarkdown } from '../utils/markdown';
-import type { AccentKey } from '../data/accents';
 
 interface Project {
   id: number;
@@ -30,8 +29,6 @@ interface Project {
 interface ProjectModalProps {
   project: Project | null;
   onClose: () => void;
-  theme?: 'dark' | 'light';
-  accent?: AccentKey;
 }
 
 
@@ -85,7 +82,7 @@ function LowerThirdCard({ title, subtitle }: { title: string; subtitle: string }
   );
 }
 
-export default function ProjectModal({ project, onClose, theme = 'dark', accent = 'blue' }: ProjectModalProps) {
+export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const showFullscreenRef = useRef(showFullscreen);
@@ -348,7 +345,7 @@ export default function ProjectModal({ project, onClose, theme = 'dark', accent 
                   className="mb-8 leading-relaxed text-sm prose max-w-none prose-sm article-content"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  {parseMarkdown(project.description || '', theme, accent)}
+                  {parseMarkdown(project.description || '')}
                 </div>
 
                 {/* Testimonial */}
