@@ -258,6 +258,7 @@ a {
 
 .project-card:hover {
   transform: translateY(-4px);
+  will-change: transform;
   border-color: transparent !important;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.3),
@@ -279,7 +280,6 @@ a {
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
   -webkit-font-smoothing: subpixel-antialiased;
-  will-change: transform;
 }
 
 .project-card::after,
@@ -515,7 +515,6 @@ a {
 .logo-svg {
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   shape-rendering: geometricPrecision;
-  will-change: transform, filter;
 }
 
 .logo-svg:hover {
@@ -725,9 +724,16 @@ html[data-cursor-enabled="false"] .click-ripple {
 /* Force CQRS interactive block Next button to be visible in both themes */
 .gv-btn-prim { color: var(--bg-primary) !important; }
 [data-theme="light"] .gv-btn-prim { color: #ffffff !important; }
+[data-theme="light"] .gv-btn-prim { color: #ffffff !important; }
 
 /* --- FIX FOR MARKDOWN INTERACTIVE BLOCKS --- */
 button.gv-btn { background-color: var(--bg-secondary) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; font-weight: 600 !important; }
 button.gv-btn-prim { background-color: var(--accent) !important; color: var(--bg-primary) !important; border: 1px solid var(--accent) !important; }
 button.gv-btn:hover { filter: brightness(1.2); }
 
+/* --- FIX FOR MONACO EDITOR FIND WIDGET CLOSE BUTTON GLITCH --- */
+/* Disables pointer events on tooltips so they don't block clicks to the Find widget 'X' button */
+.monaco-editor .monaco-hover,
+.workbench-hover-container {
+  pointer-events: none !important;
+}
