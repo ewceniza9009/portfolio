@@ -170,6 +170,7 @@ function buildAnimLayer(wrapper: HTMLElement, anims: Animation[]): AnimLayer {
 // ── HyperFrames-accurate animations ──
 
 function animMorph(m: AnimLayer, matched: ReturnType<typeof matchByKey>) {
+  // 1. Tokens glide between positions
   matched.matched.forEach(({ f, t }) => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
@@ -180,25 +181,35 @@ function animMorph(m: AnimLayer, matched: ReturnType<typeof matchByKey>) {
         { transform: `translate3d(0,0,0)` },
         { transform: `translate3d(${dx}px,${dy}px,0)` },
       ],
-      { duration: 600, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards' }
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
     ))
   })
+  
+  // 2. Leavers fade out cleanly
   matched.leaving.forEach(f => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity`
     m.anims.push(el.animate(
-      [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.95)' }],
-      { duration: 300, easing: 'ease-in-out', fill: 'forwards' }
+      [
+        { opacity: 1 }, 
+        { opacity: 0 }
+      ],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
     ))
   })
+  
+  // 3. Enterers fade in cleanly
   matched.entering.forEach(t => {
     const tp = m.pos(t.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity`
     m.anims.push(el.animate(
-      [{ opacity: 0, transform: 'scale(0.95)' }, { opacity: 1, transform: 'scale(1)' }],
-      { duration: 400, easing: 'ease-out', fill: 'forwards', delay: 200 }
+      [
+        { opacity: 0 }, 
+        { opacity: 1 }
+      ],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
     ))
   })
 }
