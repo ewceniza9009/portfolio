@@ -1371,7 +1371,7 @@ export default function CodeMorphBlock({
     return () => {
       cancelled = true;
     };
-  }, [beforeCode, afterCode, lang, theme]);
+  }, [beforeCode, afterCode, lang, theme, isIntersecting]);
 
   // Sync beforeHtml to stage div (initial / theme change)
   useEffect(() => {

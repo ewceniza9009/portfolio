@@ -413,7 +413,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
       })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [cleanLines, lang, theme])
+  }, [cleanLines, lang, theme, isIntersecting])
 
 
 
