@@ -2371,6 +2371,449 @@ def process(data):
                     <div>{"```"}</div>
                   </div>
                 </div>
+
+                {/* Example 5: Cinematic Cross-fade (blur) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Cinematic Cross-fade (blur)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph blur\n// old implementation\nfunction slowRender() {\n  for(let i=0; i<1e6; i++) {}\n}\n---\n// cinematic fade to new\nfunction fastRender() {\n  requestAnimationFrame(draw);\n}\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph blur"}</div>
+                    <div>// old implementation</div>
+                    <div>function slowRender() {"{"}</div>
+                    <div>{"  for(let i=0; i<1e6; i++) {}"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>// cinematic fade to new</div>
+                    <div>function fastRender() {"{"}</div>
+                    <div>{"  requestAnimationFrame(draw);"}</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 6: Cyberpunk Glitch (glitch) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Cyberpunk Glitch (glitch)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph glitch\n// SYSTEM INTRUSION DETECTED\naccess_granted = false;\nsystem.lockdown();\n---\n// OVERRIDE SUCCESSFUL\naccess_granted = true;\nsystem.bypass_security();\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph glitch"}</div>
+                    <div>// SYSTEM INTRUSION DETECTED</div>
+                    <div>access_granted = false;</div>
+                    <div>system.lockdown();</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>// OVERRIDE SUCCESSFUL</div>
+                    <div>access_granted = true;</div>
+                    <div>system.bypass_security();</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 7: Digital Rain (matrix) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Digital Rain (matrix)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph matrix\n101010001010010111101\n000101110101011101010\n101010101000111100101\n---\nWake up, Neo...\nThe Matrix has you...\nFollow the white rabbit.\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph matrix"}</div>
+                    <div>101010001010010111101</div>
+                    <div>000101110101011101010</div>
+                    <div>101010101000111100101</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>Wake up, Neo...</div>
+                    <div>The Matrix has you...</div>
+                    <div>Follow the white rabbit.</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 8: Explode (explode) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Scatter & Reform (explode)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph explode\nfunction transform(obj) {\n  let a = obj.a;\n  let b = obj.b;\n  return { a, b };\n}\n---\nfunction transform({ a, b }) {\n  return { a, b };\n}\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph explode"}</div>
+                    <div>function transform(obj) {"{"}</div>
+                    <div>{"  let a = obj.a;"}</div>
+                    <div>{"  let b = obj.b;"}</div>
+                    <div>{"  return { a, b };"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>function transform({"{"} a, b {"}"}) {"{"}</div>
+                    <div>{"  return { a, b };"}</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 9: Carousel (slide) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Carousel Presentation (slide)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph slide\n// Step 1: Initialize\nconst app = express();\napp.use(cors());\n---\n// Step 2: Add Routes\napp.get("/", (req, res) => {\n  res.send("Hello World!");\n});\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph slide"}</div>
+                    <div>// Step 1: Initialize</div>
+                    <div>const app = express();</div>
+                    <div>app.use(cors());</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>// Step 2: Add Routes</div>
+                    <div>app.get("/", (req, res) =&gt; {"{"}</div>
+                    <div>{"  res.send(\"Hello World!\");"}</div>
+                    <div>{"});"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 10: Z-axis Depth (zoom) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Z-axis Depth (zoom)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph zoom\n<div className="layer-1">\n  <span>Background</span>\n</div>\n---\n<div className="layer-2">\n  <span>Foreground</span>\n</div>\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph zoom"}</div>
+                    <div>{"<div className=\"layer-1\">"}</div>
+                    <div>{"  <span>Background</span>"}</div>
+                    <div>{"</div>"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>{"<div className=\"layer-2\">"}</div>
+                    <div>{"  <span>Foreground</span>"}</div>
+                    <div>{"</div>"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 11: Flight (flight) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Staggered Entry (flight)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph flight\n// Loading modules...\nimport React from "react";\n---\n// Modules loaded.\nimport React from "react";\nimport { useState } from "react";\nimport { useEffect } from "react";\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph flight"}</div>
+                    <div>// Loading modules...</div>
+                    <div>import React from "react";</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>// Modules loaded.</div>
+                    <div>import React from "react";</div>
+                    <div>import {"{"} useState {"}"} from "react";</div>
+                    <div>import {"{"} useEffect {"}"} from "react";</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 12: Terminal (typewriter) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Terminal Print (typewriter)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph typewriter\n> npm start\nStarting development server...\n---\n> npm start\nStarting development server...\nCompiled successfully!\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph typewriter"}</div>
+                    <div>&gt; npm start</div>
+                    <div>Starting development server...</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>&gt; npm start</div>
+                    <div>Starting development server...</div>
+                    <div>Compiled successfully!</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 13: Erase & Type (erase) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Erase & Type (erase)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph erase\nfunction status() {\n  return "Loading";\n}\n---\nfunction status() {\n  return "Complete";\n}\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph erase"}</div>
+                    <div>function status() {"{"}</div>
+                    <div>{"  return \"Loading\";"}</div>
+                    <div>{"}"}</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>function status() {"{"}</div>
+                    <div>{"  return \"Complete\";"}</div>
+                    <div>{"}"}</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 14: Target Highlight (highlight:3) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Target Highlight (highlight:3)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph highlight:3\n// Watch line 3!\nconst a = 1;\nconst b = 2;\nreturn a + b;\n---\n// Watch line 3!\nconst a = 1;\nconst b = 2; // HIGHLIGHTED!\nreturn a + b;\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph highlight:3"}</div>
+                    <div>// Watch line 3!</div>
+                    <div>const a = 1;</div>
+                    <div>const b = 2;</div>
+                    <div>return a + b;</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>// Watch line 3!</div>
+                    <div>const a = 1;</div>
+                    <div>const b = 2; // HIGHLIGHTED!</div>
+                    <div>return a + b;</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
+
+                {/* Example 15: Target Scroll (scroll:5) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Target Scroll (scroll:5)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph scroll:5\n1\n2\n3\n4\n5\n6\n7\n---\n1\n2\n3\n4\n5 <== SCROLLS HERE\n6\n7\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph scroll:5"}</div>
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                    <div>4</div>
+                    <div>5</div>
+                    <div>6</div>
+                    <div>7</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                    <div>4</div>
+                    <div>5 &lt;== SCROLLS HERE</div>
+                    <div>6</div>
+                    <div>7</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
               </section>
             </div>
 

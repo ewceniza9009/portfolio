@@ -54,7 +54,7 @@ interface CodeMorphBlockProps {
   anim?: string
 }
 
-export type AnimMode = 'morph' | 'fade' | 'flip' | 'diff' | 'flight' | 'typewriter' | 'highlight' | 'scroll'
+export type AnimMode = 'morph' | 'fade' | 'flip' | 'diff' | 'flight' | 'typewriter' | 'highlight' | 'scroll' | 'blur' | 'slide' | 'zoom' | 'glitch' | 'erase' | 'matrix' | 'explode'
 
 const ANIM_MODES: { key: AnimMode; label: string; desc: string }[] = [
   { key: 'morph', label: 'Morph', desc: 'Tokens glide to new positions (HyperFrames)' },
@@ -65,6 +65,13 @@ const ANIM_MODES: { key: AnimMode; label: string; desc: string }[] = [
   { key: 'typewriter', label: 'Typewriter', desc: 'Per-character reveal with caret' },
   { key: 'highlight', label: 'Highlight', desc: 'Line highlight box, dim others' },
   { key: 'scroll', label: 'Scroll', desc: 'Scroll to target line + highlight' },
+  { key: 'blur', label: 'Blur', desc: 'Cinematic out-of-focus crossfade' },
+  { key: 'slide', label: 'Slide', desc: 'Carousel slide transition' },
+  { key: 'zoom', label: 'Zoom', desc: 'Z-axis depth scaling' },
+  { key: 'glitch', label: 'Glitch', desc: 'Cyberpunk neon scramble' },
+  { key: 'erase', label: 'Erase', desc: 'Realistic backspace and re-type' },
+  { key: 'matrix', label: 'Matrix', desc: 'Digital rain character cascade' },
+  { key: 'explode', label: 'Explode', desc: 'Tokens scatter outwards' },
 ]
 
 function ensureStyles() {
@@ -590,6 +597,180 @@ function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetId
 
 type AnimFn = (m: AnimLayer, ...args: any[]) => void
 
+function animBlur(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach(f => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,filter`
+    m.anims.push(el.animate(
+      [{ opacity: 1, filter: 'blur(0px)' }, { opacity: 0, filter: 'blur(8px)' }],
+      { duration: 600, easing: 'ease-in-out', fill: 'forwards' }
+    ))
+  })
+  to.forEach(t => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,filter`
+    m.anims.push(el.animate(
+      [{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }],
+      { duration: 600, easing: 'ease-in-out', fill: 'forwards' }
+    ))
+  })
+}
+
+function animSlide(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach(f => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [{ opacity: 1, transform: 'translate3d(0,0,0)' }, { opacity: 0, transform: 'translate3d(-50px,0,0)' }],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+  to.forEach(t => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [{ opacity: 0, transform: 'translate3d(50px,0,0)' }, { opacity: 1, transform: 'translate3d(0,0,0)' }],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+}
+
+function animZoom(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach(f => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform;transform-origin:center`
+    m.anims.push(el.animate(
+      [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.8)' }],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+  to.forEach(t => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform;transform-origin:center`
+    m.anims.push(el.animate(
+      [{ opacity: 0, transform: 'scale(1.2)' }, { opacity: 1, transform: 'scale(1)' }],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+}
+
+function animGlitch(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach(f => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [
+        { opacity: 1, transform: 'translate(0)' },
+        { opacity: 0.8, transform: 'translate(-2px, 1px)', color: '#0ff' },
+        { opacity: 0.9, transform: 'translate(2px, -1px)', color: '#f0f' },
+        { opacity: 0.5, transform: 'translate(-1px, 2px)', color: '#f0f' },
+        { opacity: 0, transform: 'translate(1px, -2px)' }
+      ],
+      { duration: 300, easing: 'steps(4, end)', fill: 'forwards' }
+    ))
+  })
+  to.forEach(t => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [
+        { opacity: 0, transform: 'translate(-2px, 2px)', color: '#0ff' },
+        { opacity: 0.8, transform: 'translate(2px, -2px)', color: '#f0f' },
+        { opacity: 0.5, transform: 'translate(-1px, 1px)', color: '#0ff' },
+        { opacity: 0.9, transform: 'translate(1px, -1px)' },
+        { opacity: 1, transform: 'translate(0)', color: t.color }
+      ],
+      { duration: 300, easing: 'steps(4, end)', fill: 'forwards', delay: 200 }
+    ))
+  })
+}
+
+function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  const maxDelayFrom = from.length * 5
+  from.reverse().forEach((f, i) => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;`
+    m.anims.push(el.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: 1, delay: i * 5, fill: 'forwards' }
+    ))
+  })
+  to.forEach((t, i) => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;opacity:0`
+    m.anims.push(el.animate(
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: 1, delay: maxDelayFrom + 100 + (i * 5), fill: 'forwards' }
+    ))
+  })
+}
+
+function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach((f, i) => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:#0f0;font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(20px)' }],
+      { duration: 300, easing: 'ease-in', fill: 'forwards', delay: i * 3 }
+    ))
+  })
+  to.forEach((t, i) => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:#0f0;font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
+    m.anims.push(el.animate(
+      [{ opacity: 0, transform: 'translateY(-20px)' }, { opacity: 1, transform: 'translateY(0)', color: t.color }],
+      { duration: 300, easing: 'ease-out', fill: 'forwards', delay: i * 3 + 200 }
+    ))
+  })
+}
+
+function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
+  from.forEach(f => {
+    const fp = m.pos(f.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
+    const angle = Math.random() * Math.PI * 2
+    const dist = 50 + Math.random() * 100
+    const dx = Math.cos(angle) * dist
+    const dy = Math.sin(angle) * dist
+    m.anims.push(el.animate(
+      [
+        { opacity: 1, transform: 'translate3d(0,0,0) rotate(0deg)' }, 
+        { opacity: 0, transform: `translate3d(${dx}px,${dy}px,0) rotate(${(Math.random()-0.5)*180}deg)` }
+      ],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+  to.forEach(t => {
+    const tp = m.pos(t.rect)
+    const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
+    const angle = Math.random() * Math.PI * 2
+    const dist = 50 + Math.random() * 100
+    const dx = Math.cos(angle) * dist
+    const dy = Math.sin(angle) * dist
+    m.anims.push(el.animate(
+      [
+        { opacity: 0, transform: `translate3d(${dx}px,${dy}px,0) rotate(${(Math.random()-0.5)*180}deg)` }, 
+        { opacity: 1, transform: 'translate3d(0,0,0) rotate(0deg)' }
+      ],
+      { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+    ))
+  })
+}
+
 const ANIM_FNS: Record<AnimMode, AnimFn> = {
   morph: animMorph,
   fade: animFade,
@@ -599,6 +780,13 @@ const ANIM_FNS: Record<AnimMode, AnimFn> = {
   typewriter: animTypewriter,
   highlight: animHighlight,
   scroll: animScroll,
+  blur: animBlur,
+  slide: animSlide,
+  zoom: animZoom,
+  glitch: animGlitch,
+  erase: animErase,
+  matrix: animMatrix,
+  explode: animExplode,
 }
 
 export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlockProps) {
