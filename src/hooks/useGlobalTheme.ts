@@ -1,15 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ACCENT_THEMES, type AccentKey } from '../data/accents';
-import { setSafeItem } from '../utils/storage';
+import { getSafeItem, setSafeItem } from '../utils/storage';
 
 export function useGlobalTheme() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => 
-    typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
-  );
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof document === 'undefined') return 'dark';
+    const saved = getSafeItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false';
+    if (!isThemeRotEnabled) {
+      const def = getSafeItem('default_theme');
+      if (def === 'light' || def === 'dark') return def;
+    }
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  });
   
-  const [accent, setAccent] = useState<AccentKey>(() => 
-    (typeof document !== 'undefined' && document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
-  );
+  const [accent, setAccent] = useState<AccentKey>(() => {
+    if (typeof document === 'undefined') return 'gold';
+    const saved = getSafeItem('accent') as AccentKey;
+    if (saved && ACCENT_THEMES[saved]) return saved;
+    const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true';
+    if (!isAccentRotEnabled) {
+      const def = getSafeItem('default_accent') as AccentKey;
+      if (def && ACCENT_THEMES[def]) return def;
+    }
+    return (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold';
+  });
 
   useEffect(() => {
     if (typeof document === 'undefined') return;

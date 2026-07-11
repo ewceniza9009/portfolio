@@ -345,7 +345,11 @@ export default function App() {
         setSafeItem('rotation_interval_hours', data.rotation_interval_hours)
       }
       if (data.cursor_enabled !== undefined) {
-        setSafeItem('cursor_enabled', data.cursor_enabled)
+        const isEnabledStr = String(data.cursor_enabled);
+        setSafeItem('cursor_enabled', isEnabledStr);
+        const isEnabled = isEnabledStr !== 'false';
+        document.documentElement.dataset.cursorEnabled = isEnabled ? 'true' : 'false';
+        window.dispatchEvent(new CustomEvent('cursor-state-changed', { detail: { enabled: isEnabled } }));
       }
 
       const isThemeRot = data.rotation_theme_enabled !== 'false'
