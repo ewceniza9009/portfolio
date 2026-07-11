@@ -369,25 +369,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
     return false
   }, [meta, lineAnnotations])
 
-  const [isIntersecting, setIsIntersecting] = useState(false)
-
   useEffect(() => {
-    if (!containerRef.current) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsIntersecting(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: '200px' }
-    )
-    observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!isIntersecting) return
     let cancelled = false
     const cleanCode = cleanLines.join('\n')
     if (!cleanCode.trim()) return
@@ -413,7 +395,7 @@ function CodeHikeBlockInner({ code, lang, meta, theme = 'dark' }: CodeHikeBlockP
       })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [cleanLines, lang, theme, isIntersecting])
+  }, [cleanLines, lang, theme])
 
 
 

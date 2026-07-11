@@ -1285,13 +1285,11 @@ export default function CodeMorphBlock({
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState(() =>
+  const [theme] = useState(() =>
     document.documentElement.getAttribute("data-theme") === "light"
       ? "github-light"
       : "github-dark",
   );
-  const [isIntersecting, setIsIntersecting] = useState(false);
-
   useEffect(() => {
     ensureStyles();
     const handler = (e: MouseEvent) => {
@@ -1302,42 +1300,12 @@ export default function CodeMorphBlock({
         setDropdownOpen(false);
     };
     document.addEventListener("mousedown", handler);
-    const observer = new MutationObserver(() => {
-      setTheme(
-        document.documentElement.getAttribute("data-theme") === "light"
-          ? "github-light"
-          : "github-dark",
-      );
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
     return () => {
       document.removeEventListener("mousedown", handler);
-      observer.disconnect();
     };
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsIntersecting(true);
-          // Optional: observer.disconnect() if we only need to lazy load once, 
-          // but if we keep it, it doesn't hurt. Disconnecting saves memory.
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isIntersecting) return;
     let cancelled = false;
     async function init() {
       try {
@@ -1371,7 +1339,7 @@ export default function CodeMorphBlock({
     return () => {
       cancelled = true;
     };
-  }, [beforeCode, afterCode, lang, theme, isIntersecting]);
+  }, [beforeCode, afterCode, lang, theme]);
 
   // Sync beforeHtml to stage div (initial / theme change)
   useEffect(() => {
