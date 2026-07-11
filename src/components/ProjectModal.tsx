@@ -34,6 +34,57 @@ interface ProjectModalProps {
   accent?: AccentKey;
 }
 
+
+function LowerThirdCard({ title, subtitle }: { title: string; subtitle: string }) {
+  const [visible, setVisible] = useState(false);
+  
+  useEffect(() => {
+    const showTimeout = setTimeout(() => setVisible(true), 1500);
+    const hideTimeout = setTimeout(() => setVisible(false), 6500);
+    return () => { clearTimeout(showTimeout); clearTimeout(hideTimeout); };
+  }, [title]);
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="absolute bottom-16 lg:bottom-20 left-4 lg:left-6 z-50 flex flex-col gap-1.5 p-3 px-5 rounded-xl pointer-events-none"
+          style={{ background: "#16181d", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.6)" }}
+        >
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="text-lg font-bold leading-none tracking-tight"
+            style={{ color: "#ffffff", letterSpacing: "-0.015em", fontFamily: "system-ui, sans-serif" }}
+          >
+            {title}
+          </motion.div>
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+            style={{ height: "2px", width: "100%", background: "#f5b942", borderRadius: "1px", transformOrigin: "left" }}
+          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            className="text-xs font-medium uppercase tracking-wider"
+            style={{ color: "#aeb6c2", fontFamily: "system-ui, sans-serif" }}
+          >
+            {subtitle}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export default function ProjectModal({ project, onClose, theme = 'dark', accent = 'blue' }: ProjectModalProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
@@ -169,6 +220,7 @@ export default function ProjectModal({ project, onClose, theme = 'dark', accent 
                         aria-label={`Demo video for ${project.title}`}
                       />
                     )}
+                    <LowerThirdCard title={project.title} subtitle={`${project.type} • ${project.year}`} />
                   </motion.div>
                 </>
               ) : (
