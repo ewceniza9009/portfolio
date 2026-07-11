@@ -813,7 +813,7 @@ export function parseMarkdown(md: string, theme?: 'dark' | 'light', accent?: Acc
           result.push(<RemotionBlock key={keyIndex++} code={codeText} theme={theme} accent={accent} />)
         } else if (codeLang.toLowerCase().startsWith('code-morph') || codeLang.toLowerCase().startsWith('codemorph')) {
           const meta = codeLang.replace(/code-?morph/i, '').trim()
-          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} />)
+          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} theme={theme} />)
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(

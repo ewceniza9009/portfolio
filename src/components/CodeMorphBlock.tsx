@@ -76,6 +76,7 @@ interface AnimLayer {
 interface CodeMorphBlockProps {
   code: string;
   anim?: string;
+  theme?: "light" | "dark";
 }
 
 export type AnimMode =
@@ -800,11 +801,11 @@ function animHighlight(
   );
   otherLines.forEach((el, i) => {
     m.anims.push(
-      (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.5 }], {
+      (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.3 }], {
         duration: 400,
         easing: "ease-out",
         fill: "forwards",
-        delay: i * 30,
+        delay: Math.min(i * 15, 600),
       }),
     );
   });
@@ -892,11 +893,11 @@ function animScroll(
   );
   otherLines.forEach((el, i) => {
     m.anims.push(
-      (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.5 }], {
+      (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.3 }], {
         duration: 350,
         easing: "ease-out",
         fill: "forwards",
-        delay: 500 + i * 30,
+        delay: Math.min(500 + i * 15, 1100),
       }),
     );
   });
@@ -1243,6 +1244,7 @@ const ANIM_FNS: Record<AnimMode, AnimFn> = {
 export default function CodeMorphBlock({
   code,
   anim: initialAnim,
+  theme: themeProp = "dark",
 }: CodeMorphBlockProps) {
   const parts = code.split(/^---$/m);
   const beforeCode = parts[0]?.trim() || "";
@@ -1285,11 +1287,8 @@ export default function CodeMorphBlock({
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [theme] = useState(() =>
-    document.documentElement.getAttribute("data-theme") === "light"
-      ? "github-light"
-      : "github-dark",
-  );
+  const shikiTheme = themeProp === "light" ? "github-light" : "github-dark";
+
   useEffect(() => {
     ensureStyles();
     const handler = (e: MouseEvent) => {
@@ -1308,10 +1307,11 @@ export default function CodeMorphBlock({
   useEffect(() => {
     let cancelled = false;
     async function init() {
+      await new Promise((r) => setTimeout(r, Math.random() * 300));
       try {
         const shiki = await getHighlighter();
-        const beforeData = shiki.codeToTokens(beforeCode, { lang, theme });
-        const afterData = shiki.codeToTokens(afterCode, { lang, theme });
+        const beforeData = shiki.codeToTokens(beforeCode, { lang, theme: shikiTheme });
+        const afterData = shiki.codeToTokens(afterCode, { lang, theme: shikiTheme });
         if (!cancelled) {
           const b = buildTokenHtml(beforeData.tokens, beforeData.fg);
           const a = buildTokenHtml(afterData.tokens, afterData.fg);
@@ -1339,7 +1339,7 @@ export default function CodeMorphBlock({
     return () => {
       cancelled = true;
     };
-  }, [beforeCode, afterCode, lang, theme]);
+  }, [beforeCode, afterCode, lang, shikiTheme]);
 
   // Sync beforeHtml to stage div (initial / theme change)
   useEffect(() => {
