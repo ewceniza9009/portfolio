@@ -303,7 +303,6 @@ export default function App() {
         }
       }
       document.documentElement.setAttribute('data-accent', initialAccent);
-      document.documentElement.style.setProperty('--accent', ACCENT_THEMES[initialAccent].dark.accent);
     }
   }, []);
 

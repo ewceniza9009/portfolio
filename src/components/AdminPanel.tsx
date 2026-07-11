@@ -1033,6 +1033,8 @@ function AdminPanel() {
     if (val === "dark" || val === "light") {
       setDefaultTheme(val);
       setSafeItem("default_theme", val);
+      document.documentElement.setAttribute('data-theme', val);
+      removeSafeItem('theme'); // Clear manual override so default takes effect
       setRotationThemeEnabled(false);
       setSafeItem("rotation_theme_enabled", "false");
       await saveSettings({
@@ -1041,7 +1043,6 @@ function AdminPanel() {
       });
     } else {
       setDefaultTheme(null);
-      removeSafeItem("default_theme");
       setRotationThemeEnabled(true);
       setSafeItem("rotation_theme_enabled", "true");
       await saveSettings({ default_theme: "", rotation_theme_enabled: "true" });
@@ -1052,6 +1053,8 @@ function AdminPanel() {
     if (val && val !== "auto") {
       setDefaultAccent(val);
       setSafeItem("default_accent", val);
+      document.documentElement.setAttribute('data-accent', val);
+      removeSafeItem('accent'); // Clear manual override so default takes effect
       setRotationAccentEnabled(false);
       setSafeItem("rotation_accent_enabled", "false");
       await saveSettings({
@@ -1060,13 +1063,9 @@ function AdminPanel() {
       });
     } else {
       setDefaultAccent(null);
-      removeSafeItem("default_accent");
       setRotationAccentEnabled(true);
       setSafeItem("rotation_accent_enabled", "true");
-      await saveSettings({
-        default_accent: "",
-        rotation_accent_enabled: "true",
-      });
+      await saveSettings({ default_accent: "", rotation_accent_enabled: "true" });
     }
   };
 

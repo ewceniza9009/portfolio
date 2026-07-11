@@ -8,7 +8,11 @@ export function useGlobalTheme() {
     const saved = getSafeItem('theme');
     if (saved === 'light' || saved === 'dark') return saved;
     const isThemeRotEnabled = getSafeItem('rotation_theme_enabled') !== 'false';
-    if (!isThemeRotEnabled) {
+    if (isThemeRotEnabled) {
+      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2');
+      const hour = new Date().getHours();
+      return Math.floor(hour / intervalHours) % 2 === 0 ? 'dark' : 'light';
+    } else {
       const def = getSafeItem('default_theme');
       if (def === 'light' || def === 'dark') return def;
     }
@@ -20,7 +24,13 @@ export function useGlobalTheme() {
     const saved = getSafeItem('accent') as AccentKey;
     if (saved && ACCENT_THEMES[saved]) return saved;
     const isAccentRotEnabled = getSafeItem('rotation_accent_enabled') === 'true';
-    if (!isAccentRotEnabled) {
+    if (isAccentRotEnabled) {
+      const intervalHours = Number(getSafeItem('rotation_interval_hours') || '2');
+      const hour = new Date().getHours();
+      const accentKeys = Object.keys(ACCENT_THEMES) as AccentKey[];
+      const accentIndex = Math.floor(hour / intervalHours) % accentKeys.length;
+      return accentKeys[accentIndex];
+    } else {
       const def = getSafeItem('default_accent') as AccentKey;
       if (def && ACCENT_THEMES[def]) return def;
     }
