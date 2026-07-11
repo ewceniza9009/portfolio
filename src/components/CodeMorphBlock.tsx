@@ -94,6 +94,8 @@ function ensureStyles() {
     .cm-diff-add .cm-diff-sign { color:#3fb950; }
     .cm-highlight-box { position:absolute;background:rgba(88,166,255,0.16);border-left:3px solid #58a6ff;border-radius:6px;pointer-events:none; }
     .cm-caret { position:absolute;width:2px;background:#58a6ff;border-radius:1px;pointer-events:none; }
+    @keyframes cm-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes cm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
   `
 }
 
@@ -171,32 +173,32 @@ function animMorph(m: AnimLayer, matched: ReturnType<typeof matchByKey>) {
   matched.matched.forEach(({ f, t }) => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre`
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:transform`
     const dx = t.rect.left - f.rect.left, dy = t.rect.top - f.rect.top
     m.anims.push(el.animate(
       [
-        { transform: `translate(0,0)` },
-        { transform: `translate(${dx}px,${dy}px)` },
+        { transform: `translate3d(0,0,0)` },
+        { transform: `translate3d(${dx}px,${dy}px,0)` },
       ],
-      { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
+      { duration: 600, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards' }
     ))
   })
   matched.leaving.forEach(f => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre`
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
     m.anims.push(el.animate(
-      [{ opacity: 1 }, { opacity: 0 }],
-      { duration: 250, easing: 'ease-in', fill: 'forwards' }
+      [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.95)' }],
+      { duration: 300, easing: 'ease-in-out', fill: 'forwards' }
     ))
   })
   matched.entering.forEach(t => {
     const tp = m.pos(t.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre`
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
     m.anims.push(el.animate(
-      [{ opacity: 0 }, { opacity: 1 }],
-      { duration: 300, easing: 'ease-out', fill: 'forwards', delay: 150 }
+      [{ opacity: 0, transform: 'scale(0.95)' }, { opacity: 1, transform: 'scale(1)' }],
+      { duration: 400, easing: 'ease-out', fill: 'forwards', delay: 200 }
     ))
   })
 }
@@ -205,19 +207,19 @@ function animFade(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
   from.forEach(f => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre`
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity,transform`
     m.anims.push(el.animate(
-      [{ opacity: 1 }, { opacity: 0, transform: 'translateY(-6px)' }],
-      { duration: 250, easing: 'ease-in', fill: 'forwards' }
+      [{ opacity: 1 }, { opacity: 0, transform: 'translate3d(0,-8px,0)' }],
+      { duration: 300, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' }
     ))
   })
   to.forEach(t => {
     const tp = m.pos(t.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: t.text }))
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre`
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity,transform`
     m.anims.push(el.animate(
-      [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1 }],
-      { duration: 300, easing: 'ease-out', fill: 'forwards', delay: 150 }
+      [{ opacity: 0, transform: 'translate3d(0,8px,0)' }, { opacity: 1, transform: 'translate3d(0,0,0)' }],
+      { duration: 400, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards', delay: 200 }
     ))
   })
 }
@@ -229,21 +231,25 @@ function animFlip(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
   const fw = r - l + 40, fh = b - t + 40
   const cx = (l + r) / 2 - m.wr.left, cy = (t + b) / 2 - m.wr.top
   const card = m.add(Object.assign(document.createElement('div'), { className: 'cm-flip-card' }))
-  card.style.cssText = `position:absolute;left:${cx - fw / 2}px;top:${cy - fh / 2}px;width:${fw}px;height:${fh}px;perspective:1200px`
+  card.style.cssText = `position:absolute;left:${cx - fw / 2}px;top:${cy - fh / 2}px;width:${fw}px;height:${fh}px;perspective:1400px`
   const inner = document.createElement('div')
-  inner.style.cssText = 'width:100%;height:100%;position:relative;transform-style:preserve-3d'
+  inner.style.cssText = 'width:100%;height:100%;position:relative;transform-style:preserve-3d;will-change:transform'
   card.appendChild(inner)
   const front = document.createElement('div')
-  front.style.cssText = 'position:absolute;inset:0;backface-visibility:hidden'
+  front.style.cssText = 'position:absolute;inset:0;backface-visibility:hidden;background:var(--bg-primary);border-radius:8px'
   from.forEach(f => { const p = m.pos(f.rect); const s = Object.assign(document.createElement('span'), { textContent: f.text }); s.style.cssText = `position:absolute;left:${p.left - (cx - fw / 2)}px;top:${p.top - (cy - fh / 2)}px;color:${f.color};font-weight:${f.weight};white-space:pre`; front.appendChild(s) })
   inner.appendChild(front)
   const back = document.createElement('div')
-  back.style.cssText = 'position:absolute;inset:0;backface-visibility:hidden;transform:rotateX(180deg)'
+  back.style.cssText = 'position:absolute;inset:0;backface-visibility:hidden;transform:rotateX(180deg);background:var(--bg-primary);border-radius:8px'
   to.forEach(t => { const p = m.pos(t.rect); const s = Object.assign(document.createElement('span'), { textContent: t.text }); s.style.cssText = `position:absolute;left:${p.left - (cx - fw / 2)}px;top:${p.top - (cy - fh / 2)}px;color:${t.color};font-weight:${t.weight};white-space:pre`; back.appendChild(s) })
   inner.appendChild(back)
   m.anims.push(inner.animate(
-    [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(180deg)' }],
-    { duration: 600, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }
+    [
+      { transform: 'rotateX(0deg) scale(1)' },
+      { transform: 'rotateX(90deg) scale(0.92)', offset: 0.5 },
+      { transform: 'rotateX(180deg) scale(1)' }
+    ],
+    { duration: 800, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' }
   ))
 }
 
@@ -341,40 +347,73 @@ function animDiff(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: 
   })
 }
 
-function animFlight(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], _fromHtml: string, toHtml: string, wrapper: HTMLElement) {
+function animFlight(m: AnimLayer, _from: TokenRect[], _to: TokenRect[], fromHtml: string, toHtml: string, wrapper: HTMLElement) {
+  const fromLines = fromHtml.match(/<div class="cm-line">.*?<\/div>/g) || []
   const toLines = toHtml.match(/<div class="cm-line">.*?<\/div>/g) || []
   wrapper.innerHTML = ''
-  const blocks: HTMLElement[] = []
+  
+  const oldBlocks: HTMLElement[] = []
+  const newBlocks: HTMLElement[] = []
+
+  fromLines.forEach(h => {
+    const blk = document.createElement('div')
+    blk.style.cssText = 'position:absolute;white-space:pre;border-radius:8px;padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);font-size:inherit;line-height:1.6;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.1)'
+    blk.innerHTML = h
+    wrapper.appendChild(blk)
+    oldBlocks.push(blk)
+  })
 
   toLines.forEach(h => {
     const blk = document.createElement('div')
-    blk.style.cssText = 'position:relative;white-space:pre;border-radius:8px;padding:4px 10px;margin-bottom:4px;background:var(--bg-card);border:1px solid var(--border);font-size:inherit;line-height:1.6;font-family:inherit'
+    blk.style.cssText = 'position:absolute;white-space:pre;border-radius:8px;padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);font-size:inherit;line-height:1.6;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.1);opacity:0'
     blk.innerHTML = h
     wrapper.appendChild(blk)
-    blocks.push(blk)
+    newBlocks.push(blk)
   })
 
   void wrapper.offsetHeight
   let maxW = 0
-  blocks.forEach(b => { const r = b.getBoundingClientRect(); if (r.width > maxW) maxW = r.width })
-  blocks.forEach(b => { b.style.width = maxW + 'px' })
+  ;[...oldBlocks, ...newBlocks].forEach(b => { const r = b.getBoundingClientRect(); if (r.width > maxW) maxW = r.width })
+  ;[...oldBlocks, ...newBlocks].forEach(b => { b.style.width = maxW + 'px' })
   void wrapper.offsetHeight
 
-  const GAP = 4
-  const n = blocks.length
-  const stackH = n * (parseInt(getComputedStyle(wrapper).lineHeight) || 26) + (n - 1) * GAP + 8
-  wrapper.style.minHeight = `${stackH}px`
+  const GAP = 8
+  const lineH = parseInt(getComputedStyle(wrapper).lineHeight) || 26
+  const n = Math.max(oldBlocks.length, newBlocks.length)
+  const stackH = n * lineH + (n - 1) * GAP + 16
+  
+  // Animate height if it changes
+  const initialH = wrapper.style.height || `${wrapper.scrollHeight}px`
+  wrapper.style.height = initialH
+  void wrapper.offsetHeight
+  wrapper.style.height = `${stackH}px`
+  wrapper.style.position = 'relative'
 
-  // Fly in from left
-  const flyFrom = -(maxW + 60)
-  blocks.forEach((blk, i) => {
-    blk.style.position = 'relative'
+  // Position all blocks statically within relative wrapper before flying
+  oldBlocks.forEach((blk, i) => { blk.style.top = `${i * (lineH + GAP) + 8}px` })
+  newBlocks.forEach((blk, i) => { blk.style.top = `${i * (lineH + GAP) + 8}px` })
+
+  const flyDist = maxW + 100
+
+  // Fly out old from right
+  oldBlocks.forEach((blk, i) => {
     m.anims.push(blk.animate(
       [
-        { transform: `translateX(${flyFrom}px)`, opacity: 0 },
-        { transform: 'translateX(0)', opacity: 1 },
+        { transform: 'translate3d(0,0,0)', opacity: 1 },
+        { transform: `translate3d(${flyDist}px,0,0)`, opacity: 0 },
       ],
-      { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards', delay: i * 80 }
+      { duration: 400, easing: 'cubic-bezier(0.36, 0, 0.66, -0.56)', fill: 'forwards', delay: i * 50 }
+    ))
+  })
+
+  // Fly in new from left
+  newBlocks.forEach((blk, i) => {
+    m.anims.push(blk.animate(
+      [
+        { transform: `translate3d(-${flyDist}px,0,0)`, opacity: 0 },
+        { transform: 'translate3d(0,0,0)', opacity: 1 },
+      ],
+      { duration: 500, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards', delay: 300 + i * 50 }
     ))
   })
 }
@@ -396,60 +435,65 @@ function animTypewriter(m: AnimLayer, from: TokenRect[], _to: TokenRect[], toHtm
   // Hide all chars initially
   charEls.forEach(el => { el.style.opacity = '0' })
 
-  // Create caret
+  // Create blinking caret
   const caret = document.createElement('div')
   caret.className = 'cm-caret'
+  caret.style.animation = 'cm-blink 0.8s step-end infinite'
   const firstRect = charEls[0]?.getBoundingClientRect()
   if (firstRect) {
-    caret.style.cssText = `left:${firstRect.left - wr.left}px;top:${firstRect.top - wr.top}px;height:${firstRect.height}px`
+    caret.style.cssText += `;left:${firstRect.left - wr.left}px;top:${firstRect.top - wr.top}px;height:${firstRect.height}px`
   }
   m.layer.appendChild(caret)
 
-  const PER = 28
-  // Reveal chars sequentially
+  // Reveal chars sequentially with human-like variable speed
+  let currentDelay = 0
   charEls.forEach((el, i) => {
     const isSpace = el.textContent === ' ' || el.textContent === '\u00A0'
+    const isPunctuation = /[,.;(){}\[\]]/.test(el.textContent || '')
+    // Variable timing: spaces are fast, punctuation pauses slightly, others vary
+    const charDelay = isSpace ? 10 : isPunctuation ? 80 + Math.random() * 50 : 20 + Math.random() * 40
+    
     m.anims.push(el.animate(
       [{ opacity: 0 }, { opacity: 1 }],
-      { duration: isSpace ? 1 : 80, easing: 'ease-out', fill: 'forwards', delay: i * PER }
+      { duration: 10, easing: 'ease-out', fill: 'forwards', delay: currentDelay }
     ))
+
+    // Animate caret to the right of the current char
+    const r = el.getBoundingClientRect()
+    const x = r.right - wr.left
+    const y = r.top - wr.top
+    const isLast = i === charEls.length - 1
+    m.anims.push(caret.animate(
+      [{ left: `${x}px`, top: `${y}px` }],
+      { duration: isLast ? 1 : charDelay, easing: 'steps(1)', fill: 'forwards', delay: currentDelay }
+    ))
+
+    currentDelay += charDelay
   })
 
-  // Animate caret
-  if (charEls.length > 0) {
-    const lastIdx = charEls.length - 1
-    charEls.forEach((el, i) => {
-      const r = el.getBoundingClientRect()
-      const x = r.right - wr.left
-      const y = r.top - wr.top
-      const isLast = i === lastIdx
-      m.anims.push(caret.animate(
-        [{ left: `${x}px`, top: `${y}px` }],
-        { duration: isLast ? 1 : PER, easing: 'steps(1)', fill: 'forwards', delay: i * PER + (isLast ? PER * lastIdx : 0) }
-      ))
-    })
-  }
-
-  // Fade out "from" content
+  // Fade out "from" content gracefully
   from.forEach(f => {
     const fp = m.pos(f.rect)
     const el = m.add(Object.assign(document.createElement('span'), { textContent: f.text }))
     el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre`
     m.anims.push(el.animate(
       [{ opacity: 1 }, { opacity: 0 }],
-      { duration: 150, easing: 'ease-in', fill: 'forwards' }
+      { duration: 200, easing: 'ease-in-out', fill: 'forwards' }
     ))
   })
 }
 
-function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
+function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIdxRaw: number | null) {
   wrapper.innerHTML = toHtml
   void wrapper.offsetHeight
 
   const lines = wrapper.querySelectorAll('.cm-line')
   if (!lines.length) return
 
-  const targetIdx = Math.floor(lines.length / 2)
+  // Default to middle line if not specified, bounded to array
+  let targetIdx = targetIdxRaw !== null ? targetIdxRaw - 1 : Math.floor(lines.length / 2)
+  targetIdx = Math.max(0, Math.min(targetIdx, lines.length - 1))
+  
   const targetLine = lines[targetIdx] as HTMLElement
   const lr = targetLine.getBoundingClientRect()
   const wr = wrapper.getBoundingClientRect()
@@ -462,6 +506,8 @@ function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
   box.style.width = '0px'
   box.style.height = `${lr.height + 4}px`
   box.style.opacity = '0'
+  box.style.animation = 'cm-pulse 2.5s ease-in-out infinite alternate'
+  box.style.animationDelay = '0.7s'
   wrapper.insertBefore(box, wrapper.firstChild)
 
   // Dim other lines
@@ -480,14 +526,17 @@ function animHighlight(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
   ))
 }
 
-function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
+function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement, targetIdxRaw: number | null) {
   wrapper.innerHTML = toHtml
   void wrapper.offsetHeight
 
   const lines = wrapper.querySelectorAll('.cm-line')
   if (!lines.length) return
 
-  const targetIdx = Math.floor(lines.length / 2)
+  // Default to middle line if not specified, bounded to array
+  let targetIdx = targetIdxRaw !== null ? targetIdxRaw - 1 : Math.floor(lines.length / 2)
+  targetIdx = Math.max(0, Math.min(targetIdx, lines.length - 1))
+  
   const targetLine = lines[targetIdx] as HTMLElement
   const lr = targetLine.getBoundingClientRect()
   const wr = wrapper.getBoundingClientRect()
@@ -505,6 +554,8 @@ function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
   box.style.width = `${lr.width + 18}px`
   box.style.height = `${lr.height + 4}px`
   box.style.opacity = '0'
+  box.style.animation = 'cm-pulse 2.5s ease-in-out infinite alternate'
+  box.style.animationDelay = '0.85s'
   wrapper.insertBefore(box, wrapper.firstChild)
 
   // Dim others
@@ -519,7 +570,7 @@ function animScroll(m: AnimLayer, toHtml: string, wrapper: HTMLElement) {
   // Scroll wrapper
   m.anims.push(wrapper.animate(
     [{ transform: 'translateY(0)' }, { transform: `translateY(${dy}px)` }],
-    { duration: 600, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
+    { duration: 600, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards' }
   ))
 
   // Show box
@@ -548,7 +599,15 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
   const afterCode = parts[1]?.trim() || ''
   const lang = detectLang(beforeCode || afterCode)
   const validMode = (m: string): AnimMode => ANIM_MODES.some(a => a.key === m) ? m as AnimMode : 'morph'
-  const [animMode, setAnimMode] = useState<AnimMode>(validMode(initialAnim || 'morph'))
+  
+  // Parse mode and potential target (e.g., highlight:3)
+  const animParts = (initialAnim || 'morph').split(':')
+  const baseModeStr = animParts[0].trim()
+  const parsedTarget = parseInt(animParts[1]?.trim() || '', 10)
+  
+  const [animMode, setAnimMode] = useState<AnimMode>(validMode(baseModeStr))
+  const animTargetIdx = isNaN(parsedTarget) ? null : parsedTarget
+  
   const [morphed, setMorphed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [beforeHtml, setBeforeHtml] = useState('')
@@ -617,29 +676,44 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
     const wrapper = stageRef.current
     setMorphing(true)
     try {
-      const from = measureTokens(wrapper, fromHtml)
-      const to = measureTokens(wrapper, toHtml)
-      const h2 = wrapper.scrollHeight
+      // 1. Accurately measure heights first
+      wrapper.style.height = ''
       wrapper.innerHTML = fromHtml
       void wrapper.offsetHeight
       const h1 = wrapper.scrollHeight
+      
+      wrapper.innerHTML = toHtml
+      void wrapper.offsetHeight
+      const h2 = wrapper.scrollHeight
+      
+      // 2. Lock height to max to prevent page scroll/layout shift during measurements
+      wrapper.style.height = `${Math.max(h1, h2)}px`
+      
+      const from = measureTokens(wrapper, fromHtml)
+      const to = measureTokens(wrapper, toHtml)
+      
       const matched = matchByKey(from, to)
       wrapper.innerHTML = ''
       const m = buildAnimLayer(wrapper, [])
-      const lockH = animMode === 'diff' || animMode === 'flight' ? 0 : Math.max(h1, h2, 80)
-      if (lockH > 0) wrapper.style.minHeight = `${lockH}px`
+      
+      // 3. Set starting height for animation
+      if (animMode !== 'diff' && animMode !== 'flight') {
+        wrapper.style.height = `${h1}px`
+        void wrapper.offsetHeight // force reflow
+        wrapper.style.height = `${h2}px` // smoothly transition to h2
+      } else {
+        wrapper.style.height = ''
+      }
 
       const fn = ANIM_FNS[animMode]
       if (animMode === 'diff') {
         (fn as Function)(m, from, to, fromHtml, toHtml, wrapper, () => {})
       } else if (animMode === 'flight') {
         (fn as Function)(m, from, to, fromHtml, toHtml, wrapper)
+      } else if (animMode === 'highlight' || animMode === 'scroll') {
+        (fn as Function)(m, toHtml, wrapper, animTargetIdx)
       } else if (animMode === 'typewriter') {
         (fn as Function)(m, from, to, toHtml, wrapper)
-      } else if (animMode === 'highlight') {
-        (fn as Function)(m, toHtml, wrapper)
-      } else if (animMode === 'scroll') {
-        (fn as Function)(m, toHtml, wrapper)
       } else if (animMode === 'morph') {
         (fn as Function)(m, matched)
       } else {
@@ -648,6 +722,7 @@ export default function CodeMorphBlock({ code, anim: initialAnim }: CodeMorphBlo
 
       await Promise.all(m.anims.map(a => a.finished.catch(() => {})))
       wrapper.style.position = ''
+      wrapper.style.height = ''
       wrapper.style.minHeight = ''
       
       const keepStructure = ['diff', 'highlight', 'scroll'].includes(animMode)
