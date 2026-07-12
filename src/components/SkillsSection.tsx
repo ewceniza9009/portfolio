@@ -169,7 +169,7 @@ const SkillTag = React.memo(React.forwardRef<HTMLSpanElement, {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0, y: -10 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="skill-tag inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all duration-300"
+      className="skill-tag group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all duration-300"
       style={{
         background: isHovered && hoverColors ? hoverColors.bg : defaultBg,
         color: isHovered && hoverColors ? hoverColors.color : 'var(--text-secondary)',
@@ -178,12 +178,15 @@ const SkillTag = React.memo(React.forwardRef<HTMLSpanElement, {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -2, scale: 1.05 }}
     >
-      {typeof skill.icon === 'string' && TECH_ICONS[skill.icon] 
-        ? React.createElement(TECH_ICONS[skill.icon], { size: 14 }) 
-        : (typeof skill.icon !== 'string' && skill.icon && React.createElement(skill.icon as any, { size: 14 }))}
-      {skill.name}
+      {/* Hover lift lives on an inner node so it doesn't fight the parent's
+          `layout` (FLIP) transform — otherwise you get a flickering ghost. */}
+      <span className="inline-flex items-center gap-1.5 transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04]">
+        {typeof skill.icon === 'string' && TECH_ICONS[skill.icon]
+          ? React.createElement(TECH_ICONS[skill.icon], { size: 14 })
+          : (typeof skill.icon !== 'string' && skill.icon && React.createElement(skill.icon as any, { size: 14 }))}
+        {skill.name}
+      </span>
     </motion.span>
   )
 }))
@@ -295,7 +298,7 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
                   {BACKGROUND_DECORATIONS[category] || null}
 
                   <motion.div layout className="relative z-10 flex flex-wrap gap-2.5">
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                       {data.items.map((skill) => {
                         if (filterMode === 'core' && skill.level === 'familiar') return null;
                         return (
