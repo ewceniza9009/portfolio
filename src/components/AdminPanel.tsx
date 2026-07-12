@@ -1414,6 +1414,8 @@ function AdminPanel() {
       published: blogPublished ? 1 : 0,
       read_time: blogReadTime,
       cover_image: blogCoverImage,
+      devto_summary: blogDevtoSummary,
+      social_summary: blogSocialSummary,
     };
 
     try {

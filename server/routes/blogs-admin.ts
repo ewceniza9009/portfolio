@@ -48,7 +48,7 @@ router.post('/api/admin/upload', authMiddleware, upload.single('image'), (req, r
 // Get all blogs (drafts + published)
 router.get('/api/admin/blogs', authMiddleware, async (_req, res) => {
   try {
-    const result = await turso.execute('SELECT id, slug, title, content, summary, tags, category, published, likes, read_time, cover_image, created_at, updated_at FROM blogs ORDER BY created_at DESC')
+    const result = await turso.execute('SELECT id, slug, title, content, summary, tags, category, published, likes, read_time, cover_image, devto_summary, social_summary, created_at, updated_at FROM blogs ORDER BY created_at DESC')
     res.json(result.rows)
   } catch (err) {
     console.error('Fetch admin blogs error:', err)
@@ -59,15 +59,15 @@ router.get('/api/admin/blogs', authMiddleware, async (_req, res) => {
 // Create a new blog post
 router.post('/api/admin/blogs', authMiddleware, async (req, res) => {
   try {
-    const { title, slug, content, summary, tags, category, published, read_time, cover_image } = req.body
+    const { title, slug, content, summary, tags, category, published, read_time, cover_image, devto_summary, social_summary } = req.body
     if (!title || !slug || !content) {
       return res.status(400).json({ error: 'Title, slug, and content are required' })
     }
 
     const id = uuidv4()
     await turso.execute({
-      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, category, published, read_time, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [id, slug, title, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null] as any,
+      sql: 'INSERT INTO blogs (id, slug, title, content, summary, tags, category, published, read_time, cover_image, devto_summary, social_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [id, slug, title, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null, devto_summary || null, social_summary || null] as any,
     })
 
     res.json({ success: true, id })
@@ -87,14 +87,14 @@ router.post('/api/admin/blogs', authMiddleware, async (req, res) => {
 // Update an existing blog post
 router.put('/api/admin/blogs/:id', authMiddleware, async (req, res) => {
   try {
-    const { title, slug, content, summary, tags, category, published, read_time, cover_image } = req.body
+    const { title, slug, content, summary, tags, category, published, read_time, cover_image, devto_summary, social_summary } = req.body
     if (!title || !slug || !content) {
       return res.status(400).json({ error: 'Title, slug, and content are required' })
     }
 
     await turso.execute({
-      sql: "UPDATE blogs SET title = ?, slug = ?, content = ?, summary = ?, tags = ?, category = ?, published = ?, read_time = ?, cover_image = ?, updated_at = datetime('now') WHERE id = ?",
-      args: [title, slug, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null, req.params.id] as any,
+      sql: "UPDATE blogs SET title = ?, slug = ?, content = ?, summary = ?, tags = ?, category = ?, published = ?, read_time = ?, cover_image = ?, devto_summary = ?, social_summary = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [title, slug, content, summary || null, tags || null, category || 'General', published ? 1 : 0, read_time || null, cover_image || null, devto_summary || null, social_summary || null, req.params.id] as any,
     })
 
     res.json({ success: true })
