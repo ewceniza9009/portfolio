@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, memo } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Sun, Moon, Palette, BookOpen, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -181,22 +182,48 @@ interface NavbarProps {
 export function AccentDropdown() {
   const { theme, accent, setAccent: onChangeAccent } = useGlobalTheme()
   const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        btnRef.current &&
+        !btnRef.current.contains(event.target as Node) &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    window.addEventListener('scroll', () => setIsOpen(false), true)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', () => setIsOpen(false), true)
+    }
   }, [])
 
+  // Position the portal menu under the trigger button (escapes ancestor
+  // overflow/stacking contexts, which is why it was clipped on the admin panel).
+  const place = () => {
+    const el = btnRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setCoords({ top: r.bottom + 8, left: r.right - 192 })
+  }
+
+  const toggle = () => {
+    if (!isOpen) place()
+    setIsOpen((o) => !o)
+  }
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={btnRef}
+        onClick={toggle}
         aria-label="Customize accent color"
         className="no-ripple w-10 h-10 rounded-full flex items-center justify-center border relative transition-transform hover:scale-105"
         style={{ borderColor: 'var(--border)', background: 'var(--bg-card)', color: 'var(--accent)' }}
@@ -209,41 +236,51 @@ export function AccentDropdown() {
         />
       </motion.button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-48 rounded-2xl p-2 glass shadow-xl z-50 border"
-            style={ACCENT_DROPDOWN_STYLE}
-          >
-            <div className="text-[10px] uppercase font-bold tracking-wider px-3 py-1 mb-1 text-muted" style={{ color: 'var(--text-muted)' }}>
-              Branding Color
-            </div>
-            {Object.entries(ACCENT_THEMES).map(([key, data]) => {
-              const active = accent === key
-              const colorDot = theme === 'dark' ? data.dark.accent : data.light.accent
-              
-              return (
-                <button
-                  key={key}
-                  onClick={() => { onChangeAccent(key as AccentKey); setIsOpen(false) }}
-                  className="no-ripple w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors hover:bg-[var(--accent-dim)]"
-                  style={{ 
-                    color: active ? 'var(--accent)' : 'var(--text-secondary)'
-                  }}
-                >
-                  <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ background: colorDot }} />
-                  <span className="truncate">{data.name.split(' (')[0]}</span>
-                </button>
-              )
-            })}
-          </motion.div>
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                ref={menuRef}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="fixed w-48 rounded-2xl p-2 glass shadow-xl border"
+                style={{
+                  ...ACCENT_DROPDOWN_STYLE,
+                  top: coords.top,
+                  left: coords.left,
+                  zIndex: 2147483647,
+                }}
+              >
+                <div className="text-[10px] uppercase font-bold tracking-wider px-3 py-1 mb-1 text-muted" style={{ color: 'var(--text-muted)' }}>
+                  Branding Color
+                </div>
+                {Object.entries(ACCENT_THEMES).map(([key, data]) => {
+                  const active = accent === key
+                  const colorDot = theme === 'dark' ? data.dark.accent : data.light.accent
+                  
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => { onChangeAccent(key as AccentKey); setIsOpen(false) }}
+                      className="no-ripple w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors hover:bg-[var(--accent-dim)]"
+                      style={{ 
+                        color: active ? 'var(--accent)' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ background: colorDot }} />
+                      <span className="truncate">{data.name.split(' (')[0]}</span>
+                    </button>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
-    </div>
+    </>
   )
 }
 
@@ -319,6 +356,9 @@ export default function Navbar({ activeSection, onScrollTo }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const isHomePage = location.pathname === '/' || location.pathname === ''
+  // The admin route has its own DashboardHeader; don't render the global
+  // navbar there or it will overlap and clip the admin header's dropdown.
+  if (location.pathname.startsWith('/admin')) return null
 
   useEffect(() => {
     const handleCloseMenu = () => setMobileMenuOpen(false)
