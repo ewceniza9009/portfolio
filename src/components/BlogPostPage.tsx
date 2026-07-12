@@ -661,7 +661,7 @@ export default function BlogPostPage() {
 
         {/* Desktop Sidebar TOC */}
         <aside className="hidden lg:block w-72 shrink-0 sticky top-32">
-          {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} alwaysOpen />}
+          {tableOfContents.length > 0 && <BlogTOC headings={tableOfContents} alwaysOpen scrollable />}
         </aside>
       </main>
 

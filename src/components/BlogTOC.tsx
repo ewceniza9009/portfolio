@@ -30,14 +30,18 @@ export function extractHeadings(content: string): TocHeading[] {
   return headings.filter(h => h.level >= 2 && h.level <= 3).slice(0, 20)
 }
 
-export default function BlogTOC({ headings, alwaysOpen = false }: { headings: TocHeading[], alwaysOpen?: boolean }) {
+export default function BlogTOC({ headings, alwaysOpen = false, scrollable = false }: { headings: TocHeading[], alwaysOpen?: boolean, scrollable?: boolean }) {
   const [open, setOpen] = useState(alwaysOpen)
   if (!headings.length) return null
   return (
     <nav
       aria-label="Table of contents"
-      className="mb-10 rounded-2xl border glass"
-      style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
+      className={`mb-10 rounded-2xl border glass${scrollable ? ' overflow-y-auto custom-scrollbar' : ''}`}
+      style={{
+        borderColor: 'var(--border)',
+        background: 'var(--bg-card)',
+        ...(scrollable ? { maxHeight: 'calc(100vh - 12rem)' } : {}),
+      }}
     >
       {!alwaysOpen ? (
         <button
