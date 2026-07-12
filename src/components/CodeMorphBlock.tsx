@@ -1151,7 +1151,11 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     const delay = (Math.floor(fp.left) * 47) % 600 + (fp.top * 1.5);
     
     const scramble = setInterval(() => {
-       if (f.text.trim()) el.textContent = chars[Math.floor(Math.random() * chars.length)];
+       if (f.text.trim()) {
+         let s = '';
+         for (let i = 0; i < f.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
+         el.textContent = s;
+       }
     }, 50);
 
     const anim = el.animate(
@@ -1177,7 +1181,11 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     const delay = (Math.floor(tp.left) * 47) % 600 + (tp.top * 1.5) + 300;
     
     const scramble = setInterval(() => {
-       if (t.text.trim()) el.textContent = chars[Math.floor(Math.random() * chars.length)];
+       if (t.text.trim()) {
+         let s = '';
+         for (let i = 0; i < t.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
+         el.textContent = s;
+       }
     }, 50);
 
     const anim = el.animate(
