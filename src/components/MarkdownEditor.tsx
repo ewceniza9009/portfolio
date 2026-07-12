@@ -2981,6 +2981,43 @@ return a + b;
                     <div>{"```"}</div>
                   </div>
                 </div>
+                {/* Example 16: Explainer Annotations (// !) */}
+                <div className="mb-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Explainer Annotations (// !)
+                  </p>
+                  <div
+                    className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
+                    style={{ background: "var(--bg-secondary)" }}
+                  >
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          '```code-morph morph\nconst a = 1;\n// ! We start with a single variable\n---\nconst a = 1;\nconst b = 2;\n// ! Then we add a second one\n```'
+                        )
+                      }
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Copy"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    <div>{"```code-morph morph"}</div>
+                    <div>const a = 1;</div>
+                    <div style={{ color: "var(--accent)" }}>// ! We start with a single variable</div>
+                    <div style={{ color: "var(--text-muted)" }}>---</div>
+                    <div>const a = 1;</div>
+                    <div>const b = 2;</div>
+                    <div style={{ color: "var(--accent)" }}>// ! Then we add a second one</div>
+                    <div>{"```"}</div>
+                  </div>
+                </div>
               </section>
             </div>
 
