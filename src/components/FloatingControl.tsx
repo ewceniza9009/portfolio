@@ -1417,6 +1417,7 @@ export default function FloatingControl() {
       if (!detail) return;
       setPendingChatPrompt(detail.prompt ?? null);
       setPendingCodebaseContext(detail.codebaseContext ?? null);
+      setPendingChatNonce((n) => n + 1);
       setMode("chat");
     };
     window.addEventListener("open-ai-chat", onOpenAIChat as EventListener);
@@ -1707,6 +1708,7 @@ export default function FloatingControl() {
             onOpenChat={(prompt, codebaseContext) => {
               setPendingChatPrompt(prompt);
               setPendingCodebaseContext(codebaseContext ?? null);
+              setPendingChatNonce((n) => n + 1);
               setMode("chat");
             }}
           />
@@ -1719,6 +1721,7 @@ export default function FloatingControl() {
           <ChatWindow
             onClose={handleClose}
             initialPrompt={pendingChatPrompt ?? undefined}
+            initialPromptNonce={pendingChatNonce}
             codebaseContext={pendingCodebaseContext ?? undefined}
           />
         )}
