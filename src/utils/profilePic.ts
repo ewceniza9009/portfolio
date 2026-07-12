@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getApiUrl, getAdminToken } from './api'
 
-const DEFAULT_PIC = '/img/profile-pic.png'
+const DEFAULT_PIC = '/img/profile-pic.png?v=' + Date.now();
 
 interface ProfilePicState {
   url: string
