@@ -1139,42 +1139,67 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
 }
 
 function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
-  from.forEach((f, i) => {
+  const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890!@#$%^&*";
+  
+  from.forEach((f) => {
     const fp = m.pos(f.rect);
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: f.text }),
     );
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:#0f0;font-weight:${f.weight};white-space:pre;will-change:opacity,transform`;
-    m.anims.push(
-      el.animate(
-        [
-          { opacity: 1, transform: "translateY(0)" },
-          { opacity: 0, transform: "translateY(20px)" },
-        ],
-        { duration: 300, easing: "ease-in", fill: "both", delay: i * 3 },
-      ),
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:#0f0;text-shadow:0 0 5px #0f0;font-weight:${f.weight};white-space:pre;will-change:opacity,transform,color`;
+    
+    const delay = (Math.floor(fp.left) * 47) % 600 + (fp.top * 1.5);
+    
+    const scramble = setInterval(() => {
+       if (f.text.trim()) el.textContent = chars[Math.floor(Math.random() * chars.length)];
+    }, 50);
+
+    const anim = el.animate(
+      [
+        { opacity: 1, transform: "translateY(0)", color: "#fff" },
+        { opacity: 0.8, transform: "translateY(5px)", color: "#0f0" },
+        { opacity: 0, transform: "translateY(30px)", color: "#003300" },
+      ],
+      { duration: 500, easing: "ease-in", fill: "both", delay },
     );
+    
+    anim.finished.finally(() => clearInterval(scramble));
+    m.anims.push(anim);
   });
-  to.forEach((t, i) => {
+
+  to.forEach((t) => {
     const tp = m.pos(t.rect);
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: t.text }),
     );
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:#0f0;font-weight:${t.weight};white-space:pre;will-change:opacity,transform`;
-    m.anims.push(
-      el.animate(
-        [
-          { opacity: 0, transform: "translateY(-20px)" },
-          { opacity: 1, transform: "translateY(0)", color: t.color },
-        ],
-        {
-          duration: 300,
-          easing: "ease-out",
-          fill: "both",
-          delay: i * 3 + 200,
-        },
-      ),
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:#0f0;text-shadow:0 0 5px #0f0;font-weight:${t.weight};white-space:pre;will-change:opacity,transform,color`;
+    
+    const delay = (Math.floor(tp.left) * 47) % 600 + (tp.top * 1.5) + 300;
+    
+    const scramble = setInterval(() => {
+       if (t.text.trim()) el.textContent = chars[Math.floor(Math.random() * chars.length)];
+    }, 50);
+
+    const anim = el.animate(
+      [
+        { opacity: 0, transform: "translateY(-30px)", color: "#fff", textShadow: "0 0 8px #fff" },
+        { opacity: 1, transform: "translateY(0)", color: "#0f0", textShadow: "0 0 5px #0f0" },
+        { opacity: 1, transform: "translateY(0)", color: t.color, textShadow: "none" },
+      ],
+      {
+        duration: 700,
+        easing: "ease-out",
+        fill: "both",
+        delay,
+      },
     );
+    
+    anim.finished.finally(() => {
+      clearInterval(scramble);
+      el.textContent = t.text;
+    });
+    
+    m.anims.push(anim);
   });
 }
 
