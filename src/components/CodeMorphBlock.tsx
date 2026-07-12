@@ -1160,9 +1160,9 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
       
       el.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${token.weight};will-change:opacity,transform,color`;
       
-      // Column-based staggering + random offset
-      const colDelay = (Math.floor(x / 10) * 137) % 1500;
-      const delay = colDelay + (isOutgoig ? 0 : 500);
+      // Column-based staggering + random offset (sped up for ~1.5s total anim)
+      const colDelay = (Math.floor(x / 10) * 137) % 600;
+      const delay = colDelay + (isOutgoig ? 0 : 300);
 
       const scramble = setInterval(() => {
          el.textContent = chars[Math.floor(Math.random() * chars.length)];
@@ -1179,7 +1179,7 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
           { opacity: 1, transform: "translateY(0)", color: token.color, textShadow: "none" },
         ],
         { 
-          duration: isOutgoig ? 800 : 1200, 
+          duration: isOutgoig ? 600 : 1000, 
           easing: isOutgoig ? "ease-in" : "ease-out", 
           fill: "both", 
           delay 
