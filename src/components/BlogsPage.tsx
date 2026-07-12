@@ -130,10 +130,11 @@ const BLOG_PAGE_STYLES = `
   .aurora-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(140px);
+    filter: blur(80px);
     pointer-events: none;
     z-index: 0;
-    mix-blend-mode: screen;
+    will-change: transform;
+    transform: translateZ(0);
   }
   .aurora-container {
     position: absolute;
@@ -240,7 +241,7 @@ export default function BlogsPage() {
       
       <CursorFollower />
       
-      <div className="min-h-screen transition-colors duration-300 relative overflow-x-hidden flex flex-col justify-between" style={{ color: 'var(--text-primary)', background: 'var(--bg-primary)' }}>
+      <div className="min-h-screen relative overflow-x-hidden flex flex-col justify-between" style={{ color: 'var(--text-primary)', background: 'var(--bg-primary)' }}>
         
         {/* Dynamic Aurora Backdrop */}
         <div className="aurora-container">
