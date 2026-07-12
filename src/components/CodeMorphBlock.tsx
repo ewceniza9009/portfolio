@@ -1332,27 +1332,27 @@ export default function CodeMorphBlock({
     };
   }, [beforeCode, afterCode, lang]);
 
-  // Instant theme swap from cache — useLayoutEffect runs before browser paint
+  // Sync theme from DOM — useLayoutEffect fires synchronously after React commits, BEFORE paint
+  // This ensures the "after" snapshot of startViewTransition sees the correct colors
   useLayoutEffect(() => {
     const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
     const cached = cacheRef.current[cacheKey];
+
     if (cached) {
-      const isDark = globalTheme === "dark";
-      const html = isDark ? cached.darkBefore : cached.lightBefore;
-      setBeforeHtml(html);
-      setAfterHtml(isDark ? cached.darkAfter : cached.lightAfter);
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      // If morph has played, show AFTER code; otherwise show BEFORE code
+      const html = morphed
+        ? (isDark ? cached.darkAfter : cached.lightAfter)
+        : (isDark ? cached.darkBefore : cached.lightBefore);
       if (stageRef.current) {
         stageRef.current.innerHTML = html;
       }
-    }
-  }, [globalTheme, beforeCode, afterCode, lang]);
-
-  // Sync beforeHtml to stage div (initial load only)
-  useEffect(() => {
-    if (!loading && beforeHtml && stageRef.current) {
+    } else if (!loading && beforeHtml && stageRef.current) {
       stageRef.current.innerHTML = beforeHtml;
     }
-  }, [beforeHtml, loading]);
+  }, [globalTheme, morphed, beforeCode, afterCode, lang, beforeHtml, loading]);
+
+  // Remove the separate useEffect that was overwriting the theme swap
 
   const runMorph = useCallback(
     async (fromHtml: string, toHtml: string, forward: boolean) => {

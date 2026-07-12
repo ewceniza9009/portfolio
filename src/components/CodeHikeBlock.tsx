@@ -593,10 +593,13 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
     };
   }, [cleanLines, lang]);
 
+  // Sync theme from DOM — useLayoutEffect fires synchronously after React commits, BEFORE paint
+  // This ensures the "after" snapshot of startViewTransition sees the correct colors
   useLayoutEffect(() => {
     const cacheKey = cleanLines.join("\n");
     const cached = cacheRef.current[cacheKey];
     if (cached) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       setHighlightedLines(isDark ? cached.dark : cached.light);
     }
   }, [isDark, cleanLines]);
