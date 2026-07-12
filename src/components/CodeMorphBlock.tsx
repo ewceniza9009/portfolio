@@ -1138,93 +1138,150 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
   });
 }
 
-function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
-  const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890!@#$%^&*";
-  const spawned: { el: HTMLElement; target: string; outgoing: boolean }[] = [];
+function animMatrix(
+  m: AnimLayer,
+  _from: TokenRect[],
+  to: TokenRect[],
+  _toHtml?: string,
+) {
+  const layer = m.layer;
+  const cssW = layer.clientWidth || 320;
+  const cssH = layer.clientHeight || 200;
+  const fontSize = Math.max(
+    10,
+    parseFloat(getComputedStyle(layer).fontSize) || 14,
+  );
+  const DURATION = 1500;
+  const chars =
+    "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789=+-*/<>{}[]()/$#";
+  const randGlyph = () => chars[(Math.random() * chars.length) | 0];
 
-  // Per-token rain: split into individual chars that cascade in aligned
-  // columns. Each char gets ONE Web Animations instance (no timers).
-  const spawnRain = (token: TokenRect, isOutgoing: boolean) => {
-    const pos = m.pos(token.rect);
-    const text = token.text;
-    const charWidth = token.rect.width / Math.max(1, text.length);
+  // Theme colors so the rain blends with the app (dark or light).
+  const rootStyle = getComputedStyle(document.documentElement);
+  const accent = rootStyle.getPropertyValue("--accent").trim() || "#22d3ee";
+  const bg = rootStyle.getPropertyValue("--bg-primary").trim() || "#0b0f17";
 
+  // Build one cell per target character, positioned at its real code
+  // location. Each starts as a scrambling matrix glyph and "locks" into its
+  // real character (in its syntax color) — left to right — so the rain
+  // visibly decrypts into the next snapshot's code.
+  const cells: {
+    x: number;
+    y: number;
+    ch: string;
+    color: string;
+    settled: boolean;
+    g: string;
+    settleAt: number;
+  }[] = [];
+  let maxX = 1;
+  for (const t of to) {
+    const text = t.text;
+    if (!text) continue;
+    const cw = (t.rect.width || text.length * fontSize) / Math.max(1, text.length);
+    const p = m.pos(t.rect);
     for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if (!char.trim()) continue; // Skip spaces
-
-      const x = pos.left + i * charWidth;
-      // Align into ~14px columns so the cascade reads as vertical rain.
-      const col = Math.floor(x / 14);
-      const delay = (col * 70) % 900 + (isOutgoing ? 0 : 250);
-
-      const el = m.add(
-        Object.assign(document.createElement("span"), { textContent: char }),
-      );
-      el.style.cssText = `position:absolute;left:${x}px;top:${pos.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${token.weight};will-change:transform,opacity`;
-
-      spawned.push({ el, target: char, outgoing: isOutgoing });
-
-      const anim = el.animate(
-        isOutgoing ? [
-          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)" },
-          { opacity: 0.85, transform: "translateY(18px)", color: "var(--matrix-color)" },
-          { opacity: 0, transform: "translateY(64px)", color: "var(--matrix-bg)" },
-        ] : [
-          { opacity: 0, transform: "translateY(-64px)", color: "var(--matrix-bg)" },
-          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)", offset: 0.75 },
-          { opacity: 1, transform: "translateY(0)", color: token.color, textShadow: "none" },
-        ],
-        {
-          duration: isOutgoing ? 700 : 1100,
-          easing: isOutgoing ? "ease-in" : "ease-out",
-          fill: "both",
-          delay,
-        },
-      );
-
-      anim.finished.finally(() => {
-        if (!isOutgoing) el.textContent = char;
+      const ch = text[i];
+      const x = p.left + i * cw;
+      if (x > maxX) maxX = x;
+      cells.push({
+        x,
+        y: p.top,
+        ch,
+        color: t.color,
+        settled: false,
+        g: randGlyph(),
+        settleAt: 0,
       });
+    }
+  }
+  cells.sort((a, b) => a.x - b.x || a.y - b.y);
+  cells.forEach((c) => {
+    c.settleAt = (c.x / maxX) * (DURATION * 0.7) + Math.random() * 160;
+  });
 
-      m.anims.push(anim);
+  // Faint falling-rain ambiance behind the decrypt.
+  const cols = Math.max(1, Math.floor(cssW / fontSize));
+  const drops = new Array(cols)
+    .fill(0)
+    .map(() => Math.floor((Math.random() * cssH) / fontSize) * -1);
+
+  const canvas = m.add(document.createElement("canvas")) as HTMLCanvasElement;
+  canvas.style.cssText = `position:absolute;inset:0;opacity:1;filter:drop-shadow(0 0 6px ${accent})`;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(cssW * dpr);
+  canvas.height = Math.floor(cssH * dpr);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.scale(dpr, dpr);
+  ctx.font = `${fontSize}px JetBrains Mono, Fira Code, Cascadia Code, Consolas, monospace`;
+  ctx.textBaseline = "top";
+
+  const draw = (elapsed: number) => {
+    // Trail fade in the theme background.
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.globalAlpha = 1;
+
+    // Ambient columns.
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < cols; i++) {
+      const ch = randGlyph();
+      ctx.fillStyle = accent;
+      ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > cssH && Math.random() > 0.975) drops[i] = 0;
+      drops[i] += 1;
+    }
+    ctx.globalAlpha = 1;
+
+    // Decrypt grid: matrix glyphs locking into the real code.
+    for (const c of cells) {
+      if (!c.settled && elapsed >= c.settleAt) c.settled = true;
+      if (c.settled) {
+        if (c.ch.trim()) {
+          ctx.fillStyle = c.color;
+          ctx.fillText(c.ch, c.x, c.y);
+        }
+      } else if (c.ch.trim()) {
+        if (Math.random() < 0.25) c.g = randGlyph();
+        ctx.fillStyle = accent;
+        ctx.fillText(c.g, c.x, c.y);
+      }
     }
   };
 
-  from.forEach((f) => spawnRain(f, true));
-  to.forEach((t) => spawnRain(t, false));
+  let raf = 0;
+  let stopped = false;
+  const startT = performance.now();
+  const frame = (now: number) => {
+    if (stopped) return;
+    draw(now - startT);
+    if (now - startT < DURATION) raf = requestAnimationFrame(frame);
+    else stop();
+  };
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    cancelAnimationFrame(raf);
+  };
+  raf = requestAnimationFrame(frame);
 
-  // A SINGLE shared scramble loop for every char — far smoother than one
-  // setInterval per character (which spawned hundreds of competing timers
-  // and caused the stutter). A sentinel animation keeps runMorph waiting
-  // until the rain settles and clears everything on cancel.
-  if (spawned.length) {
-    const SETTLE = 2300;
-    let settled = false;
-    const scramble = window.setInterval(() => {
-      for (const s of spawned)
-        s.el.textContent = chars[(Math.random() * chars.length) | 0];
-    }, 60);
-    const cleanup = () => {
-      if (settled) return;
-      settled = true;
-      window.clearInterval(scramble);
-      for (const s of spawned) if (!s.outgoing) s.el.textContent = s.target;
-    };
-    window.setTimeout(cleanup, SETTLE);
-    m.anims.push({
-      playState: "running",
-      play() {},
-      pause() {},
-      cancel: cleanup,
-      get finished() {
-        return new Promise<void>((res) => {
-          const check = () => (settled ? res() : setTimeout(check, 50));
-          check();
-        });
-      },
-    } as unknown as Animation);
-  }
+  // Sentinel keeps runMorph awaiting until the decrypt finishes and cancels
+  // the rAF loop on scrub/cancel. (runMorph then swaps in the real toHtml,
+  // which now matches what the canvas already shows.)
+  m.anims.push({
+    playState: "running",
+    play() {},
+    pause() {},
+    cancel: stop,
+    get finished() {
+      return new Promise<void>((res) => {
+        const check = () => (stopped ? res() : setTimeout(check, 50));
+        check();
+      });
+    },
+  } as unknown as Animation);
 }
 
 function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
