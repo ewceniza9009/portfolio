@@ -1148,7 +1148,8 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     );
     el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:#0f0;text-shadow:0 0 5px #0f0;font-weight:${f.weight};white-space:pre;will-change:opacity,transform,color`;
     
-    const delay = (Math.floor(fp.left) * 47) % 600 + (fp.top * 1.5);
+    // Spread the drop delay out over a longer 1200ms modulo to slow down the waves
+    const delay = (Math.floor(fp.left) * 47) % 1200 + (fp.top * 2.5);
     
     const scramble = setInterval(() => {
        if (f.text.trim()) {
@@ -1156,15 +1157,15 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
          for (let i = 0; i < f.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
          el.textContent = s;
        }
-    }, 50);
+    }, 80); // Slower scramble
 
     const anim = el.animate(
       [
         { opacity: 1, transform: "translateY(0)", color: "#fff" },
-        { opacity: 0.8, transform: "translateY(5px)", color: "#0f0" },
-        { opacity: 0, transform: "translateY(30px)", color: "#003300" },
+        { opacity: 0.8, transform: "translateY(10px)", color: "#0f0" },
+        { opacity: 0, transform: "translateY(40px)", color: "#003300" },
       ],
-      { duration: 500, easing: "ease-in", fill: "both", delay },
+      { duration: 800, easing: "ease-in", fill: "both", delay },
     );
     
     anim.finished.finally(() => clearInterval(scramble));
@@ -1178,7 +1179,8 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     );
     el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:#0f0;text-shadow:0 0 5px #0f0;font-weight:${t.weight};white-space:pre;will-change:opacity,transform,color`;
     
-    const delay = (Math.floor(tp.left) * 47) % 600 + (tp.top * 1.5) + 300;
+    // Add base delay to wait for `from` animations to clear a bit
+    const delay = (Math.floor(tp.left) * 47) % 1200 + (tp.top * 2.5) + 500;
     
     const scramble = setInterval(() => {
        if (t.text.trim()) {
@@ -1186,16 +1188,16 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
          for (let i = 0; i < t.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
          el.textContent = s;
        }
-    }, 50);
+    }, 80); // Slower scramble
 
     const anim = el.animate(
       [
-        { opacity: 0, transform: "translateY(-30px)", color: "#fff", textShadow: "0 0 8px #fff" },
+        { opacity: 0, transform: "translateY(-40px)", color: "#fff", textShadow: "0 0 8px #fff" },
         { opacity: 1, transform: "translateY(0)", color: "#0f0", textShadow: "0 0 5px #0f0" },
         { opacity: 1, transform: "translateY(0)", color: t.color, textShadow: "none" },
       ],
       {
-        duration: 700,
+        duration: 1200, // Slower fade in
         easing: "ease-out",
         fill: "both",
         delay,
