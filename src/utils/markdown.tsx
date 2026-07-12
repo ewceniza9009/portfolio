@@ -9,7 +9,29 @@ import ChartBlock from '../components/ChartBlock'
 import CodeHikeBlock from '../components/CodeHikeBlock'
 import RemotionBlock from '../components/RemotionBlock'
 import CodeMorphBlock from '../components/CodeMorphBlock'
+import { BlockErrorBoundary } from '../components/BlockErrorBoundary'
 import { slugifyHeading } from './slugify'
+
+// Fallback for a block that throws during render: show the raw code so the
+// article content is never lost, and the failure is visible/debuggable.
+function rawCodeFallback(label: string, code: string) {
+  return (error: Error) => (
+    <div className="my-6">
+      <div
+        className="rounded-t-xl px-3 py-2 text-xs font-bold border border-red-500/40 bg-red-500/10"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {label} failed to render: {error.message}
+      </div>
+      <pre
+        className="rounded-b-xl p-4 overflow-x-auto text-xs border border-t-0 border-red-500/30 bg-black/40"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {code}
+      </pre>
+    </div>
+  )
+}
 
 function detectLang(code: string): string {
   const t = code.trim()
@@ -827,25 +849,53 @@ export function parseMarkdown(md: string): React.ReactNode[] {
     const trimmedLine = line.trim()
     
     if (inCodeBlock) {
-      if (trimmedLine.startsWith('```')) {
-        // End of code block
+      if (/^```(?!`)\s*$/.test(trimmedLine)) {
+        // End of code block (exactly 3 backticks, optionally trailing whitespace)
         const codeText = codeLines.join('\n')
         if (codeLang.toLowerCase() === 'mermaid') {
-          result.push(<MermaidRenderer key={keyIndex++} code={codeText} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="Diagram" fallback={rawCodeFallback('Diagram', codeText)}>
+              <MermaidRenderer code={codeText} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase() === 'interactive-3d') {
-          result.push(<Interactive3DBlock key={keyIndex++} html={codeText} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="3D Block" fallback={rawCodeFallback('3D Block', codeText)}>
+              <Interactive3DBlock html={codeText} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase() === 'interactive') {
-          result.push(<InteractiveBlock key={keyIndex++} html={codeText} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="Interactive Block" fallback={rawCodeFallback('Interactive Block', codeText)}>
+              <InteractiveBlock html={codeText} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase() === 'chart') {
-          result.push(<ChartBlock key={keyIndex++} code={codeText} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="Chart" fallback={rawCodeFallback('Chart', codeText)}>
+              <ChartBlock code={codeText} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase().startsWith('codehike') || codeLang.toLowerCase().startsWith('code-hike')) {
           const meta = codeLang.replace(/code-?hike/i, '').trim()
-          result.push(<CodeHikeBlock key={keyIndex++} code={codeText} lang={detectLang(codeText)} meta={meta} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="CodeHike" fallback={rawCodeFallback('CodeHike', codeText)}>
+              <CodeHikeBlock code={codeText} lang={detectLang(codeText)} meta={meta} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase() === 'remotion') {
-          result.push(<RemotionBlock key={keyIndex++} code={codeText} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="Remotion" fallback={rawCodeFallback('Remotion', codeText)}>
+              <RemotionBlock code={codeText} />
+            </BlockErrorBoundary>
+          )
         } else if (codeLang.toLowerCase().startsWith('code-morph') || codeLang.toLowerCase().startsWith('codemorph')) {
           const meta = codeLang.replace(/code-?morph/i, '').trim()
-          result.push(<CodeMorphBlock key={keyIndex++} code={codeText} anim={meta} />)
+          result.push(
+            <BlockErrorBoundary key={keyIndex++} label="CodeMorph" fallback={rawCodeFallback('CodeMorph', codeText)}>
+              <CodeMorphBlock code={codeText} anim={meta} />
+            </BlockErrorBoundary>
+          )
         } else {
           const highlightedHtml = highlightCode(codeText, codeLang)
           result.push(
@@ -863,10 +913,12 @@ export function parseMarkdown(md: string): React.ReactNode[] {
         codeLines.push(line)
       }
     } else {
-      if (trimmedLine.startsWith('```')) {
+      if (/^`{3,}/.test(trimmedLine)) {
         flushCurrentBlock()
         inCodeBlock = true
-        codeLang = trimmedLine.slice(3).trim()
+        // Strip the leading fence; keep any language token after the 3rd backtick.
+        const after = trimmedLine.replace(/^`{3,}/, '')
+        codeLang = after.trim()
       } else if (trimmedLine.startsWith('#')) {
         flushCurrentBlock()
         result.push(parseBlock(trimmedLine, keyIndex++, slugCounter))

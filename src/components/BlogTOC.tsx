@@ -27,7 +27,7 @@ export function extractHeadings(content: string): TocHeading[] {
     const id = slugifyHeading(m[2], counter)
     headings.push({ id, text, level })
   }
-  return headings.filter(h => h.level >= 2 && h.level <= 3).slice(0, 20)
+  return headings.filter(h => h.level >= 2 && h.level <= 3)
 }
 
 export default function BlogTOC({ headings, alwaysOpen = false, scrollable = false }: { headings: TocHeading[], alwaysOpen?: boolean, scrollable?: boolean }) {
