@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from "react";
 import { Copy, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AccentKey } from "../data/accents";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
@@ -518,7 +518,6 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
   const cacheRef = useRef<Record<string, { dark: string[]; light: string[] }>>({});
 
   const isDark = theme === "dark";
-  const shikiTheme = isDark ? "github-dark" : "github-light";
 
   const { cleanLines, lineAnnotations } = useMemo(
     () => parseAnnotations(code),
@@ -594,7 +593,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
     };
   }, [cleanLines, lang]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const cacheKey = cleanLines.join("\n");
     const cached = cacheRef.current[cacheKey];
     if (cached) {

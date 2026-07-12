@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
 import { Play, RotateCcw, Copy, Check } from "lucide-react";
 
@@ -1332,18 +1332,22 @@ export default function CodeMorphBlock({
     };
   }, [beforeCode, afterCode, lang]);
 
-  // Instant theme swap from cache
-  useEffect(() => {
+  // Instant theme swap from cache — useLayoutEffect runs before browser paint
+  useLayoutEffect(() => {
     const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
     const cached = cacheRef.current[cacheKey];
     if (cached) {
       const isDark = globalTheme === "dark";
-      setBeforeHtml(isDark ? cached.darkBefore : cached.lightBefore);
+      const html = isDark ? cached.darkBefore : cached.lightBefore;
+      setBeforeHtml(html);
       setAfterHtml(isDark ? cached.darkAfter : cached.lightAfter);
+      if (stageRef.current) {
+        stageRef.current.innerHTML = html;
+      }
     }
   }, [globalTheme, beforeCode, afterCode, lang]);
 
-  // Sync beforeHtml to stage div (initial / theme change)
+  // Sync beforeHtml to stage div (initial load only)
   useEffect(() => {
     if (!loading && beforeHtml && stageRef.current) {
       stageRef.current.innerHTML = beforeHtml;
