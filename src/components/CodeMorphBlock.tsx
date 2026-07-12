@@ -1146,7 +1146,7 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: f.text }),
     );
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:#0f0;text-shadow:0 0 8px #0f0;font-weight:${f.weight};white-space:pre;will-change:opacity,color`;
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${f.weight};white-space:pre;will-change:opacity,color`;
     
     // Smooth left-to-right + top-to-bottom wave delay for the old code to disappear
     const delay = (fp.left * 0.5) + (fp.top * 2);
@@ -1161,9 +1161,9 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
 
     const anim = el.animate(
       [
-        { opacity: 1, color: "#fff" },
-        { opacity: 0.8, color: "#0f0" },
-        { opacity: 0, color: "#002200" },
+        { opacity: 1, color: "var(--matrix-head)" },
+        { opacity: 0.8, color: "var(--matrix-color)" },
+        { opacity: 0, color: "var(--matrix-bg)" },
       ],
       { duration: 800, easing: "ease-in", fill: "both", delay },
     );
@@ -1177,7 +1177,7 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: t.text }),
     );
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:#0f0;text-shadow:0 0 8px #0f0;font-weight:${t.weight};white-space:pre;will-change:opacity,color`;
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${t.weight};white-space:pre;will-change:opacity,color`;
     
     // Wave delay for new code to appear, slightly after the old code
     const delay = (tp.left * 0.5) + (tp.top * 2) + 400;
@@ -1192,8 +1192,8 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
 
     const anim = el.animate(
       [
-        { opacity: 0, color: "#002200", textShadow: "0 0 10px #0f0" },
-        { opacity: 1, color: "#0f0", textShadow: "0 0 8px #0f0" },
+        { opacity: 0, color: "var(--matrix-bg)", textShadow: "0 0 10px var(--matrix-color)" },
+        { opacity: 1, color: "var(--matrix-color)", textShadow: "0 0 8px var(--matrix-glow)" },
         { opacity: 1, color: t.color, textShadow: "none" },
       ],
       {

@@ -23,6 +23,10 @@
   --glass-border: rgba(255, 255, 255, 0.06);
   --card-shadow: none;
   --skeleton-bg: rgba(255, 255, 255, 0.12);
+  --matrix-color: #0f0;
+  --matrix-glow: rgba(0, 255, 0, 0.8);
+  --matrix-head: #fff;
+  --matrix-bg: #002200;
 }
 
 [data-theme="light"] {
@@ -46,6 +50,10 @@
   --glass-border: rgba(226, 232, 240, 0.8);
   --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.03), 0 2px 4px -2px rgb(0 0 0 / 0.03);
   --skeleton-bg: rgba(0, 0, 0, 0.08);
+  --matrix-color: #008800;
+  --matrix-glow: rgba(0, 136, 0, 0.2);
+  --matrix-head: #004400;
+  --matrix-bg: #e6ffe6;
 }
 
 * {
