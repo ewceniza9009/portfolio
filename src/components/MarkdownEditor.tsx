@@ -2278,6 +2278,25 @@ return a + b;
                   </div>
                 </div>
 
+                <div className="mt-4 mb-4 p-3 rounded-lg border" style={{ borderColor: "var(--border)", background: "var(--bg-primary)" }}>
+                  <h4 className="text-[11px] font-bold mb-2" style={{ color: "var(--accent)" }}>Advanced Syntax & Targeting</h4>
+                  <ul className="text-[10px] space-y-2" style={{ color: "var(--text-secondary)" }}>
+                    <li>
+                      <strong style={{ color: "var(--text-primary)" }}>Language Overrides:</strong> 
+                      CodeMorph auto-detects languages, but you can force a language by appending it:
+                      <div className="mt-1"><code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>```code-morph diff javascript</code></div>
+                    </li>
+                    <li>
+                      <strong style={{ color: "var(--text-primary)" }}>Line Targeting (Highlight / Scroll):</strong> 
+                      For <code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>highlight</code> and <code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>scroll</code> modes, you can target specific lines using a colon:
+                      <div className="mt-1">
+                         <code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>```code-morph highlight:3</code> (Targets line 3)<br/>
+                         <code className="px-1 py-0.5 rounded font-mono" style={{ background: "var(--bg-secondary)" }}>```code-morph scroll:2-5</code> (Targets lines 2 through 5)
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
                 <div className="mt-3 space-y-4">
                   <p className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Examples:</p>
 
