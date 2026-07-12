@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
 import { Play, RotateCcw, Copy, Check } from "lucide-react";
 
@@ -1262,7 +1262,6 @@ export default function CodeMorphBlock({
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const shikiTheme = globalTheme === "light" ? "github-light" : "github-dark";
   const cacheRef = useRef<Record<string, { darkBefore: string; darkAfter: string; lightBefore: string; lightAfter: string }>>({});
 
   useEffect(() => {
