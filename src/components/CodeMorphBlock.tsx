@@ -1295,13 +1295,19 @@ export default function CodeMorphBlock({
         const annotations: { lineIndex: number; text: string }[] = [];
         
         lines.forEach(line => {
-            if (line.trim().startsWith("// !")) {
+            // Check for line-level annotations like `# !callout(...)`, `// !callout(...)`, `<!-- !callout(...) -->`, or `// ! ...`
+            const calloutMatch = line.match(/^\s*(?:\/\/|#|<!--)\s*!callout\((.*?)\)(?:\s*-->)?\s*$/)
+                              || line.match(/^\s*(?:\/\/|#|<!--)\s*!\s+(.*?)(?:\s*-->)?\s*$/);
+            
+            if (calloutMatch) {
                 annotations.push({
                     lineIndex: Math.max(0, cleanLines.length - 1),
-                    text: line.replace("// !", "").trim()
+                    text: calloutMatch[1].trim()
                 });
             } else {
-                cleanLines.push(line);
+                // Strip inline CodeHike-style markers if they exist (e.g. ` // !focus`)
+                const cleanLine = line.replace(/\s*(?:\/\/|#|<!--)\s*!(?:focus|mark|border|tooltip).*$/, '');
+                cleanLines.push(cleanLine);
             }
         });
         cleanSnapshots.push(cleanLines.join("\n"));
@@ -1485,37 +1491,9 @@ export default function CodeMorphBlock({
   }, [code, lang, globalTheme]);
 
 
-  const [annotationBounds, setAnnotationBounds] = useState<Record<number, { top: number; right: number }>>({});
+  const [annotationBounds, setAnnotationBounds] = useState<Record<number, { top: number; left?: number; right?: number }>>({});
   
-  // Calculate vertical positions for annotations when idle
-  useLayoutEffect(() => {
-    if (morphing || !stageRef.current || !containerRef.current) {
-      setAnnotationBounds({});
-      return;
-    }
-    // Skip the getBoundingClientRect reflow storm for off-screen blocks.
-    if (!inViewRef.current) return;
-    const bounds: Record<number, { top: number; right: number }> = {};
-    const currentAnns = allAnnotations[step];
-    if (currentAnns && currentAnns.length > 0) {
-       const lines = stageRef.current.querySelectorAll('.cm-line');
-       const containerRect = containerRef.current.getBoundingClientRect();
-       
-       currentAnns.forEach((ann: { lineIndex: number; text: string }) => {
-           const lineEl = lines[ann.lineIndex] as HTMLElement;
-           if (lineEl) {
-               const rect = lineEl.getBoundingClientRect();
-               bounds[ann.lineIndex] = {
-                   top: rect.top - containerRect.top + containerRef.current!.scrollTop,
-                   right: 16 // floating on right edge
-               };
-           }
-       });
-    }
-    setAnnotationBounds(bounds);
-  }, [step, morphing, allAnnotations, htmls, inView]);
-
-  // Sync the rendered snapshot whenever the step, theme, or html set changes.
+  // 1. Sync the rendered snapshot whenever the step, theme, or html set changes.
   // Skipped while an animation is mid-flight (the anim layer owns the DOM then).
   useLayoutEffect(() => {
     if (morphing || !stageRef.current) return;
@@ -1535,6 +1513,51 @@ export default function CodeMorphBlock({
       stageRef.current.innerHTML = html;
     }
   }, [htmls, step, morphing]);
+
+  // 2. Calculate positions for annotations when idle
+  useLayoutEffect(() => {
+    if (morphing || !stageRef.current || !containerRef.current) {
+      setAnnotationBounds({});
+      return;
+    }
+    // Skip the getBoundingClientRect reflow storm for off-screen blocks.
+    if (!inViewRef.current) return;
+    
+    const bounds: Record<number, { top: number; left?: number; right?: number }> = {};
+    const currentAnns = allAnnotations[step];
+    const lines = stageRef.current.querySelectorAll('.cm-line');
+    
+    // Always reset margins first
+    lines.forEach(l => (l as HTMLElement).style.marginBottom = '0');
+
+    if (currentAnns && currentAnns.length > 0) {
+       // First pass: Add margins to make physical space for annotations
+       currentAnns.forEach((ann: { lineIndex: number; text: string }) => {
+           const lineEl = lines[ann.lineIndex] as HTMLElement;
+           if (lineEl) {
+               // Estimate height needed: base 36px + ~16px per 50 chars
+               const linesOfText = Math.ceil(ann.text.length / 50);
+               const estimatedHeight = 36 + (linesOfText * 16);
+               lineEl.style.marginBottom = `${estimatedHeight + 16}px`; 
+           }
+       });
+       
+       // Second pass: Read positions after layout shift
+       const containerRect = containerRef.current.getBoundingClientRect();
+       currentAnns.forEach((ann: { lineIndex: number; text: string }) => {
+           const lineEl = lines[ann.lineIndex] as HTMLElement;
+           if (lineEl) {
+               const rect = lineEl.getBoundingClientRect();
+               // rect.bottom is the bottom of the text, ignoring the margin we just added!
+               bounds[ann.lineIndex] = {
+                   top: rect.bottom - containerRect.top + containerRef.current!.scrollTop + 8,
+                   left: 32 // Indent slightly
+               };
+           }
+       });
+    }
+    setAnnotationBounds(bounds);
+  }, [step, morphing, allAnnotations, htmls, inView]);
 
   // Remove the separate useEffect that was overwriting the theme swap
 
@@ -1889,7 +1912,7 @@ export default function CodeMorphBlock({
       }}
     >
       <div 
-         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col mb-12" : "flex flex-col"}
+         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col mb-12 relative" : "flex flex-col relative"}
          style={{ 
             borderColor: "var(--border)", 
             background: "var(--bg-card)",
@@ -1938,6 +1961,8 @@ export default function CodeMorphBlock({
                     onClick={() => {
                       setAnimMode(m.key);
                       setDropdownOpen(false);
+                      // Auto-reset when mode changes
+                      handleReset();
                     }}
                   >
                     <span className="lbl">{m.label}</span>
@@ -2102,7 +2127,7 @@ export default function CodeMorphBlock({
       </div>
       <div
         ref={containerRef}
-        className="relative text-sm leading-relaxed overflow-x-auto overflow-y-hidden"
+        className="relative text-sm leading-relaxed overflow-x-auto overflow-hidden"
         style={{ fontVariantLigatures: "none" }}
       >
         {!morphing && allAnnotations[step]?.map((ann, i) => {
@@ -2111,18 +2136,18 @@ export default function CodeMorphBlock({
           return (
              <div 
                key={i} 
-               className="absolute z-30 px-3 py-2 rounded-lg text-xs animate-in fade-in slide-in-from-right-4 duration-500 shadow-xl border"
+               className="absolute z-30 px-3 py-2 rounded-lg text-xs animate-in fade-in slide-in-from-top-2 duration-500 shadow-xl border pointer-events-none"
                style={{ 
-                 top: pos.top - 8, 
-                 right: pos.right, 
+                 top: pos.top, 
+                 left: pos.left, 
                  background: "var(--bg-card)",
                  color: "var(--text-primary)",
                  borderColor: "var(--accent)",
-                 maxWidth: "200px",
+                 maxWidth: "calc(100% - 64px)",
                  backdropFilter: "blur(8px)"
                }}
              >
-               <div className="absolute top-3 -left-2 w-0 h-0 border-y-4 border-y-transparent border-r-[8px]" style={{ borderRightColor: "var(--accent)" }} />
+               <div className="absolute -top-[5px] left-4 w-0 h-0 border-x-[5px] border-x-transparent border-b-[6px]" style={{ borderBottomColor: "var(--accent)" }} />
                <span className="font-bold text-[10px] uppercase tracking-wider mb-1 block" style={{ color: "var(--accent)" }}>Explainer</span>
                {ann.text}
              </div>
@@ -2157,7 +2182,7 @@ export default function CodeMorphBlock({
             </span>
           </div>
         )}
-        <div ref={stageRef} data-cm="stage" className="p-4 relative" />
+        <div ref={stageRef} data-cm="stage" className={`p-4 relative ${(allAnnotations[step]?.length > 0) ? 'pb-24' : ''}`} />
 
       </div>
       </div>
