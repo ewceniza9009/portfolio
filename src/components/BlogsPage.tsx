@@ -17,7 +17,6 @@ import type { Blog } from '../types/blog'
 
 const NOOP_SCROLL = () => {}
 
-import { useGlobalTheme } from '../hooks/useGlobalTheme'
 const relativeDate = (dateStr: string) => {
   const now = Date.now()
   const then = new Date(dateStr).getTime()
@@ -149,7 +148,6 @@ const BLOG_PAGE_STYLES = `
 `
 
 export default function BlogsPage() {
-  useGlobalTheme()
   const { data: rawBlogs = [], isLoading: loading } = useBlogs()
   const blogs = rawBlogs as Blog[]
   const { data: settings } = useSettings()

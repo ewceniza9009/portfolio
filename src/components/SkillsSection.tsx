@@ -167,7 +167,7 @@ const SkillTag = React.memo(React.forwardRef<HTMLSpanElement, {
       layout
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.8, y: -20 }}
+      exit={{ opacity: 0, scale: 0, y: -10 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className="skill-tag inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-all duration-300"
       style={{
@@ -295,7 +295,7 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
                   {BACKGROUND_DECORATIONS[category] || null}
 
                   <motion.div layout className="relative z-10 flex flex-wrap gap-2.5">
-                    <AnimatePresence mode="popLayout">
+                    <AnimatePresence>
                       {data.items.map((skill) => {
                         if (filterMode === 'core' && skill.level === 'familiar') return null;
                         return (

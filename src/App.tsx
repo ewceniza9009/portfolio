@@ -111,10 +111,7 @@ function Portfolio() {
     } else {
       const element = document.getElementById(id)
       if (element) {
-        const navHeight = 80
-        const elementPosition = element.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.scrollY - navHeight
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' })
+        element.scrollIntoView({ behavior: 'smooth' })
       }
     }
 

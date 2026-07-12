@@ -4,7 +4,7 @@ import { Mail, Phone, Linkedin, Github, Copy, Check, Send, Loader } from 'lucide
 import { getSafeItem, setSafeItem } from '../utils/storage'
 import { getApiUrl } from '../utils/api'
 import MagneticWrapper from './MagneticWrapper'
-import { useGlobalTheme } from '../hooks/useGlobalTheme'
+
 
 function CopyToast({ message }: { message: string }) {
   return (
@@ -111,7 +111,6 @@ function SocialLink({ href, icon, label, value }: SocialLinkProps) {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function ContactSection() {
-  const { theme } = useGlobalTheme()
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', _honeypot: '' })
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -188,7 +187,7 @@ export default function ContactSection() {
         >
           <div className="absolute inset-0 pointer-events-none" style={{ 
             background: 'linear-gradient(135deg, var(--accent) 0%, transparent 100%)',
-            opacity: theme === 'dark' ? 0.12 : 0.015
+            opacity: typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? 0.12 : 0.015
           }} />
 
           <h3 className="text-xl font-semibold mb-6 text-center relative z-10">Send Me a Message</h3>
@@ -298,7 +297,7 @@ export default function ContactSection() {
         >
           <div className="absolute inset-0 pointer-events-none" style={{ 
             background: 'linear-gradient(135deg, var(--accent-secondary) 0%, transparent 100%)',
-            opacity: theme === 'dark' ? 0.12 : 0.015
+            opacity: typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? 0.12 : 0.015
           }} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">

@@ -32,10 +32,7 @@ import AboutTab from "./admin/AboutTab";
 import ExperienceTab from "./admin/ExperienceTab";
 import AwardsTab from "./admin/AwardsTab";
 
-import { useGlobalTheme } from "../hooks/useGlobalTheme";
-
 function AdminPanel() {
-  const { theme, accent } = useGlobalTheme();
   const [token, setToken] = useState<string | null>(getSafeItem("admin_token"));
   const [password, setPassword] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -287,7 +284,7 @@ function AdminPanel() {
         />
       );
     },
-    [theme, accent, previewLogs, fixingErrorId, aiSuggestions],
+    [previewLogs, fixingErrorId, aiSuggestions],
   );
 
   useEffect(() => {

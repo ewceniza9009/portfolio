@@ -734,3 +734,8 @@ button.gv-btn:hover { filter: brightness(1.2); }
 .workbench-hover-container {
   display: none !important;
 }
+
+/* ── Section Scroll Margin ── */
+section {
+  scroll-margin-top: 80px;
+}

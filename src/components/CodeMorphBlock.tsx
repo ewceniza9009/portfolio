@@ -1344,13 +1344,20 @@ export default function CodeMorphBlock({
       const html = morphed
         ? (isDark ? cached.darkAfter : cached.lightAfter)
         : (isDark ? cached.darkBefore : cached.lightBefore);
+      
       if (stageRef.current) {
-        stageRef.current.innerHTML = html;
+        const keepStructure = ["diff", "highlight", "scroll"].includes(animMode);
+        // Do not overwrite the DOM if we are in a structure-retaining mode that just finished morphing
+        if (keepStructure && morphed) {
+          // Leave the animated DOM structure intact
+        } else {
+          stageRef.current.innerHTML = html;
+        }
       }
     } else if (!loading && beforeHtml && stageRef.current) {
       stageRef.current.innerHTML = beforeHtml;
     }
-  }, [globalTheme, morphed, beforeCode, afterCode, lang, beforeHtml, loading]);
+  }, [globalTheme, morphed, beforeCode, afterCode, lang, beforeHtml, loading, animMode]);
 
   // Remove the separate useEffect that was overwriting the theme swap
 

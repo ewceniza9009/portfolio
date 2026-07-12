@@ -416,32 +416,24 @@ function SlideshowBlock({ code, lang, meta }: CodeHikeBlockProps) {
     return <CodeHikeBlockInner code={code} lang={lang} meta={cleanMeta} />;
   }
 
-  const animName =
-    direction === "right" ? "ch-step-resolve-right" : "ch-step-resolve-left";
+  const slideRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!slideRef.current || animKey === 0) return;
+    
+    const isRight = direction === "right";
+    slideRef.current.animate([
+      { opacity: 0, filter: "blur(8px)", transform: `translateX(${isRight ? 34 : -34}px) scale(0.985)` },
+      { opacity: 1, filter: "blur(0)", transform: "translateX(0) scale(1)" }
+    ], {
+      duration: 500,
+      easing: "cubic-bezier(0.16, 1, 0.3, 1)"
+    });
+  }, [animKey, direction]);
 
   return (
     <div className="relative my-6">
-      <style>{`
-        @keyframes ch-step-resolve-right {
-          0% { opacity: 0; filter: blur(8px); transform: translateX(34px) scale(0.985); }
-          100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
-        }
-        @keyframes ch-step-resolve-left {
-          0% { opacity: 0; filter: blur(8px); transform: translateX(-34px) scale(0.985); }
-          100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
-        }
-        .ch-slideshow-step {
-          animation-duration: 0.5s;
-          animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-          animation-fill-mode: both;
-          will-change: opacity, transform, filter;
-        }
-      `}</style>
-      <div
-        key={animKey}
-        className="ch-slideshow-step"
-        style={{ animationName: animName }}
-      >
+      <div ref={slideRef} className="will-change-[opacity,transform,filter]">
         <CodeHikeBlockInner code={steps[step]} lang={lang} meta={cleanMeta} />
       </div>
       {/* Navigation bar */}
@@ -450,6 +442,7 @@ function SlideshowBlock({ code, lang, meta }: CodeHikeBlockProps) {
         style={{ color: isDark ? "#8b949e" : "#656d76" }}
       >
         <button
+          type="button"
           onClick={goPrev}
           disabled={step === 0}
           className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all duration-150 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -460,6 +453,7 @@ function SlideshowBlock({ code, lang, meta }: CodeHikeBlockProps) {
         <div className="flex items-center gap-2">
           {Array.from({ length: total }).map((_, idx) => (
             <button
+              type="button"
               key={idx}
               onClick={() => {
                 setDirection(idx > step ? "right" : "left");
@@ -486,6 +480,7 @@ function SlideshowBlock({ code, lang, meta }: CodeHikeBlockProps) {
           </span>
         </div>
         <button
+          type="button"
           onClick={goNext}
           disabled={step === total - 1}
           className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all duration-150 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
