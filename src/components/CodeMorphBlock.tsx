@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, Copy, Check } from "lucide-react";
 
 const HIGH_KEY = "__cm_shiki";
 function getHighlighter() {
@@ -1257,6 +1257,8 @@ export default function CodeMorphBlock({
   const [afterHtml, setAfterHtml] = useState("");
   const [morphing, setMorphing] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
+  const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1399,9 +1401,18 @@ export default function CodeMorphBlock({
   );
 
   const handleMorph = useCallback(
-    () => runMorph(beforeHtml, afterHtml, true),
+    () => {
+      setHasPlayed(true);
+      runMorph(beforeHtml, afterHtml, true);
+    },
     [runMorph, beforeHtml, afterHtml],
   );
+  
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(morphed ? afterCode : beforeCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [morphed, beforeCode, afterCode]);
   const handleReset = useCallback(
     () => runMorph(afterHtml, beforeHtml, false),
     [runMorph, afterHtml, beforeHtml],
@@ -1410,7 +1421,7 @@ export default function CodeMorphBlock({
   if (loading) {
     return (
       <div
-        className="my-6 rounded-2xl border overflow-hidden"
+        className="my-6 rounded-2xl border"
         style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
       >
         <div
@@ -1421,7 +1432,7 @@ export default function CodeMorphBlock({
             className="text-xs font-semibold tracking-wide"
             style={{ color: "var(--accent)" }}
           >
-            Code Anim
+            Code Anime
           </span>
         </div>
         <div className="p-4 text-xs" style={{ color: "var(--text-muted)" }}>
@@ -1433,7 +1444,7 @@ export default function CodeMorphBlock({
 
   return (
     <div
-      className="my-6 rounded-2xl border overflow-hidden"
+      className="my-6 rounded-2xl border"
       style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
     >
       <div
@@ -1445,7 +1456,7 @@ export default function CodeMorphBlock({
             className="text-xs font-semibold tracking-wide"
             style={{ color: "var(--accent)" }}
           >
-            Code Anim
+            Code Anime
           </span>
           <div className="relative" ref={dropdownRef}>
             <button
@@ -1487,31 +1498,63 @@ export default function CodeMorphBlock({
             )}
           </div>
         </div>
-        <button
-          onClick={morphed ? handleReset : handleMorph}
-          disabled={morphing}
-          className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          {morphing ? (
-            <span
-              className="text-[10px]"
-              style={{ color: "var(--text-muted)" }}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            title="Copy code"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+          </button>
+          <div className="relative">
+            {!hasPlayed && !morphed && (
+              <div 
+                className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
+                style={{
+                  background: "var(--bg-card)",
+                  color: "var(--text-primary)",
+                  borderColor: "var(--accent)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.3), 0 0 10px rgba(255,200,0,0.2)",
+                }}
+              >
+                ✨ Click to play
+                <div 
+                  className="absolute -bottom-1 right-6 w-2 h-2 rotate-45 border-r border-b"
+                  style={{
+                    background: "var(--bg-card)",
+                    borderColor: "var(--accent)",
+                  }}
+                />
+              </div>
+            )}
+            <button
+              onClick={morphed ? handleReset : handleMorph}
+              disabled={morphing}
+              className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
+              style={{ color: "var(--text-secondary)" }}
             >
-              ...
-            </span>
-          ) : morphed ? (
-            <>
-              <RotateCcw size={13} />
-              <span className="hidden sm:inline ml-1">Reset</span>
-            </>
-          ) : (
-            <>
-              <Play size={13} />
-              <span className="hidden sm:inline ml-1">Play</span>
-            </>
-          )}
-        </button>
+              {morphing ? (
+                <span
+                  className="text-[10px]"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  ...
+                </span>
+              ) : morphed ? (
+                <>
+                  <RotateCcw size={13} />
+                  <span className="hidden sm:inline ml-1">Reset</span>
+                </>
+              ) : (
+                <>
+                  <Play size={13} className={!hasPlayed ? "animate-pulse text-[var(--accent)]" : ""} />
+                  <span className="hidden sm:inline ml-1">Play</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
       <div
         ref={containerRef}
