@@ -1141,76 +1141,62 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
 function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
   const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890!@#$%^&*";
   
-  from.forEach((f) => {
-    const fp = m.pos(f.rect);
-    const el = m.add(
-      Object.assign(document.createElement("span"), { textContent: f.text }),
-    );
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${f.weight};white-space:pre;will-change:opacity,color`;
+  // Helper to create true digital rain for a token by splitting it into individual characters
+  const spawnRain = (token: TokenRect, isOutgoig: boolean) => {
+    const pos = m.pos(token.rect);
+    const text = token.text;
+    const charWidth = token.rect.width / Math.max(1, text.length);
     
-    // Smooth left-to-right + top-to-bottom wave delay for the old code to disappear
-    const delay = (fp.left * 0.5) + (fp.top * 2);
-    
-    const scramble = setInterval(() => {
-       if (f.text.trim()) {
-         let s = '';
-         for (let i = 0; i < f.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
-         el.textContent = s;
-       }
-    }, 100);
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (!char.trim()) continue; // Skip spaces
 
-    const anim = el.animate(
-      [
-        { opacity: 1, color: "var(--matrix-head)" },
-        { opacity: 0.8, color: "var(--matrix-color)" },
-        { opacity: 0, color: "var(--matrix-bg)" },
-      ],
-      { duration: 800, easing: "ease-in", fill: "both", delay },
-    );
-    
-    anim.finished.finally(() => clearInterval(scramble));
-    m.anims.push(anim);
-  });
+      const x = pos.left + (i * charWidth);
+      const y = pos.top;
+      
+      const el = m.add(
+        Object.assign(document.createElement("span"), { textContent: char }),
+      );
+      
+      el.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${token.weight};will-change:opacity,transform,color`;
+      
+      // Column-based staggering + random offset
+      const colDelay = (Math.floor(x / 10) * 137) % 1500;
+      const delay = colDelay + (isOutgoig ? 0 : 500);
 
-  to.forEach((t) => {
-    const tp = m.pos(t.rect);
-    const el = m.add(
-      Object.assign(document.createElement("span"), { textContent: t.text }),
-    );
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${t.weight};white-space:pre;will-change:opacity,color`;
-    
-    // Wave delay for new code to appear, slightly after the old code
-    const delay = (tp.left * 0.5) + (tp.top * 2) + 400;
-    
-    const scramble = setInterval(() => {
-       if (t.text.trim()) {
-         let s = '';
-         for (let i = 0; i < t.text.length; i++) s += chars[Math.floor(Math.random() * chars.length)];
-         el.textContent = s;
-       }
-    }, 100);
+      const scramble = setInterval(() => {
+         el.textContent = chars[Math.floor(Math.random() * chars.length)];
+      }, 50 + Math.random() * 50);
 
-    const anim = el.animate(
-      [
-        { opacity: 0, color: "var(--matrix-bg)", textShadow: "0 0 10px var(--matrix-color)" },
-        { opacity: 1, color: "var(--matrix-color)", textShadow: "0 0 8px var(--matrix-glow)" },
-        { opacity: 1, color: t.color, textShadow: "none" },
-      ],
-      {
-        duration: 1200,
-        easing: "ease-out",
-        fill: "both",
-        delay,
-      },
-    );
-    
-    anim.finished.finally(() => {
-      clearInterval(scramble);
-      el.textContent = t.text;
-    });
-    
-    m.anims.push(anim);
-  });
+      const anim = el.animate(
+        isOutgoig ? [
+          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)" },
+          { opacity: 0.8, transform: "translateY(15px)", color: "var(--matrix-color)" },
+          { opacity: 0, transform: "translateY(60px)", color: "var(--matrix-bg)" },
+        ] : [
+          { opacity: 0, transform: "translateY(-60px)", color: "var(--matrix-bg)" },
+          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)", offset: 0.8 },
+          { opacity: 1, transform: "translateY(0)", color: token.color, textShadow: "none" },
+        ],
+        { 
+          duration: isOutgoig ? 800 : 1200, 
+          easing: isOutgoig ? "ease-in" : "ease-out", 
+          fill: "both", 
+          delay 
+        },
+      );
+      
+      anim.finished.finally(() => {
+        clearInterval(scramble);
+        if (!isOutgoig) el.textContent = char;
+      });
+      
+      m.anims.push(anim);
+    }
+  };
+
+  from.forEach(f => spawnRain(f, true));
+  to.forEach(t => spawnRain(t, false));
 }
 
 function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
