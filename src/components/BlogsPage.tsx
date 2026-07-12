@@ -130,7 +130,6 @@ const BLOG_PAGE_STYLES = `
   .aurora-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
     pointer-events: none;
     z-index: 0;
     will-change: transform;
@@ -143,10 +142,14 @@ const BLOG_PAGE_STYLES = `
     pointer-events: none;
     z-index: 0;
   }
+  .blob-1 { opacity: 0.02; }
+  .blob-2 { opacity: 0.01; }
+  [data-theme="dark"] .blob-1 { opacity: 0.08; }
+  [data-theme="dark"] .blob-2 { opacity: 0.05; }
 `
 
 export default function BlogsPage() {
-  const { theme } = useGlobalTheme()
+  useGlobalTheme()
   const { data: rawBlogs = [], isLoading: loading } = useBlogs()
   const blogs = rawBlogs as Blog[]
   const { data: settings } = useSettings()
@@ -248,16 +251,14 @@ export default function BlogsPage() {
           <div 
             className="aurora-blob w-[600px] h-[600px] -top-20 -left-20 blob-1" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent) 0%, transparent 60%)',
-              opacity: theme === 'dark' ? 0.08 : 0.02,
+              background: 'radial-gradient(circle, var(--accent) 0%, transparent 40%)',
               animation: 'blob-float-1 20s infinite alternate ease-in-out'
             }} 
           />
           <div 
             className="aurora-blob w-[700px] h-[700px] top-[30vh] -right-20 blob-2" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 60%)',
-              opacity: theme === 'dark' ? 0.05 : 0.01,
+              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 40%)',
               animation: 'blob-float-2 25s infinite alternate ease-in-out'
             }} 
           />

@@ -515,6 +515,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
   const [linesRevealed, setLinesRevealed] = useState(false);
   const [unfoldedRanges, setUnfoldedRanges] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const cacheRef = useRef<Record<string, { dark: string[]; light: string[] }>>({});
 
   const isDark = theme === "dark";
   const shikiTheme = isDark ? "github-dark" : "github-light";
@@ -544,26 +545,45 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
     const cleanCode = cleanLines.join("\n");
     if (!cleanCode.trim()) return;
 
-    getHighlighter(theme)
-      .then((highlighter) => {
+    const cacheKey = cleanCode;
+
+    if (cacheRef.current[cacheKey]) {
+      const cached = cacheRef.current[cacheKey];
+      setHighlightedLines(isDark ? cached.dark : cached.light);
+      requestAnimationFrame(() => setRevealed(true));
+      setTimeout(() => setLinesRevealed(true), 800);
+      return () => { cancelled = true; };
+    }
+
+    Promise.all([getHighlighter("dark"), getHighlighter("light")])
+      .then(([darkHighlighter, lightHighlighter]) => {
         if (cancelled) return;
-        const loaded = highlighter.getLoadedLanguages();
-        const resolvedLang = loaded.includes(lang) ? lang : "text";
-        return highlighter.codeToHtml(cleanCode, {
-          lang: resolvedLang,
-          theme: shikiTheme,
+        const loadedDark = darkHighlighter.getLoadedLanguages();
+        const loadedLight = lightHighlighter.getLoadedLanguages();
+        const resolvedLangDark = loadedDark.includes(lang) ? lang : "text";
+        const resolvedLangLight = loadedLight.includes(lang) ? lang : "text";
+        const darkHtml = darkHighlighter.codeToHtml(cleanCode, {
+          lang: resolvedLangDark,
+          theme: "github-dark",
         });
+        const lightHtml = lightHighlighter.codeToHtml(cleanCode, {
+          lang: resolvedLangLight,
+          theme: "github-light",
+        });
+        return { darkHtml, lightHtml };
       })
-      .then((html) => {
-        if (!cancelled && html) {
-          const codeMatch = html.match(
-            /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
-          );
-          if (codeMatch) {
-            setHighlightedLines(codeMatch[1].split("\n"));
-          } else {
-            setHighlightedLines([html]);
-          }
+      .then((result) => {
+        if (!cancelled && result) {
+          const extract = (html: string) => {
+            const codeMatch = html.match(
+              /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
+            );
+            return codeMatch ? codeMatch[1].split("\n") : [html];
+          };
+          const darkLines = extract(result.darkHtml);
+          const lightLines = extract(result.lightHtml);
+          cacheRef.current[cacheKey] = { dark: darkLines, light: lightLines };
+          setHighlightedLines(isDark ? darkLines : lightLines);
           requestAnimationFrame(() => setRevealed(true));
           setTimeout(() => setLinesRevealed(true), 800);
         }
@@ -572,7 +592,15 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
     return () => {
       cancelled = true;
     };
-  }, [cleanLines, lang, theme]);
+  }, [cleanLines, lang]);
+
+  useEffect(() => {
+    const cacheKey = cleanLines.join("\n");
+    const cached = cacheRef.current[cacheKey];
+    if (cached) {
+      setHighlightedLines(isDark ? cached.dark : cached.light);
+    }
+  }, [isDark, cleanLines]);
 
   const handleCopy = useCallback(async () => {
     try {

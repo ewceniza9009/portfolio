@@ -16,7 +16,7 @@ import { formatDate } from '../utils/format'
 import { getApiUrl } from '../utils/api'
 import type { Blog } from '../types/blog'
 import BlogTOC, { extractHeadings } from './BlogTOC'
-import { useGlobalTheme } from '../hooks/useGlobalTheme'
+
 
 const NOOP_SCROLL = () => {}
 
@@ -52,7 +52,6 @@ const BLOG_POST_STYLES = `
   .aurora-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
     pointer-events: none;
     z-index: 0;
     will-change: transform;
@@ -65,6 +64,10 @@ const BLOG_POST_STYLES = `
     pointer-events: none;
     z-index: 0;
   }
+  .blob-1 { opacity: 0.06; }
+  .blob-2 { opacity: 0.05; }
+  [data-theme="dark"] .blob-1 { opacity: 0.12; }
+  [data-theme="dark"] .blob-2 { opacity: 0.1; }
   .article-content h1, 
   .article-content h2, 
   .article-content h3 {
@@ -73,7 +76,6 @@ const BLOG_POST_STYLES = `
 `
 
 export default function BlogPostPage() {
-  const { theme } = useGlobalTheme()
   const { slug } = useParams<{ slug: string }>()
   const { data: rawBlog, isLoading: blogLoading } = useBlog(slug || '')
   const blog = rawBlog as Blog | undefined
@@ -314,16 +316,14 @@ export default function BlogPostPage() {
           <div 
             className="aurora-blob w-[500px] h-[500px] -top-40 -left-40 blob-1" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
-              opacity: theme === 'dark' ? 0.12 : 0.06,
+              background: 'radial-gradient(circle, var(--accent) 0%, transparent 50%)',
               animation: 'blob-float-1 25s infinite alternate ease-in-out'
             }} 
           />
           <div 
             className="aurora-blob w-[600px] h-[600px] top-[40vh] -right-40 blob-2" 
             style={{ 
-              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%)',
-              opacity: theme === 'dark' ? 0.1 : 0.05,
+              background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 50%)',
               animation: 'blob-float-2 30s infinite alternate ease-in-out'
             }} 
           />

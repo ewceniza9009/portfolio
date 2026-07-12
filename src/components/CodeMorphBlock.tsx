@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
 import { Play, RotateCcw, Copy, Check } from "lucide-react";
 
@@ -1263,6 +1263,7 @@ export default function CodeMorphBlock({
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const shikiTheme = globalTheme === "light" ? "github-light" : "github-dark";
+  const cacheRef = useRef<Record<string, { darkBefore: string; darkAfter: string; lightBefore: string; lightAfter: string }>>({});
 
   useEffect(() => {
     ensureStyles();
@@ -1281,17 +1282,33 @@ export default function CodeMorphBlock({
 
   useEffect(() => {
     let cancelled = false;
+    const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
+
+    if (cacheRef.current[cacheKey]) {
+      const cached = cacheRef.current[cacheKey];
+      setBeforeHtml(globalTheme === "dark" ? cached.darkBefore : cached.lightBefore);
+      setAfterHtml(globalTheme === "dark" ? cached.darkAfter : cached.lightAfter);
+      setLoading(false);
+      return () => { cancelled = true; };
+    }
+
     async function init() {
-      await new Promise((r) => setTimeout(r, Math.random() * 300));
       try {
         const shiki = await getHighlighter();
-        const beforeData = shiki.codeToTokens(beforeCode, { lang, theme: shikiTheme });
-        const afterData = shiki.codeToTokens(afterCode, { lang, theme: shikiTheme });
+        const darkBefore = shiki.codeToTokens(beforeCode, { lang, theme: "github-dark" });
+        const darkAfter = shiki.codeToTokens(afterCode, { lang, theme: "github-dark" });
+        const lightBefore = shiki.codeToTokens(beforeCode, { lang, theme: "github-light" });
+        const lightAfter = shiki.codeToTokens(afterCode, { lang, theme: "github-light" });
         if (!cancelled) {
-          const b = buildTokenHtml(beforeData.tokens, beforeData.fg);
-          const a = buildTokenHtml(afterData.tokens, afterData.fg);
-          setBeforeHtml(b);
-          setAfterHtml(a);
+          cacheRef.current[cacheKey] = {
+            darkBefore: buildTokenHtml(darkBefore.tokens, darkBefore.fg),
+            darkAfter: buildTokenHtml(darkAfter.tokens, darkAfter.fg),
+            lightBefore: buildTokenHtml(lightBefore.tokens, lightBefore.fg),
+            lightAfter: buildTokenHtml(lightAfter.tokens, lightAfter.fg),
+          };
+          const cached = cacheRef.current[cacheKey];
+          setBeforeHtml(globalTheme === "dark" ? cached.darkBefore : cached.lightBefore);
+          setAfterHtml(globalTheme === "dark" ? cached.darkAfter : cached.lightAfter);
           setLoading(false);
         }
       } catch {
@@ -1314,7 +1331,18 @@ export default function CodeMorphBlock({
     return () => {
       cancelled = true;
     };
-  }, [beforeCode, afterCode, lang, shikiTheme]);
+  }, [beforeCode, afterCode, lang]);
+
+  // Instant theme swap from cache
+  useEffect(() => {
+    const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
+    const cached = cacheRef.current[cacheKey];
+    if (cached) {
+      const isDark = globalTheme === "dark";
+      setBeforeHtml(isDark ? cached.darkBefore : cached.lightBefore);
+      setAfterHtml(isDark ? cached.darkAfter : cached.lightAfter);
+    }
+  }, [globalTheme, beforeCode, afterCode, lang]);
 
   // Sync beforeHtml to stage div (initial / theme change)
   useEffect(() => {
