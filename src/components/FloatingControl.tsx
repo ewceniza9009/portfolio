@@ -452,6 +452,7 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
   const [activeMode, setActiveMode] = useState<
     "matrix" | "snake" | "guess" | "adventure" | null
   >(null);
+  const closeOverlay = useCallback(() => setActiveMode(null), []);
   const [guessTarget, setGuessTarget] = useState(0);
   const [guessAttempts, setGuessAttempts] = useState(0);
   const [adventureNode, setAdventureNode] = useState("start");
@@ -771,6 +772,10 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (activeMode) {
+      e.preventDefault();
+      return;
+    }
     if (e.key === "ArrowUp") {
       e.preventDefault();
       if (historyIndex < cmdHistory.length - 1) {
@@ -883,10 +888,10 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
         style={{ overscrollBehavior: "contain" }}
       >
         {activeMode === "matrix" && (
-          <MatrixOverlay onClose={() => setActiveMode(null)} />
+          <MatrixOverlay onClose={closeOverlay} />
         )}
         {activeMode === "snake" && (
-          <SnakeOverlay onClose={() => setActiveMode(null)} />
+          <SnakeOverlay onClose={closeOverlay} />
         )}
         {history.map((line, i) => (
           <div key={i} className="mb-2">
@@ -922,7 +927,9 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
             ref={inputRef}
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              if (!activeMode) setInput(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
             className={`flex-1 bg-transparent border-none outline-none font-mono ${isRoot ? "text-red-100" : "text-white"}`}
             autoFocus
