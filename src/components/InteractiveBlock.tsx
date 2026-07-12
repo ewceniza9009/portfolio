@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, memo } from "react";
+import confetti from "canvas-confetti";
 import {
   ChevronRight,
   ChevronLeft,
@@ -128,6 +129,15 @@ function Quiz({
       setShowResult(false);
     } else {
       setDone(true);
+      const pct = Math.round((score / questions.length) * 100);
+      if (pct >= 70) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#22c55e']
+        });
+      }
     }
   };
 

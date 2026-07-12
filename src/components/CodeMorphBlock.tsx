@@ -2,31 +2,33 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
 import { Play, Pause, StepForward, RotateCcw, Copy, Check } from "lucide-react";
 
-const HIGH_KEY = "__cm_shiki";
-function getHighlighter() {
-  if (!(window as any)[HIGH_KEY]) {
-    (window as any)[HIGH_KEY] = (async () => {
-      const shiki = await import("shiki");
-      return shiki.createHighlighter({
-        themes: ["github-dark", "github-light"],
-        langs: [
-          "javascript",
-          "typescript",
-          "csharp",
-          "css",
-          "html",
-          "json",
-          "sql",
-          "python",
-          "bash",
-          "markdown",
-          "yaml",
-          "text",
-        ],
-      });
-    })();
+let worker: Worker | null = null;
+let msgId = 0;
+const callbacks = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void }>();
+
+function tokenizeWithWorker(snapshots: string[], lang: string): Promise<{ dark: string[], light: string[] }> {
+  if (typeof window === 'undefined') {
+    return Promise.resolve({ dark: snapshots, light: snapshots });
   }
-  return (window as any)[HIGH_KEY];
+  
+  if (!worker) {
+    worker = new Worker(new URL('../workers/shiki.worker.ts', import.meta.url), { type: 'module' });
+    worker.onmessage = (e) => {
+      const { id, dark, light, error } = e.data;
+      const cb = callbacks.get(id);
+      if (cb) {
+        if (error) cb.reject(new Error(error));
+        else cb.resolve({ dark, light });
+        callbacks.delete(id);
+      }
+    };
+  }
+  
+  return new Promise((resolve, reject) => {
+    const id = msgId++;
+    callbacks.set(id, { resolve, reject });
+    worker!.postMessage({ id, snapshots, lang });
+  });
 }
 
 function detectLang(code: string): string {
@@ -1339,19 +1341,7 @@ export default function CodeMorphBlock({
 
     async function init() {
       try {
-        const shiki = await getHighlighter();
-        const dark = await Promise.all(
-          snapshots.map(async (s) => {
-            const r = await shiki.codeToTokens(s, { lang, theme: "github-dark" });
-            return buildTokenHtml(r.tokens, r.fg);
-          }),
-        );
-        const light = await Promise.all(
-          snapshots.map(async (s) => {
-            const r = await shiki.codeToTokens(s, { lang, theme: "github-light" });
-            return buildTokenHtml(r.tokens, r.fg);
-          }),
-        );
+        const { dark, light } = await tokenizeWithWorker(snapshots, lang);
         if (!cancelled) {
           cacheRef.current[cacheKey] = { dark, light };
           setHtmls(globalTheme === "dark" ? dark : light);
