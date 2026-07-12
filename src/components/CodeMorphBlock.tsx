@@ -1140,63 +1140,91 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
 
 function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
   const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890!@#$%^&*";
-  
-  // Helper to create true digital rain for a token by splitting it into individual characters
-  const spawnRain = (token: TokenRect, isOutgoig: boolean) => {
+  const spawned: { el: HTMLElement; target: string; outgoing: boolean }[] = [];
+
+  // Per-token rain: split into individual chars that cascade in aligned
+  // columns. Each char gets ONE Web Animations instance (no timers).
+  const spawnRain = (token: TokenRect, isOutgoing: boolean) => {
     const pos = m.pos(token.rect);
     const text = token.text;
     const charWidth = token.rect.width / Math.max(1, text.length);
-    
+
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
       if (!char.trim()) continue; // Skip spaces
 
-      const x = pos.left + (i * charWidth);
-      const y = pos.top;
-      
+      const x = pos.left + i * charWidth;
+      // Align into ~14px columns so the cascade reads as vertical rain.
+      const col = Math.floor(x / 14);
+      const delay = (col * 70) % 900 + (isOutgoing ? 0 : 250);
+
       const el = m.add(
         Object.assign(document.createElement("span"), { textContent: char }),
       );
-      
-      el.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${token.weight};will-change:opacity,transform,color`;
-      
-      // Column-based staggering + random offset (sped up for ~1.5s total anim)
-      const colDelay = (Math.floor(x / 10) * 137) % 600;
-      const delay = colDelay + (isOutgoig ? 0 : 300);
+      el.style.cssText = `position:absolute;left:${x}px;top:${pos.top}px;color:var(--matrix-color);text-shadow:0 0 8px var(--matrix-glow);font-weight:${token.weight};will-change:transform,opacity`;
 
-      const scramble = setInterval(() => {
-         el.textContent = chars[Math.floor(Math.random() * chars.length)];
-      }, 50 + Math.random() * 50);
+      spawned.push({ el, target: char, outgoing: isOutgoing });
 
       const anim = el.animate(
-        isOutgoig ? [
+        isOutgoing ? [
           { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)" },
-          { opacity: 0.8, transform: "translateY(15px)", color: "var(--matrix-color)" },
-          { opacity: 0, transform: "translateY(60px)", color: "var(--matrix-bg)" },
+          { opacity: 0.85, transform: "translateY(18px)", color: "var(--matrix-color)" },
+          { opacity: 0, transform: "translateY(64px)", color: "var(--matrix-bg)" },
         ] : [
-          { opacity: 0, transform: "translateY(-60px)", color: "var(--matrix-bg)" },
-          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)", offset: 0.8 },
+          { opacity: 0, transform: "translateY(-64px)", color: "var(--matrix-bg)" },
+          { opacity: 1, transform: "translateY(0)", color: "var(--matrix-head)", textShadow: "0 0 10px var(--matrix-head)", offset: 0.75 },
           { opacity: 1, transform: "translateY(0)", color: token.color, textShadow: "none" },
         ],
-        { 
-          duration: isOutgoig ? 600 : 1000, 
-          easing: isOutgoig ? "ease-in" : "ease-out", 
-          fill: "both", 
-          delay 
+        {
+          duration: isOutgoing ? 700 : 1100,
+          easing: isOutgoing ? "ease-in" : "ease-out",
+          fill: "both",
+          delay,
         },
       );
-      
+
       anim.finished.finally(() => {
-        clearInterval(scramble);
-        if (!isOutgoig) el.textContent = char;
+        if (!isOutgoing) el.textContent = char;
       });
-      
+
       m.anims.push(anim);
     }
   };
 
-  from.forEach(f => spawnRain(f, true));
-  to.forEach(t => spawnRain(t, false));
+  from.forEach((f) => spawnRain(f, true));
+  to.forEach((t) => spawnRain(t, false));
+
+  // A SINGLE shared scramble loop for every char — far smoother than one
+  // setInterval per character (which spawned hundreds of competing timers
+  // and caused the stutter). A sentinel animation keeps runMorph waiting
+  // until the rain settles and clears everything on cancel.
+  if (spawned.length) {
+    const SETTLE = 2300;
+    let settled = false;
+    const scramble = window.setInterval(() => {
+      for (const s of spawned)
+        s.el.textContent = chars[(Math.random() * chars.length) | 0];
+    }, 60);
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      window.clearInterval(scramble);
+      for (const s of spawned) if (!s.outgoing) s.el.textContent = s.target;
+    };
+    window.setTimeout(cleanup, SETTLE);
+    m.anims.push({
+      playState: "running",
+      play() {},
+      pause() {},
+      cancel: cleanup,
+      get finished() {
+        return new Promise<void>((res) => {
+          const check = () => (settled ? res() : setTimeout(check, 50));
+          check();
+        });
+      },
+    } as unknown as Animation);
+  }
 }
 
 function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
