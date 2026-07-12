@@ -1372,6 +1372,9 @@ export default function CodeMorphBlock({
   const sequenceRef = useRef(false);
   const aliveRef = useRef(true);
   const skipSyncRef = useRef(false);
+  const inViewRef = useRef(true);
+  const dirtyRef = useRef(false);
+  const [inView, setInView] = useState(true);
   const cacheRef = useRef<Record<string, { dark: string[]; light: string[] }>>({});
 
   useEffect(() => {
@@ -1408,23 +1411,37 @@ export default function CodeMorphBlock({
     };
   }, []);
 
-  // Pause autoplay whenever the block scrolls out of the viewport to save GPU.
+  // Track viewport visibility: pause autoplay off-screen (save GPU) and skip
+  // expensive DOM work (innerHTML swap + reflow) for off-screen blocks so that
+  // theme switches on pages with many blocks stay fast.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting && sequenceRef.current) {
+        const visible = entry.isIntersecting;
+        inViewRef.current = visible;
+        setInView(visible);
+        if (!visible && sequenceRef.current) {
           sequenceRef.current = false;
           setPlaying(false);
           setCountdown(0);
         }
       },
-      { threshold: 0 },
+      { threshold: 0, rootMargin: "300px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // When a deferred (off-screen) block scrolls back into view, flush any
+  // pending snapshot/theme update it skipped.
+  useLayoutEffect(() => {
+    if (!inView || !dirtyRef.current || morphing || !stageRef.current) return;
+    dirtyRef.current = false;
+    const html = htmls[step];
+    if (html != null) stageRef.current.innerHTML = html;
+  }, [inView, htmls, step, morphing]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1476,6 +1493,8 @@ export default function CodeMorphBlock({
       setAnnotationBounds({});
       return;
     }
+    // Skip the getBoundingClientRect reflow storm for off-screen blocks.
+    if (!inViewRef.current) return;
     const bounds: Record<number, { top: number; right: number }> = {};
     const currentAnns = allAnnotations[step];
     if (currentAnns && currentAnns.length > 0) {
@@ -1494,7 +1513,7 @@ export default function CodeMorphBlock({
        });
     }
     setAnnotationBounds(bounds);
-  }, [step, morphing, allAnnotations, htmls]);
+  }, [step, morphing, allAnnotations, htmls, inView]);
 
   // Sync the rendered snapshot whenever the step, theme, or html set changes.
   // Skipped while an animation is mid-flight (the anim layer owns the DOM then).
@@ -1504,6 +1523,11 @@ export default function CodeMorphBlock({
     // DOM in place — don't clobber it with the plain snapshot this one time.
     if (skipSyncRef.current) {
       skipSyncRef.current = false;
+      return;
+    }
+    // Off-screen: defer the DOM swap until the block scrolls back into view.
+    if (!inViewRef.current) {
+      dirtyRef.current = true;
       return;
     }
     const html = htmls[step];
