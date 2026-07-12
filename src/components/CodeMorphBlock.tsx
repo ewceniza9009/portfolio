@@ -1825,9 +1825,12 @@ export default function CodeMorphBlock({
 
   return (
     <>
-    {/* Backdrop for fullscreen */}
     {isFullscreen && (
-       <div className="fixed inset-0 z-[99998] bg-black/90 backdrop-blur-md transition-opacity" onClick={() => setIsFullscreen(false)} />
+       <div 
+         className="fixed inset-0 z-[99998] backdrop-blur-md transition-opacity" 
+         style={{ background: "var(--glass-bg)" }}
+         onClick={() => setIsFullscreen(false)} 
+       />
     )}
     <div
       className={
