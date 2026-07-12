@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
-import { Play, RotateCcw, Copy, Check } from "lucide-react";
+import { Play, Pause, StepForward, RotateCcw, Copy, Check } from "lucide-react";
 
 const HIGH_KEY = "__cm_shiki";
 function getHighlighter() {
@@ -1219,10 +1219,11 @@ export default function CodeMorphBlock({
   anim: initialAnim = "morph",
 }: CodeMorphBlockProps) {
   const { theme: globalTheme } = useGlobalTheme();
-  const parts = code.split("---").map((p) => p.trim());
-  const beforeCode = parts[0]?.trim() || "";
-  const afterCode = parts.length > 1 ? parts[1]?.trim() || "" : beforeCode;
-  const lang = detectLang(beforeCode || afterCode);
+  // Keep the FULL list of `---` separated snapshots so the player can step
+  // through every state in order (not just a single before/after pair).
+  const parts = code.split("---").map((p) => p.trim()).filter(Boolean);
+  const snapshots = parts.length ? parts : [code.trim()];
+  const lang = detectLang(snapshots[0]);
   const validMode = (m: string): AnimMode =>
     ANIM_MODES.some((a) => a.key === m) ? (m as AnimMode) : "morph";
 
@@ -1251,18 +1252,41 @@ export default function CodeMorphBlock({
 
   const [animMode, setAnimMode] = useState<AnimMode>(validMode(baseModeStr));
 
-  const [morphed, setMorphed] = useState(false);
+  const [step, setStep] = useState(0);
+  const [htmls, setHtmls] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [beforeHtml, setBeforeHtml] = useState("");
-  const [afterHtml, setAfterHtml] = useState("");
   const [morphing, setMorphing] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [primaryAction, setPrimaryAction] = useState<"play" | "step">("play");
   const [hasPlayed, setHasPlayed] = useState(false);
   const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const cacheRef = useRef<Record<string, { darkBefore: string; darkAfter: string; lightBefore: string; lightAfter: string }>>({});
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const stepRef = useRef(0);
+  const htmlsRef = useRef<string[]>([]);
+  const sequenceRef = useRef(false);
+  const aliveRef = useRef(true);
+  const skipSyncRef = useRef(false);
+  const cacheRef = useRef<Record<string, { dark: string[]; light: string[] }>>({});
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+  useEffect(() => {
+    htmlsRef.current = htmls;
+  }, [htmls]);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      sequenceRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     ensureStyles();
@@ -1272,6 +1296,11 @@ export default function CodeMorphBlock({
         !dropdownRef.current.contains(e.target as Node)
       )
         setDropdownOpen(false);
+      if (
+        controlsRef.current &&
+        !controlsRef.current.contains(e.target as Node)
+      )
+        setControlsOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => {
@@ -1279,14 +1308,31 @@ export default function CodeMorphBlock({
     };
   }, []);
 
+  // Pause autoplay whenever the block scrolls out of the viewport to save GPU.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting && sequenceRef.current) {
+          sequenceRef.current = false;
+          setPlaying(false);
+          setCountdown(0);
+        }
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
+    const cacheKey = `${code}|||${lang}`;
 
     if (cacheRef.current[cacheKey]) {
       const cached = cacheRef.current[cacheKey];
-      setBeforeHtml(globalTheme === "dark" ? cached.darkBefore : cached.lightBefore);
-      setAfterHtml(globalTheme === "dark" ? cached.darkAfter : cached.lightAfter);
+      setHtmls(globalTheme === "dark" ? cached.dark : cached.light);
       setLoading(false);
       return () => { cancelled = true; };
     }
@@ -1294,20 +1340,21 @@ export default function CodeMorphBlock({
     async function init() {
       try {
         const shiki = await getHighlighter();
-        const darkBefore = shiki.codeToTokens(beforeCode, { lang, theme: "github-dark" });
-        const darkAfter = shiki.codeToTokens(afterCode, { lang, theme: "github-dark" });
-        const lightBefore = shiki.codeToTokens(beforeCode, { lang, theme: "github-light" });
-        const lightAfter = shiki.codeToTokens(afterCode, { lang, theme: "github-light" });
+        const dark = await Promise.all(
+          snapshots.map(async (s) => {
+            const r = await shiki.codeToTokens(s, { lang, theme: "github-dark" });
+            return buildTokenHtml(r.tokens, r.fg);
+          }),
+        );
+        const light = await Promise.all(
+          snapshots.map(async (s) => {
+            const r = await shiki.codeToTokens(s, { lang, theme: "github-light" });
+            return buildTokenHtml(r.tokens, r.fg);
+          }),
+        );
         if (!cancelled) {
-          cacheRef.current[cacheKey] = {
-            darkBefore: buildTokenHtml(darkBefore.tokens, darkBefore.fg),
-            darkAfter: buildTokenHtml(darkAfter.tokens, darkAfter.fg),
-            lightBefore: buildTokenHtml(lightBefore.tokens, lightBefore.fg),
-            lightAfter: buildTokenHtml(lightAfter.tokens, lightAfter.fg),
-          };
-          const cached = cacheRef.current[cacheKey];
-          setBeforeHtml(globalTheme === "dark" ? cached.darkBefore : cached.lightBefore);
-          setAfterHtml(globalTheme === "dark" ? cached.darkAfter : cached.lightAfter);
+          cacheRef.current[cacheKey] = { dark, light };
+          setHtmls(globalTheme === "dark" ? dark : light);
           setLoading(false);
         }
       } catch {
@@ -1317,10 +1364,10 @@ export default function CodeMorphBlock({
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;");
-          const fb = `<span style="color:var(--text-secondary)">${e(beforeCode)}</span>`;
-          setBeforeHtml(fb);
-          setAfterHtml(
-            `<span style="color:var(--text-secondary)">${e(afterCode)}</span>`,
+          setHtmls(
+            snapshots.map(
+              (s) => `<span style="color:var(--text-secondary)">${e(s)}</span>`,
+            ),
           );
           setLoading(false);
         }
@@ -1330,39 +1377,28 @@ export default function CodeMorphBlock({
     return () => {
       cancelled = true;
     };
-  }, [beforeCode, afterCode, lang]);
+  }, [code, lang, globalTheme]);
 
-  // Sync theme from DOM — useLayoutEffect fires synchronously after React commits, BEFORE paint
-  // This ensures the "after" snapshot of startViewTransition sees the correct colors
+  // Sync the rendered snapshot whenever the step, theme, or html set changes.
+  // Skipped while an animation is mid-flight (the anim layer owns the DOM then).
   useLayoutEffect(() => {
-    const cacheKey = `${beforeCode}|||${afterCode}|||${lang}`;
-    const cached = cacheRef.current[cacheKey];
-
-    if (cached) {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      // If morph has played, show AFTER code; otherwise show BEFORE code
-      const html = morphed
-        ? (isDark ? cached.darkAfter : cached.lightAfter)
-        : (isDark ? cached.darkBefore : cached.lightBefore);
-      
-      if (stageRef.current) {
-        const keepStructure = ["diff", "highlight", "scroll"].includes(animMode);
-        // Do not overwrite the DOM if we are in a structure-retaining mode that just finished morphing
-        if (keepStructure && morphed) {
-          // Leave the animated DOM structure intact
-        } else {
-          stageRef.current.innerHTML = html;
-        }
-      }
-    } else if (!loading && beforeHtml && stageRef.current) {
-      stageRef.current.innerHTML = beforeHtml;
+    if (morphing || !stageRef.current) return;
+    // A keep-structure animation (diff/highlight/scroll) just left its decorated
+    // DOM in place — don't clobber it with the plain snapshot this one time.
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
     }
-  }, [globalTheme, morphed, beforeCode, afterCode, lang, beforeHtml, loading, animMode]);
+    const html = htmls[step];
+    if (html != null) {
+      stageRef.current.innerHTML = html;
+    }
+  }, [htmls, step, morphing]);
 
   // Remove the separate useEffect that was overwriting the theme swap
 
   const runMorph = useCallback(
-    async (fromHtml: string, toHtml: string, forward: boolean) => {
+    async (fromHtml: string, toHtml: string, toStep?: number) => {
       if (!stageRef.current || morphing) return;
       const wrapper = stageRef.current;
       setMorphing(true);
@@ -1418,6 +1454,9 @@ export default function CodeMorphBlock({
         );
         if (!keepStructure) {
           wrapper.innerHTML = toHtml;
+        } else {
+          // Prevent the post-morph sync effect from wiping the animated styling.
+          skipSyncRef.current = true;
         }
 
         if (
@@ -1429,8 +1468,7 @@ export default function CodeMorphBlock({
             (el as HTMLElement).style.opacity = "1";
           });
         }
-        if (forward) setMorphed(true);
-        else setMorphed(false);
+        if (typeof toStep === "number") setStep(toStep);
       } finally {
         setMorphing(false);
       }
@@ -1438,23 +1476,104 @@ export default function CodeMorphBlock({
     [animMode, morphing],
   );
 
-  const handleMorph = useCallback(
-    () => {
-      setHasPlayed(true);
-      runMorph(beforeHtml, afterHtml, true);
-    },
-    [runMorph, beforeHtml, afterHtml],
+  // Drives the circular countdown meter for `ms`, resolving when it completes.
+  // Cancels early if autoplay is paused or the component unmounts.
+  const startCountdown = useCallback(
+    (ms: number) =>
+      new Promise<void>((resolve) => {
+        const start = performance.now();
+        let raf = 0;
+        const tick = (now: number) => {
+          if (!aliveRef.current || !sequenceRef.current) {
+            cancelAnimationFrame(raf);
+            setCountdown(0);
+            resolve();
+            return;
+          }
+          const t = Math.min(1, (now - start) / ms);
+          setCountdown(t);
+          if (t >= 1) {
+            setCountdown(0);
+            resolve();
+          } else {
+            raf = requestAnimationFrame(tick);
+          }
+        };
+        raf = requestAnimationFrame(tick);
+      }),
+    [],
   );
-  
+
+  // Autoplay: continuously step through every snapshot, counting down 5s
+  // between transitions and looping back to the start. Clicking Play again
+  // (or the menu's Pause) stops it.
+  const toggleAutoplay = useCallback(async () => {
+    if (morphing && !sequenceRef.current) return;
+    // If already running, this click pauses the loop.
+    if (sequenceRef.current) {
+      sequenceRef.current = false;
+      setPlaying(false);
+      setCountdown(0);
+      return;
+    }
+    if (morphing) return;
+    const arr = htmlsRef.current;
+    if (arr.length < 2) return;
+    sequenceRef.current = true;
+    setPlaying(true);
+    setHasPlayed(true);
+    try {
+      while (aliveRef.current && sequenceRef.current) {
+        const from = stepRef.current;
+        const next = from >= arr.length - 1 ? 0 : from + 1;
+        await runMorph(arr[from], arr[next], next);
+        if (!sequenceRef.current) break;
+        await startCountdown(5000);
+      }
+    } finally {
+      sequenceRef.current = false;
+      setPlaying(false);
+      setCountdown(0);
+    }
+  }, [morphing, runMorph, startCountdown]);
+
+  // Manual single step: advance exactly one snapshot (wraps at the end).
+  const stepOnce = useCallback(() => {
+    if (sequenceRef.current || morphing) return;
+    const arr = htmlsRef.current;
+    if (arr.length < 2) return;
+    const from = stepRef.current;
+    const next = from >= arr.length - 1 ? 0 : from + 1;
+    setHasPlayed(true);
+    runMorph(arr[from], arr[next], next);
+  }, [morphing, runMorph]);
+
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(morphed ? afterCode : beforeCode);
+    navigator.clipboard.writeText(snapshots[step] ?? "");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [morphed, beforeCode, afterCode]);
-  const handleReset = useCallback(
-    () => runMorph(afterHtml, beforeHtml, false),
-    [runMorph, afterHtml, beforeHtml],
-  );
+  }, [snapshots, step]);
+
+  // The default (split-button) action: whatever was last chosen in the menu.
+  const primaryDisabled =
+    primaryAction === "step" ? morphing || playing : morphing && !playing;
+  const runPrimary = () => {
+    if (primaryAction === "step") stepOnce();
+    else toggleAutoplay();
+  };
+  const handleReset = useCallback(() => {
+    if (morphing) return;
+    // Stop any running autoplay before jumping back to the first snapshot.
+    sequenceRef.current = false;
+    setPlaying(false);
+    const arr = htmlsRef.current;
+    const from = stepRef.current;
+    if (from === 0) {
+      if (stageRef.current && arr[0] != null) stageRef.current.innerHTML = arr[0];
+      return;
+    }
+    runMorph(arr[from], arr[0], 0);
+  }, [morphing, runMorph]);
 
   if (loading) {
     return (
@@ -1545,8 +1664,8 @@ export default function CodeMorphBlock({
           >
             {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
           </button>
-          <div className="relative">
-            {!hasPlayed && !morphed && (
+          <div className="relative flex items-center" ref={controlsRef}>
+            {!hasPlayed && step === 0 && (
               <div 
                 className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
                 style={{
@@ -1556,7 +1675,7 @@ export default function CodeMorphBlock({
                   boxShadow: "0 4px 12px rgba(0,0,0,0.3), 0 0 10px rgba(255,200,0,0.2)",
                 }}
               >
-                ✨ Click to play
+                ✨ Click to play / step
                 <div 
                   className="absolute -bottom-1 right-6 w-2 h-2 rotate-45 border-r border-b"
                   style={{
@@ -1566,39 +1685,124 @@ export default function CodeMorphBlock({
                 />
               </div>
             )}
+            {/* Default action — runs immediately without opening the menu */}
             <button
-              onClick={morphed ? handleReset : handleMorph}
-              disabled={morphing}
+              onClick={runPrimary}
+              disabled={primaryDisabled}
+              title={primaryAction === "step" ? "Step to next snapshot" : playing ? "Pause autoplay" : "Play (auto-advances every 5s)"}
               className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
               style={{ color: "var(--text-secondary)" }}
             >
-              {morphing ? (
-                <span
-                  className="text-[10px]"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  ...
-                </span>
-              ) : morphed ? (
-                <>
-                  <RotateCcw size={13} />
-                  <span className="hidden sm:inline ml-1">Reset</span>
-                </>
+              {primaryAction === "step" ? (
+                <StepForward size={13} />
+              ) : playing ? (
+                <Pause size={13} />
               ) : (
-                <>
-                  <Play size={13} className={!hasPlayed ? "animate-pulse text-[var(--accent)]" : ""} />
-                  <span className="hidden sm:inline ml-1">Play</span>
-                </>
+                <Play size={13} className={!hasPlayed ? "animate-pulse text-[var(--accent)]" : ""} />
               )}
+              <span className="hidden sm:inline ml-1">
+                {primaryAction === "step" ? "Step" : playing ? "Pause" : "Play"}
+              </span>
             </button>
+            {/* Arrow opens the menu to pick/change the default action */}
+            <button
+              onClick={() => setControlsOpen((o) => !o)}
+              title="Choose action"
+              className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center text-[10px] font-bold"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {controlsOpen && (
+              <div className="cm-dropdown" style={{ right: 0 }}>
+                <button
+                  onClick={() => {
+                    setPrimaryAction("play");
+                    toggleAutoplay();
+                    setControlsOpen(false);
+                  }}
+                  disabled={morphing && !playing}
+                  className={primaryAction === "play" ? "active" : ""}
+                  style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
+                >
+                  {playing ? <Pause size={13} /> : <Play size={13} />}
+                  <span style={{ display: "flex", flexDirection: "column" }}>
+                    <span className="lbl">{playing ? "Pause" : "Play"}</span>
+                    <span className="dsc">Auto every 5s</span>
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setPrimaryAction("step");
+                    if (sequenceRef.current) {
+                      sequenceRef.current = false;
+                      setPlaying(false);
+                    }
+                    stepOnce();
+                    setControlsOpen(false);
+                  }}
+                  disabled={morphing || playing}
+                  className={primaryAction === "step" ? "active" : ""}
+                  style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
+                >
+                  <StepForward size={13} />
+                  <span style={{ display: "flex", flexDirection: "column" }}>
+                    <span className="lbl">Step</span>
+                    <span className="dsc">Next snapshot</span>
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
+          {/* Reset stays a separate, always-visible button outside the menu */}
+          <button
+            onClick={handleReset}
+            disabled={morphing}
+            title="Back to first snapshot"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <RotateCcw size={13} />
+            <span className="hidden sm:inline ml-1">Reset</span>
+          </button>
         </div>
       </div>
       <div
         ref={containerRef}
-        className="text-sm leading-relaxed overflow-x-auto overflow-y-hidden"
+        className="relative text-sm leading-relaxed overflow-x-auto overflow-y-hidden"
         style={{ fontVariantLigatures: "none" }}
       >
+        {playing && (
+          <div
+            className="absolute top-2 right-2 z-20 pointer-events-none"
+            style={{ width: 30, height: 30 }}
+            title="Next snapshot in…"
+          >
+            <svg width="30" height="30" viewBox="0 0 30 30">
+              <circle cx="15" cy="15" r="13" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="3" />
+              <circle
+                cx="15"
+                cy="15"
+                r="13"
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 13}
+                strokeDashoffset={2 * Math.PI * 13 * (1 - countdown)}
+                transform="rotate(-90 15 15)"
+              />
+            </svg>
+            <span
+              className="absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums"
+              style={{ color: "var(--accent)" }}
+            >
+              {Math.ceil((1 - countdown) * 5)}
+            </span>
+          </div>
+        )}
         <div ref={stageRef} data-cm="stage" className="p-4 relative" />
       </div>
     </div>

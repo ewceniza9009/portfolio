@@ -2156,7 +2156,7 @@ return a + b;
                   >
                     {"```code-morph"}
                   </code>{" "}
-                  fence. Use <code className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>---</code> on its own line to separate the "before" (top) and "after" (bottom) code. Click the Play button to morph between them.
+                  fence. Use <code className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: "var(--bg-secondary)" }}>---</code> on its own line to separate snapshots. You can chain as many as you like. Open the playback menu (the <b>Play/Pause</b> button) and choose: <b>Play</b> — auto-advances through every snapshot in order (top → bottom), counting down 5 seconds between each (a circular meter in the top-right corner shows the wait) and looping until you hit <b>Pause</b>; <b>Step</b> — advances exactly one snapshot at a time (manual); <b>Reset</b> — jumps back to the first. With only two snapshots it behaves like the classic before/after morph.
                 </p>
                 <div
                   className="relative p-3 rounded-lg font-mono text-[11px] leading-relaxed"
@@ -2165,7 +2165,7 @@ return a + b;
                   <button
                     onClick={() =>
                       navigator.clipboard.writeText(
-                        '```code-morph\nconst name = "World";\nconsole.log(name);\n---\nconst greeting = "Hello, World!";\nconsole.log(greeting);\n```',
+                        '```code-morph\nconst name = "World";\nconsole.log(name);\n---\nconst greeting = "Hello, World!";\nconsole.log(greeting);\n---\nconsole.log(`Hello, ${name}!`);\n```',
                       )
                     }
                     className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 transition-colors text-[10px]"
@@ -2183,6 +2183,8 @@ return a + b;
                   <div style={{ color: "var(--text-muted)" }}>---</div>
                   <div>const greeting = "Hello, World!";</div>
                   <div>console.log(greeting);</div>
+                  <div style={{ color: "var(--text-muted)" }}>---</div>
+                  <div>{'console.log(`Hello, ${name}!`);'}</div>
                   <div>{"```"}</div>
                 </div>
               </section>

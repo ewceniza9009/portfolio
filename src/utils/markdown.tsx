@@ -38,7 +38,9 @@ const MERMAID_STYLES = `
   .mermaid-svg-container svg .mindmap-node rect,
   .mermaid-svg-container svg .mindmap-node circle,
   .mermaid-svg-container svg .mindmap-node path,
-  .mermaid-svg-container svg .mindmap-node polygon {
+  .mermaid-svg-container svg .mindmap-node polygon,
+  .mermaid-svg-container svg .branchLabel rect,
+  .mermaid-svg-container svg .commitLabel rect {
     fill: var(--bg-card) !important;
     stroke: var(--accent) !important;
     stroke-width: 1.5px !important;
@@ -46,7 +48,17 @@ const MERMAID_STYLES = `
   .mermaid-svg-container svg .node text,
   .mermaid-svg-container svg .node tspan,
   .mermaid-svg-container svg .mindmap-node text,
-  .mermaid-svg-container svg .mindmap-node tspan {
+  .mermaid-svg-container svg .mindmap-node tspan,
+  .mermaid-svg-container svg [class*="branchLabel"] text,
+  .mermaid-svg-container svg [class*="branchLabel"] tspan,
+  .mermaid-svg-container svg [class*="branchLabel"] span,
+  .mermaid-svg-container svg [class*="branch-label"] text,
+  .mermaid-svg-container svg [class*="branch-label"] tspan,
+  .mermaid-svg-container svg [class*="branch-label"] span,
+  .mermaid-svg-container svg [class*="commitLabel"] text,
+  .mermaid-svg-container svg [class*="commitLabel"] tspan,
+  .mermaid-svg-container svg [class*="commit-label"] text,
+  .mermaid-svg-container svg [class*="commit-label"] tspan {
     fill: var(--text-primary) !important;
     color: var(--text-primary) !important;
   }
@@ -211,6 +223,26 @@ export function MermaidRenderer({ code }: MermaidRendererProps) {
       taskTextOutsideColor: isDark ? '#f1f5f9' : '#0f172a',
       taskBorderColor: isDark ? '#334155' : '#cbd5e1',
       todayLineColor: isDark ? '#f59e0b' : '#f59e0b',
+      // Git graph
+      git0: isDark ? '#3b82f6' : '#3b82f6',
+      git1: isDark ? '#8b5cf6' : '#8b5cf6',
+      git2: isDark ? '#ec4899' : '#ec4899',
+      git3: isDark ? '#14b8a6' : '#14b8a6',
+      git4: isDark ? '#f59e0b' : '#f59e0b',
+      git5: isDark ? '#ef4444' : '#ef4444',
+      git6: isDark ? '#84cc16' : '#84cc16',
+      git7: isDark ? '#64748b' : '#64748b',
+      gitBranchLabel0: '#ffffff',
+      gitBranchLabel1: '#ffffff',
+      gitBranchLabel2: '#ffffff',
+      gitBranchLabel3: '#ffffff',
+      gitBranchLabel4: '#ffffff',
+      gitBranchLabel5: '#ffffff',
+      gitBranchLabel6: '#ffffff',
+      gitBranchLabel7: '#ffffff',
+      commitLabelColor: isDark ? '#f1f5f9' : '#0f172a',
+      commitLabelBackground: isDark ? '#1e293b' : '#f1f5f9',
+      commitLabelFontSize: '12px',
     },
   }
 
