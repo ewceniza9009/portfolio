@@ -38,6 +38,8 @@ export default function OptimizedImage({
   width,
   height,
   noFade = false,
+  onLoad,
+  onError,
   ...props
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false)
@@ -48,6 +50,14 @@ export default function OptimizedImage({
   useEffect(() => {
     if (imgRef.current?.complete) setLoaded(true)
   }, [src])
+
+  // Merge the caller's onLoad/onError with the component's internal handlers so
+  // that both the fade-in (`loaded`) state and any caller-level logic (e.g.
+  // showing a skeleton until the image actually loads) keep working.
+  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    setLoaded(true)
+    onLoad?.(e)
+  }
 
   // 1. Strip query/hash for extension checks
   const cleanSrc = src.split('?')[0].split('#')[0]
@@ -94,8 +104,10 @@ export default function OptimizedImage({
     textRendering: 'optimizeLegibility',
     WebkitBackfaceVisibility: 'hidden',
     backfaceVisibility: 'hidden',
-    WebkitTransform: 'translateZ(0)',
-    transform: 'translateZ(0)',
+    // NOTE: intentionally NOT setting `transform` here. An inline `transform`
+    // would override any transform-based animation/hover (e.g. Tailwind
+    // `group-hover:scale-105`) applied via `className`. Compositing is still
+    // hinted via `willChange` below.
     willChange: 'transform, opacity',
     // Smooth fade-in once loaded
     opacity: loaded || noFade ? 1 : 0,
@@ -131,14 +143,15 @@ export default function OptimizedImage({
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           decoding={priority ? 'sync' : 'async'}
-          onLoad={() => setLoaded(true)}
-          onError={() => {
+          onLoad={handleLoad}
+          onError={(e) => {
             // If the optimized variant 404s, fall back to the original src.
             if (imgRef.current && webpSrc && imgRef.current.src.endsWith('.webp')) {
               imgRef.current.src = src
             } else {
               setError(true)
             }
+            onError?.(e)
           }}
           className={className}
           style={optimizationStyle}
@@ -160,8 +173,11 @@ export default function OptimizedImage({
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
       decoding={priority ? 'sync' : 'async'}
-      onLoad={() => setLoaded(true)}
-      onError={() => setError(true)}
+      onLoad={handleLoad}
+      onError={(e) => {
+        setError(true)
+        onError?.(e)
+      }}
       className={className}
       style={optimizationStyle}
       {...props}

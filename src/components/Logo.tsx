@@ -5,18 +5,31 @@ interface LogoProps {
 }
 
 export default function Logo({ size = 40, className = '', style }: LogoProps) {
+  // The detailed emblem has fine strokes + an intricate alpha mask that go
+  // sub-pixel when rendered small, which aliases into ragged edges. To keep the
+  // exact same design but render it crisply, we rasterize the SVG at 2x and let
+  // the browser downscale it (supersampling) instead of rasterizing at 1x.
+  const SS = 2
+  const w = Math.round(size * 2.09)
+  const h = size
+
   return (
-    <svg
-      width={size * 2.09}
-      height={size}
-      viewBox="0 0 705 337"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={`logo-svg ${className}`}
-      style={style}
+    <span
+      className={`logo-wrap ${className}`}
+      style={{ display: 'inline-block', width: w, height: h, overflow: 'hidden', ...style }}
+      role="img"
       aria-label="EWC Logo"
-      shapeRendering="geometricPrecision"
     >
+      <svg
+        width={w * SS}
+        height={h * SS}
+        viewBox="0 0 705 337"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="logo-svg"
+        style={{ display: 'block', transform: `scale(${1 / SS})`, transformOrigin: 'top left' }}
+        shapeRendering="geometricPrecision"
+      >
       <defs>
         {/* Dynamic theme-aware gradients */}
         <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -59,6 +72,15 @@ export default function Logo({ size = 40, className = '', style }: LogoProps) {
             d="M465.29 251.25 c-0.77 -0.34 -1.77 -1.05 -2.20 -1.53 -0.72 -0.91 -9.48 -16.28 -10.87 -19.11 -0.38 -0.77 -1.39 -2.63 -2.25 -4.07 -2.54 -4.31 -5.36 -9.67 -11.35 -21.46 -4.17 -8.24 -5.65 -11.64 -5.65 -12.93 0 -1.01 2.87 -10.25 6.51 -21.17 3.59 -10.68 6.71 -20.02 6.94 -20.83 0.91 -3.59 7.71 -22.89 8.38 -23.95 1.29 -1.96 3.35 -2.25 15.90 -2.06 l11.69 0.14 1.15 1.34 c0.62 0.72 1.15 1.92 1.15 2.63 0 0.72 -1.87 4.74 -4.07 8.96 -6.61 12.45 -8.19 18.10 -8.09 29.22 0.05 6.47 0.96 11.78 3.11 18.20 1.44 4.26 5.46 12.69 7.18 15.18 0.53 0.67 0.91 1.39 0.91 1.58 0 0.34 2.87 4.65 3.35 5.03 0.14 0.14 0.81 1.01 1.44 1.92 2.01 3.02 0.62 2.87 24.62 2.87 12.17 0 22.32 -0.19 22.65 -0.38 0.29 -0.19 1.77 -2.49 3.26 -5.12 4.60 -8.05 9.82 -17.48 9.82 -17.72 0 -0.62 4.12 -6.47 4.79 -6.75 0.38 -0.19 9.29 -0.38 19.78 -0.48 20.55 -0.19 21.12 -0.10 22.41 2.30 0.72 1.34 0.29 4.07 -1.10 6.90 -2.11 4.21 -7.66 14.75 -8.43 16 -0.43 0.67 -1.96 3.45 -3.40 6.23 -1.44 2.78 -3.40 6.37 -4.41 8 -1.01 1.63 -3.02 5.17 -4.45 7.90 -2.73 5.17 -10.11 18.25 -11.64 20.74 -0.48 0.81 -1.63 1.82 -2.54 2.25 -1.58 0.81 -4.79 0.86 -47.42 0.86 -36.88 -0.05 -46.03 -0.14 -47.18 -0.67z m101.54 -19.54 c9.20 -16.57 13.89 -25.14 20.79 -37.74 l4.84 -8.86 -18.30 -0.14 c-14.22 -0.10 -18.44 0.05 -18.92 0.48 -0.29 0.34 -2.35 3.88 -4.45 7.81 -5.84 10.78 -11.11 20.02 -11.88 20.98 -0.67 0.77 -2.44 0.81 -24.95 0.81 -18.10 -0.05 -24.47 -0.19 -25.24 -0.62 -1.34 -0.77 -2.83 -2.54 -6.27 -7.76 -12.88 -19.30 -17 -39.18 -11.83 -57.14 1.53 -5.36 4.50 -12.07 7.42 -16.95 1.29 -2.16 2.25 -4.02 2.11 -4.12 -0.38 -0.38 -21.50 -0.10 -21.84 0.29 -0.19 0.19 -4.98 14.37 -10.63 31.56 l-10.35 31.23 2.54 5.41 c4.36 9.29 21.03 39.94 26.20 48.18 l0.67 1.05 46.03 0 46.07 0 8 -14.46z" 
           />
         </mask>
+
+        {/* Diagonal sheen used for the hover sweep (clipped to the logo by the mask) */}
+        <linearGradient id="logoShine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="58%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
       </defs>
 
       {/* Render the EWC Emblem with alpha mask applied */}
@@ -96,7 +118,11 @@ export default function Logo({ size = 40, className = '', style }: LogoProps) {
           strokeLinejoin="round"
           d="M464.62 246.56 c-2.44 -3.93 -12.45 -21.79 -17.58 -31.37 -7.71 -14.46 -11.21 -21.89 -11.21 -23.80 0.05 -0.81 4.74 -15.61 10.49 -32.86 l10.44 -31.37 10.25 -0.34 c5.65 -0.14 11.26 -0.19 12.55 -0.05 2.16 0.24 2.25 0.34 2.25 1.82 0 0.96 -0.81 2.92 -2.35 5.41 -4.69 7.81 -8.09 17.24 -9.20 25.34 -1.77 13.46 3.21 30.32 13.60 45.88 3.45 5.22 4.93 6.99 6.27 7.76 0.77 0.43 6.80 0.57 23.80 0.62 21.12 0 22.85 -0.05 23.52 -0.81 0.77 -0.96 5.99 -10.11 11.83 -20.93 2.16 -3.93 4.12 -7.42 4.41 -7.81 0.43 -0.48 4.41 -0.62 20.35 -0.62 l19.83 0 0 1.53 c0 1.72 -2.39 6.23 -25.62 48.18 l-8 14.46 -47.51 0 -47.46 0 -0.67 -1.05z" 
         />
+
+        {/* Sweeping highlight (animated via CSS on hover) */}
+        <rect className="logo-shine" x="0" y="0" width="705" height="337" fill="url(#logoShine)" />
       </g>
     </svg>
+    </span>
   )
 }

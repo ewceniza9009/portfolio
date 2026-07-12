@@ -517,13 +517,35 @@ a {
 
 /* ── Smooth Logo Styling & Hover Effects ── */
 .logo-svg {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   shape-rendering: geometricPrecision;
 }
 
-.logo-svg:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+/* Sheen sweep that crosses the gold letterforms on hover (clipped by the logo mask) */
+.logo-shine {
+  transform: translateX(-705px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-wrap:hover .logo-shine {
+  animation: logo-shine-sweep 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes logo-shine-sweep {
+  0% {
+    transform: translateX(-705px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(705px);
+    opacity: 0;
+  }
 }
 
 /* ── Form Inputs Styling ── */
