@@ -17,6 +17,7 @@ import { formatDate } from '../utils/format'
 import { getApiUrl } from '../utils/api'
 import type { Blog } from '../types/blog'
 import BlogTOC, { extractHeadings } from './BlogTOC'
+import BlogAskAIMenu from './BlogAskAIMenu'
 
 
 const NOOP_SCROLL = () => {}
@@ -103,6 +104,9 @@ export default function BlogPostPage() {
   // Comments deferral
   const commentsRef = useRef<HTMLElement>(null)
   const [commentsVisible, setCommentsVisible] = useState(false)
+
+  // Selection menu ("Ask AI about this") target
+  const articleRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     if (!commentsRef.current) return
@@ -439,9 +443,11 @@ export default function BlogPostPage() {
           </div>
 
           {/* Article Render Content */}
-          <article className="prose max-w-none mb-12 leading-relaxed select-text text-sm sm:text-base article-content">
+          <article ref={articleRef} className="prose max-w-none mb-12 leading-relaxed select-text text-sm sm:text-base article-content">
             {parsedContent}
           </article>
+
+          <BlogAskAIMenu containerRef={articleRef} blogTitle={blog.title} />
 
           <div className="mb-8">
             <PayPalDonate url={paypalUrl} variant="inline" />

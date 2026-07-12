@@ -955,10 +955,12 @@ const SUGGESTIONS = [
 function ChatWindow({
   onClose,
   initialPrompt,
+  initialPromptNonce,
   codebaseContext,
 }: {
   onClose: () => void;
   initialPrompt?: string;
+  initialPromptNonce?: number;
   codebaseContext?: string;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -973,10 +975,10 @@ function ChatWindow({
   const [blogContext, setBlogContext] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(!initialPrompt);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [expanded, setExpanded] = useState(false);
   const dragControls = useDragControls();
   const [isMaximized, setIsMaximized] = useState(false);
-  const initialPromptSent = useRef(false);
 
   const parsedContent = useMemo(() => {
     return messages.map((msg) =>
@@ -1006,18 +1008,25 @@ function ChatWindow({
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send initial prompt from CodeGalaxy
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    const max = expanded ? 320 : 120;
+    el.style.height = Math.min(el.scrollHeight, max) + "px";
+  };
+
+  // Send initial prompt from CodeGalaxy (or any external "open-ai-chat" dispatch).
+  // Keyed on the nonce so re-selecting identical text still re-sends.
   useEffect(() => {
-    if (initialPrompt && !initialPromptSent.current) {
-      initialPromptSent.current = true;
-      setTimeout(() => handleSend(initialPrompt), 100);
-    }
-  }, [initialPrompt]);
+    if (initialPrompt) setTimeout(() => handleSend(initialPrompt), 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPromptNonce]);
 
   const handleSend = async (text?: string) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
     setInput("");
+    setExpanded(false);
     setShowSuggestions(false);
     const updatedMessages: ChatMessage[] = [
       ...messages,
@@ -1321,21 +1330,47 @@ function ChatWindow({
           borderColor: "var(--border)",
         }}
       >
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask me anything..."
-          className="flex-1 px-4 py-3 rounded-xl text-sm outline-none border transition-all focus:ring-2 focus:ring-offset-0"
+          rows={1}
+          onChange={(e) => {
+            setInput(e.target.value);
+            autoResize(e.currentTarget);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="Ask me anything... (Shift+Enter for a new line)"
+          className="flex-1 px-4 py-3 rounded-xl text-sm outline-none border transition-all focus:ring-2 focus:ring-offset-0 resize-none overflow-y-auto leading-relaxed"
           style={{
             background: "var(--bg-primary)",
             color: "var(--text-primary)",
             borderColor: "color-mix(in srgb, var(--accent) 30%, var(--border))",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            minHeight: expanded ? 140 : 44,
           }}
           autoFocus
         />
+        <button
+          type="button"
+          onClick={() => {
+            setExpanded((v) => !v);
+            setTimeout(() => autoResize(inputRef.current), 0);
+          }}
+          title={expanded ? "Collapse input" : "Expand input"}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg"
+          style={{
+            background: "var(--bg-primary)",
+            color: "var(--text-secondary)",
+            border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--border))",
+          }}
+        >
+          {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
         <button
           type="submit"
           disabled={loading || !input.trim()}
@@ -1370,7 +1405,24 @@ export default function FloatingControl() {
   const [pendingCodebaseContext, setPendingCodebaseContext] = useState<
     string | null
   >(null);
+  const [pendingChatNonce, setPendingChatNonce] = useState(0);
   const menuContainerRef = useRef<HTMLDivElement>(null);
+
+  // ── External "Ask AI about this" bridge (dispatched from blog post selection) ──
+  useEffect(() => {
+    const onOpenAIChat = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { prompt?: string; codebaseContext?: string }
+        | undefined;
+      if (!detail) return;
+      setPendingChatPrompt(detail.prompt ?? null);
+      setPendingCodebaseContext(detail.codebaseContext ?? null);
+      setMode("chat");
+    };
+    window.addEventListener("open-ai-chat", onOpenAIChat as EventListener);
+    return () =>
+      window.removeEventListener("open-ai-chat", onOpenAIChat as EventListener);
+  }, []);
 
   // ── Music player — plays all tracks from /audios on loop, on by default ──
   const PLAYLIST: { src: string; gain: number }[] = [
