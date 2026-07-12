@@ -6,6 +6,7 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
+import OptimizedImage from './OptimizedImage'
 import { parseMarkdown } from '../utils/markdown'
 import PayPalDonate from './PayPalDonate'
 import HeadTags from './HeadTags'
@@ -400,11 +401,13 @@ export default function BlogPostPage() {
           {/* Banner cover image */}
           <div className="rounded-3xl overflow-hidden mb-10 h-56 sm:h-72 md:h-80 w-full border relative" style={{ borderColor: 'var(--border)' }}>
             {blog.cover_image ? (
-              <img 
+              <OptimizedImage 
                 src={blog.cover_image} 
                 alt={blog.title}
                 className="w-full h-full object-cover"
-                fetchPriority="high"
+                priority={true}
+                quality="high"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, 100vw"
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.slug)} flex items-center justify-center relative p-6`}>
@@ -447,7 +450,7 @@ export default function BlogPostPage() {
           {/* Written By Author Card */}
           <section className="p-6 rounded-3xl border glass mb-12 flex flex-col sm:flex-row items-start sm:items-center gap-6 select-none" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-              <img src={profilePicUrl} alt="Erwin Wilson Ceniza" className="w-full h-full object-cover rounded-2xl" key={profilePicUrl} />
+              <OptimizedImage src={profilePicUrl} alt="Erwin Wilson Ceniza" className="w-full h-full object-cover rounded-2xl" key={profilePicUrl} quality="high" />
             </div>
             <div className="text-center sm:text-left space-y-1">
               <h4 className="text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5">

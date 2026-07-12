@@ -9,6 +9,7 @@ import Footer from './Footer'
 import BackToTop from './BackToTop'
 import CursorFollower from './CursorFollower'
 import HeadTags from './HeadTags'
+import OptimizedImage from './OptimizedImage'
 import { useProfilePic } from '../utils/profilePic'
 import { useBlogs, useSettings } from '../hooks/usePortfolioData'
 import { getGradient } from '../utils/gradients'
@@ -279,11 +280,11 @@ export default function BlogsPage() {
                 className="inline-block"
               >
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg" style={{ borderColor: 'var(--accent)', boxShadow: '0 0 24px color-mix(in srgb, var(--accent) 35%, transparent)' }}>
-                  <img
+                  <OptimizedImage
                     src={profilePicUrl}
                     alt="Erwin Wilson Ceniza"
                     className="w-full h-full object-cover"
-                    key={profilePicUrl}
+                    quality="high"
                   />
                 </div>
               </motion.div>
@@ -603,11 +604,13 @@ export default function BlogsPage() {
                     <div className="md:col-span-7 h-64 md:h-full overflow-hidden relative border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--border)' }}>
                       <Link to={`/blogs/${featuredBlog.slug}`} className="w-full h-full block" onMouseEnter={() => handleMouseEnter(featuredBlog.slug)} onMouseLeave={() => handleMouseLeave(featuredBlog.slug)}>
                         {featuredBlog.cover_image ? (
-                          <img 
+                          <OptimizedImage 
                             src={featuredBlog.cover_image} 
                             alt={featuredBlog.title}
-                            fetchPriority="high"
+                            priority={true}
+                            quality="high"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 60vw"
                           />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${getGradient(featuredBlog.slug)} flex items-center justify-center p-6 transition-transform duration-700 group-hover:scale-[1.03] opacity-90 relative`}>
@@ -675,7 +678,7 @@ export default function BlogsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
-                              <img src={profilePicUrl} alt="Author" className="w-full h-full object-cover" key={profilePicUrl} />
+                              <OptimizedImage src={profilePicUrl} alt="Author" className="w-full h-full object-cover" quality="medium" />
                             </div>
                             <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
                               <Heart size={12} />
@@ -729,11 +732,12 @@ export default function BlogsPage() {
                             {/* Card Image Banner */}
                             <Link to={`/blogs/${blog.slug}`} className="relative h-44 w-full overflow-hidden block border-b" style={{ borderColor: 'var(--border)' }} onMouseEnter={() => handleMouseEnter(blog.slug)} onMouseLeave={() => handleMouseLeave(blog.slug)}>
                               {blog.cover_image ? (
-                                <img 
+                                <OptimizedImage 
                                   src={blog.cover_image} 
                                   alt={blog.title}
-                                  loading="lazy"
+                                  quality="high"
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 />
                               ) : (
                                 <div className={`w-full h-full bg-gradient-to-br ${blog.category ? categoryMeta[blog.category]?.gradient || getGradient(blog.slug) : getGradient(blog.slug)} flex items-center justify-center relative transition-transform duration-500 group-hover:scale-105 opacity-90`}>
@@ -808,7 +812,7 @@ export default function BlogsPage() {
                                 <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
                                   <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
                                     <div className="w-6 h-6 rounded-full overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
-                                      <img src={profilePicUrl} alt="Author" className="w-full h-full object-cover" loading="lazy" key={profilePicUrl} />
+                                      <OptimizedImage src={profilePicUrl} alt="Author" className="w-full h-full object-cover" quality="medium" />
                                     </div>
                                     <span className="flex items-center gap-1"><Heart size={12} /> {blog.likes}</span>
                                     <span className="flex items-center gap-1"><Clock size={12} /> {blog.read_time || '3 min'}</span>

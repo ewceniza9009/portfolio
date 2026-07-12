@@ -8,6 +8,7 @@ import {
   Download,
 } from "lucide-react";
 import VantaBackground from "./VantaBackground";
+import OptimizedImage from "./OptimizedImage";
 import { useProfilePic } from "../utils/profilePic";
 import MagneticWrapper from "./MagneticWrapper";
 
@@ -116,18 +117,17 @@ export default React.memo(function HeroSection({
             {!imgLoaded && (
               <div className="absolute inset-0 bg-[var(--bg-secondary)] animate-pulse" />
             )}
-            <img
+            <OptimizedImage
               src={profilePicUrl}
               alt="Erwin Wilson Ceniza"
               className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
+              priority={true}
+              quality="high"
               key={profilePicUrl}
-              // @ts-expect-error — fetchpriority is valid HTML but not in React's type defs
-              fetchpriority="high"
-              loading="eager"
             />
           </motion.div>
 

@@ -1,6 +1,7 @@
 import { motion, useInView } from 'framer-motion'
 import React, { useRef } from 'react'
 import { Award as AwardIcon, Calendar, Building2 } from 'lucide-react'
+import OptimizedImage from './OptimizedImage'
 
 interface Award {
   id: string | number
@@ -96,14 +97,17 @@ export default React.memo(function AwardsSection({ awards }: AwardsSectionProps)
                   <text x="100" y="580" fontSize="16" fontFamily="monospace" fill="var(--accent)" opacity="0.5">#</text>
                 </svg>
                 
-                <motion.img
+                <motion.div
                   whileHover={{ scale: 1.08, rotate: -2 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  src={award.image}
-                  alt={award.title}
-                  loading="lazy"
-                  className="w-auto h-56 md:h-64 object-contain relative z-10 rounded-2xl drop-shadow-md saturate-[1.15] contrast-[1.1] brightness-[1.05]"
-                />
+                >
+                  <OptimizedImage
+                    src={award.image}
+                    alt={award.title}
+                    className="w-auto h-56 md:h-64 object-contain relative z-10 rounded-2xl drop-shadow-md saturate-[1.15] contrast-[1.1] brightness-[1.05]"
+                    quality="high"
+                  />
+                </motion.div>
               </div>
 
               {/* Content Section on the Right */}

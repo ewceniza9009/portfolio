@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import OptimizedImage from "./OptimizedImage";
 import { GALLERY_DESCRIPTIONS } from "../data/gallery-descriptions";
 
 interface GalleryImage {
@@ -141,11 +142,9 @@ const GalleryTile = memo(function GalleryTile({
           <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Image unavailable</span>
         </div>
       ) : (
-        <motion.img
-          layoutId={`gallery-img-${image.id}`}
+        <OptimizedImage
           src={imgSrc}
           alt={image.alt}
-          loading="lazy"
           onLoad={() => setIsLoaded(true)}
           onError={() => {
             if (imgSrc.endsWith('.webp')) {
@@ -155,11 +154,8 @@ const GalleryTile = memo(function GalleryTile({
             }
           }}
           className={`w-full h-full object-cover transform group-hover:scale-105 group-hover:rotate-1 transition-all duration-700 ease-out group-hover:blur-0 ${isLoaded ? 'opacity-100 blur-[0.4px]' : 'opacity-0 blur-md'}`}
-          style={{
-            imageRendering: "auto",
-            WebkitFontSmoothing: "antialiased",
-            transform: "translate3d(0,0,0)",
-          }}
+          quality="high"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
       )}
       <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 md:p-4 ${isFocal ? 'opacity-0' : ''}`}>
@@ -766,7 +762,9 @@ export default function GallerySection() {
                 src={currentLightboxImage.src}
                 alt={currentLightboxImage.alt}
                 className="w-full h-full object-contain relative z-10"
-                style={{ filter: "drop-shadow(0 0 20px rgba(0,0,0,0.5))" }}
+                style={{ 
+                  filter: "drop-shadow(0 0 20px rgba(0,0,0,0.5))"
+                } as any}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
               <motion.div 

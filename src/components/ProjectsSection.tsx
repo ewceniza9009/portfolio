@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion } from "framer-motion";
 import { Github, ExternalLink, Play, Search, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import OptimizedImage from "./OptimizedImage";
 import {
   SiDotnet,
   SiReact,
@@ -72,12 +73,13 @@ function ImageWithFallback({
   };
 
   return (
-    <img
+    <OptimizedImage
       src={getSrc()}
       alt={alt}
       className={className}
       onError={() => setError(e => e + 1)}
-      loading="lazy"
+      quality="high"
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
     />
   );
 }
