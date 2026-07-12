@@ -1075,7 +1075,7 @@ function ChatWindow({
       dragListener={false}
       dragMomentum={false}
       dragConstraints={{ top: -800, bottom: 50, left: -800, right: 800 }}
-      className={`fixed z-[100] shadow-2xl overflow-hidden text-sm border ${
+      className={`fixed z-[100] shadow-2xl overflow-hidden text-sm border flex flex-col ${
         isMaximized
           ? "inset-4 rounded-2xl"
           : "sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:max-w-lg sm:h-[520px] sm:max-h-[70vh] sm:w-[calc(100%-2rem)] sm:top-auto inset-4 rounded-2xl"
@@ -1150,7 +1150,7 @@ function ChatWindow({
 
       {/* Messages */}
       <div
-        className="overflow-y-auto h-[calc(100%-150px)] px-4 py-5 space-y-5"
+        className="overflow-y-auto flex-1 min-h-0 px-4 py-5 space-y-5"
         style={{
           background: "var(--bg-primary)",
           overscrollBehavior: "contain",
@@ -1323,7 +1323,7 @@ function ChatWindow({
           e.preventDefault();
           handleSend();
         }}
-        className="flex items-center gap-2.5 px-4 py-4 border-t"
+        className="flex items-center gap-2.5 px-4 py-4 border-t shrink-0"
         style={{
           background:
             "linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)",
