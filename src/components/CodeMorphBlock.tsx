@@ -1,6 +1,40 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useGlobalTheme } from "../hooks/useGlobalTheme";
-import { Play, Pause, StepForward, RotateCcw, Copy, Check } from "lucide-react";
+import { Play, Pause, StepForward, RotateCcw, Copy, Check, VolumeX, Volume2, Maximize2, Minimize2 } from "lucide-react";
+
+
+const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
+
+function playSound(type: "tick" | "swoosh", muted: boolean) {
+  if (muted || !audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  const now = audioCtx.currentTime;
+  
+  if (type === "tick") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.03);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    osc.start(now);
+    osc.stop(now + 0.04);
+  } else if (type === "swoosh") {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.5);
+  }
+}
 
 let worker: Worker | null = null;
 let msgId = 0;
@@ -53,12 +87,7 @@ function detectLang(code: string): string {
   return "text";
 }
 
-interface TokenItem {
-  content: string;
-  offset: number;
-  color: string;
-  fontStyle: number;
-}
+
 
 interface TokenRect {
   text: string;
@@ -166,23 +195,7 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildTokenHtml(tokens: TokenItem[][], fg: string): string {
-  return tokens
-    .map((line) =>
-      line.length === 0
-        ? '<div class="cm-line"><br></div>'
-        : `<div class="cm-line">${line
-            .map((t) => {
-              const color = t.color || fg;
-              let style = `color:${color}`;
-              if (t.fontStyle & 1) style += ";font-style:italic";
-              if (t.fontStyle & 2) style += ";font-weight:bold";
-              return `<span class="cm-tok" style="${style}">${esc(t.content)}</span>`;
-            })
-            .join("")}</div>`,
-    )
-    .join("");
-}
+
 
 function measureTokens(wrapper: HTMLElement, html: string): TokenRect[] {
   wrapper.innerHTML = html;
@@ -243,59 +256,84 @@ function buildAnimLayer(wrapper: HTMLElement, anims: Animation[]): AnimLayer {
 // ── HyperFrames-accurate animations ──
 
 function animMorph(m: AnimLayer, matched: ReturnType<typeof matchByKey>) {
-  // 1. Tokens glide between positions
-  matched.matched.forEach(({ f, t }) => {
+  // 1. Tokens glide between positions with a highly polished spring easing and color morph
+  matched.matched.forEach(({ f, t }, i) => {
     const fp = m.pos(f.rect);
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: f.text }),
     );
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:transform`;
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${t.weight};white-space:pre;will-change:transform,color`;
     const dx = t.rect.left - f.rect.left,
       dy = t.rect.top - f.rect.top;
+    
+    // Slight stagger for a cascading effect
+    const delay = Math.min(i * 1.5, 120);
+
     m.anims.push(
       el.animate(
         [
-          { transform: `translate3d(0,0,0)` },
-          { transform: `translate3d(${dx}px,${dy}px,0)` },
+          { transform: `translate3d(0,0,0)`, color: f.color },
+          { transform: `translate3d(${dx}px,${dy}px,0)`, color: t.color },
         ],
         {
-          duration: 600,
-          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          duration: 750,
+          delay: delay,
+          easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", // Snappy, elegant elastic spring
+          fill: "both",
         },
       ),
     );
   });
 
-  // 2. Leavers fade out cleanly
-  matched.leaving.forEach((f) => {
+  // 2. Leavers drop down slightly and fade out
+  matched.leaving.forEach((f, i) => {
     const fp = m.pos(f.rect);
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: f.text }),
     );
-    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:opacity`;
+    el.style.cssText = `position:absolute;left:${fp.left}px;top:${fp.top}px;color:${f.color};font-weight:${f.weight};white-space:pre;will-change:transform,opacity`;
+    
+    const delay = Math.min(i * 2, 100);
+    
     m.anims.push(
-      el.animate([{ opacity: 1 }, { opacity: 0 }], {
-        duration: 600,
-        easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-        fill: "forwards",
-      }),
+      el.animate(
+        [
+          { opacity: 1, transform: "translateY(0) scale(1)" },
+          { opacity: 0, transform: "translateY(10px) scale(0.95)" }
+        ], 
+        {
+          duration: 400,
+          delay: delay,
+          easing: "ease-in",
+          fill: "both",
+        }
+      ),
     );
   });
 
-  // 3. Enterers fade in cleanly
-  matched.entering.forEach((t) => {
+  // 3. Enterers rise up and fade in
+  matched.entering.forEach((t, i) => {
     const tp = m.pos(t.rect);
     const el = m.add(
       Object.assign(document.createElement("span"), { textContent: t.text }),
     );
-    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:opacity`;
+    el.style.cssText = `position:absolute;left:${tp.left}px;top:${tp.top}px;color:${t.color};font-weight:${t.weight};white-space:pre;will-change:transform,opacity`;
+    
+    const delay = Math.min(i * 2.5, 150) + 100; // Start slightly after leavers
+    
     m.anims.push(
-      el.animate([{ opacity: 0 }, { opacity: 1 }], {
-        duration: 600,
-        easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-        fill: "forwards",
-      }),
+      el.animate(
+        [
+          { opacity: 0, transform: "translateY(-10px) scale(0.95)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" }
+        ], 
+        {
+          duration: 550,
+          delay: delay,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)", // Smooth deceleration
+          fill: "both",
+        }
+      ),
     );
   });
 }
@@ -313,7 +351,7 @@ function animFade(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 300,
           easing: "cubic-bezier(0.4, 0, 1, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -333,7 +371,7 @@ function animFade(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 400,
           easing: "cubic-bezier(0, 0, 0.2, 1)",
-          fill: "forwards",
+          fill: "both",
           delay: 200,
         },
       ),
@@ -393,7 +431,7 @@ function animFlip(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
       {
         duration: 800,
         easing: "cubic-bezier(0.65, 0, 0.35, 1)",
-        fill: "forwards",
+        fill: "both",
       },
     ),
   );
@@ -520,12 +558,11 @@ function animDiff(
   const addH = addEls.map((el) => el.scrollHeight || lineH);
 
   delEls.forEach((el, i) => {
-    el.style.opacity = "0";
     m.anims.push(
-      el.animate([{ opacity: 0 }, { opacity: 1 }], {
+      el.animate([{ backgroundColor: "transparent" }, { backgroundColor: "rgba(255, 99, 71, 0.15)" }], {
         duration: 300,
         easing: "ease-in",
-        fill: "forwards",
+        fill: "both",
         delay: i * 60,
       }),
     );
@@ -538,13 +575,13 @@ function animDiff(
     m.anims.push(
       el.animate(
         [
-          { height: "0px", opacity: 0 },
-          { height: `${h}px`, opacity: 1 },
+          { height: "0px", opacity: 0, backgroundColor: "transparent" },
+          { height: `${h}px`, opacity: 1, backgroundColor: "rgba(46, 204, 113, 0.15)" },
         ],
         {
           duration: 350,
           easing: "ease-out",
-          fill: "forwards",
+          fill: "both",
           delay: 350 + i * 80,
         },
       ),
@@ -623,7 +660,7 @@ function animFlight(
         {
           duration: 400,
           easing: "cubic-bezier(0.36, 0, 0.66, -0.56)",
-          fill: "forwards",
+          fill: "both",
           delay: i * 50,
         },
       ),
@@ -640,7 +677,7 @@ function animFlight(
         {
           duration: 500,
           easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-          fill: "forwards",
+          fill: "both",
           delay: 300 + i * 50,
         },
       ),
@@ -704,7 +741,7 @@ function animTypewriter(
       el.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: 10,
         easing: "ease-out",
-        fill: "forwards",
+        fill: "both",
         delay: currentDelay,
       }),
     );
@@ -717,7 +754,7 @@ function animTypewriter(
       caret.animate([{ left: `${x}px`, top: `${y}px` }], {
         duration: isLast ? 1 : charDelay,
         easing: "steps(1)",
-        fill: "forwards",
+        fill: "both",
         delay: currentDelay,
       }),
     );
@@ -735,7 +772,7 @@ function animTypewriter(
       el.animate([{ opacity: 1 }, { opacity: 0 }], {
         duration: 200,
         easing: "ease-in-out",
-        fill: "forwards",
+        fill: "both",
       }),
     );
   });
@@ -789,7 +826,7 @@ function animHighlight(
       (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.3 }], {
         duration: 400,
         easing: "ease-out",
-        fill: "forwards",
+        fill: "both",
         delay: Math.min(i * 15, 600),
       }),
     );
@@ -804,7 +841,7 @@ function animHighlight(
       {
         duration: 500,
         easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        fill: "forwards",
+        fill: "both",
         delay: 200,
       },
     ),
@@ -873,7 +910,7 @@ function animScroll(
       (el as HTMLElement).animate([{ opacity: 1 }, { opacity: 0.3 }], {
         duration: 350,
         easing: "ease-out",
-        fill: "forwards",
+        fill: "both",
         delay: Math.min(500 + i * 15, 1100),
       }),
     );
@@ -885,7 +922,7 @@ function animScroll(
       {
         duration: 600,
         easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-        fill: "forwards",
+        fill: "both",
       },
     ),
   );
@@ -894,7 +931,7 @@ function animScroll(
     box.animate([{ opacity: "0" }, { opacity: "1" }], {
       duration: 300,
       easing: "ease-out",
-      fill: "forwards",
+      fill: "both",
       delay: 550,
     }),
   );
@@ -915,7 +952,7 @@ function animBlur(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
           { opacity: 1, filter: "blur(0px)" },
           { opacity: 0, filter: "blur(8px)" },
         ],
-        { duration: 600, easing: "ease-in-out", fill: "forwards" },
+        { duration: 600, easing: "ease-in-out", fill: "both" },
       ),
     );
   });
@@ -931,7 +968,7 @@ function animBlur(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
           { opacity: 0, filter: "blur(8px)" },
           { opacity: 1, filter: "blur(0px)" },
         ],
-        { duration: 600, easing: "ease-in-out", fill: "forwards" },
+        { duration: 600, easing: "ease-in-out", fill: "both" },
       ),
     );
   });
@@ -953,7 +990,7 @@ function animSlide(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -973,7 +1010,7 @@ function animSlide(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -996,7 +1033,7 @@ function animZoom(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -1016,7 +1053,7 @@ function animZoom(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -1039,7 +1076,7 @@ function animGlitch(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
           { opacity: 0.5, transform: "translate(-1px, 2px)", color: "#f0f" },
           { opacity: 0, transform: "translate(1px, -2px)" },
         ],
-        { duration: 300, easing: "steps(4, end)", fill: "forwards" },
+        { duration: 300, easing: "steps(4, end)", fill: "both" },
       ),
     );
   });
@@ -1061,7 +1098,7 @@ function animGlitch(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 300,
           easing: "steps(4, end)",
-          fill: "forwards",
+          fill: "both",
           delay: 200,
         },
       ),
@@ -1081,7 +1118,7 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
       el.animate([{ opacity: 1 }, { opacity: 0 }], {
         duration: 1,
         delay: i * 5,
-        fill: "forwards",
+        fill: "both",
       }),
     );
   });
@@ -1095,7 +1132,7 @@ function animErase(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
       el.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: 1,
         delay: maxDelayFrom + 100 + i * 5,
-        fill: "forwards",
+        fill: "both",
       }),
     );
   });
@@ -1114,7 +1151,7 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
           { opacity: 1, transform: "translateY(0)" },
           { opacity: 0, transform: "translateY(20px)" },
         ],
-        { duration: 300, easing: "ease-in", fill: "forwards", delay: i * 3 },
+        { duration: 300, easing: "ease-in", fill: "both", delay: i * 3 },
       ),
     );
   });
@@ -1133,7 +1170,7 @@ function animMatrix(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 300,
           easing: "ease-out",
-          fill: "forwards",
+          fill: "both",
           delay: i * 3 + 200,
         },
       ),
@@ -1164,7 +1201,7 @@ function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -1191,7 +1228,7 @@ function animExplode(m: AnimLayer, from: TokenRect[], to: TokenRect[]) {
         {
           duration: 600,
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "forwards",
+          fill: "both",
         },
       ),
     );
@@ -1223,8 +1260,37 @@ export default function CodeMorphBlock({
   const { theme: globalTheme } = useGlobalTheme();
   // Keep the FULL list of `---` separated snapshots so the player can step
   // through every state in order (not just a single before/after pair).
-  const parts = code.split("---").map((p) => p.trim()).filter(Boolean);
-  const snapshots = parts.length ? parts : [code.trim()];
+
+  // Parse annotations out of the raw code blocks (lines starting with // !)
+  const { cleanSnapshots, allAnnotations } = useMemo(() => {
+    const rawParts = code.split("---").map((p) => p.trim()).filter(Boolean);
+    const raws = rawParts.length ? rawParts : [code.trim()];
+    const allAnnotations: { lineIndex: number; text: string }[][] = [];
+    const cleanSnapshots: string[] = [];
+
+    raws.forEach(raw => {
+        const lines = raw.split("\n");
+        const cleanLines: string[] = [];
+        const annotations: { lineIndex: number; text: string }[] = [];
+        
+        lines.forEach(line => {
+            if (line.trim().startsWith("// !")) {
+                annotations.push({
+                    lineIndex: Math.max(0, cleanLines.length - 1),
+                    text: line.replace("// !", "").trim()
+                });
+            } else {
+                cleanLines.push(line);
+            }
+        });
+        cleanSnapshots.push(cleanLines.join("\n"));
+        allAnnotations.push(annotations);
+    });
+    return { cleanSnapshots, allAnnotations };
+  }, [code]);
+
+  const snapshots = cleanSnapshots;
+
   const lang = detectLang(snapshots[0]);
   const validMode = (m: string): AnimMode =>
     ANIM_MODES.some((a) => a.key === m) ? (m as AnimMode) : "morph";
@@ -1262,10 +1328,21 @@ export default function CodeMorphBlock({
   const [countdown, setCountdown] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [primaryAction, setPrimaryAction] = useState<"play" | "step">("play");
+  const [primaryAction, setPrimaryAction] = useState<"play" | "step">("step");
   const [hasPlayed, setHasPlayed] = useState(false);
+
   const [copied, setCopied] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+
+  const [muted, setMuted] = useState(false);
+  const lastTickRef = useRef(0);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeAnimsRef = useRef<Animation[]>([]);
+  const [scrubValue, setScrubValue] = useState(100);
+
   const stageRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -1356,7 +1433,7 @@ export default function CodeMorphBlock({
               .replace(/>/g, "&gt;");
           setHtmls(
             snapshots.map(
-              (s) => `<span style="color:var(--text-secondary)">${e(s)}</span>`,
+              (s: string) => `<span style="color:var(--text-secondary)">${e(s)}</span>`,
             ),
           );
           setLoading(false);
@@ -1368,6 +1445,35 @@ export default function CodeMorphBlock({
       cancelled = true;
     };
   }, [code, lang, globalTheme]);
+
+
+  const [annotationBounds, setAnnotationBounds] = useState<Record<number, { top: number; right: number }>>({});
+  
+  // Calculate vertical positions for annotations when idle
+  useLayoutEffect(() => {
+    if (morphing || !stageRef.current || !containerRef.current) {
+      setAnnotationBounds({});
+      return;
+    }
+    const bounds: Record<number, { top: number; right: number }> = {};
+    const currentAnns = allAnnotations[step];
+    if (currentAnns && currentAnns.length > 0) {
+       const lines = stageRef.current.querySelectorAll('.cm-line');
+       const containerRect = containerRef.current.getBoundingClientRect();
+       
+       currentAnns.forEach((ann: { lineIndex: number; text: string }) => {
+           const lineEl = lines[ann.lineIndex] as HTMLElement;
+           if (lineEl) {
+               const rect = lineEl.getBoundingClientRect();
+               bounds[ann.lineIndex] = {
+                   top: rect.top - containerRect.top + containerRef.current!.scrollTop,
+                   right: 16 // floating on right edge
+               };
+           }
+       });
+    }
+    setAnnotationBounds(bounds);
+  }, [step, morphing, allAnnotations, htmls]);
 
   // Sync the rendered snapshot whenever the step, theme, or html set changes.
   // Skipped while an animation is mid-flight (the anim layer owns the DOM then).
@@ -1410,16 +1516,22 @@ export default function CodeMorphBlock({
         const from = measureTokens(wrapper, fromHtml);
         const to = measureTokens(wrapper, toHtml);
 
+
         const matched = matchByKey(from, to);
+        
+        
+
         wrapper.innerHTML = "";
         const m = buildAnimLayer(wrapper, []);
 
-        // 3. Keep height locked at maxH during animation for stability, except for flight/diff which handle their own layout
         if (animMode === "diff" || animMode === "flight") {
           wrapper.style.height = "";
         }
 
+
         const fn = ANIM_FNS[animMode];
+        playSound("swoosh", muted);
+
         if (animMode === "diff") {
           (fn as Function)(m, from, to, fromHtml, toHtml, wrapper, () => {});
         } else if (animMode === "flight") {
@@ -1434,7 +1546,16 @@ export default function CodeMorphBlock({
           (fn as Function)(m, from, to);
         }
 
+        activeAnimsRef.current = m.anims;
         await Promise.all(m.anims.map((a) => a.finished.catch(() => {})));
+        
+        if (scrubCancelRef.current) {
+           if (m.layer && m.layer.parentNode) m.layer.parentNode.removeChild(m.layer);
+           return;
+        }
+        
+        activeAnimsRef.current = [];
+
         wrapper.style.position = "";
         wrapper.style.height = "";
         wrapper.style.minHeight = "";
@@ -1460,7 +1581,9 @@ export default function CodeMorphBlock({
         }
         if (typeof toStep === "number") setStep(toStep);
       } finally {
-        setMorphing(false);
+        if (!scrubCancelRef.current) {
+          setMorphing(false);
+        }
       }
     },
     [animMode, morphing],
@@ -1497,10 +1620,16 @@ export default function CodeMorphBlock({
   // Autoplay: continuously step through every snapshot, counting down 5s
   // between transitions and looping back to the start. Clicking Play again
   // (or the menu's Pause) stops it.
+
   const toggleAutoplay = useCallback(async () => {
-    if (morphing && !sequenceRef.current) return;
-    // If already running, this click pauses the loop.
+    if (morphing && !sequenceRef.current) {
+       if (activeAnimsRef.current.some(a => a.playState === 'paused')) {
+           activeAnimsRef.current.forEach(a => a.play());
+       }
+       return;
+    }
     if (sequenceRef.current) {
+
       sequenceRef.current = false;
       setPlaying(false);
       setCountdown(0);
@@ -1528,8 +1657,14 @@ export default function CodeMorphBlock({
   }, [morphing, runMorph, startCountdown]);
 
   // Manual single step: advance exactly one snapshot (wraps at the end).
+
   const stepOnce = useCallback(() => {
-    if (sequenceRef.current || morphing) return;
+    if (sequenceRef.current) return;
+    if (morphing) {
+       activeAnimsRef.current.forEach(a => a.finish());
+       return;
+    }
+
     const arr = htmlsRef.current;
     if (arr.length < 2) return;
     const from = stepRef.current;
@@ -1545,25 +1680,123 @@ export default function CodeMorphBlock({
   }, [snapshots, step]);
 
   // The default (split-button) action: whatever was last chosen in the menu.
-  const primaryDisabled =
-    primaryAction === "step" ? morphing || playing : morphing && !playing;
+
   const runPrimary = () => {
     if (primaryAction === "step") stepOnce();
     else toggleAutoplay();
   };
+
+
+  const scrubCancelRef = useRef(false);
+
   const handleReset = useCallback(() => {
-    if (morphing) return;
-    // Stop any running autoplay before jumping back to the first snapshot.
     sequenceRef.current = false;
     setPlaying(false);
-    const arr = htmlsRef.current;
-    const from = stepRef.current;
-    if (from === 0) {
-      if (stageRef.current && arr[0] != null) stageRef.current.innerHTML = arr[0];
-      return;
+    
+    if (morphing) {
+      scrubCancelRef.current = true;
+      activeAnimsRef.current.forEach(a => a.cancel());
+      activeAnimsRef.current = [];
+      setMorphing(false);
     }
-    runMorph(arr[from], arr[0], 0);
+
+    const arr = htmlsRef.current;
+    if (stageRef.current && arr[0] != null) stageRef.current.innerHTML = arr[0];
+    setStep(0);
+    setScrubValue(0);
+  }, [morphing]);
+
+
+  // Sync scrubber visually during playback
+  useEffect(() => {
+    if (!morphing) {
+       return;
+    }
+    let raf = 0;
+    const updateScrubber = () => {
+       if (activeAnimsRef.current.length > 0 && sequenceRef.current) {
+          const a = activeAnimsRef.current[0];
+          const dur = (a.effect?.getComputedTiming().duration as number) || 1;
+          const curr = (a.currentTime as number) || 0;
+          setScrubValue(Math.min(100, (curr / dur) * 100));
+       }
+       raf = requestAnimationFrame(updateScrubber);
+    };
+    raf = requestAnimationFrame(updateScrubber);
+    return () => cancelAnimationFrame(raf);
+  }, [morphing]);
+
+  const isBuildingRef = useRef(false);
+
+  const handleScrub = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const globalVal = parseFloat(e.target.value);
+    if (Math.abs(globalVal - lastTickRef.current) > 3) {
+       playSound("tick", muted);
+       lastTickRef.current = globalVal;
+    }
+
+    const targetFromStep = Math.floor(globalVal / 100);
+    const localVal = globalVal % 100;
+    const arr = htmlsRef.current;
+    if (arr.length < 2) return;
+    const targetNextStep = Math.min(targetFromStep + 1, arr.length - 1);
+
+    setScrubValue(localVal);
+
+    if (localVal === 0) {
+       if (sequenceRef.current) { sequenceRef.current = false; setPlaying(false); }
+       if (morphing) {
+          scrubCancelRef.current = true;
+          activeAnimsRef.current.forEach(a => a.cancel());
+          activeAnimsRef.current = [];
+          setMorphing(false);
+       }
+       if (targetFromStep !== stepRef.current) setStep(targetFromStep);
+       if (stageRef.current && arr[targetFromStep] != null) {
+           stageRef.current.innerHTML = arr[targetFromStep];
+       }
+       return;
+    }
+
+    if (!morphing || targetFromStep !== stepRef.current) {
+       if (isBuildingRef.current) return;
+       if (sequenceRef.current) { sequenceRef.current = false; setPlaying(false); }
+       
+       if (morphing) {
+          scrubCancelRef.current = true;
+          activeAnimsRef.current.forEach(a => a.cancel());
+       }
+       
+       setStep(targetFromStep);
+       isBuildingRef.current = true;
+       scrubCancelRef.current = false;
+       setTimeout(() => {
+           runMorph(arr[targetFromStep], arr[targetNextStep], targetNextStep);
+           setTimeout(() => {
+               if (activeAnimsRef.current.length > 0) {
+                   activeAnimsRef.current.forEach(a => {
+                      a.pause();
+                      const dur = a.effect?.getComputedTiming().duration as number;
+                      if (dur) a.currentTime = (localVal / 100) * dur;
+                   });
+               }
+               isBuildingRef.current = false;
+           }, 20);
+       }, 0);
+       return;
+    }
+
+    if (sequenceRef.current) { sequenceRef.current = false; setPlaying(false); }
+    activeAnimsRef.current.forEach(a => {
+      a.pause();
+      const dur = a.effect?.getComputedTiming().duration as number;
+      if (dur) a.currentTime = (localVal / 100) * dur;
+    });
   }, [morphing, runMorph]);
+
+
+
+
 
   if (loading) {
     return (
@@ -1589,13 +1822,35 @@ export default function CodeMorphBlock({
     );
   }
 
+
   return (
+    <>
+    {/* Backdrop for fullscreen */}
+    {isFullscreen && (
+       <div className="fixed inset-0 z-[99998] bg-black/90 backdrop-blur-md transition-opacity" onClick={() => setIsFullscreen(false)} />
+    )}
     <div
-      className="my-6 rounded-2xl border"
-      style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[99999] overflow-y-auto p-4 pt-8 sm:p-12 sm:pt-[8vh] animate-in fade-in zoom-in-95 duration-300"
+          : "my-6 rounded-2xl border"
+      }
+      style={{ 
+         borderColor: isFullscreen ? "transparent" : "var(--border)", 
+         background: isFullscreen ? "transparent" : "var(--bg-card)" 
+      }}
     >
+      <div 
+         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col mb-12" : "flex flex-col"}
+         style={{ 
+            borderColor: "var(--border)", 
+            background: "var(--bg-card)",
+            boxShadow: isFullscreen ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" : "none"
+         }}
+      >
       <div
-        className="flex items-center justify-between px-4 py-2 border-b"
+        className="flex items-center justify-between px-4 py-2 border-b shrink-0"
+
         style={{ borderColor: "var(--border)" }}
       >
         <div className="flex items-center gap-2">
@@ -1645,16 +1900,39 @@ export default function CodeMorphBlock({
             )}
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Theater Mode"}
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          </button>
+          <button
             onClick={handleCopy}
+
             title="Copy code"
             className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
             style={{ color: "var(--text-secondary)" }}
           >
             {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
           </button>
+
+          <button
+            onClick={() => {
+               if (muted && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+               setMuted(!muted);
+            }}
+            title={muted ? "Unmute" : "Mute"}
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+          </button>
           <div className="relative flex items-center" ref={controlsRef}>
+
             {!hasPlayed && step === 0 && (
               <div 
                 className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
@@ -1678,7 +1956,7 @@ export default function CodeMorphBlock({
             {/* Default action — runs immediately without opening the menu */}
             <button
               onClick={runPrimary}
-              disabled={primaryDisabled}
+              disabled={false}
               title={primaryAction === "step" ? "Step to next snapshot" : playing ? "Pause autoplay" : "Play (auto-advances every 5s)"}
               className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
               style={{ color: "var(--text-secondary)" }}
@@ -1713,7 +1991,7 @@ export default function CodeMorphBlock({
                     toggleAutoplay();
                     setControlsOpen(false);
                   }}
-                  disabled={morphing && !playing}
+                  disabled={false}
                   className={primaryAction === "play" ? "active" : ""}
                   style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
                 >
@@ -1733,7 +2011,7 @@ export default function CodeMorphBlock({
                     stepOnce();
                     setControlsOpen(false);
                   }}
-                  disabled={morphing || playing}
+                  disabled={playing}
                   className={primaryAction === "step" ? "active" : ""}
                   style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
                 >
@@ -1749,7 +2027,7 @@ export default function CodeMorphBlock({
           {/* Reset stays a separate, always-visible button outside the menu */}
           <button
             onClick={handleReset}
-            disabled={morphing}
+            disabled={false}
             title="Back to first snapshot"
             className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
             style={{ color: "var(--text-secondary)" }}
@@ -1758,12 +2036,50 @@ export default function CodeMorphBlock({
             <span className="hidden sm:inline ml-1">Reset</span>
           </button>
         </div>
+
+
+
+      </div>
+      <div className="w-full px-4 py-2 border-b flex items-center gap-3 bg-black/10" style={{ borderColor: "var(--border)" }}>
+         <span className="text-[9px] font-bold text-gray-500">SCRUB</span>
+         <input 
+            type="range" 
+            min="0" 
+            max={Math.max(0, (htmls.length - 1) * 100)} 
+            step="0.1" 
+            value={morphing && activeAnimsRef.current.length > 0 ? (stepRef.current * 100) + scrubValue : (step * 100)} 
+            onChange={handleScrub} 
+            className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer hover:bg-gray-500 transition-colors" 
+         />
       </div>
       <div
         ref={containerRef}
         className="relative text-sm leading-relaxed overflow-x-auto overflow-y-hidden"
         style={{ fontVariantLigatures: "none" }}
       >
+        {!morphing && allAnnotations[step]?.map((ann, i) => {
+          const pos = annotationBounds[ann.lineIndex];
+          if (!pos) return null;
+          return (
+             <div 
+               key={i} 
+               className="absolute z-30 px-3 py-2 rounded-lg text-xs animate-in fade-in slide-in-from-right-4 duration-500 shadow-xl border"
+               style={{ 
+                 top: pos.top - 8, 
+                 right: pos.right, 
+                 background: "var(--bg-card)",
+                 color: "var(--text-primary)",
+                 borderColor: "var(--accent)",
+                 maxWidth: "200px",
+                 backdropFilter: "blur(8px)"
+               }}
+             >
+               <div className="absolute top-3 -left-2 w-0 h-0 border-y-4 border-y-transparent border-r-[8px]" style={{ borderRightColor: "var(--accent)" }} />
+               <span className="font-bold text-[10px] uppercase tracking-wider mb-1 block" style={{ color: "var(--accent)" }}>Explainer</span>
+               {ann.text}
+             </div>
+          );
+        })}
         {playing && (
           <div
             className="absolute top-2 right-2 z-20 pointer-events-none"
@@ -1794,7 +2110,10 @@ export default function CodeMorphBlock({
           </div>
         )}
         <div ref={stageRef} data-cm="stage" className="p-4 relative" />
+
       </div>
-    </div>
+      </div>
+      </div>
+    </>
   );
 }

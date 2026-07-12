@@ -14,10 +14,10 @@ function buildTokenHtml(tokens: any[][], fg: string): string {
         : `<div class="cm-line">${line
             .map((t) => {
               const color = t.color || fg;
-              let style = \`color:\${color}\`;
+              let style = `color:${color}`;
               if (t.fontStyle & 1) style += ";font-style:italic";
               if (t.fontStyle & 2) style += ";font-weight:bold";
-              return \`<span class="cm-tok" style="\${style}">\${esc(t.content)}</span>\`;
+              return `<span class="cm-tok" style="${style}">${esc(t.content)}</span>`;
             })
             .join("")}</div>`
     )
