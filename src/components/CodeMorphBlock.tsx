@@ -171,11 +171,11 @@ function ensureStyles() {
     .cm-wrapper { position:relative;transition:height 0.35s ease-out;transform-origin:top; }
     .cm-tok { white-space: pre; display: inline; }
     .cm-stage { counter-reset: cm-line-no; }
-    .cm-line { display: block; white-space: pre; position: relative; padding-left: 3em; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
-    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 2.6em; text-align: right; padding-right: 0.6em; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
+    .cm-line { display: block; white-space: pre; position: relative; padding-left: 2.5rem; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
+    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 1.8rem; text-align: right; padding-right: 0.6rem; font-size: 12px; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
     .cm-line:hover::before { opacity: 0.8; color: var(--accent); }
     .cm-line:hover { opacity: 1 !important; }
-    .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50;overflow:hidden; }
+    .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50; }
     .cm-dropdown button { display:flex;flex-direction:column;width:100%;text-align:left;padding:6px 10px;font-size:11px;border:none;background:none;cursor:pointer;color:var(--text-primary); }
     .cm-dropdown button:hover { background:rgba(255,255,255,0.08); }
     .cm-dropdown button.active { background:rgba(255,255,255,0.05); }
@@ -1993,7 +1993,7 @@ export default function CodeMorphBlock({
       className={
         isFullscreen
           ? "fixed inset-0 z-[99999] overflow-y-auto p-4 pt-8 sm:p-12 sm:pt-[8vh] animate-in fade-in zoom-in-95 duration-300"
-          : "my-6 rounded-2xl border"
+          : "my-6 rounded-3xl border"
       }
       style={{ 
          borderColor: isFullscreen ? "transparent" : "var(--border)", 
@@ -2001,43 +2001,24 @@ export default function CodeMorphBlock({
       }}
     >
       <div 
-         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-2xl overflow-hidden border shadow-2xl flex flex-col mb-12 relative" : "flex flex-col relative"}
+         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-3xl overflow-hidden border shadow-2xl flex flex-col mb-12 relative" : "flex flex-col relative rounded-3xl"}
          style={{ 
             borderColor: "var(--border)", 
-            background: "var(--bg-card)",
             boxShadow: isFullscreen ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" : "none"
          }}
       >
       <div
         className="flex items-center justify-between px-4 py-2 border-b shrink-0"
-
-        style={{ borderColor: "var(--border)" }}
+        style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className="text-xs font-semibold tracking-wide"
-            style={{ color: "var(--accent)" }}
-          >
-            Code Anime
-          </span>
+        <div className="flex items-center gap-3 text-[10px] font-bold tracking-wider uppercase">
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors flex items-center gap-1"
-              style={{
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-              }}
+              className="flex items-center gap-1.5 hover:text-[var(--accent)] transition-colors"
             >
               {animMode}
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
@@ -2050,7 +2031,6 @@ export default function CodeMorphBlock({
                     onClick={() => {
                       setAnimMode(m.key);
                       setDropdownOpen(false);
-                      // Auto-reset when mode changes
                       handleReset();
                     }}
                   >
@@ -2061,40 +2041,41 @@ export default function CodeMorphBlock({
               </div>
             )}
           </div>
+          <span style={{ color: "var(--text-muted)", opacity: 0.5 }}>·</span>
+          <span style={{ opacity: 0.6 }}>{snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''}</span>
+          <span style={{ color: "var(--text-muted)", opacity: 0.5 }}>·</span>
+          <span style={{ opacity: 0.6 }}>{snapshots[step]?.split('\n').length || 0} lines</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
             title={isFullscreen ? "Exit Fullscreen" : "Enter Theater Mode"}
-            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
-            style={{ color: "var(--text-secondary)" }}
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-muted)" }}
           >
             {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
           </button>
           <button
             onClick={handleCopy}
-
             title="Copy code"
-            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
-            style={{ color: "var(--text-secondary)" }}
+            className={`p-1.5 rounded hover:bg-white/10 transition-colors ${copied ? "text-green-500" : ""}`}
+            style={{ color: copied ? undefined : "var(--text-muted)" }}
           >
-            {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+            {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
-
           <button
             onClick={() => {
                if (muted && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                setMuted(!muted);
             }}
             title={muted ? "Unmute" : "Mute"}
-            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold"
-            style={{ color: "var(--text-secondary)" }}
+            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            style={{ color: "var(--text-muted)" }}
           >
             {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
           </button>
           <div className="relative flex items-center" ref={controlsRef}>
-
             {!hasPlayed && step === 0 && !isSingle && (
               <div 
                 className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
@@ -2105,7 +2086,7 @@ export default function CodeMorphBlock({
                   boxShadow: "0 4px 12px rgba(0,0,0,0.3), 0 0 10px rgba(255,200,0,0.2)",
                 }}
               >
-                ✨ Click to play / step
+                Click to play / step
                 <div 
                   className="absolute -bottom-1 right-6 w-2 h-2 rotate-45 border-r border-b"
                   style={{
@@ -2115,7 +2096,6 @@ export default function CodeMorphBlock({
                 />
               </div>
             )}
-            {/* Default action — runs immediately without opening the menu */}
             <button
               onClick={runPrimary}
               disabled={isSingle}
@@ -2128,18 +2108,17 @@ export default function CodeMorphBlock({
               ) : playing ? (
                 <Pause size={13} />
               ) : (
-                <Play size={13} className={!hasPlayed ? "animate-pulse text-[var(--accent)]" : ""} />
+                <Play size={13} className={!hasPlayed && !isSingle ? "animate-pulse text-[var(--accent)]" : ""} />
               )}
               <span className="hidden sm:inline ml-1">
                 {primaryAction === "step" ? "Step" : playing ? "Pause" : "Play"}
               </span>
             </button>
-            {/* Arrow opens the menu to pick/change the default action */}
             <button
               onClick={() => setControlsOpen((o) => !o)}
               title="Choose action"
               className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center text-[10px] font-bold"
-              style={{ color: "var(--text-secondary)" }}
+              style={{ color: "var(--text-muted)" }}
             >
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="6 9 12 15 18 9" />
@@ -2186,16 +2165,14 @@ export default function CodeMorphBlock({
               </div>
             )}
           </div>
-          {/* Reset stays a separate, always-visible button outside the menu */}
           <button
             onClick={handleReset}
             disabled={isSingle}
             title="Back to first snapshot"
             className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ color: "var(--text-secondary)" }}
+            style={{ color: "var(--text-muted)" }}
           >
             <RotateCcw size={13} />
-            <span className="hidden sm:inline ml-1">Reset</span>
           </button>
         </div>
 
@@ -2203,23 +2180,69 @@ export default function CodeMorphBlock({
 
       </div>
       {!isSingle && (
-      <div className="w-full px-4 py-2 border-b flex items-center gap-3 bg-black/10" style={{ borderColor: "var(--border)" }}>
-         <span className="text-[9px] font-bold text-gray-500">SCRUB</span>
-         <input 
-            type="range" 
-            min="0" 
-            max={Math.max(0, (htmls.length - 1) * 100)} 
-            step="0.1" 
-            value={morphing && activeAnimsRef.current.length > 0 ? (stepRef.current * 100) + scrubValue : (step * 100)} 
-            onChange={handleScrub} 
-            className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer hover:bg-gray-500 transition-colors" 
-         />
+      <div className="w-full px-4 py-2.5 border-b flex items-center gap-3" style={{ borderColor: "var(--border)" }}>
+         <div className="relative flex-1 h-6 flex items-center">
+            {/* Step dots background */}
+            <div className="absolute inset-x-0 flex items-center justify-between px-1">
+              {htmls.map((_, i) => {
+                const currentStep = morphing && activeAnimsRef.current.length > 0 ? stepRef.current : step;
+                const isPast = i < currentStep;
+                const isCurrent = i === currentStep;
+                return (
+                  <div
+                    key={i}
+                    className="relative z-10 rounded-full transition-all duration-200"
+                    style={{
+                      width: isCurrent ? 8 : 5,
+                      height: isCurrent ? 8 : 5,
+                      background: isPast || isCurrent ? "var(--accent)" : "var(--text-muted)",
+                      opacity: isPast ? 0.5 : isCurrent ? 1 : 0.25,
+                      boxShadow: isCurrent ? "0 0 8px var(--accent)" : "none",
+                    }}
+                  />
+                );
+              })}
+            </div>
+            {/* Track line behind dots */}
+            <div className="absolute inset-x-1 h-[2px] rounded-full" style={{ background: "var(--text-muted)", opacity: 0.15 }} />
+            <div
+              className="absolute left-1 h-[2px] rounded-full transition-all duration-150"
+              style={{
+                width: `${htmls.length > 1 ? ((morphing && activeAnimsRef.current.length > 0 ? stepRef.current : step) / (htmls.length - 1)) * 100 : 0}%`,
+                background: "var(--accent)",
+              }}
+            />
+            {/* Range input overlay */}
+            <input
+               type="range"
+               min="0"
+               max={Math.max(0, (htmls.length - 1) * 100)}
+               step="0.1"
+               value={morphing && activeAnimsRef.current.length > 0 ? (stepRef.current * 100) + scrubValue : (step * 100)}
+               onChange={handleScrub}
+               className="absolute inset-0 w-full opacity-0 cursor-pointer"
+               style={{ margin: 0 }}
+            />
+            {/* Custom thumb */}
+            <div
+              className="absolute z-20 w-3 h-3 rounded-full border-2 pointer-events-none transition-all duration-150"
+              style={{
+                left: `calc(${htmls.length > 1 ? ((morphing && activeAnimsRef.current.length > 0 ? stepRef.current : step) / (htmls.length - 1)) * 100 : 0}% - 6px)`,
+                borderColor: "var(--accent)",
+                background: "var(--bg-card)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+              }}
+            />
+         </div>
+         <span className="text-[10px] font-mono font-bold tabular-nums shrink-0" style={{ color: "var(--text-muted)" }}>
+           {(morphing && activeAnimsRef.current.length > 0 ? stepRef.current : step) + 1}/{htmls.length}
+         </span>
       </div>
       )}
       <div
         ref={containerRef}
-        className="relative text-sm leading-relaxed overflow-x-auto overflow-hidden"
-        style={{ fontVariantLigatures: "none" }}
+        className="relative text-sm leading-relaxed overflow-x-auto"
+        style={{ fontVariantLigatures: "none", maxHeight: "70vh", overflowY: "auto" }}
       >
         {!morphing && allAnnotations[step]?.map((ann, i) => {
           const pos = annotationBounds[ann.lineIndex];
@@ -2275,6 +2298,15 @@ export default function CodeMorphBlock({
         )}
         <div ref={stageRef} data-cm="stage" className={`cm-stage p-4 relative ${(allAnnotations[step]?.length > 0) ? 'pb-24' : ''}`} />
 
+      </div>
+      {/* Bottom accent sweep line */}
+      <div className="relative overflow-hidden" style={{ height: "2px" }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
+          }}
+        />
       </div>
       </div>
       </div>
