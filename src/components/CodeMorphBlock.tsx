@@ -172,9 +172,14 @@ function ensureStyles() {
     .cm-tok { white-space: pre; display: inline; }
     .cm-stage { counter-reset: cm-line-no; }
     .cm-line { display: block; white-space: pre; position: relative; padding-left: 2rem; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
-    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 1.4rem; text-align: right; padding-right: 0.5rem; font-size: 11px; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
-    .cm-line:hover::before { opacity: 0.8; color: var(--accent); }
+    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 1.6rem; text-align: right; padding-right: 0.5rem; font-size: 13px; color: var(--text-muted); opacity: 0.7; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
+    .cm-line:hover::before { opacity: 1; color: var(--accent); }
     .cm-line:hover { opacity: 1 !important; }
+    .cm-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .cm-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .cm-scrollbar::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 4px; }
+    .cm-scrollbar::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+    .cm-scrollbar { scrollbar-width: auto; scrollbar-color: color-mix(in srgb, var(--accent) 40%, transparent) transparent; }
     .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50; }
     .cm-dropdown button { display:flex;flex-direction:column;width:100%;text-align:left;padding:6px 10px;font-size:11px;border:none;background:none;cursor:pointer;color:var(--text-primary); }
     .cm-dropdown button:hover { background:rgba(255,255,255,0.08); }
@@ -1478,6 +1483,7 @@ export default function CodeMorphBlock({
   useEffect(() => {
     htmlsRef.current = htmls;
   }, [htmls]);
+
   useEffect(() => {
     aliveRef.current = true;
     return () => {
@@ -2001,7 +2007,7 @@ export default function CodeMorphBlock({
       }}
     >
       <div 
-         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-3xl overflow-hidden border shadow-2xl flex flex-col mb-12 relative" : "flex flex-col relative rounded-3xl"}
+         className={isFullscreen ? "mx-auto w-full max-w-6xl rounded-3xl overflow-hidden border shadow-2xl flex flex-col mb-12 relative" : "flex flex-col relative rounded-3xl pb-1"}
          style={{ 
             borderColor: "var(--border)", 
             boxShadow: isFullscreen ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" : "none"
@@ -2077,7 +2083,7 @@ export default function CodeMorphBlock({
           </button>
           <div className="relative flex items-center" ref={controlsRef}>
             {!hasPlayed && step === 0 && !isSingle && (
-              <div 
+              <div
                 className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
                 style={{
                   background: "var(--bg-card)",
@@ -2087,7 +2093,7 @@ export default function CodeMorphBlock({
                 }}
               >
                 Click to play / step
-                <div 
+                <div
                   className="absolute -bottom-1 right-6 w-2 h-2 rotate-45 border-r border-b"
                   style={{
                     background: "var(--bg-card)",
@@ -2241,7 +2247,7 @@ export default function CodeMorphBlock({
       )}
       <div
         ref={containerRef}
-        className="relative text-sm leading-relaxed overflow-x-auto"
+        className="relative text-sm leading-relaxed cm-scrollbar"
         style={{ fontVariantLigatures: "none", maxHeight: "70vh", overflowY: "auto" }}
       >
         {!morphing && allAnnotations[step]?.map((ann, i) => {

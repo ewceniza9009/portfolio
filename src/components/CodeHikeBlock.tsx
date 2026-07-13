@@ -617,7 +617,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
   return (
     <div
       ref={containerRef}
-      className="relative group my-6 rounded-3xl border select-text ch-container"
+      className="relative group my-6 border select-text ch-container"
       style={
         {
           background: isDark ? "#0d1117" : "#ffffff",
@@ -694,7 +694,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
           transition: opacity 0.2s ease;
         }
         /* Prevent page horizontal stretching while allowing scroll */
-        .ch-container { overflow-x: auto !important; overflow-y: hidden !important; }
+        .ch-container { overflow: visible !important; padding-bottom: 6px; }
 
         @keyframes ch-focus-border-in {
           0% { border-left-width: 0; opacity: 0; }
@@ -978,6 +978,12 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
           100% { transform: scale(1) rotate(0deg); }
         }
         .ch-copy-success { animation: ch-copy-success 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        .ch-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .ch-container::-webkit-scrollbar-track { background: transparent; }
+        .ch-container::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 4px; }
+        .ch-container::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+        .ch-container { scrollbar-width: auto; scrollbar-color: color-mix(in srgb, var(--accent) 40%, transparent) transparent; }
       `}</style>
 
       {/* Header */}
@@ -1037,11 +1043,11 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
 
       {/* Code lines */}
       <div
-        className="rounded-b-3xl overflow-hidden"
+        className="overflow-x-auto overflow-y-hidden"
         style={{ transition: "opacity 0.7s ease", opacity: revealed ? 1 : 0 }}
       >
         <div
-          className="p-0 m-0 rounded-b-2xl"
+          className="p-0 m-0 rounded-b-3xl"
           style={{ background: isDark ? "#0d1117" : "#ffffff" }}
         >
           {(() => {
@@ -1469,7 +1475,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title={`Expand ${linesHidden} hidden lines`}
                           style={{
                             display: "inline-block",
-                            width: "1.4rem",
+                            width: "1.6rem",
                             textAlign: "right",
                             paddingRight: "0.5rem",
                             color: "var(--accent)",
@@ -1580,7 +1586,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title="Fold lines"
                           style={{
                             display: "inline-block",
-                            width: "1.4rem",
+                            width: "1.6rem",
                             textAlign: "right",
                             paddingRight: "0.5rem",
                             color: "var(--accent)",
@@ -1603,13 +1609,13 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                         <span
                           style={{
                             display: "inline-block",
-                            width: "1.4rem",
+                            width: "1.6rem",
                             textAlign: "right",
                             paddingRight: "0.5rem",
                             color: isDark ? "#6e7681" : "#8c959f",
                             userSelect: "none",
-                            opacity: isDimmed ? 0.45 : 0.6,
-                            fontSize: "11px",
+                            opacity: isDimmed ? 0.5 : 0.7,
+                            fontSize: "13px",
                             fontVariantNumeric: "tabular-nums",
                           }}
                         >
