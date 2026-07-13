@@ -357,6 +357,41 @@ a {
   background: radial-gradient(ellipse at 50% 50%, var(--accent-dim) 0%, var(--bg-primary) 70%);
 }
 
+/* CSS ring fallback used when WebGL is unavailable or motion is reduced.
+   Renders concentric rings so the background is never blank. Animation is
+   disabled under prefers-reduced-motion. */
+.vanta-fallback.is-css-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center,
+      transparent 0 18%,
+      var(--accent) 18.3% 19.3%,
+      transparent 19.6% 30%,
+      var(--accent-secondary) 30.3% 31.3%,
+      transparent 31.6% 42%,
+      var(--accent) 42.3% 43.3%,
+      transparent 43.6% 60%,
+      var(--accent-secondary) 60.3% 61.3%,
+      transparent 61.6%);
+  -webkit-mask-image: radial-gradient(closest-side at center, black 30%, transparent 90%);
+  mask-image: radial-gradient(closest-side at center, black 30%, transparent 90%);
+  opacity: 0.5;
+  animation: vanta-ring-spin 45s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes vanta-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vanta-fallback.is-css-ring::before {
+    animation: none;
+  }
+}
+
 /* ── Focus Styles ── */
 :focus-visible {
   outline: 2px solid var(--accent);

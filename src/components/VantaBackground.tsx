@@ -14,6 +14,21 @@ export default function VantaBackground() {
     (document.documentElement.getAttribute('data-accent') as AccentKey) || 'gold'
   )
   const [isIntersecting, setIsIntersecting] = useState(true)
+  // When WebGL is unavailable / blocked or init fails, we fall back to a CSS
+  // ring so the background is never blank.
+  const [cssRing, setCssRing] = useState(false)
+
+  const webglAvailable = () => {
+    try {
+      const canvas = document.createElement('canvas')
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      )
+    } catch {
+      return false
+    }
+  }
 
   // 1. Intersection Observer to disable WebGL off-screen
   useEffect(() => {
@@ -76,41 +91,56 @@ export default function VantaBackground() {
 
     loopControlRef.current = { start, stop }
 
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
     async function init() {
       if (effectRef.current) return; // Already initialized
+
+      // Respect reduced-motion: show a (static) CSS ring instead of WebGL.
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setCssRing(true)
+        return
+      }
+
+      // No WebGL? Use the CSS ring fallback instead of failing silently.
+      if (!webglAvailable()) {
+        console.warn('[Vanta] WebGL unavailable — using CSS ring fallback')
+        setCssRing(true)
+        return
+      }
 
       const colorHex = ACCENT_THEMES[accent]?.[theme]?.accent || '#f3ca65'
       const colorNum = parseInt(colorHex.replace('#', '0x'), 16)
       const bgColorNum = theme === 'dark' ? 0x0a0a0a : 0xffffff
 
-      const three = await import('three')
-      if (!isMounted) return;
-      window.THREE = three
-      const RINGS = (await import('vanta/dist/vanta.rings.min')).default
-      if (!isMounted) return;
+      try {
+        const three = await import('three')
+        if (!isMounted) return;
+        window.THREE = three
+        const RINGS = (await import('vanta/dist/vanta.rings.min')).default
+        if (!isMounted) return;
 
-      if (vantaRef.current) {
-        effectRef.current = RINGS({
-          el: vantaRef.current,
-          mouseControls: false,
-          touchControls: false,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          color: colorNum,
-          backgroundColor: bgColorNum,
-          backgroundAlpha: 0,
-        })
-        // Cap device pixel ratio so the full-screen canvas isn't rendered at 2x/3x
-        effectRef.current.renderer?.setPixelRatio?.(Math.min(window.devicePixelRatio || 1, 1.5))
+        if (vantaRef.current) {
+          effectRef.current = RINGS({
+            el: vantaRef.current,
+            mouseControls: false,
+            touchControls: false,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: colorNum,
+            backgroundColor: bgColorNum,
+            backgroundAlpha: 0,
+          })
+          // Cap device pixel ratio so the full-screen canvas isn't rendered at 2x/3x
+          effectRef.current.renderer?.setPixelRatio?.(Math.min(window.devicePixelRatio || 1, 1.5))
+          setCssRing(false)
 
-        if (isVisible() && isIntersectingRef.current) start()
+          if (isVisible() && isIntersectingRef.current) start()
+        }
+      } catch (err) {
+        console.warn('[Vanta] init failed — using CSS ring fallback:', err)
+        setCssRing(true)
       }
     }
     init()
@@ -186,7 +216,7 @@ export default function VantaBackground() {
   return (
     <div
       ref={vantaRef}
-      className="absolute top-[10vh] left-[15vw] w-[120vw] h-[120vh] z-0 pointer-events-none vanta-fallback"
+      className={`absolute top-[10vh] left-[15vw] w-[120vw] h-[120vh] z-0 pointer-events-none vanta-fallback${cssRing ? ' is-css-ring' : ''}`}
       style={{
         WebkitMaskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",
         maskImage: "radial-gradient(closest-side at center, black 30%, transparent 90%)",

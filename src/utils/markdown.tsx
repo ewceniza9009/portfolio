@@ -100,6 +100,59 @@ interface MermaidRendererProps {
 // Module-level counter ensures globally unique IDs across all MermaidRenderer instances
 let _mermaidIdCounter = 0
 
+// Mermaid uses a shared global DOM container during render, so concurrent
+// renders from multiple diagram instances on the same page collide and some
+// come back blank. Serialize all init+render work through a single FIFO queue
+// (one promise at a time) to eliminate the race. Also initialize Mermaid once
+// per config instead of on every render.
+let _mermaidQueue: (() => Promise<void>)[] = []
+let _mermaidRunning = false
+let _mermaidInitKey = ''
+
+function enqueueMermaid(task: () => Promise<void>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    _mermaidQueue.push(async () => {
+      try {
+        await task()
+        resolve()
+      } catch (e) {
+        reject(e)
+      }
+    })
+    if (!_mermaidRunning) {
+      _mermaidRunning = true
+      const drain = async () => {
+        const next = _mermaidQueue.shift()
+        if (!next) {
+          _mermaidRunning = false
+          return
+        }
+        try {
+          await next()
+        } catch {
+          // errors are surfaced per-instance via the task's own try/catch
+        }
+        await drain()
+      }
+      drain()
+    }
+  })
+}
+
+async function renderMermaid(cleanCode: string, config: Record<string, unknown>): Promise<string> {
+  const mermaidModule = await import('mermaid')
+  const mermaid = mermaidModule.default
+  const key = JSON.stringify(config)
+  // Re-initialize only when the config (theme/accent colors) actually changes.
+  if (_mermaidInitKey !== key) {
+    mermaid.initialize(config as any)
+    _mermaidInitKey = key
+  }
+  const id = `mermaid-${++_mermaidIdCounter}-${Date.now()}`
+  const result = await mermaid.render(id, cleanCode)
+  return typeof result === 'string' ? result : (result as { svg?: string }).svg || ''
+}
+
 export function MermaidRenderer({ code }: MermaidRendererProps) {
   const { theme, accent } = useGlobalTheme()
   const [svgHtml, setSvgHtml] = useState('')
@@ -278,15 +331,9 @@ export function MermaidRenderer({ code }: MermaidRendererProps) {
     setIsLoading(true)
     setIsError(false)
 
-    async function render() {
+    enqueueMermaid(async () => {
       try {
-        const mermaidModule = await import('mermaid')
-        const mermaid = mermaidModule.default
-        mermaid.initialize(mermaidConfig)
-        // Use module counter + cycle + timestamp for truly unique IDs
-        const id = `mermaid-${++_mermaidIdCounter}-${cycle}-${Date.now()}`
-        const result = await mermaid.render(id, cleanCode)
-        const svg = typeof result === 'string' ? result : (result as { svg?: string }).svg
+        const svg = await renderMermaid(cleanCode, mermaidConfig)
         // Ignore result if this render cycle was cancelled or superseded
         if (cancelled || cycle !== renderCycleRef.current) return
         if (svg) {
@@ -304,8 +351,7 @@ export function MermaidRenderer({ code }: MermaidRendererProps) {
           setIsLoading(false)
         }
       }
-    }
-    render()
+    })
 
     return () => { 
       cancelled = true 
