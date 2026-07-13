@@ -617,7 +617,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
   return (
     <div
       ref={containerRef}
-      className="relative group my-6 border select-text ch-container"
+      className="relative group my-6 border select-text ch-container rounded-3xl"
       style={
         {
           background: isDark ? "#0d1117" : "#ffffff",
@@ -694,7 +694,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
           transition: opacity 0.2s ease;
         }
         /* Prevent page horizontal stretching while allowing scroll */
-        .ch-container { overflow: visible !important; padding-bottom: 6px; }
+        .ch-container { }
 
         @keyframes ch-focus-border-in {
           0% { border-left-width: 0; opacity: 0; }
@@ -979,10 +979,11 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
         }
         .ch-copy-success { animation: ch-copy-success 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        .ch-container::-webkit-scrollbar { width: 8px; height: 8px; }
-        .ch-container::-webkit-scrollbar-track { background: transparent; }
-        .ch-container::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 4px; }
-        .ch-container::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+        .ch-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .ch-scroll::-webkit-scrollbar-track { background: transparent; }
+        .ch-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 4px; }
+        .ch-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+        .ch-scroll::-webkit-scrollbar-button { display: none; }
         .ch-container { scrollbar-width: auto; scrollbar-color: color-mix(in srgb, var(--accent) 40%, transparent) transparent; }
       `}</style>
 
@@ -1043,7 +1044,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
 
       {/* Code lines */}
       <div
-        className="overflow-x-auto overflow-y-hidden"
+        className="overflow-x-auto overflow-y-hidden ch-scroll"
         style={{ transition: "opacity 0.7s ease", opacity: revealed ? 1 : 0 }}
       >
         <div
