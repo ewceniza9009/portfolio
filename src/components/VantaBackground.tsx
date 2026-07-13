@@ -94,12 +94,6 @@ export default function VantaBackground() {
     async function init() {
       if (effectRef.current) return; // Already initialized
 
-      // Respect reduced-motion: show a (static) CSS ring instead of WebGL.
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setCssRing(true)
-        return
-      }
-
       // No WebGL? Use the CSS ring fallback instead of failing silently.
       if (!webglAvailable()) {
         console.warn('[Vanta] WebGL unavailable — using CSS ring fallback')
