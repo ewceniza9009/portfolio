@@ -1431,6 +1431,8 @@ export default function FloatingControl() {
     { src: "/audios/bwy-sv-lofi2.mp3", gain: 1.6 },
     { src: "/audios/wsntm-shggy-lofi1.mp3", gain: 1.3 },
     { src: "/audios/wsntm-shggy-lofi2.mp3", gain: 1.3 },
+    { src: "/audios/chcb-ffy-lofi1.mp3", gain: 1.3 },
+    { src: "/audios/chcb-ffy-lofi2.mp3", gain: 1.3 },
     { src: "/audios/Lukrembo - Bake A Pie (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Lukrembo - Donut (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Lukrembo - Rose (freetouse.com).mp3", gain: 1.0 },
