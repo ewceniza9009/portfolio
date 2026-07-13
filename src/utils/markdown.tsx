@@ -1,16 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { ACCENT_THEMES } from '../data/accents'
 import { useGlobalTheme } from '../hooks/useGlobalTheme'
 import { Copy, Check, Maximize2, X, Download, Minus, Plus, RotateCcw } from 'lucide-react'
 import Interactive3DBlock from '../components/Interactive3DBlock'
 import InteractiveBlock from '../components/InteractiveBlock'
-import ChartBlock from '../components/ChartBlock'
 import CodeHikeBlock from '../components/CodeHikeBlock'
 import RemotionBlock from '../components/RemotionBlock'
 import CodeMorphBlock from '../components/CodeMorphBlock'
 import { BlockErrorBoundary } from '../components/BlockErrorBoundary'
 import { slugifyHeading } from './slugify'
+
+const ChartBlock = lazy(() =>
+  import('../components/ChartBlock').then((m) => ({ default: m.default })),
+)
 
 // Fallback for a block that throws during render: show the raw code so the
 // article content is never lost, and the failure is visible/debuggable.
@@ -873,7 +876,9 @@ export function parseMarkdown(md: string): React.ReactNode[] {
         } else if (codeLang.toLowerCase() === 'chart') {
           result.push(
             <BlockErrorBoundary key={keyIndex++} label="Chart" fallback={rawCodeFallback('Chart', codeText)}>
-              <ChartBlock code={codeText} />
+              <Suspense fallback={<div className="my-6 h-48 grid place-items-center text-sm opacity-60">Loading chart…</div>}>
+                <ChartBlock code={codeText} />
+              </Suspense>
             </BlockErrorBoundary>
           )
         } else if (codeLang.toLowerCase().startsWith('codehike') || codeLang.toLowerCase().startsWith('code-hike')) {

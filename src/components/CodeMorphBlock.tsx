@@ -1402,6 +1402,7 @@ export default function CodeMorphBlock({
   }, [code]);
 
   const snapshots = cleanSnapshots;
+  const isSingle = snapshots.length < 2;
 
   const lang = detectLang(snapshots[0]);
   const validMode = (m: string): AnimMode =>
@@ -2091,7 +2092,7 @@ export default function CodeMorphBlock({
           </button>
           <div className="relative flex items-center" ref={controlsRef}>
 
-            {!hasPlayed && step === 0 && (
+            {!hasPlayed && step === 0 && !isSingle && (
               <div 
                 className="absolute -top-10 right-0 px-2.5 py-1 rounded-md text-[10px] font-bold animate-bounce pointer-events-none whitespace-nowrap border z-10"
                 style={{
@@ -2114,9 +2115,9 @@ export default function CodeMorphBlock({
             {/* Default action — runs immediately without opening the menu */}
             <button
               onClick={runPrimary}
-              disabled={false}
+              disabled={isSingle}
               title={primaryAction === "step" ? "Step to next snapshot" : playing ? "Pause autoplay" : "Play (auto-advances every 5s)"}
-              className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
+              className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ color: "var(--text-secondary)" }}
             >
               {primaryAction === "step" ? (
@@ -2149,7 +2150,7 @@ export default function CodeMorphBlock({
                     toggleAutoplay();
                     setControlsOpen(false);
                   }}
-                  disabled={false}
+                  disabled={isSingle}
                   className={primaryAction === "play" ? "active" : ""}
                   style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
                 >
@@ -2169,7 +2170,7 @@ export default function CodeMorphBlock({
                     stepOnce();
                     setControlsOpen(false);
                   }}
-                  disabled={playing}
+                  disabled={playing || isSingle}
                   className={primaryAction === "step" ? "active" : ""}
                   style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}
                 >
@@ -2185,9 +2186,9 @@ export default function CodeMorphBlock({
           {/* Reset stays a separate, always-visible button outside the menu */}
           <button
             onClick={handleReset}
-            disabled={false}
+            disabled={isSingle}
             title="Back to first snapshot"
-            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40"
+            className="p-1.5 rounded hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ color: "var(--text-secondary)" }}
           >
             <RotateCcw size={13} />
@@ -2198,6 +2199,7 @@ export default function CodeMorphBlock({
 
 
       </div>
+      {!isSingle && (
       <div className="w-full px-4 py-2 border-b flex items-center gap-3 bg-black/10" style={{ borderColor: "var(--border)" }}>
          <span className="text-[9px] font-bold text-gray-500">SCRUB</span>
          <input 
@@ -2210,6 +2212,7 @@ export default function CodeMorphBlock({
             className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer hover:bg-gray-500 transition-colors" 
          />
       </div>
+      )}
       <div
         ref={containerRef}
         className="relative text-sm leading-relaxed overflow-x-auto overflow-hidden"

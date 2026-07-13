@@ -1,9 +1,13 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Network, X, RotateCw } from "lucide-react";
 import { useGraphData } from "./useGraphData";
 import { useGraphLayout } from "./useGraphLayout";
-import { CanvasGraph, type CanvasGraphHandle } from "./CanvasGraph";
+import type { CanvasGraphHandle } from "./CanvasGraph";
+
+const CanvasGraph = lazy(() =>
+  import("./CanvasGraph").then((m) => ({ default: m.CanvasGraph })),
+);
 import { SidePanel } from "./SidePanel";
 import { FilterBar } from "./FilterBar";
 import type { GraphNode } from "./constants";
@@ -355,24 +359,26 @@ export function CodeGalaxyWindow({
 
       {/* Canvas area */}
       <div className="relative flex-1 h-[calc(100%-56px)]">
-        <CanvasGraph
-          ref={graphRef}
-          nodes={stableNodesList}
-          links={data.payload?.links || []}
-          layout={layout}
-          layoutRef={layoutRef}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          hoveredId={hoveredId}
-          onHover={setHoveredId}
-          visibleNodes={visibleNodes}
-          visibleLinks={visibleLinks}
-          tooltip={tooltip}
-          onTooltip={setTooltip}
-          searchMatchIds={searchMatchIds}
-          onLinkTooltip={setLinkTip}
-          onNodeContextMenu={(x, y, node) => setCtxMenu({ x, y, node })}
-        />
+        <Suspense fallback={<div className="w-full h-full grid place-items-center text-sm opacity-60">Loading galaxy…</div>}>
+          <CanvasGraph
+            ref={graphRef}
+            nodes={stableNodesList}
+            links={data.payload?.links || []}
+            layout={layout}
+            layoutRef={layoutRef}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            hoveredId={hoveredId}
+            onHover={setHoveredId}
+            visibleNodes={visibleNodes}
+            visibleLinks={visibleLinks}
+            tooltip={tooltip}
+            onTooltip={setTooltip}
+            searchMatchIds={searchMatchIds}
+            onLinkTooltip={setLinkTip}
+            onNodeContextMenu={(x, y, node) => setCtxMenu({ x, y, node })}
+          />
+        </Suspense>
 
         {/* Breadcrumb trail */}
         {navHistory.length > 0 && (
