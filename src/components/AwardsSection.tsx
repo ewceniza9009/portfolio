@@ -24,8 +24,8 @@ export default React.memo(function AwardsSection({ awards }: AwardsSectionProps)
     <section id="awards" className="py-32 px-6 relative" style={{ background: 'var(--bg-primary)' }}>
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="bg-glow-blob absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full blur-[100px]" style={{ background: 'var(--accent)' }} />
-        <div className="bg-glow-blob absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[100px]" style={{ background: 'var(--accent-secondary)' }} />
+        <div className="bg-glow-blob absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full" style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }} />
+        <div className="bg-glow-blob absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full" style={{ background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%)' }} />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10" ref={sectionRef}>

@@ -19,8 +19,8 @@ export default React.memo(function AboutSection({ title, paragraphs }: AboutSect
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          className="bg-glow-blob absolute top-[20%] -left-[10%] w-[30%] h-[40%] rounded-full blur-[100px]"
-          style={{ background: "var(--accent)" }}
+          className="bg-glow-blob absolute top-[20%] -left-[10%] w-[30%] h-[40%] rounded-full"
+          style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)" }}
         />
       </div>
 

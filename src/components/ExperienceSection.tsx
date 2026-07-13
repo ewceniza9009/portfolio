@@ -35,8 +35,8 @@ export default React.memo(function ExperienceSection({ experience }: ExperienceS
       <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_var(--text-primary)_1.5px,_transparent_1.5px)] [background-size:32px_32px] pointer-events-none" />
       
       {/* Subtle glowing accents */}
-      <div className="bg-glow-blob absolute top-20 -left-20 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'var(--accent)' }} />
-      <div className="bg-glow-blob absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: 'var(--accent-secondary)' }} />
+      <div className="bg-glow-blob absolute top-20 -left-20 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }} />
+      <div className="bg-glow-blob absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%)' }} />
 
       {/* Tech Doodles / Floating Accents */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ opacity: 0.12, color: 'var(--text-secondary)' }}>

@@ -5,6 +5,8 @@ import type { AccentKey } from '../data/accents'
 export default function VantaBackground() {
   const vantaRef = useRef<HTMLDivElement>(null)
   const effectRef = useRef<any>(null)
+  const isIntersectingRef = useRef(true)
+  const loopControlRef = useRef<{ start: () => void; stop: () => void } | null>(null)
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     document.documentElement.getAttribute('data-theme') !== 'light' ? 'dark' : 'light'
   )
@@ -42,9 +44,37 @@ export default function VantaBackground() {
     }
   }, [])
 
-  // 3. Vanta effect initialization (mount/unmount only)
+  // 3. Vanta effect initialization + a throttled, pausable render loop (mount/unmount only)
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
+    let rafId: number | null = null
+    let lastTime = 0
+    const FPS = 30
+    const FRAME = 1000 / FPS
+
+    const isVisible = () => document.visibilityState === 'visible'
+
+    const loop = (t: number) => {
+      rafId = requestAnimationFrame(loop)
+      if (t - lastTime < FRAME) return
+      lastTime = t
+      effectRef.current?.render?.()
+    }
+
+    const start = () => {
+      if (rafId == null) {
+        lastTime = 0
+        rafId = requestAnimationFrame(loop)
+      }
+    }
+    const stop = () => {
+      if (rafId != null) {
+        cancelAnimationFrame(rafId)
+        rafId = null
+      }
+    }
+
+    loopControlRef.current = { start, stop }
 
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
@@ -72,17 +102,23 @@ export default function VantaBackground() {
           minHeight: 200.00,
           minWidth: 200.00,
           scale: 1.00,
-          scaleMobile: 2.00,
+          scaleMobile: 1.00,
           color: colorNum,
           backgroundColor: bgColorNum,
           backgroundAlpha: 0,
         })
+        // Cap device pixel ratio so the full-screen canvas isn't rendered at 2x/3x
+        effectRef.current.renderer?.setPixelRatio?.(Math.min(window.devicePixelRatio || 1, 1.5))
+
+        if (isVisible() && isIntersectingRef.current) start()
       }
     }
     init()
 
     return () => {
-      isMounted = false;
+      isMounted = false
+      stop()
+      loopControlRef.current = null
       if (effectRef.current) {
         effectRef.current.destroy()
         effectRef.current = null
@@ -91,17 +127,47 @@ export default function VantaBackground() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
 
-  // 4. Pause/resume rendering based on intersection (no destroy/recreate)
+  // 4. Pause/resume rendering based on intersection + tab visibility (no destroy/recreate)
   useEffect(() => {
-    if (!effectRef.current) return
-    if (effectRef.current.renderer) {
-      if (isIntersecting) {
-        effectRef.current.renderer.setAnimationLoop?.(effectRef.current.render?.bind(effectRef.current))
-      } else {
-        effectRef.current.renderer.setAnimationLoop?.(null)
-      }
-    }
+    isIntersectingRef.current = isIntersecting
+    const ctrl = loopControlRef.current
+    if (!ctrl) return
+    if (isIntersecting && document.visibilityState === 'visible') ctrl.start()
+    else ctrl.stop()
   }, [isIntersecting])
+
+  // 5. Pause rendering when the tab is hidden to save CPU/GPU
+  useEffect(() => {
+    const onVisibility = () => {
+      const ctrl = loopControlRef.current
+      if (!ctrl) return
+      if (document.visibilityState === 'visible' && isIntersectingRef.current) ctrl.start()
+      else ctrl.stop()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+  // 6. Pause the render loop while scrolling; resume ~250ms after it stops.
+  //    This keeps the background alive when idle but never competes with the
+  //    compositor during scroll, which is what made scrolling stutter.
+  useEffect(() => {
+    let scrollTimer: any
+    const onScroll = () => {
+      const ctrl = loopControlRef.current
+      if (!ctrl) return
+      ctrl.stop()
+      clearTimeout(scrollTimer)
+      scrollTimer = setTimeout(() => {
+        if (isIntersectingRef.current && document.visibilityState === 'visible') ctrl.start()
+      }, 250)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      clearTimeout(scrollTimer)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
 
   // 4. Update Vanta colors without destroying the context
   useEffect(() => {

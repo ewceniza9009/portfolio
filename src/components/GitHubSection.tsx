@@ -33,8 +33,8 @@ export default memo(function GitHubSection() {
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          className="bg-glow-blob absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[50%] rounded-full blur-[100px]"
-          style={{ background: "var(--accent)" }}
+          className="bg-glow-blob absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[50%] rounded-full"
+          style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)" }}
         />
       </div>
 
