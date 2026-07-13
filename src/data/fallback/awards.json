@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Award of Excellence",
+    "date": "DEC 2024",
+    "company": "AccountMate Corporation",
+    "description": "Earned for playing a key role in developing and stabilizing the company's core platform. This award highlighted my focus on delivering reliable, high-performance code and stepping up to solve critical technical challenges when the team needed it most.",
+    "image": "/img/awardofexcellence.png",
+    "display_order": 0,
+    "created_at": "2026-07-05 09:34:17"
+  },
+  {
+    "id": 2,
+    "title": "Service Award",
+    "date": "DEC 2023",
+    "company": "AccountMate Corporation",
+    "description": "Awarded in recognition of five years of continuous dedication and technical contribution to the company. Over half a decade, I helped evolve our systems from early iterations into mature, scalable products while mentoring newer developers along the way.",
+    "image": "/img/serviceaward.png",
+    "display_order": 1,
+    "created_at": "2026-07-05 09:34:17"
+  }
+]

@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { getApiUrl } from '../utils/api'
+import aboutFallback from '../data/fallback/about.json'
+import experienceFallback from '../data/fallback/experience.json'
+import awardsFallback from '../data/fallback/awards.json'
+import projectsFallback from '../data/fallback/projects.json'
+import skillsFallback from '../data/fallback/skills.json'
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(getApiUrl(path))
@@ -11,6 +16,8 @@ export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: () => fetchJson<any[]>('/api/projects'),
+    initialData: projectsFallback as any[],
+    refetchOnMount: 'always',
     select: (data) => {
       if (!Array.isArray(data) || data.length === 0) return []
       return data.map((p: any) => ({
@@ -26,6 +33,8 @@ export function useSkills() {
   return useQuery({
     queryKey: ['skills'],
     queryFn: () => fetchJson<{ categories: any[]; skills: any }>('/api/skills'),
+    initialData: skillsFallback as { categories: any[]; skills: any },
+    refetchOnMount: 'always',
     select: (data) => {
       if (!data?.categories || !data?.skills) return []
       return data.categories.map((cat: any) => ({
@@ -42,6 +51,8 @@ export function useAbout() {
   return useQuery({
     queryKey: ['about'],
     queryFn: () => fetchJson<{ title: string; paragraphs: string[] }>('/api/about'),
+    initialData: aboutFallback as { title: string; paragraphs: string[] },
+    refetchOnMount: 'always',
     select: (data) => {
       if (data?.paragraphs && data.paragraphs.length > 0) return data
       return { title: 'About Me', paragraphs: [] as string[] }
@@ -53,6 +64,8 @@ export function useExperience() {
   return useQuery({
     queryKey: ['experience'],
     queryFn: () => fetchJson<any[]>('/api/experience'),
+    initialData: experienceFallback as any[],
+    refetchOnMount: 'always',
     select: (data) => {
       if (!Array.isArray(data) || data.length === 0) return []
       return data.map((exp: any) => ({
@@ -68,6 +81,8 @@ export function useAwards() {
   return useQuery({
     queryKey: ['awards'],
     queryFn: () => fetchJson<any[]>('/api/awards'),
+    initialData: awardsFallback as any[],
+    refetchOnMount: 'always',
     select: (data) => (Array.isArray(data) && data.length > 0 ? data : []),
   })
 }

@@ -1,0 +1,438 @@
+{
+  "categories": [
+    {
+      "id": "backend",
+      "label": "Backend",
+      "image": "/img/2-thumbnail.jpg",
+      "display_order": 0
+    },
+    {
+      "id": "frontend",
+      "label": "Frontend",
+      "image": "/img/1-thumbnail.jpg",
+      "display_order": 1
+    },
+    {
+      "id": "database",
+      "label": "Database",
+      "image": "/img/3-thumbnail.jpg",
+      "display_order": 2
+    },
+    {
+      "id": "tools",
+      "label": "Tools & DevOps",
+      "image": "/img/4-thumbnail.jpg",
+      "display_order": 3
+    },
+    {
+      "id": "practices",
+      "label": "Practices",
+      "image": "/img/5-thumbnail.jpg",
+      "display_order": 4
+    }
+  ],
+  "skills": {
+    "backend": {
+      "image": "/img/2-thumbnail.jpg",
+      "label": "Backend",
+      "items": [
+        {
+          "id": 1,
+          "name": "C#",
+          "icon": "C#",
+          "level": "core"
+        },
+        {
+          "id": 5,
+          "name": ".NET 8/9+",
+          "icon": ".NET 8/9+",
+          "level": "core"
+        },
+        {
+          "id": 3,
+          "name": "ASP.NET Core",
+          "icon": "ASP.NET Core",
+          "level": "core"
+        },
+        {
+          "id": 4,
+          "name": "ASP.NET Core MVC",
+          "icon": "ASP.NET Core MVC",
+          "level": "core"
+        },
+        {
+          "id": 6,
+          "name": "Node.js",
+          "icon": "Node.js",
+          "level": "core"
+        },
+        {
+          "id": 7,
+          "name": "Express",
+          "icon": "Express",
+          "level": "core"
+        },
+        {
+          "id": 2,
+          "name": "VBA",
+          "icon": "VBA",
+          "level": "familiar"
+        },
+        {
+          "id": 8,
+          "name": "Entity Framework",
+          "icon": "Entity Framework",
+          "level": "core"
+        },
+        {
+          "id": 9,
+          "name": "LINQ",
+          "icon": "LINQ",
+          "level": "core"
+        },
+        {
+          "id": 10,
+          "name": "Dapper",
+          "icon": "Dapper",
+          "level": "core"
+        },
+        {
+          "id": 11,
+          "name": "GraphQL",
+          "icon": "GraphQL",
+          "level": "core"
+        },
+        {
+          "id": 12,
+          "name": "Apollo Federation",
+          "icon": "Apollo Federation",
+          "level": "familiar"
+        },
+        {
+          "id": 13,
+          "name": "Hot Chocolate",
+          "icon": "Hot Chocolate",
+          "level": "familiar"
+        },
+        {
+          "id": 14,
+          "name": "SignalR",
+          "icon": "SignalR",
+          "level": "familiar"
+        },
+        {
+          "id": 15,
+          "name": "Microsoft Graph API",
+          "icon": "Microsoft Graph API",
+          "level": "familiar"
+        },
+        {
+          "id": 16,
+          "name": "Python",
+          "icon": "Python",
+          "level": "familiar"
+        },
+        {
+          "id": 17,
+          "name": "TensorFlow",
+          "icon": "TensorFlow",
+          "level": "familiar"
+        },
+        {
+          "id": 18,
+          "name": "OpenCV",
+          "icon": "OpenCV",
+          "level": "familiar"
+        },
+        {
+          "id": 19,
+          "name": "Gemini AI",
+          "icon": "Gemini AI",
+          "level": "familiar"
+        }
+      ]
+    },
+    "frontend": {
+      "image": "/img/1-thumbnail.jpg",
+      "label": "Frontend",
+      "items": [
+        {
+          "id": 20,
+          "name": "React",
+          "icon": "React",
+          "level": "core"
+        },
+        {
+          "id": 23,
+          "name": "Blazor",
+          "icon": "Blazor",
+          "level": "core"
+        },
+        {
+          "id": 24,
+          "name": "WPF",
+          "icon": "Xaml",
+          "level": "core"
+        },
+        {
+          "id": 25,
+          "name": ".NET MAUI",
+          "icon": ".NET MAUI",
+          "level": "core"
+        },
+        {
+          "id": 21,
+          "name": "Angular",
+          "icon": "Angular",
+          "level": "core"
+        },
+        {
+          "id": 22,
+          "name": "TypeScript",
+          "icon": "TypeScript",
+          "level": "core"
+        },
+        {
+          "id": 26,
+          "name": "Windows Forms",
+          "icon": "Windows Forms",
+          "level": "familiar"
+        },
+        {
+          "id": 27,
+          "name": "HTML5",
+          "icon": "HTML5",
+          "level": "core"
+        },
+        {
+          "id": 28,
+          "name": "CSS3",
+          "icon": "CSS3",
+          "level": "core"
+        },
+        {
+          "id": 29,
+          "name": "jQuery",
+          "icon": "jQuery",
+          "level": "familiar"
+        },
+        {
+          "id": 30,
+          "name": "Bootstrap",
+          "icon": "Bootstrap",
+          "level": "familiar"
+        },
+        {
+          "id": 31,
+          "name": "Tailwind CSS",
+          "icon": "Tailwind CSS",
+          "level": "core"
+        },
+        {
+          "id": 32,
+          "name": "Flutter",
+          "icon": "Flutter",
+          "level": "familiar"
+        },
+        {
+          "id": 33,
+          "name": "Ionic",
+          "icon": "Ionic",
+          "level": "familiar"
+        },
+        {
+          "id": 34,
+          "name": "Xamarin Forms",
+          "icon": "Xamarin Forms",
+          "level": "familiar"
+        }
+      ]
+    },
+    "database": {
+      "image": "/img/3-thumbnail.jpg",
+      "label": "Database",
+      "items": [
+        {
+          "id": 35,
+          "name": "MS SQL Server",
+          "icon": "MS SQL Server",
+          "level": "core"
+        },
+        {
+          "id": 37,
+          "name": "PostgreSQL",
+          "icon": "PostgreSQL",
+          "level": "core"
+        },
+        {
+          "id": 38,
+          "name": "MongoDB",
+          "icon": "MongoDB",
+          "level": "familiar"
+        },
+        {
+          "id": 39,
+          "name": "MySQL",
+          "icon": "MySQL",
+          "level": "core"
+        },
+        {
+          "id": 40,
+          "name": "SQLite",
+          "icon": "SQLite",
+          "level": "core"
+        },
+        {
+          "id": 41,
+          "name": "Elasticsearch",
+          "icon": "Elasticsearch",
+          "level": "familiar"
+        },
+        {
+          "id": 42,
+          "name": "Redis",
+          "icon": "Redis",
+          "level": "familiar"
+        },
+        {
+          "id": 36,
+          "name": "MS Access",
+          "icon": "MS Access",
+          "level": "familiar"
+        }
+      ]
+    },
+    "tools": {
+      "image": "/img/4-thumbnail.jpg",
+      "label": "Tools & DevOps",
+      "items": [
+        {
+          "id": 43,
+          "name": "GitHub",
+          "icon": "GitHub",
+          "level": "core"
+        },
+        {
+          "id": 44,
+          "name": "GitHub Actions",
+          "icon": "GitHub Actions",
+          "level": "core"
+        },
+        {
+          "id": 45,
+          "name": "Git",
+          "icon": "Git",
+          "level": "core"
+        },
+        {
+          "id": 46,
+          "name": "Azure DevOps",
+          "icon": "Azure DevOps",
+          "level": "core"
+        },
+        {
+          "id": 47,
+          "name": "Azure CI/CD",
+          "icon": "Azure CI/CD",
+          "level": "core"
+        },
+        {
+          "id": 48,
+          "name": "Azure",
+          "icon": "Azure",
+          "level": "core"
+        },
+        {
+          "id": 49,
+          "name": "Docker",
+          "icon": "Docker",
+          "level": "core"
+        },
+        {
+          "id": 62,
+          "name": "DockerPloy",
+          "icon": "SIDocker",
+          "level": "familiar"
+        },
+        {
+          "id": 50,
+          "name": "Telerik",
+          "icon": "Telerik",
+          "level": "familiar"
+        },
+        {
+          "id": 51,
+          "name": "DevExpress",
+          "icon": "DevExpress",
+          "level": "familiar"
+        },
+        {
+          "id": 52,
+          "name": "Syncfusion",
+          "icon": "Syncfusion",
+          "level": "familiar"
+        }
+      ]
+    },
+    "practices": {
+      "image": "/img/5-thumbnail.jpg",
+      "label": "Practices",
+      "items": [
+        {
+          "id": 54,
+          "name": "CQRS",
+          "icon": "CQRS",
+          "level": "core"
+        },
+        {
+          "id": 53,
+          "name": "Clean Architecture",
+          "icon": "Clean Architecture",
+          "level": "core"
+        },
+        {
+          "id": 55,
+          "name": "Domain-Driven Design",
+          "icon": "Domain-Driven Design",
+          "level": "core"
+        },
+        {
+          "id": 56,
+          "name": "SOLID",
+          "icon": "SOLID",
+          "level": "core"
+        },
+        {
+          "id": 57,
+          "name": "OOP",
+          "icon": "OOP",
+          "level": "core"
+        },
+        {
+          "id": 58,
+          "name": "MVVM",
+          "icon": "MVVM",
+          "level": "core"
+        },
+        {
+          "id": 59,
+          "name": "Microservices",
+          "icon": "Microservices",
+          "level": "core"
+        },
+        {
+          "id": 60,
+          "name": "Multithreading",
+          "icon": "Multithreading",
+          "level": "familiar"
+        },
+        {
+          "id": 61,
+          "name": "Async & Concurrency",
+          "icon": "Async & Concurrency",
+          "level": "familiar"
+        }
+      ]
+    }
+  }
+}

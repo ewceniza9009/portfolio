@@ -8,6 +8,7 @@
     "vercel": "vercel dev",
     "generate:codegalaxy": "node generate-codegalaxy.mjs",
     "copy-graph-data": "node copy-graph-data.mjs",
+    "dump:fallback": "node scripts/dump-fallback.mjs",
     "sitemap": "node generate-sitemap.mjs",
     "prebuild": "node generate-sitemap.mjs && npm run generate:codegalaxy && npm run copy-graph-data",
     "predev": "node generate-sitemap.mjs && npm run generate:codegalaxy && npm run copy-graph-data",
