@@ -170,7 +170,10 @@ function ensureStyles() {
   style.innerHTML = `
     .cm-wrapper { position:relative;transition:height 0.35s ease-out;transform-origin:top; }
     .cm-tok { white-space: pre; display: inline; }
-    .cm-line { display: block; white-space: pre; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
+    .cm-stage { counter-reset: cm-line-no; }
+    .cm-line { display: block; white-space: pre; position: relative; padding-left: 3em; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
+    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 2.6em; text-align: right; padding-right: 0.6em; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
+    .cm-line:hover::before { opacity: 0.8; color: var(--accent); }
     .cm-line:hover { opacity: 1 !important; }
     .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50;overflow:hidden; }
     .cm-dropdown button { display:flex;flex-direction:column;width:100%;text-align:left;padding:6px 10px;font-size:11px;border:none;background:none;cursor:pointer;color:var(--text-primary); }
@@ -2270,7 +2273,7 @@ export default function CodeMorphBlock({
             </span>
           </div>
         )}
-        <div ref={stageRef} data-cm="stage" className={`p-4 relative ${(allAnnotations[step]?.length > 0) ? 'pb-24' : ''}`} />
+        <div ref={stageRef} data-cm="stage" className={`cm-stage p-4 relative ${(allAnnotations[step]?.length > 0) ? 'pb-24' : ''}`} />
 
       </div>
       </div>
