@@ -617,10 +617,11 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
   return (
     <div
       ref={containerRef}
-      className="relative group my-6 rounded-2xl select-text ch-container"
+      className="relative group my-6 rounded-3xl border select-text ch-container"
       style={
         {
           background: isDark ? "#0d1117" : "#ffffff",
+          borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
           "--ch-text-inverted": isDark ? "#000000" : "#ffffff",
         } as React.CSSProperties
       }
@@ -652,14 +653,6 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
         }
         .ch-header { animation: ch-header-in 0.3s 0.2s ease both; }
 
-        @keyframes ch-dot-blink {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 0.4; }
-        }
-        .ch-dot { animation: ch-dot-blink 3s ease-in-out infinite; }
-        .ch-dot:nth-child(2) { animation-delay: 0.5s; }
-        .ch-dot:nth-child(3) { animation-delay: 1s; }
-
         @keyframes ch-line-reveal {
           0% { opacity: 0; transform: translateY(6px); clip-path: inset(-50px 100% -50px -50px); }
           40% { clip-path: inset(-50px -50px -50px -50px); }
@@ -670,7 +663,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
           100% { opacity: 0.45; transform: none; }
         }
         .ch-line {
-          padding: 2px 20px 2px 40px;
+          padding: 2px 20px 2px 2.5rem;
           border-left: 3px solid transparent;
           min-height: 1.4em;
           position: relative;
@@ -989,42 +982,25 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
 
       {/* Header */}
       <div
-        className={`ch-header flex items-center justify-between ${meta ? "px-0 pt-0 pb-0 rounded-t-2xl overflow-hidden" : "px-5 py-2.5 rounded-t-2xl"} text-[10px] font-bold tracking-wider select-none border-b transition-colors duration-300`}
+        className={`ch-header flex items-center justify-between ${meta ? "px-4 py-2" : "px-4 py-2"} text-[10px] font-bold tracking-wider select-none border-b transition-colors duration-300 rounded-t-3xl`}
         style={{
           background: isDark ? "#161b22" : "#f6f8fa",
           color: isDark ? "#8b949e" : "#656d76",
           borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
         }}
       >
-        {meta ? (
-          <div className="flex items-center">
-            <div
-              className="px-4 py-2.5 border-r border-t-2 bg-[#0d1117] flex items-center gap-2"
-              style={{
-                borderTopColor: "var(--accent)",
-                borderRightColor: isDark
-                  ? "rgba(255,255,255,0.06)"
-                  : "rgba(0,0,0,0.06)",
-                color: isDark ? "#c9d1d9" : "#24292f",
-              }}
-            >
-              <span className="normal-case text-[12px]">{meta}</span>
-            </div>
-            <div className="px-4 flex items-center gap-3 opacity-60 uppercase text-[9px]">
-              <span>{lang || "code"}</span>
-              <span>{lineCount} lines</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 uppercase">
-            <div className="ch-dot w-2.5 h-2.5 rounded-full bg-red-500/80" />
-            <div className="ch-dot w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-            <div className="ch-dot w-2.5 h-2.5 rounded-full bg-green-500/80" />
-            <span className="ml-2">{lang || "code"}</span>
-            <span style={{ color: isDark ? "#484f58" : "#d0d7de" }}>
-              {lineCount} lines
+        <div className="flex items-center gap-3 uppercase">
+          {meta && (
+            <span className="normal-case text-[12px] px-2 py-0.5 rounded" style={{ background: isDark ? "#0d1117" : "#ffffff", color: isDark ? "#c9d1d9" : "#24292f" }}>
+              {meta}
             </span>
-            {hasAnnotations && (
+          )}
+          <span>{lang || "code"}</span>
+          <span style={{ color: isDark ? "#484f58" : "#d0d7de" }}>·</span>
+          <span style={{ opacity: 0.6 }}>{lineCount} lines</span>
+          {hasAnnotations && (
+            <>
+              <span style={{ color: isDark ? "#484f58" : "#d0d7de" }}>·</span>
               <span
                 className="px-1.5 py-0.5 rounded text-[9px]"
                 style={{
@@ -1034,12 +1010,12 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
               >
                 annotated
               </span>
-            )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
         <button
           onClick={handleCopy}
-          className={`flex items-center gap-1.5 ${meta ? "mr-3" : ""} px-2.5 py-1 rounded-lg transition-all duration-200 hover:bg-white/10 hover:text-white active:scale-95 ${copied ? "ch-copy-success" : ""}`}
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all duration-200 hover:bg-white/10 active:scale-95 ${copied ? "ch-copy-success" : ""}`}
           style={{
             color: copied ? "var(--accent)" : "inherit",
             textTransform: "uppercase",
@@ -1061,7 +1037,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
 
       {/* Code lines */}
       <div
-        className="rounded-b-2xl"
+        className="rounded-b-3xl overflow-hidden"
         style={{ transition: "opacity 0.7s ease", opacity: revealed ? 1 : 0 }}
       >
         <div
@@ -1493,9 +1469,9 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title={`Expand ${linesHidden} hidden lines`}
                           style={{
                             display: "inline-block",
-                            width: "2rem",
+                            width: "1.8rem",
                             textAlign: "right",
-                            marginRight: "1rem",
+                            paddingRight: "0.6rem",
                             color: "var(--accent)",
                             userSelect: "none",
                             cursor: "pointer",
@@ -1604,9 +1580,9 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title="Fold lines"
                           style={{
                             display: "inline-block",
-                            width: "2rem",
+                            width: "1.8rem",
                             textAlign: "right",
-                            marginRight: "1rem",
+                            paddingRight: "0.6rem",
                             color: "var(--accent)",
                             userSelect: "none",
                             cursor: "pointer",
@@ -1627,12 +1603,14 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                         <span
                           style={{
                             display: "inline-block",
-                            width: "2rem",
+                            width: "1.8rem",
                             textAlign: "right",
-                            marginRight: "1rem",
+                            paddingRight: "0.6rem",
                             color: isDark ? "#6e7681" : "#8c959f",
                             userSelect: "none",
-                            opacity: isDimmed ? 0.5 : 1,
+                            opacity: isDimmed ? 0.45 : 0.6,
+                            fontSize: "12px",
+                            fontVariantNumeric: "tabular-nums",
                           }}
                         >
                           {i + 1}
