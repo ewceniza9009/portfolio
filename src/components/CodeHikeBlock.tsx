@@ -663,7 +663,7 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
           100% { opacity: 0.45; transform: none; }
         }
         .ch-line {
-          padding: 2px 20px 2px 2.5rem;
+          padding: 2px 20px 2px 2rem;
           border-left: 3px solid transparent;
           min-height: 1.4em;
           position: relative;
@@ -1469,9 +1469,9 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title={`Expand ${linesHidden} hidden lines`}
                           style={{
                             display: "inline-block",
-                            width: "1.8rem",
+                            width: "1.4rem",
                             textAlign: "right",
-                            paddingRight: "0.6rem",
+                            paddingRight: "0.5rem",
                             color: "var(--accent)",
                             userSelect: "none",
                             cursor: "pointer",
@@ -1580,9 +1580,9 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                           title="Fold lines"
                           style={{
                             display: "inline-block",
-                            width: "1.8rem",
+                            width: "1.4rem",
                             textAlign: "right",
-                            paddingRight: "0.6rem",
+                            paddingRight: "0.5rem",
                             color: "var(--accent)",
                             userSelect: "none",
                             cursor: "pointer",
@@ -1603,13 +1603,13 @@ function CodeHikeBlockInner({ code, lang, meta }: CodeHikeBlockProps) {
                         <span
                           style={{
                             display: "inline-block",
-                            width: "1.8rem",
+                            width: "1.4rem",
                             textAlign: "right",
-                            paddingRight: "0.6rem",
+                            paddingRight: "0.5rem",
                             color: isDark ? "#6e7681" : "#8c959f",
                             userSelect: "none",
                             opacity: isDimmed ? 0.45 : 0.6,
-                            fontSize: "12px",
+                            fontSize: "11px",
                             fontVariantNumeric: "tabular-nums",
                           }}
                         >

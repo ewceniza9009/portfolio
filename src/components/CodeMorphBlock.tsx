@@ -171,8 +171,8 @@ function ensureStyles() {
     .cm-wrapper { position:relative;transition:height 0.35s ease-out;transform-origin:top; }
     .cm-tok { white-space: pre; display: inline; }
     .cm-stage { counter-reset: cm-line-no; }
-    .cm-line { display: block; white-space: pre; position: relative; padding-left: 2.5rem; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
-    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 1.8rem; text-align: right; padding-right: 0.6rem; font-size: 12px; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
+    .cm-line { display: block; white-space: pre; position: relative; padding-left: 2rem; counter-increment: cm-line-no; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; line-height: 1.6; transition: opacity 0.2s ease; }
+    .cm-line::before { content: counter(cm-line-no); position: absolute; left: 0; top: 0; width: 1.4rem; text-align: right; padding-right: 0.5rem; font-size: 11px; color: var(--text-muted); opacity: 0.45; font-variant-numeric: tabular-nums; user-select: none; pointer-events: none; }
     .cm-line:hover::before { opacity: 0.8; color: var(--accent); }
     .cm-line:hover { opacity: 1 !important; }
     .cm-dropdown { position:absolute;top:100%;left:0;margin-top:4px;min-width:150px;max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:50; }
