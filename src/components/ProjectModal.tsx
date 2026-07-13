@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, ExternalLink } from "lucide-react";
 import { TechIcon } from "./ProjectsSection";
 import { parseMarkdown } from '../utils/markdown';
+import OptimizedImage from './OptimizedImage';
 
 interface Project {
   id: number;
@@ -111,6 +112,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     }
   }, [project, handleKeyDown]);
 
+  const webpImage = project?.image.replace(/\.(png|jpg|jpeg)$/i, '.webp') ?? '';
+
   return (
     <AnimatePresence>
       {project && (
@@ -184,7 +187,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   <div 
                     className="absolute inset-0 opacity-30 blur-3xl scale-110 transition-opacity duration-1000"
                     style={{
-                      backgroundImage: `url(${project.image})`,
+                      backgroundImage: `url(${webpImage})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
@@ -231,24 +234,30 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                   <div 
                     className="absolute inset-0 opacity-30 blur-3xl scale-110 transition-opacity duration-1000"
                     style={{
-                      backgroundImage: `url(${project.image})`,
+                      backgroundImage: `url(${webpImage})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
                   />
                   <div className="absolute inset-0 bg-[var(--bg-card)]/50" />
                   
-                  <motion.img
-                    src={project.image}
-                    alt={project.title}
+                  <motion.div
                     animate={{ 
-                      scale: isZoomed ? 1.05 : 1, 
-                      objectFit: isZoomed ? "cover" : "contain" 
+                      scale: isZoomed ? 1.05 : 1,
                     }}
                     whileHover={!isZoomed ? { scale: 1.05 } : {}}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                     className="w-full h-full relative z-10"
-                  />
+                  >
+                    <OptimizedImage
+                      src={project.image}
+                      alt={project.title}
+                      className="w-full h-full"
+                      style={{ objectFit: isZoomed ? "cover" : "contain" }}
+                      quality="high"
+                      sizes="50vw"
+                    />
+                  </motion.div>
                   {/* Gradient overlay to ensure mobile close button is visible */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent lg:hidden pointer-events-none" />
                 </div>
@@ -460,15 +469,20 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           >
             <X size={24} />
           </button>
-          <motion.img
-            src={project.image}
-            alt={project.title}
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="max-w-[95vw] max-h-[95vh] object-contain"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            <OptimizedImage
+              src={project.image}
+              alt={project.title}
+              className="max-w-[95vw] max-h-[95vh] object-contain"
+              quality="high"
+              sizes="95vw"
+            />
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

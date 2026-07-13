@@ -225,7 +225,7 @@ const ProjectCard = React.memo(function ProjectCard({
           <video
             ref={videoRef}
             src={project.video}
-            poster={project.image}
+            poster={project.image.replace(/\.(png|jpg|jpeg)$/i, '.webp')}
             preload="none"
             muted
             loop

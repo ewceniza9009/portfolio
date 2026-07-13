@@ -8,6 +8,7 @@ import InteractiveBlock from '../components/InteractiveBlock'
 import CodeHikeBlock from '../components/CodeHikeBlock'
 import RemotionBlock from '../components/RemotionBlock'
 import CodeMorphBlock from '../components/CodeMorphBlock'
+import OptimizedImage from '../components/OptimizedImage'
 import { BlockErrorBoundary } from '../components/BlockErrorBoundary'
 import { slugifyHeading } from './slugify'
 
@@ -1123,11 +1124,13 @@ function parseInline(text: string): React.ReactNode[] {
         const [_, alt, url] = match
         return (
           <span key={index} className="block my-6 text-center select-none">
-            <img 
+            <OptimizedImage 
               src={url} 
               alt={alt} 
               className="mx-auto max-w-full rounded-2xl border p-2 bg-white/5" 
-              style={{ borderColor: 'var(--border)' }} 
+              style={{ borderColor: 'var(--border)' }}
+              quality="high"
+              sizes="100vw"
             />
             {alt && <span className="block text-xs mt-2 opacity-50 font-sans">{alt}</span>}
           </span>

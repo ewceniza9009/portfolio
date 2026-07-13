@@ -757,15 +757,15 @@ export default function GallerySection() {
               className="w-full h-full p-4 md:p-16 flex flex-col items-center justify-center relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <motion.img
-                layoutId={`gallery-img-${currentLightboxImage.id}`}
+              <OptimizedImage
                 src={currentLightboxImage.src}
                 alt={currentLightboxImage.alt}
                 className="w-full h-full object-contain relative z-10"
                 style={{ 
                   filter: "drop-shadow(0 0 20px rgba(0,0,0,0.5))"
-                } as any}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                }}
+                quality="ultra"
+                sizes="100vw"
               />
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}

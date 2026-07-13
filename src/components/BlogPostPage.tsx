@@ -355,11 +355,12 @@ export default function BlogPostPage() {
           <header className="mb-8 relative">
             {/* Author byline with badge */}
             <div className="flex items-center gap-4 mb-6">
-              <img 
+              <OptimizedImage 
                 src={profilePicUrl} 
                 alt="Erwin Wilson Ceniza" 
                 className="w-12 h-12 rounded-full border-2"
                 style={{ borderColor: 'var(--border)' }}
+                quality="medium"
               />
               <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent)', borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
                 <Sparkles size={12} className="animate-pulse" />
