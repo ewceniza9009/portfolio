@@ -887,12 +887,8 @@ function TerminalWindow({ onClose }: { onClose: () => void }) {
         onClick={() => inputRef.current?.focus()}
         style={{ overscrollBehavior: "contain" }}
       >
-        {activeMode === "matrix" && (
-          <MatrixOverlay onClose={closeOverlay} />
-        )}
-        {activeMode === "snake" && (
-          <SnakeOverlay onClose={closeOverlay} />
-        )}
+        {activeMode === "matrix" && <MatrixOverlay onClose={closeOverlay} />}
+        {activeMode === "snake" && <SnakeOverlay onClose={closeOverlay} />}
         {history.map((line, i) => (
           <div key={i} className="mb-2">
             {line.type === "command" && (
@@ -1366,7 +1362,8 @@ function ChatWindow({
           style={{
             background: "var(--bg-primary)",
             color: "var(--text-secondary)",
-            border: "1px solid color-mix(in srgb, var(--accent) 30%, var(--border))",
+            border:
+              "1px solid color-mix(in srgb, var(--accent) 30%, var(--border))",
           }}
         >
           {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -1392,7 +1389,6 @@ function ChatWindow({
 
 // ── Main FloatingControl ──
 export default function FloatingControl() {
-
   const [mode, setMode] = useState<
     "menu" | "terminal" | "chat" | "contact" | "codegalaxy" | null
   >(null);
@@ -1433,17 +1429,25 @@ export default function FloatingControl() {
     { src: "/audios/wsntm-shggy-lofi2.mp3", gain: 1.3 },
     { src: "/audios/chcb-ffy-lofi1.mp3", gain: 1.3 },
     { src: "/audios/chcb-ffy-lofi2.mp3", gain: 1.3 },
+    { src: "/audios/mylf-rbnthck-lfcl2.mp3", gain: 1.0 },
+    { src: "/audios/mylf-rbnthck-lfcl3.mp3", gain: 1.0 },
     { src: "/audios/Lukrembo - Bake A Pie (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Lukrembo - Donut (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Lukrembo - Rose (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Moavii - Adventure (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/Moavii - Summertide (freetouse.com).mp3", gain: 1.0 },
-    { src: "/audios/StockTune-Sunset Beachfront Chillout_1783664206.mp3", gain: 1.0 },
+    {
+      src: "/audios/StockTune-Sunset Beachfront Chillout_1783664206.mp3",
+      gain: 1.0,
+    },
     { src: "/audios/atlasaudio-sad-lofi-516966.mp3", gain: 1.0 },
     { src: "/audios/days-off-matrika-main-version-39449-02-56.mp3", gain: 1.0 },
     { src: "/audios/leberch-lofi-516620.mp3", gain: 1.0 },
     { src: "/audios/lofi-beat-beta1.mp3", gain: 1.0 },
-    { src: "/audios/lofi_music_library-coffee-lofi-lofi-music-chill-ambient-458900.mp3", gain: 1.0 },
+    {
+      src: "/audios/lofi_music_library-coffee-lofi-lofi-music-chill-ambient-458900.mp3",
+      gain: 1.0,
+    },
     { src: "/audios/luke-jzz1.mkv", gain: 1.0 },
     { src: "/audios/massobeats - city (freetouse.com).mp3", gain: 1.0 },
     { src: "/audios/massobeats - honey jam (freetouse.com).mp3", gain: 1.0 },
@@ -1451,8 +1455,14 @@ export default function FloatingControl() {
     { src: "/audios/ornave-lofi-open-window-553420.mp3", gain: 1.0 },
     { src: "/audios/prettyjohn1-lofi-lofi-music-533423.mp3", gain: 1.0 },
     { src: "/audios/pulsebox-lofi-production-522875.mp3", gain: 1.0 },
-    { src: "/audios/rio-in-the-seventies-nicolas-kluzek-main-version-42735-01-42.mp3", gain: 1.0 },
-    { src: "/audios/shuffle-night-drift-main-version-20733-02-42.mp3", gain: 1.0 },
+    {
+      src: "/audios/rio-in-the-seventies-nicolas-kluzek-main-version-42735-01-42.mp3",
+      gain: 1.0,
+    },
+    {
+      src: "/audios/shuffle-night-drift-main-version-20733-02-42.mp3",
+      gain: 1.0,
+    },
     { src: "/audios/ss-alxhtcs1.MP3", gain: 0.5 },
   ];
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -1480,7 +1490,11 @@ export default function FloatingControl() {
     setMusicOn((p) => {
       const a = audioRef.current;
       if (!a) return !p;
-      if (p) { a.pause(); } else { a.play().catch(() => {}); }
+      if (p) {
+        a.pause();
+      } else {
+        a.play().catch(() => {});
+      }
       return !p;
     });
   }, []);
@@ -1493,12 +1507,15 @@ export default function FloatingControl() {
     setTrackIndex((i) => (i - 1 + PLAYLIST.length) % PLAYLIST.length);
   }, []);
 
-  const onVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseFloat(e.target.value);
-    setVolume(v);
-    const a = audioRef.current;
-    if (a) a.volume = v * PLAYLIST[trackIndex].gain;
-  }, [trackIndex]);
+  const onVolumeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = parseFloat(e.target.value);
+      setVolume(v);
+      const a = audioRef.current;
+      if (a) a.volume = v * PLAYLIST[trackIndex].gain;
+    },
+    [trackIndex],
+  );
 
   useEffect(() => {
     document.body.dataset.fabActive = mode === "menu" ? "true" : "false";
@@ -1547,36 +1564,28 @@ export default function FloatingControl() {
     else setMode("menu");
   };
 
-
-
   return (
     <>
-      <audio key={trackIndex} ref={audioRef} src={PLAYLIST[trackIndex].src} autoPlay={musicOn} loop={false} preload="auto" onEnded={nextTrack} onLoadedData={() => { const a = audioRef.current; if (a) a.volume = volume * PLAYLIST[trackIndex].gain; }} />
+      <audio
+        key={trackIndex}
+        ref={audioRef}
+        src={PLAYLIST[trackIndex].src}
+        autoPlay={musicOn}
+        loop={false}
+        preload="auto"
+        onEnded={nextTrack}
+        onLoadedData={() => {
+          const a = audioRef.current;
+          if (a) a.volume = volume * PLAYLIST[trackIndex].gain;
+        }}
+      />
       <div ref={menuContainerRef}>
-      {/* FAB Button */}
-      {(!mode || mode === "menu") && (
-        <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-3">
-          {/* AI Chat Standalone Button */}
-          <motion.button
-            onClick={() => setMode("chat")}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
-            style={{
-              background: "var(--bg-card)",
-              borderColor: "var(--accent)",
-              color: "var(--accent)",
-              boxShadow:
-                "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)",
-            }}
-          >
-            <MessageCircle size={14} /> AI Chat
-          </motion.button>
-
-          {/* Launch Menu Button */}
-          <div className="relative group">
+        {/* FAB Button */}
+        {(!mode || mode === "menu") && (
+          <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-3">
+            {/* AI Chat Standalone Button */}
             <motion.button
-              onClick={handleFabClick}
+              onClick={() => setMode("chat")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
@@ -1588,153 +1597,248 @@ export default function FloatingControl() {
                   "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)",
               }}
             >
-              <Sparkles size={13} /> Launch
+              <MessageCircle size={14} /> AI Chat
             </motion.button>
-            <div
-              className={`absolute bottom-full mb-3 right-0 opacity-0 ${mode !== "menu" ? "group-hover:opacity-100" : ""} transition-opacity duration-200 pointer-events-none hidden sm:block`}
-            >
-              <div
-                className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
+
+            {/* Launch Menu Button */}
+            <div className="relative group">
+              <motion.button
+                onClick={handleFabClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-lg transition-all hover:brightness-110 select-none"
                 style={{
                   background: "var(--bg-card)",
-                  borderColor: "var(--border)",
-                  color: "var(--text-secondary)",
+                  borderColor: "var(--accent)",
+                  color: "var(--accent)",
+                  boxShadow:
+                    "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent)",
                 }}
               >
-                Terminal &middot; Contact &middot; Cursor &middot; Graph
+                <Sparkles size={13} /> Launch
+              </motion.button>
+              <div
+                className={`absolute bottom-full mb-3 right-0 opacity-0 ${mode !== "menu" ? "group-hover:opacity-100" : ""} transition-opacity duration-200 pointer-events-none hidden sm:block`}
+              >
+                <div
+                  className="rounded-lg border shadow-xl px-3 py-2 text-[11px] font-medium whitespace-nowrap"
+                  style={{
+                    background: "var(--bg-card)",
+                    borderColor: "var(--border)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Terminal &middot; Contact &middot; Cursor &middot; Graph
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Sub-menu */}
-      <AnimatePresence>
-        {mode === "menu" && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
-          >
-            <button
-              onClick={() => setMode("codegalaxy")}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background:
-                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor:
-                  "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: "var(--text-secondary)",
-              }}
+        {/* Sub-menu */}
+        <AnimatePresence>
+          {mode === "menu" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed bottom-24 right-6 z-[100] flex flex-col gap-1.5 items-end"
             >
-              <Network size={14} /> Code Galaxy
-            </button>
-            <button
-              onClick={() => setMode("terminal")}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background:
-                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor:
-                  "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <Terminal size={14} /> Terminal
-            </button>
-            <button
-              onClick={() => setMode("contact")}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background:
-                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor:
-                  "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <Phone size={14} /> Contact
-            </button>
-            <button
-              onClick={toggleCursor}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background:
-                  "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor: cursorOn
-                  ? "var(--accent)"
-                  : "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: cursorOn ? "var(--accent)" : "var(--text-muted)",
-              }}
-            >
-              <MousePointer2 size={14} /> Cursor
-            </button>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border backdrop-blur-xl"
-              style={{
-                background: "color-mix(in srgb, var(--bg-card) 80%, transparent)",
-                borderColor: musicOn ? "var(--accent)" : "color-mix(in srgb, var(--border) 150%, transparent)",
-                color: musicOn ? "var(--accent)" : "var(--text-muted)",
-              }}
-            >
-              {musicOn ? <><Music size={14} /><span className="inline-flex gap-0.5 items-end"><span className="w-0.5 bg-current rounded-full" style={{height:"6px",animation:"musicBar 0.6s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"10px",animation:"musicBar 0.9s ease-in-out infinite alternate"}}/><span className="w-0.5 bg-current rounded-full" style={{height:"8px",animation:"musicBar 0.7s ease-in-out infinite alternate"}}/></span></> : <VolumeX size={14} />}
-              <span className="mx-1 text-[10px] opacity-70">{(trackIndex + 1)+"/"+(PLAYLIST.length)}</span>
-              <button onClick={(e) => {e.stopPropagation(); prevTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏮</span></button>
-              <button onClick={(e) => {e.stopPropagation(); toggleMusic();}} className="hover:brightness-125 p-0.5">{musicOn ? <span className="text-[13px]">⏸</span> : <span className="text-[13px]">▶</span>}</button>
-              <button onClick={(e) => {e.stopPropagation(); nextTrack();}} className="hover:brightness-125 p-0.5"><span className="text-[13px]">⏭</span></button>
-              <input type="range" min="0" max="1" step="0.05" value={volume} onChange={onVolumeChange} onClick={(e) => e.stopPropagation()}
-                className="w-16 h-1 cursor-pointer accent-current"
-                style={{background:"color-mix(in srgb, var(--accent) 40%, transparent)"}} />
-            </div>
-            <style>{`@keyframes musicBar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }`}</style>
-            <div
-              className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
-              style={{
-                background:
-                  "linear-gradient(90deg, var(--accent), transparent)",
+              <button
+                onClick={() => setMode("codegalaxy")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                  borderColor:
+                    "color-mix(in srgb, var(--border) 150%, transparent)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Network size={14} /> Code Galaxy
+              </button>
+              <button
+                onClick={() => setMode("terminal")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                  borderColor:
+                    "color-mix(in srgb, var(--border) 150%, transparent)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Terminal size={14} /> Terminal
+              </button>
+              <button
+                onClick={() => setMode("contact")}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                  borderColor:
+                    "color-mix(in srgb, var(--border) 150%, transparent)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Phone size={14} /> Contact
+              </button>
+              <button
+                onClick={toggleCursor}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all hover:brightness-110 active:scale-95 whitespace-nowrap border backdrop-blur-xl"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                  borderColor: cursorOn
+                    ? "var(--accent)"
+                    : "color-mix(in srgb, var(--border) 150%, transparent)",
+                  color: cursorOn ? "var(--accent)" : "var(--text-muted)",
+                }}
+              >
+                <MousePointer2 size={14} /> Cursor
+              </button>
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border backdrop-blur-xl"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--bg-card) 80%, transparent)",
+                  borderColor: musicOn
+                    ? "var(--accent)"
+                    : "color-mix(in srgb, var(--border) 150%, transparent)",
+                  color: musicOn ? "var(--accent)" : "var(--text-muted)",
+                }}
+              >
+                {musicOn ? (
+                  <>
+                    <Music size={14} />
+                    <span className="inline-flex gap-0.5 items-end">
+                      <span
+                        className="w-0.5 bg-current rounded-full"
+                        style={{
+                          height: "6px",
+                          animation:
+                            "musicBar 0.6s ease-in-out infinite alternate",
+                        }}
+                      />
+                      <span
+                        className="w-0.5 bg-current rounded-full"
+                        style={{
+                          height: "10px",
+                          animation:
+                            "musicBar 0.9s ease-in-out infinite alternate",
+                        }}
+                      />
+                      <span
+                        className="w-0.5 bg-current rounded-full"
+                        style={{
+                          height: "8px",
+                          animation:
+                            "musicBar 0.7s ease-in-out infinite alternate",
+                        }}
+                      />
+                    </span>
+                  </>
+                ) : (
+                  <VolumeX size={14} />
+                )}
+                <span className="mx-1 text-[10px] opacity-70">
+                  {trackIndex + 1 + "/" + PLAYLIST.length}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevTrack();
+                  }}
+                  className="hover:brightness-125 p-0.5"
+                >
+                  <span className="text-[13px]">⏮</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMusic();
+                  }}
+                  className="hover:brightness-125 p-0.5"
+                >
+                  {musicOn ? (
+                    <span className="text-[13px]">⏸</span>
+                  ) : (
+                    <span className="text-[13px]">▶</span>
+                  )}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextTrack();
+                  }}
+                  className="hover:brightness-125 p-0.5"
+                >
+                  <span className="text-[13px]">⏭</span>
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volume}
+                  onChange={onVolumeChange}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-16 h-1 cursor-pointer accent-current"
+                  style={{
+                    background:
+                      "color-mix(in srgb, var(--accent) 40%, transparent)",
+                  }}
+                />
+              </div>
+              <style>{`@keyframes musicBar { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }`}</style>
+              <div
+                className="absolute -top-1 right-6 w-6 h-0.5 rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(90deg, var(--accent), transparent)",
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Terminal Window */}
+        <AnimatePresence>
+          {mode === "terminal" && <TerminalWindow onClose={handleClose} />}
+        </AnimatePresence>
+
+        {/* Code Galaxy Window */}
+        <AnimatePresence>
+          {mode === "codegalaxy" && (
+            <CodeGalaxyWindow
+              onClose={handleClose}
+              onOpenChat={(prompt, codebaseContext) => {
+                setPendingChatPrompt(prompt);
+                setPendingCodebaseContext(codebaseContext ?? null);
+                setPendingChatNonce((n) => n + 1);
+                setMode("chat");
               }}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-      {/* Terminal Window */}
-      <AnimatePresence>
-        {mode === "terminal" && <TerminalWindow onClose={handleClose} />}
-      </AnimatePresence>
+        {/* Chat Window */}
+        <AnimatePresence>
+          {mode === "chat" && (
+            <ChatWindow
+              onClose={handleClose}
+              initialPrompt={pendingChatPrompt ?? undefined}
+              initialPromptNonce={pendingChatNonce}
+              codebaseContext={pendingCodebaseContext ?? undefined}
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Code Galaxy Window */}
-      <AnimatePresence>
-        {mode === "codegalaxy" && (
-          <CodeGalaxyWindow
-            onClose={handleClose}
-            onOpenChat={(prompt, codebaseContext) => {
-              setPendingChatPrompt(prompt);
-              setPendingCodebaseContext(codebaseContext ?? null);
-              setPendingChatNonce((n) => n + 1);
-              setMode("chat");
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Chat Window */}
-      <AnimatePresence>
-        {mode === "chat" && (
-          <ChatWindow
-            onClose={handleClose}
-            initialPrompt={pendingChatPrompt ?? undefined}
-            initialPromptNonce={pendingChatNonce}
-            codebaseContext={pendingCodebaseContext ?? undefined}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Contact Panel */}
-      <AnimatePresence>
-        {mode === "contact" && <ContactPanel onClose={handleClose} />}
-      </AnimatePresence>
-    </div>
+        {/* Contact Panel */}
+        <AnimatePresence>
+          {mode === "contact" && <ContactPanel onClose={handleClose} />}
+        </AnimatePresence>
+      </div>
     </>
   );
 }
