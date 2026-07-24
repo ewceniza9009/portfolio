@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import turso from '../db.js'
-import { authMiddleware } from '../auth.js'
+import { authMiddleware, isAdminRequest } from '../auth.js'
 import { isBot, isSuspiciousRequest, isPrivateIP } from '../utils/bot-detection.js'
 import { geoLookup } from '../utils/geo.js'
 import { sendTelegramAlert } from '../utils/telegram.js'
@@ -21,8 +21,10 @@ router.post('/api/visit', async (req, res) => {
     const ref = req.body?.ref || ''
     const path = req.body?.path || ''
 
-    // Skip private/dev IPs and specific owner IP entirely
-    if (isPrivateIP(ip) || ip === '143.44.164.12') {
+    // Skip tracking for private/dev IPs, authenticated admins, opt-out header, or optional OWNER_IP
+    const optOut = req.headers['x-visitor-opt-out'] === 'true'
+    const ownerIp = process.env.OWNER_IP
+    if (isPrivateIP(ip) || isAdminRequest(req) || optOut || (ownerIp && ip === ownerIp)) {
       return res.json({ success: true, dev: true })
     }
 
@@ -130,8 +132,12 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
       conditions.push('is_bot = 0')
     }
     
-    // Always exclude owner IP from stats
-    conditions.push("ip != '143.44.164.12'")
+    // Exclude optional OWNER_IP if configured in .env
+    const ownerIp = process.env.OWNER_IP
+    if (ownerIp) {
+      conditions.push('ip != ?')
+      args.push(ownerIp)
+    }
 
     if (search) {
       conditions.push(`(ip LIKE ? OR country LIKE ? OR city LIKE ? OR region LIKE ? OR referrer LIKE ? OR ref LIKE ? OR user_agent LIKE ?)`)
@@ -189,8 +195,12 @@ router.get('/api/visitors', authMiddleware, async (req, res) => {
 
     const countries = await turso.execute("SELECT DISTINCT country FROM visitors WHERE country IS NOT NULL AND country != '' ORDER BY country")
 
-    const unfilteredTotal = await turso.execute("SELECT COUNT(*) as count FROM visitors WHERE ip != '143.44.164.12'")
-    const unfilteredVisits = await turso.execute("SELECT SUM(visit_count) as count FROM visitors WHERE ip != '143.44.164.12'")
+    const unfilteredTotal = ownerIp 
+      ? await turso.execute({ sql: "SELECT COUNT(*) as count FROM visitors WHERE ip != ?", args: [ownerIp] })
+      : await turso.execute("SELECT COUNT(*) as count FROM visitors")
+    const unfilteredVisits = ownerIp
+      ? await turso.execute({ sql: "SELECT SUM(visit_count) as count FROM visitors WHERE ip != ?", args: [ownerIp] })
+      : await turso.execute("SELECT SUM(visit_count) as count FROM visitors")
 
     res.json({
       visitors: visitors.rows,
@@ -214,8 +224,13 @@ router.get('/api/visitors/pages', authMiddleware, async (req, res) => {
     const startDate = url.searchParams.get('startDate') || ''
     const endDate = url.searchParams.get('endDate') || ''
     
-    const conditions = ['v.is_bot = 0', "pv.ip != '143.44.164.12'"]
+    const ownerIp = process.env.OWNER_IP
+    const conditions = ['v.is_bot = 0']
     const args = []
+    if (ownerIp) {
+      conditions.push('pv.ip != ?')
+      args.push(ownerIp)
+    }
     if (startDate) { conditions.push('pv.visited_at >= ?'); args.push(`${startDate} 00:00:00`) }
     if (endDate) { conditions.push('pv.visited_at <= ?'); args.push(`${endDate} 23:59:59`) }
     const where = `WHERE ${conditions.join(' AND ')}`

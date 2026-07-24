@@ -12,7 +12,7 @@ import {
   useProfilePic,
 } from "../utils/profilePic";
 import { getSafeItem, setSafeItem, removeSafeItem } from "../utils/storage";
-import { getApiUrl } from "../utils/api";
+import { getApiUrl, setVisitorOptOut } from "../utils/api";
 import { slugify } from "../utils/format";
 import type { Blog, Comment, Message } from "../types/blog";
 import InlinePreviewTabs from "./admin/InlinePreviewTabs";
@@ -1088,6 +1088,7 @@ function AdminPanel() {
       if (!res.ok) throw new Error("Invalid password");
       const data = await res.json();
       setSafeItem("admin_token", data.token);
+      setVisitorOptOut(true);
       setToken(data.token);
     } catch {
       setLoginError("Invalid password");

@@ -60,6 +60,18 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 }
 
+export function isAdminRequest(req: Request): boolean {
+  const header = req.headers.authorization
+  if (!header || !header.startsWith('Bearer ')) return false
+  try {
+    const token = header.slice(7)
+    jwt.verify(token, JWT_SECRET)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Accepts both JWT tokens and long-lived API tokens (for n8n integration)
 export function flexibleAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization

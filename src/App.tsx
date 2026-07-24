@@ -23,7 +23,7 @@ import ResumeModal from './components/ResumeModal'
 import GallerySection from './components/GallerySection'
 import HeadTags from './components/HeadTags'
 import { getSafeItem, setSafeItem } from './utils/storage'
-import { apiFetch } from './utils/api'
+import { apiFetch, setVisitorOptOut } from './utils/api'
 import { useProjects, useSkills, useAbout, useExperience, useAwards } from './hooks/usePortfolioData'
 import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './components/NotFound'
@@ -305,9 +305,18 @@ export default function App() {
 
   const location = useLocation()
 
-  // Record page visit on mount and route changes
+  // Record page visit on mount and route changes (and handle ?optout=1 / ?optout=0 URL query)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const optoutParam = params.get('optout')
+    if (optoutParam === '1') {
+      setVisitorOptOut(true)
+      console.log('[Analytics] Visitor tracking disabled for this browser.')
+    } else if (optoutParam === '0') {
+      setVisitorOptOut(false)
+      console.log('[Analytics] Visitor tracking re-enabled for this browser.')
+    }
+
     const ref = params.get('ref') || ''
     apiFetch('/api/visit', {
       method: 'POST',

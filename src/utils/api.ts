@@ -1,4 +1,5 @@
 const ADMIN_TOKEN_KEY = 'admin_token'
+const OPT_OUT_KEY = 'visitor_opt_out'
 
 export function getApiUrl(path: string): string {
   if (typeof window === 'undefined') return path
@@ -18,13 +19,35 @@ export function getAdminToken(): string {
   }
 }
 
+export function isVisitorOptOut(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(OPT_OUT_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function setVisitorOptOut(optOut: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (optOut) {
+      window.localStorage.setItem(OPT_OUT_KEY, 'true')
+    } else {
+      window.localStorage.removeItem(OPT_OUT_KEY)
+    }
+  } catch {}
+}
+
 export async function apiFetch(path: string, options?: RequestInit, retries = 2): Promise<Response> {
   const token = getAdminToken()
+  const optOut = isVisitorOptOut()
   const fetchOptions = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(optOut ? { 'X-Visitor-Opt-Out': 'true' } : {}),
       ...options?.headers,
     },
   }
